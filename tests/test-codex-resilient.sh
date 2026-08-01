@@ -169,6 +169,9 @@ sed '1d' "$FAKE_CODEX_STATUSES" >"$FAKE_CODEX_STATUSES.next"
 mv "$FAKE_CODEX_STATUSES.next" "$FAKE_CODEX_STATUSES"
 case ${FAKE_CODEX_HOLD:-0} in
     1)
+        if [ -n "${FAKE_CODEX_PID_FILE:-}" ]; then
+            printf '%s\n' "$$" >"$FAKE_CODEX_PID_FILE"
+        fi
         trap 'exit 143' HUP INT TERM
         while :; do
             /bin/sleep 1
@@ -302,6 +305,7 @@ run_supervisor() {
     FAKE_RECOVERY_CALLS="$TEST_ROOT/recovery.calls" \
     FAKE_CODEX_STATUSES="$TEST_ROOT/codex.statuses" \
     FAKE_SLEEP_CALLS="$TEST_ROOT/sleep.calls" \
+    FAKE_CODEX_PID_FILE="${FAKE_CODEX_PID_FILE:-}" \
     PATH="$fake_bin:/usr/bin:/bin" \
         "$HARNESS" codex-resilient "$@"
 }
@@ -405,7 +409,9 @@ grep -F 'reason=clean-exit' "$TEST_ROOT/watcher-restart.out" >/dev/null ||
 : >"$TEST_ROOT/recovery.calls"
 : >"$TEST_ROOT/sleep.calls"
 printf '0\n' >"$TEST_ROOT/codex.statuses"
+watcher_exit_pid_file=$TEST_ROOT/watcher-exit.pid
 FAKE_RECOVERY_MODE=exit-after-ready FAKE_CODEX_HOLD=1 \
+    FAKE_CODEX_PID_FILE=$watcher_exit_pid_file \
     run_supervisor --run --name watcher-exit \
         --remote-session session-watcher-exit \
         >"$TEST_ROOT/watcher-exit.out" 2>&1 &&
@@ -422,6 +428,13 @@ grep -F 'reason=thread-recovery-blocked' \
 [ "$(grep -c '^--watch --name watcher-exit --target harness --thread session-watcher-exit$' \
     "$TEST_ROOT/recovery.calls")" = 4 ] ||
     fail "persistent watcher replacement was not bounded"
+watcher_exit_pid=$(sed -n '1p' "$watcher_exit_pid_file")
+case "$watcher_exit_pid" in
+    ''|*[!0-9]*) fail "dead recovery watcher client PID was not recorded" ;;
+esac
+if kill -0 "$watcher_exit_pid" 2>/dev/null; then
+    fail "dead recovery watcher orphaned its Codex client"
+fi
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"

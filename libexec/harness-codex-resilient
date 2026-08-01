@@ -695,7 +695,10 @@ run_codex() {
             "$launcher" resume "$session_id"
             ;;
         remote-explicit)
-            "$launcher" resume --remote unix:// "$session_id"
+            # This selector is always launched as a background function below.
+            # Replace that subshell so codex_pid names the actual client; a
+            # watcher failure must not signal only a wrapper and orphan Codex.
+            exec "$launcher" resume --remote unix:// "$session_id"
             ;;
         *) die "Codex resilient internal selector error" ;;
     esac

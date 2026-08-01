@@ -1,0 +1,614 @@
+decision	reason	path	type	uid	mode	nlink	device	inode	size	mtime_epoch
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/.org.chromium.Chromium.3GYKvp	regular empty file	5035	600	1	2050	8388829	0	1784365811
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/.org.chromium.Chromium.iQx2nd	regular empty file	5035	600	1	2050	8389264	0	1784836711
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/.org.chromium.Chromium.l9bVnX	regular file	5035	600	1	2050	8389244	49152	1784811781
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/.org.chromium.Chromium.sqxY35	regular file	5035	600	1	2050	8388865	262144	1784377606
+archive-delete	completed-swallow-task-artifact	/tmp/bridge-packed-v042.md	regular file	5035	664	1	2050	8389417	4383	1785168633
+archive-delete	completed-swallow-task-artifact	/tmp/bridge-packed-v051.md	regular file	5035	664	1	2050	8389418	4147	1785168633
+archive-delete	completed-swallow-task-artifact	/tmp/bridge-test-v042.py	regular file	5035	664	1	2050	8389419	4182	1785168663
+archive-delete	completed-swallow-task-artifact	/tmp/bridge-test-v051.py	regular file	5035	664	1	2050	8389420	4192	1785168663
+retain-runtime	managed-runtime-or-transport	/tmp/cc-daemon-5035	directory	5035	700	3	2050	8819146	4096	1785526863
+archive-delete	completed-harness-test-artifact	/tmp/changed.txt	regular file	5035	600	1	2050	8389160	610	1784836490
+retain-runtime	managed-runtime-or-transport	/tmp/claude-5035	directory	5035	700	207	2050	8650805	24576	1785574741
+retain-active	live-handoff-or-runtime	/tmp/codex-bwrap-synthetic-mount-targets-5035	directory	5035	700	2	2050	8787955	4096	1785509789
+archive-delete	completed-harness-test-artifact	/tmp/codex-manual-fetch.out	regular file	5035	664	1	2050	8388816	1200	1784371325
+archive-delete	completed-harness-test-artifact	/tmp/codex_help_A.txt	regular file	5035	600	1	2050	8389029	3765	1784558711
+archive-delete	completed-harness-test-artifact	/tmp/codex_help_B.txt	regular file	5035	600	1	2050	8389030	335	1784558711
+archive-delete	completed-harness-test-artifact	/tmp/codex_help_C.txt	regular file	5035	600	1	2050	8389031	3765	1784558711
+archive-delete	completed-swallow-task-artifact	/tmp/cowork_time_1.txt	regular file	5035	664	1	2050	8389033	18	1784581721
+archive-delete	completed-swallow-task-artifact	/tmp/cowork_time_2.txt	regular file	5035	664	1	2050	8389040	18	1784581731
+archive-delete	completed-swallow-task-artifact	/tmp/cowork_time_3.txt	regular file	5035	664	1	2050	8389089	18	1784581741
+archive-delete	completed-harness-test-artifact	/tmp/final-test-claude-takeover.out	regular file	5035	600	1	2050	8389084	29	1784562537
+archive-delete	completed-harness-test-artifact	/tmp/final-test-codex-claude-cowork-skill.out	regular file	5035	600	1	2050	8389083	39	1784562536
+archive-delete	completed-harness-test-artifact	/tmp/final-test-public-repo-audit.out	regular file	5035	600	1	2050	8389088	37	1784562537
+archive-delete	completed-harness-test-artifact	/tmp/final-test-source-contract.out	regular file	5035	600	1	2050	8389087	28	1784562537
+archive-delete	completed-swallow-task-artifact	/tmp/fl4	directory	5035	700	2	2050	8669079	4096	1784581981
+archive-delete	completed-swallow-task-artifact	/tmp/fl8	directory	5035	700	2	2050	8669084	4096	1784582002
+retain-active	live-handoff-or-runtime	/tmp/harness-connection-monitor.Y9LuPI	directory	5035	700	2	2050	9201302	4096	1785598702
+retain-active	live-handoff-or-runtime	/tmp/harness-t369-continuation-2	directory	5035	775	17	2050	8817520	4096	1785597060
+retain-runtime	managed-runtime-or-transport	/tmp/jumpcloud-user-agent-rioyokota.lock	regular empty file	5035	600	1	2050	8388620	0	1784266194
+archive-delete	completed-swallow-task-artifact	/tmp/mcore-utils-pinned.py	regular file	5035	664	1	2050	8389421	92413	1785168682
+archive-delete	completed-swallow-task-artifact	/tmp/mcore-utils-v051.py	regular file	5035	664	1	2050	8389422	106252	1785168682
+archive-delete	completed-harness-test-artifact	/tmp/nested.out	regular file	5035	664	1	2050	8389131	240	1784575552
+retain-runtime	managed-runtime-or-transport	/tmp/node-compile-cache	directory	5035	775	3	2050	8650817	4096	1784268909
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/ompi.login-01.5035	directory	5035	755	3	2050	8651892	4096	1784348569
+retain-runtime	managed-runtime-or-transport	/tmp/openai-docs-cache	directory	5035	775	2	2050	8650952	4096	1785484864
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/p002-codex-manual-helper.out	regular file	5035	664	1	2050	8390043	7479	1785484864
+archive-delete	completed-swallow-task-artifact	/tmp/p1_4.err	regular file	5035	664	1	2050	8389098	27	1784581853
+archive-delete	completed-swallow-task-artifact	/tmp/p1_4.out	regular file	5035	664	1	2050	8389097	3241	1784581853
+archive-delete	completed-swallow-task-artifact	/tmp/p1_8.err	regular file	5035	664	1	2050	8389118	27	1784581935
+archive-delete	completed-swallow-task-artifact	/tmp/p1_8.out	regular file	5035	664	1	2050	8389105	3243	1784581935
+archive-delete	completed-harness-test-artifact	/tmp/phase1-clean.log	regular file	5035	664	1	2050	8389199	3168	1784586365
+archive-delete	completed-harness-test-artifact	/tmp/phase1-out.log	regular file	5035	664	1	2050	8389187	3272	1784586252
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright-transform-cache-5035	directory	5035	775	251	2050	8652313	4096	1785112171
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-1NQKyk	directory	5035	700	2	2050	8652492	4096	1784276222
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-1uQ5SC	directory	5035	700	2	2050	8651586	4096	1784342175
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-23V6dK	directory	5035	700	2	2050	8651589	4096	1784342176
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-2ostxB	directory	5035	700	2	2050	8652432	4096	1784276215
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-3bCzfQ	directory	5035	700	2	2050	8651590	4096	1784342177
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-3e78Mf	directory	5035	700	2	2050	8652524	4096	1784276226
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-4OMaNW	directory	5035	700	2	2050	8652420	4096	1784276213
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-4SQslP	directory	5035	700	2	2050	8652532	4096	1784276227
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-4oOH6v	directory	5035	700	2	2050	8651620	4096	1784342192
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-5wmBCg	directory	5035	700	2	2050	8652528	4096	1784276226
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-7UIjqH	directory	5035	700	2	2050	8651587	4096	1784342175
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-8MnRdT	directory	5035	700	2	2050	8652460	4096	1784276218
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-9pIUj5	directory	5035	700	2	2050	8651600	4096	1784342183
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-AHKvym	directory	5035	700	2	2050	8651616	4096	1784342190
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-AcnLer	directory	5035	700	2	2050	8652536	4096	1784276227
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-BWSP5B	directory	5035	700	2	2050	8651619	4096	1784342192
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-DP54Hk	directory	5035	700	2	2050	8651594	4096	1784342179
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-EEPm2q	directory	5035	700	2	2050	8651617	4096	1784342191
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-G9tTkL	directory	5035	700	2	2050	8652508	4096	1784276224
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-ISJdyw	directory	5035	700	2	2050	8651603	4096	1784342184
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-Kko1L0	directory	5035	700	2	2050	8652484	4096	1784276221
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-L1mLjr	directory	5035	700	2	2050	8651612	4096	1784342188
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-LL27KX	directory	5035	700	2	2050	8651597	4096	1784342181
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-LS6jyz	directory	5035	700	2	2050	8652476	4096	1784276220
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-Oi5fBW	directory	5035	700	2	2050	8651623	4096	1784342193
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-OuhygF	directory	5035	700	2	2050	8652412	4096	1784276212
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-QKw8o0	directory	5035	700	2	2050	8652404	4096	1784276211
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-QaHU5I	directory	5035	700	2	2050	8652540	4096	1784276228
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-QefWUP	directory	5035	700	2	2050	8651618	4096	1784342191
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-Qr4BRQ	directory	5035	700	2	2050	8652400	4096	1784276211
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-RZrAWT	directory	5035	700	2	2050	8652464	4096	1784276218
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-Sx7tZ4	directory	5035	700	2	2050	8651621	4096	1784342193
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-TgkezN	directory	5035	700	2	2050	8651592	4096	1784342178
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-U8GKAh	directory	5035	700	2	2050	8651624	4096	1784342194
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-XBvhvG	directory	5035	700	2	2050	8652472	4096	1784276219
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-XgAX5d	directory	5035	700	2	2050	8651595	4096	1784342180
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-YTQypD	directory	5035	700	2	2050	8652424	4096	1784276214
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-YpoWNp	directory	5035	700	2	2050	8652544	4096	1784276228
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-ZAmNj7	directory	5035	700	2	2050	8652504	4096	1784276223
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-a8eg3Y	directory	5035	700	2	2050	8651584	4096	1784342174
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-cvC39m	directory	5035	700	2	2050	8652436	4096	1784276215
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-dfimvd	directory	5035	700	2	2050	8652440	4096	1784276215
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-doPi8d	directory	5035	700	2	2050	8651588	4096	1784342176
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-eXAN1C	directory	5035	700	2	2050	8652428	4096	1784276214
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-fIA2gX	directory	5035	700	2	2050	8652520	4096	1784276225
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-fcth0u	directory	5035	700	2	2050	8652488	4096	1784276221
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-hBqABh	directory	5035	700	2	2050	8652416	4096	1784276213
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-hQ8BSF	directory	5035	700	2	2050	8651591	4096	1784342178
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-hgf1Tl	directory	5035	700	2	2050	8651598	4096	1784342182
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-i815mm	directory	5035	700	2	2050	8652408	4096	1784276212
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-iXMO3l	directory	5035	700	2	2050	8651615	4096	1784342189
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-j3XMEj	directory	5035	700	2	2050	8652444	4096	1784276216
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-jCea42	directory	5035	700	2	2050	8651585	4096	1784342174
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-jLH87Y	directory	5035	700	2	2050	8652496	4096	1784276222
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-k0in7l	directory	5035	700	2	2050	8651602	4096	1784342184
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-lG2bCk	directory	5035	700	2	2050	8652512	4096	1784276224
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-nUTUXq	directory	5035	700	2	2050	8652448	4096	1784276216
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-noPGc9	directory	5035	700	2	2050	8651607	4096	1784342187
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-ooiiwX	directory	5035	700	2	2050	8652456	4096	1784276217
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-osZN2f	directory	5035	700	2	2050	8652516	4096	1784276225
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-p0I8uk	directory	5035	700	2	2050	8651596	4096	1784342180
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-paYLBr	directory	5035	700	2	2050	8652468	4096	1784276219
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-plDyng	directory	5035	700	2	2050	8651582	4096	1784342173
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-qIwZjb	directory	5035	700	2	2050	8651605	4096	1784342185
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-qbkZaQ	directory	5035	700	2	2050	8651606	4096	1784342186
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-r33N0b	directory	5035	700	2	2050	8652452	4096	1784276217
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-rDVZ2U	directory	5035	700	2	2050	8651604	4096	1784342185
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-saetxd	directory	5035	700	2	2050	8651593	4096	1784342179
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-utfjtE	directory	5035	700	2	2050	8652500	4096	1784276223
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-vEnj5K	directory	5035	700	2	2050	8651614	4096	1784342188
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-wT5oxZ	directory	5035	700	2	2050	8651601	4096	1784342183
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-wjUPi9	directory	5035	700	2	2050	8651611	4096	1784342187
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-xl0ps1	directory	5035	700	2	2050	8652548	4096	1784276229
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-yMbErU	directory	5035	700	2	2050	8652480	4096	1784276220
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-yPrFzz	directory	5035	700	2	2050	8651583	4096	1784342173
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/playwright_chromiumdev_profile-zlOueP	directory	5035	700	2	2050	8651599	4096	1784342182
+archive-delete	completed-harness-test-artifact	/tmp/probe-bogus.out	regular file	5035	600	1	2050	8389044	326	1784559887
+archive-delete	completed-harness-test-artifact	/tmp/probe-good.out	regular file	5035	600	1	2050	8389045	3765	1784559887
+archive-delete	completed-harness-test-artifact	/tmp/r2-phase1-clean.out	regular file	5035	600	1	2050	8389077	3168	1784562486
+archive-delete	completed-harness-test-artifact	/tmp/r2-phase1-dirty.out	regular file	5035	600	1	2050	8389076	3272	1784562229
+archive-delete	completed-harness-test-artifact	/tmp/r2-test-claude-takeover.out	regular file	5035	600	1	2050	8389071	29	1784562128
+archive-delete	completed-harness-test-artifact	/tmp/r2-test-public-repo-audit.out	regular file	5035	600	1	2050	8389074	37	1784562129
+archive-delete	completed-harness-test-artifact	/tmp/r2-test-source-contract.out	regular file	5035	600	1	2050	8389073	28	1784562129
+archive-delete	completed-swallow-task-artifact	/tmp/r4.out	regular file	5035	664	1	2050	8389119	3029	1784581987
+archive-delete	completed-swallow-task-artifact	/tmp/r4.time	regular file	5035	664	1	2050	8389157	27	1784581987
+archive-delete	completed-swallow-task-artifact	/tmp/r8.out	regular file	5035	664	1	2050	8389158	3032	1784582015
+archive-delete	completed-swallow-task-artifact	/tmp/r8.time	regular file	5035	664	1	2050	8389163	27	1784582015
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/ref_top.png	regular file	5035	664	1	2050	8388826	75055	1784371540
+retain-runtime	managed-runtime-or-transport	/tmp/rioyokota_user_grpc	socket	5035	700	1	2050	8388621	0	1784266194
+archive-delete	completed-harness-test-artifact	/tmp/sensei-runtime-handoff.CaWBXO.delete-manifest	regular file	5035	600	1	2050	8389845	388	1785330982
+retain-runtime	managed-runtime-or-transport	/tmp/ssh-HhvyzV4Htl	directory	5035	700	2	2050	8819131	4096	1785536931
+sensitive-delete	dead-ssh-agent-socket	/tmp/ssh-Lw2tUjSAbe	directory	5035	700	2	2050	8670977	4096	1784700516
+retain-runtime	managed-runtime-or-transport	/tmp/ssh-M9pwWT1BZY	directory	5035	700	2	2050	9044948	4096	1785458954
+retain-runtime	managed-runtime-or-transport	/tmp/ssh-PiAWv1TNFK	directory	5035	700	2	2050	8818158	4096	1785560624
+sensitive-delete	dead-ssh-agent-socket	/tmp/ssh-cxlVQPyWjf	directory	5035	700	2	2050	8670970	4096	1784698977
+archive-delete	completed-swallow-task-artifact	/tmp/sw-resource-order-5035	directory	5035	775	3	2050	8817753	4096	1785038303
+archive-delete	completed-swallow-task-artifact	/tmp/sw013-ledger-5035	directory	5035	775	2	2050	8817728	4096	1785027177
+archive-delete	completed-swallow-task-artifact	/tmp/sw030-TODO.latest	regular file	5035	640	1	2050	8389257	224083	1785072112
+archive-delete	completed-swallow-task-artifact	/tmp/sw030-defaults-shell.pbs	regular file	5035	664	1	2050	8389263	747	1785071987
+archive-delete	completed-swallow-task-artifact	/tmp/sw030-defaults-static.pbs	regular file	5035	664	1	2050	8389262	751	1785071911
+archive-delete	completed-swallow-task-artifact	/tmp/sw030-fp8-compute-repeat.pbs	regular file	5035	664	1	2050	8389260	1593	1785070742
+archive-delete	completed-swallow-task-artifact	/tmp/sw030-fp8-gather-repeat.pbs	regular file	5035	664	1	2050	8389259	1571	1785070273
+archive-delete	completed-swallow-task-artifact	/tmp/sw030-fp8-recipe-repeat.pbs	regular file	5035	664	1	2050	8389261	1593	1785071226
+archive-delete	completed-swallow-task-artifact	/tmp/sw030-ln-margin-repeat.pbs	regular file	5035	664	1	2050	8389258	1656	1785069817
+archive-delete	completed-swallow-task-artifact	/tmp/sw030-qwen3_short.sh	regular file	5035	755	1	2050	8389265	3246	1785071849
+archive-delete	completed-swallow-task-artifact	/tmp/sw030-test-sw030.sh	regular file	5035	755	1	2050	8389266	2365	1785071849
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-TODO.current	regular file	5035	640	1	2050	8389797	343401	1785324872
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-TODO.md	regular file	5035	640	1	2050	8389793	343419	1785324865
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-TODO.orig	regular file	5035	640	1	2050	8389794	340019	1785324827
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-arxiv-cycle70.atom	regular file	5035	664	1	2050	8389462	247234	1785179961
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-arxiv-recent-300.atom	regular file	5035	664	1	2050	8389461	735294	1785178134
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-arxiv-recent.atom	regular file	5035	664	1	2050	8389442	244142	1785176746
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-base-preflight-review.md	regular file	5035	600	1	2050	8389568	10336	1785309094
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-bpm-card.md	regular file	5035	664	1	2050	8389457	1863	1785177014
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-bpm-hf-metadata.json	regular file	5035	664	1	2050	8389456	1086	1785177010
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-bpm-page.html	regular file	5035	664	1	2050	8389455	46480	1785176998
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-capture-self.out	regular file	5035	664	1	2050	8389661	144	1785318342
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-closeout-TODO.md	regular file	5035	640	1	2050	8389803	343935	1785325207
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-closeout-TODO.orig	regular file	5035	640	1	2050	8389806	343419	1785325225
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-closeout-validation.md	regular file	5035	640	1	2050	8389804	2258	1785325199
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-closeout-validation.orig	regular file	5035	640	1	2050	8389807	1723	1785325225
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-cowork-execution.md	regular file	5035	640	1	2050	8389798	2013	1785324956
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-cowork-execution.orig	regular file	5035	640	1	2050	8389800	68	1785324970
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-cowork-validation.md	regular file	5035	640	1	2050	8389799	1723	1785324956
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-cowork-validation.orig	regular file	5035	640	1	2050	8389801	73	1785324970
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-datasets-sw032.json	regular file	5035	640	1	2050	8389280	29762	1785160271
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-evaluation-sw032.json	regular file	5035	640	1	2050	8389279	13850	1785160280
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-explore-span.py	regular file	5035	664	1	2050	8389268	10072	1785110343
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-failure-self.out	regular file	5035	664	1	2050	8389684	144	1785318997
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-files-copy-item.txt	regular file	5035	664	1	2050	8389473	23	1785271988
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-files-copy-smoke.def	regular file	5035	664	1	2050	8389564	76	1785272026
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-generator-implementation-independent-prompt-20260731.md	regular file	5035	664	1	2050	8390025	2779	1785426418
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-generator-implementation-independent-seal-20260731.json	regular file	5035	600	1	2050	8390026	314	1785426430
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-generator-implementation-reciprocal-prompt-20260731.md	regular file	5035	664	1	2050	8390028	2414	1785426775
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-generator-implementation-reciprocal-r2-prompt-20260731.md	regular file	5035	664	1	2050	8390031	1910	1785427179
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-generator-implementation-reciprocal-r2-seal-20260731.json	regular file	5035	600	1	2050	8390032	313	1785427188
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-generator-implementation-reciprocal-seal-20260731.json	regular file	5035	600	1	2050	8390029	313	1785426782
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-final-rereview-20260730.md	regular file	5035	664	1	2050	8389991	1341	1785422119
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-final-rereview-prompt-20260730.md	regular file	5035	664	1	2050	8389988	1346	1785422077
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-final-review-20260730.md	regular file	5035	664	1	2050	8389990	8520	1785421910
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-final-review-prompt-20260730.md	regular file	5035	664	1	2050	8389989	1737	1785421462
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-independent-live-digests-20260730.txt	regular file	5035	664	1	2050	8389970	635	1785419965
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-independent-prompt-20260730.md	regular file	5035	664	1	2050	8389969	2038	1785419949
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-independent-r2-live-digests-20260730.txt	regular file	5035	664	1	2050	8389974	635	1785420420
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-independent-r2-seal-20260730.json	regular file	5035	600	1	2050	8389980	314	1785420424
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-independent-retry-prompt-20260730.md	regular file	5035	664	1	2050	8389972	1852	1785420393
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-independent-seal-20260730.json	regular file	5035	600	1	2050	8389971	314	1785419972
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-managed-rereview-20260730.md	regular file	5035	664	1	2050	8389999	3932	1785422282
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-managed-rereview-prompt-20260730.md	regular file	5035	664	1	2050	8389996	1632	1785422141
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-pr-body.md	regular file	5035	664	1	2050	8389997	817	1785422381
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-reciprocal-live-digests-20260730.txt	regular file	5035	664	1	2050	8389975	727	1785420647
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-reciprocal-prompt-20260730.md	regular file	5035	664	1	2050	8389973	2037	1785420629
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-host-generator-reciprocal-seal-20260730.json	regular file	5035	600	1	2050	8389976	313	1785420652
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-correction-reciprocal-seal.rwg3ko	regular file	5035	600	1	2050	8389874	313	1785337285
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-correction-seal.pUjQ8x	regular file	5035	600	1	2050	8389871	314	1785336782
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-fourth-pass-independent-prompt.md	regular file	5035	664	1	2050	8389932	951	1785346255
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-fourth-pass-independent-r2-prompt.md	regular file	5035	664	1	2050	8389935	1043	1785346691
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-fourth-pass-independent-r2-seal.SD9k5i	regular file	5035	600	1	2050	8389938	314	1785346699
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-fourth-pass-independent-seal.AqqoMW	regular file	5035	600	1	2050	8389934	314	1785346270
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-fourth-pass-post-digests.txt	regular file	5035	664	1	2050	8389937	635	1785346641
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-fourth-pass-pre-digests.txt	regular file	5035	664	1	2050	8389933	635	1785346270
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-fourth-pass-r2-post-digests.txt	regular file	5035	664	1	2050	8389942	635	1785347138
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-fourth-pass-r2-pre-digests.txt	regular file	5035	664	1	2050	8389936	635	1785346699
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-reciprocal-fixed-seal.kECC7Z	regular file	5035	600	1	2050	8389862	313	1785334881
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-reciprocal-seal.c44RFx	regular file	5035	600	1	2050	8389855	313	1785333550
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-prompt.md	regular file	5035	664	1	2050	8389883	1890	1785338982
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r2-prompt.md	regular file	5035	664	1	2050	8389887	1772	1785339482
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r2-seal.tK8hJX	regular file	5035	600	1	2050	8389888	314	1785339493
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r3-prompt.md	regular file	5035	664	1	2050	8389892	1857	1785340207
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r3-seal.LVPoXO	regular file	5035	600	1	2050	8389893	314	1785340213
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r4-prompt.md	regular file	5035	664	1	2050	8389811	1787	1785340661
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r4-seal.ZEW09F	regular file	5035	600	1	2050	8389896	314	1785340667
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r5-prompt.md	regular file	5035	664	1	2050	8389899	1651	1785341156
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r5-seal.3LsycU	regular file	5035	600	1	2050	8389900	314	1785341162
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r5b-seal.pUYUat	regular file	5035	600	1	2050	8389902	314	1785341268
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r5c-seal.8oYlB8	regular file	5035	600	1	2050	8389903	314	1785341759
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r5d-seal.hIDUi9	regular file	5035	600	1	2050	8389909	314	1785343353
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r6-prompt.md	regular file	5035	664	1	2050	8389912	1524	1785343785
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-r6-seal.fbMurQ	regular file	5035	600	1	2050	8389914	314	1785343805
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-independent-seal.zDOj9z	regular file	5035	600	1	2050	8389884	314	1785339005
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-r5-post-digests.txt	regular file	5035	664	1	2050	8389910	635	1785343730
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-r5-pre-digests.txt	regular file	5035	664	1	2050	8389911	635	1785343344
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-r6-post-digests.txt	regular file	5035	664	1	2050	8389915	635	1785344347
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-r6-pre-digests.txt	regular file	5035	664	1	2050	8389913	635	1785343790
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-r6-reciprocal-post-digests.txt	regular file	5035	664	1	2050	8389925	727	1785345115
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-r6-reciprocal-pre-digests.txt	regular file	5035	664	1	2050	8389917	727	1785344482
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-reciprocal-r6-prompt.md	regular file	5035	664	1	2050	8389916	1694	1785344412
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-review-correction-reciprocal-r6c-seal.UJeiv9	regular file	5035	600	1	2050	8389919	313	1785344482
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-hostgen-seal.fu2iUc	regular file	5035	600	1	2050	8389851	314	1785332689
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-nanbeige42-metadata.json	regular file	5035	664	1	2050	8389460	3597	1785177725
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-netns-smoke.def	regular file	5035	664	1	2050	8389468	75	1785271739
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-nvidia-runtime-terminal-contract-r1.json	regular file	5035	664	1	2050	8389789	4185	1785324510
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-overlay-audit.md	regular file	5035	600	1	2050	8389341	12532	1785304129
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-overlay-rereview.md	regular file	5035	600	1	2050	8389567	4384	1785308173
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-overlay-review.md	regular file	5035	600	1	2050	8389467	3898	1785306651
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-plan-sw032.md	regular file	5035	640	1	2050	8389281	57932	1785160332
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-reader-both.out	regular file	5035	664	1	2050	8389836	181	1785330183
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-reader-final-review-prompt.md	regular file	5035	664	1	2050	8389822	1484	1785327255
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-reader-impl-final-prompt.md	regular file	5035	664	1	2050	8389840	1571	1785330701
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-reader-impl-independent-prompt.md	regular file	5035	664	1	2050	8389826	2657	1785328532
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-reader-impl-reciprocal-prompt.md	regular file	5035	664	1	2050	8389829	2237	1785329023
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-reader-no-args.out	regular file	5035	664	1	2050	8389835	178	1785330183
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-reader-prompt-independent.md	regular file	5035	664	1	2050	8389812	1560	1785325793
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-reader-prompt-reciprocal.md	regular file	5035	664	1	2050	8389815	3161	1785326330
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-reader-selftest-r2.json	regular file	5035	664	1	2050	8389844	562	1785331382
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-reader-selftest.json	regular file	5035	664	1	2050	8389837	557	1785330187
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-final-rereview-prompt-20260731.md	regular file	5035	664	1	2050	8390015	2816	1785425630
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-final-rereview-r2-prompt-20260731.md	regular file	5035	664	1	2050	8390019	1419	1785425835
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-final-rereview-r2-result-20260731.md	regular file	5035	664	1	2050	8390020	6171	1785426038
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-final-rereview-r2-stderr-20260731.txt	regular empty file	5035	664	1	2050	8390021	0	1785425842
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-final-rereview-result-20260731.md	regular file	5035	664	1	2050	8390016	8472	1785425805
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-final-rereview-stderr-20260731.txt	regular empty file	5035	664	1	2050	8390017	0	1785425638
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-final-review-prompt-20260731.md	regular file	5035	664	1	2050	8390011	2743	1785425227
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-final-review-result-20260731.md	regular file	5035	664	1	2050	8390012	7604	1785425481
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-final-review-stderr-20260731.txt	regular empty file	5035	664	1	2050	8390013	0	1785425232
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-independent-prompt-20260731.md	regular file	5035	664	1	2050	8390007	2781	1785423974
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-independent-seal-20260731.json	regular file	5035	600	1	2050	8390009	314	1785423982
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-pr-body-20260731.md	regular file	5035	664	1	2050	8390023	1475	1785426130
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-reciprocal-prompt-20260731.md	regular file	5035	664	1	2050	8390008	3020	1785424300
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-readiness-reciprocal-seal-20260731.json	regular file	5035	600	1	2050	8390010	313	1785424311
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-runtime-patch.m7hlKD	regular file	5035	600	1	2050	8389267	43100	1785109927
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-runtime-plan-self-test.out	regular file	5035	664	1	2050	8389634	150	1785315446
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-serving-current.json	regular file	5035	664	1	2050	8389441	27706	1785176531
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-examples-config.yaml	regular file	5035	664	1	2050	8389444	2409	1785176777
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-examples-reward_function-tool_call.py	regular file	5035	664	1	2050	8389451	913	1785176781
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-examples-reward_function-tool_questioner.py	regular file	5035	664	1	2050	8389450	12391	1785176780
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-question_evaluate-evaluate.py	regular file	5035	664	1	2050	8389448	6365	1785176779
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-question_evaluate-upload.py	regular file	5035	664	1	2050	8389449	27925	1785176780
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-question_generate-question_generate.py	regular file	5035	664	1	2050	8389447	10352	1785176779
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-scripts-skill_main.sh	regular file	5035	664	1	2050	8389446	4878	1785176778
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-scripts-skill_solver_train.sh	regular file	5035	664	1	2050	8389454	28064	1785176804
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-tool_call-contracts.py	regular file	5035	664	1	2050	8389453	4219	1785176781
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-tool_call-grading.py	regular file	5035	664	1	2050	8389452	10961	1785176781
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-train-tool-call-skill-qwen3-8b.sh	regular file	5035	664	1	2050	8389445	2969	1785176778
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-skillsp-tree.tsv	regular file	5035	664	1	2050	8389443	37295	1785176768
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-spdp-readme.md	regular file	5035	664	1	2050	8389458	6071	1785177140
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-static-toml-independent-live-digests-20260730.txt	regular file	5035	664	1	2050	8390001	635	1785422697
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-static-toml-independent-prompt-20260730.md	regular file	5035	664	1	2050	8390000	944	1785422680
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-static-toml-independent-seal-20260730.json	regular file	5035	600	1	2050	8390002	314	1785422703
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-static-toml-pr-body.md	regular file	5035	664	1	2050	8390006	1124	1785423372
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-static-toml-reciprocal-live-digests-20260730.txt	regular file	5035	664	1	2050	8390004	727	1785422865
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-static-toml-reciprocal-prompt-20260730.md	regular file	5035	664	1	2050	8390003	826	1785422844
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-static-toml-reciprocal-seal-20260730.json	regular file	5035	600	1	2050	8390005	313	1785422871
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-test-sw031.orig	regular file	5035	750	1	2050	8389795	189144	1785324749
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-test-sw031.sh	regular file	5035	750	1	2050	8389791	192182	1785324699
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-test-x.out	regular file	5035	664	1	2050	8389818	115515	1785327014
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-veracium-tree.tsv	regular file	5035	664	1	2050	8389459	6115	1785177233
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-wheelhouse-contract.py	regular file	5035	664	1	2050	8389472	21866	1785271391
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-wheelhouse-materialize.py	regular file	5035	664	1	2050	8389563	20651	1785271088
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-workloads.json	regular file	5035	640	1	2050	8389792	130198	1785324728
+archive-delete	completed-swallow-task-artifact	/tmp/sw031-workloads.orig	regular file	5035	640	1	2050	8389796	130164	1785324749
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-arxiv-latest.xml	regular file	5035	664	1	2050	8389463	124258	1785181175
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-completed-index.md	regular file	5035	664	1	2050	8389126	5528	1785160549
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-config.json	regular file	5035	664	1	2050	8389436	1538	1785169989
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle10-TODO.md	regular file	5035	644	1	2050	8389308	76688	1785163453
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle10-evaluation.json	regular file	5035	644	1	2050	8389310	28255	1785163437
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle10-plan.md	regular file	5035	644	1	2050	8389309	69792	1785163437
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle10-test-sw031.sh	regular file	5035	755	1	2050	8389311	23579	1785163437
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle11-TODO.md	regular file	5035	644	1	2050	8389312	78832	1785163968
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle11-evaluation.json	regular file	5035	644	1	2050	8389314	33309	1785163933
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle11-plan.md	regular file	5035	644	1	2050	8389313	71917	1785163951
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle11-recipe.json	regular file	5035	644	1	2050	8389315	37222	1785163706
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle11-test-sw031.sh	regular file	5035	755	1	2050	8389316	24536	1785163979
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle11-test-sw032.sh	regular file	5035	755	1	2050	8389317	971	1785164035
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle12-TODO.md	regular file	5035	644	1	2050	8389318	80615	1785164336
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle12-evaluation.json	regular file	5035	644	1	2050	8389320	36757	1785164336
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle12-plan.md	regular file	5035	644	1	2050	8389319	73559	1785164321
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle12-test-sw031.sh	regular file	5035	755	1	2050	8389321	25391	1785164321
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle12-test-sw032.sh	regular file	5035	755	1	2050	8389322	1100	1785164321
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle13-TODO.md	regular file	5035	644	1	2050	8389325	82098	1785164530
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle13-evaluation.json	regular file	5035	644	1	2050	8389327	38548	1785164530
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle13-plan.md	regular file	5035	644	1	2050	8389326	74986	1785164530
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle13-test-sw031.sh	regular file	5035	755	1	2050	8389328	25992	1785164530
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle13-test-sw032.sh	regular file	5035	755	1	2050	8389329	1213	1785164530
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle14-TODO.md	regular file	5035	644	1	2050	8389332	83625	1785165072
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle14-TODO.orig.md	regular file	5035	644	1	2050	8389337	82098	1785165101
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle14-datasets.json	regular file	5035	644	1	2050	8389330	42088	1785164938
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle14-datasets.orig.json	regular file	5035	644	1	2050	8389335	34043	1785165100
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle14-plan.md	regular file	5035	644	1	2050	8389331	75830	1785165028
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle14-plan.orig.md	regular file	5035	644	1	2050	8389336	74986	1785165100
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle14-test-sw031.orig.sh	regular file	5035	755	1	2050	8389338	25992	1785165101
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle14-test-sw031.sh	regular file	5035	755	1	2050	8389333	27238	1785165085
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle14-test-sw032.orig.sh	regular file	5035	755	1	2050	8389339	1213	1785165101
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle14-test-sw032.sh	regular file	5035	755	1	2050	8389334	1419	1785165085
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle15-TODO.md	regular file	5035	644	1	2050	8389351	85816	1785165462
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle15-evaluation.json	regular file	5035	644	1	2050	8389349	43982	1785165414
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle15-plan.md	regular file	5035	644	1	2050	8389350	78423	1785165445
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle15-tau3-tree-summary.json	regular file	5035	664	1	2050	8389348	127098	1785165301
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle15-test-sw031.sh	regular file	5035	755	1	2050	8389352	28322	1785165495
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle15-test-sw032.sh	regular file	5035	755	1	2050	8389353	1633	1785165563
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle16-TODO.md	regular file	5035	644	1	2050	8389357	88035	1785165815
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle16-plan.md	regular file	5035	644	1	2050	8389356	79924	1785165781
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle16-recipe.json	regular file	5035	644	1	2050	8389355	40743	1785165749
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle16-test-sw031.sh	regular file	5035	755	1	2050	8389358	29168	1785165826
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle16-test-sw032.sh	regular file	5035	755	1	2050	8389359	1850	1785165826
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle17-TODO.md	regular file	5035	644	1	2050	8389364	89789	1785166088
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle17-plan.md	regular file	5035	644	1	2050	8389363	81324	1785166067
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle17-test-sw031.sh	regular file	5035	755	1	2050	8389365	30120	1785166134
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle17-test-sw032.sh	regular file	5035	755	1	2050	8389366	2040	1785166192
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle17-workloads.json	regular file	5035	640	1	2050	8389362	11025	1785166015
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle18-TODO.md	regular file	5035	644	1	2050	8389374	91019	1785166349
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle18-plan.md	regular file	5035	644	1	2050	8389373	82224	1785166332
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle18-test-sw031.sh	regular file	5035	755	1	2050	8389375	30879	1785166384
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle18-test-sw032.sh	regular file	5035	755	1	2050	8389376	2227	1785166457
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle18-workloads.json	regular file	5035	644	1	2050	8389372	15890	1785166299
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle19-TODO.md	regular file	5035	644	1	2050	8389387	92215	1785166669
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle19-bfcl-tree.json	regular file	5035	664	1	2050	8389382	36726	1785166491
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle19-evaluation.json	regular file	5035	644	1	2050	8389389	45668	1785166669
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle19-plan.md	regular file	5035	644	1	2050	8389388	82696	1785166669
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle19-test-sw031.sh	regular file	5035	755	1	2050	8389390	31371	1785166740
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle20-TODO.md	regular file	5035	644	1	2050	8389386	93847	1785167045
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle20-evaluation.json	regular file	5035	644	1	2050	8389397	49183	1785167011
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle20-plan.md	regular file	5035	644	1	2050	8389396	83738	1785167045
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle20-test-sw031.sh	regular file	5035	755	1	2050	8389398	32130	1785167078
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle21-TODO.md	regular file	5035	644	1	2050	8389395	95416	1785167491
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle21-evaluation.json	regular file	5035	644	1	2050	8389406	50810	1785167455
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle21-plan.md	regular file	5035	644	1	2050	8389402	85194	1785167491
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle21-test-sw031.sh	regular file	5035	755	1	2050	8389408	33092	1785167455
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle21-test-sw032.sh	regular file	5035	755	1	2050	8389409	2405	1785167491
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle21-workloads.json	regular file	5035	644	1	2050	8389407	19242	1785167462
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle22-TODO.md	regular file	5035	644	1	2050	8389410	97347	1785167771
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle22-plan.md	regular file	5035	644	1	2050	8389411	87532	1785167757
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle22-recipe.json	regular file	5035	644	1	2050	8389412	44354	1785167702
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle22-test-sw031.sh	regular file	5035	755	1	2050	8389413	33854	1785167702
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle22-test-sw032.sh	regular file	5035	755	1	2050	8389414	2598	1785167828
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle3-TODO.md	regular file	5035	640	1	2050	8389130	67187	1785161122
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle3-datasets.json	regular file	5035	640	1	2050	8389134	30230	1785161199
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle3-plan.md	regular file	5035	640	1	2050	8389132	60987	1785161164
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle3-recipe.json	regular file	5035	640	1	2050	8389133	37222	1785161199
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle3-test-sw031.sh	regular file	5035	755	1	2050	8389135	19804	1785161199
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle4-TODO.md	regular file	5035	644	1	2050	8389136	69219	1785161760
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle4-evaluation.json	regular file	5035	640	1	2050	8389288	18167	1785161869
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle4-plan.md	regular file	5035	644	1	2050	8389287	63851	1785161805
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle4-test-sw031.sh	regular file	5035	755	1	2050	8389284	20777	1785161877
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle5-TODO.md	regular file	5035	644	1	2050	8389283	70743	1785162288
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle5-datasets.json	regular file	5035	644	1	2050	8389286	34043	1785162132
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle5-plan.md	regular file	5035	644	1	2050	8389285	65292	1785162288
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle5-test-sw031.sh	regular file	5035	755	1	2050	8389289	21281	1785162132
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle6-TODO.md	regular file	5035	644	1	2050	8389290	71891	1785162547
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle6-evaluation.json	regular file	5035	644	1	2050	8389292	20777	1785162528
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle6-plan.md	regular file	5035	644	1	2050	8389291	66323	1785162528
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle6-test-sw031.sh	regular file	5035	755	1	2050	8389293	21809	1785162528
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle7-TODO.md	regular file	5035	644	1	2050	8389294	73172	1785162732
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle7-evaluation.json	regular file	5035	644	1	2050	8389296	22750	1785162732
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle7-plan.md	regular file	5035	644	1	2050	8389295	67325	1785162747
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle7-test-sw031.sh	regular file	5035	755	1	2050	8389297	22266	1785162732
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle8-TODO.md	regular file	5035	644	1	2050	8389300	74210	1785162954
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle8-evaluation.json	regular file	5035	644	1	2050	8389302	24372	1785162954
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle8-plan.md	regular file	5035	644	1	2050	8389301	68074	1785162954
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle8-test-sw031.sh	regular file	5035	755	1	2050	8389303	22737	1785162954
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle9-TODO.md	regular file	5035	644	1	2050	8389304	75361	1785163208
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle9-evaluation.json	regular file	5035	644	1	2050	8389306	25573	1785163208
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle9-plan.md	regular file	5035	644	1	2050	8389305	68883	1785163208
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-cycle9-test-sw031.sh	regular file	5035	755	1	2050	8389307	23033	1785163208
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-generation_config.json	regular file	5035	664	1	2050	8389437	244	1785169989
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-hf-datasets-cycle8.json	regular file	5035	664	1	2050	8389299	17545	1785162802
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-hf-models-cycle8.json	regular file	5035	664	1	2050	8389298	55647	1785162802
+archive-delete	completed-swallow-task-artifact	/tmp/sw032-model.safetensors.index.json	regular file	5035	664	1	2050	8389435	34485	1785169989
+archive-delete	completed-swallow-task-artifact	/tmp/sw033-static-TODO.NxmwjA	regular empty file	5035	600	1	2050	8389361	0	1785206645
+archive-delete	completed-swallow-task-artifact	/tmp/sw033-static-datasets.MPt69z	regular empty file	5035	600	1	2050	8389368	0	1785206645
+archive-delete	completed-swallow-task-artifact	/tmp/sw033-static-recipe.gXsbPy	regular empty file	5035	600	1	2050	8389367	0	1785206645
+archive-delete	completed-swallow-task-artifact	/tmp/sw034-final-test.out	regular file	5035	664	1	2050	8390033	48581	1785467246
+archive-delete	completed-swallow-task-artifact	/tmp/sw034-r2-test.out	regular file	5035	664	1	2050	8390024	47857	1785466049
+archive-delete	completed-swallow-task-artifact	/tmp/sw034-ready-test.out	regular file	5035	664	1	2050	8390030	47882	1785466319
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-gate-output	regular file	5035	664	1	2050	8389981	17	1785455366
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-gate-time	regular file	5035	664	1	2050	8389982	74	1785455366
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-independent-prompt.md	regular file	5035	600	1	2050	8389984	2030	1785455643
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-independent-r2-prompt.md	regular file	5035	600	1	2050	8389987	2103	1785457306
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-independent-r2-seal.json	regular file	5035	600	1	2050	8389993	314	1785457315
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-independent-seal.json	regular file	5035	600	1	2050	8389985	314	1785455649
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-optimized-static.out	regular file	5035	664	1	2050	8390018	47	1785458520
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-pre-independent-digests.txt	regular file	5035	600	1	2050	8389983	635	1785455622
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-pre-independent-r2-digests.txt	regular file	5035	600	1	2050	8389992	635	1785457315
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-pre-reciprocal-digests.txt	regular file	5035	600	1	2050	8389995	727	1785457758
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-reciprocal-prompt.md	regular file	5035	600	1	2050	8389994	2237	1785457750
+archive-delete	completed-swallow-task-artifact	/tmp/sw038-reciprocal-seal.json	regular file	5035	600	1	2050	8390014	313	1785457758
+archive-delete	completed-harness-test-artifact	/tmp/t268-plan-doctor.out	regular file	5035	664	1	2050	8388844	33098	1784407877
+archive-delete	completed-harness-test-artifact	/tmp/t304-test-trace.out	regular file	5035	664	1	2050	8389182	11254	1784856122
+archive-delete	completed-harness-test-artifact	/tmp/t336-cowork-independent-seal.txt	regular file	5035	600	1	2050	8389401	314	1785246328
+archive-delete	completed-harness-test-artifact	/tmp/t336-cowork-independent2-seal.txt	regular file	5035	600	1	2050	8389404	314	1785246441
+archive-delete	completed-harness-test-artifact	/tmp/t336-cowork-independent3-seal.txt	regular file	5035	600	1	2050	8389399	314	1785246879
+archive-delete	completed-harness-test-artifact	/tmp/t336-cowork-reciprocal-seal.txt	regular file	5035	600	1	2050	8389400	313	1785247444
+retain-active	live-handoff-or-runtime	/tmp/t369-website	directory	5035	775	12	2050	9046025	4096	1785589696
+archive-delete	completed-swallow-task-artifact	/tmp/tasa-api-body.44	regular file	5035	664	1	2050	8389439	132	1785174272
+archive-delete	completed-swallow-task-artifact	/tmp/tasa-api-headers.44	regular file	5035	664	1	2050	8389438	1094	1785174272
+archive-delete	completed-swallow-task-artifact	/tmp/tasa-paper-v1.html	regular file	5035	664	1	2050	8389440	697367	1785174308
+archive-delete	completed-swallow-task-artifact	/tmp/tau3-ids.CXVHLE	directory	5035	700	3	2050	8817526	4096	1785173594
+archive-delete	completed-harness-test-artifact	/tmp/test-claude-takeover.out	regular file	5035	600	1	2050	8389048	29	1784559926
+archive-delete	completed-harness-test-artifact	/tmp/test-public-repo-audit.out	regular file	5035	600	1	2050	8389050	37	1784559926
+archive-delete	completed-harness-test-artifact	/tmp/test-source-contract.out	regular file	5035	600	1	2050	8389049	28	1784559926
+archive-delete	completed-swallow-task-artifact	/tmp/test-static-sw032.sh	regular file	5035	750	1	2050	8389129	2686	1785160622
+archive-delete	completed-swallow-task-artifact	/tmp/test-sw031-sw032.sh	regular file	5035	750	1	2050	8389282	19008	1785160378
+archive-delete	completed-swallow-task-artifact	/tmp/test-sw032.sh	regular file	5035	664	1	2050	8389127	826	1785160615
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.3cdT1XqzLZ	regular empty file	5035	600	1	2050	8389179	0	1784802985
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.95uGKXcqxg	directory	5035	700	2	2050	9057893	4096	1785312423
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.FEtqAHAGCH	regular empty file	5035	600	1	2050	8389178	0	1784802985
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.FtZuQiKI31	regular empty file	5035	600	1	2050	8388846	0	1784410488
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.OfZUoaogjo	regular empty file	5035	600	1	2050	8389166	0	1784852550
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.PwHZB443g5	regular empty file	5035	600	1	2050	8389173	0	1784802978
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.RJ5tNBijhv	regular empty file	5035	600	1	2050	8389170	0	1784802956
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.WxfdM4h7sn	regular empty file	5035	600	1	2050	8389171	0	1784802974
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.ZYfbploeNJ	regular empty file	5035	600	1	2050	8388815	0	1784376572
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.etgQrFhO6r	regular empty file	5035	600	1	2050	8388853	0	1784440054
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.g5hdBYHYxF	regular empty file	5035	600	1	2050	8389128	0	1785598665
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.jFTJVSdhM2	regular empty file	5035	600	1	2050	8389172	0	1784802974
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.mG52b9SHmc	regular empty file	5035	600	1	2050	8388823	0	1784376648
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmp.v3lH8h66VE	regular empty file	5035	600	1	2050	8389188	0	1784802935
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmpk6t2r4is	directory	5035	700	3	2050	9046754	4096	1785545954
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/tmptxng5gh_	directory	5035	700	3	2050	9336953	4096	1785356564
+retain-runtime	managed-runtime-or-transport	/tmp/tmux-5035	directory	5035	700	2	2050	8650794	4096	1785596861
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/top_crop.png	regular file	5035	664	1	2050	8389195	127284	1784828580
+archive-delete	completed-swallow-task-artifact	/tmp/trajectory2task.pdf	regular file	5035	664	1	2050	8389474	1064151	1785182049
+archive-delete	completed-swallow-task-artifact	/tmp/trajectory2task.txt	regular file	5035	664	1	2050	8389475	82031	1785182049
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-00f78a0a6c88a181.lock	regular empty file	5035	666	1	2050	8389998	0	1785422514
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-0362446c808fd8b5.lock	regular empty file	5035	666	1	2050	8389810	0	1785325618
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-0452c69c44502cb0.lock	regular empty file	5035	666	1	2050	8389565	0	1785285819
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-0485c1d353079b72.lock	regular empty file	5035	666	1	2050	8389646	0	1785315961
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-056f97cb5aa05051.lock	regular empty file	5035	666	1	2050	8389674	0	1785318165
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-09dd34ca00035c99.lock	regular empty file	5035	666	1	2050	8389819	0	1785327243
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-09e43b73239a33a8.lock	regular empty file	5035	666	1	2050	8389478	0	1785322135
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-0a989ad4f1035e8b.lock	regular empty file	5035	666	1	2050	8389865	0	1785335565
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-0c026cbf72fdb5e0.lock	regular empty file	5035	666	1	2050	8389853	0	1785333015
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-0d824ab3fb0d39c3.lock	regular empty file	5035	666	1	2050	8389780	0	1785321677
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-112212c5aec6ee79.lock	regular empty file	5035	666	1	2050	8389908	0	1785342954
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-14ac36e0a3763e78.lock	regular empty file	5035	666	1	2050	8389882	0	1785338883
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-19a044e31fb5827b.lock	regular empty file	5035	666	1	2050	8389905	0	1785341766
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-1e64c4078f691971.lock	regular empty file	5035	666	1	2050	8390038	0	1785469694
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-1fabe77da3aacb33.lock	regular empty file	5035	666	1	2050	8389848	0	1785332105
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-215f5c89f4371d01.lock	regular empty file	5035	666	1	2050	8389898	0	1785340829
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-2206464e6d1b60c1.lock	regular empty file	5035	666	1	2050	8389681	0	1785318656
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-2334055462edef28.lock	regular empty file	5035	666	1	2050	8389832	0	1785329659
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-244ce02888766ee0.lock	regular empty file	5035	666	1	2050	8389890	0	1785339788
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-2474005391a64648.lock	regular empty file	5035	666	1	2050	8390034	0	1785469394
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-24e9ca1172a78aca.lock	regular empty file	5035	666	1	2050	8389866	0	1785335806
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-26f27f03305f61ff.lock	regular empty file	5035	666	1	2050	8389986	0	1785456722
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-271e341cb3ceb06a.lock	regular empty file	5035	666	1	2050	8389627	0	1785314248
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-28a927e3c507a3c9.lock	regular empty file	5035	666	1	2050	8389863	0	1785335052
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-28f0ec8e8f0361bf.lock	regular empty file	5035	666	1	2050	8389816	0	1785326409
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-2ccd1d5b9f16e20a.lock	regular empty file	5035	666	1	2050	8389814	0	1785326048
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-2e8db0027947cb0b.lock	regular empty file	5035	666	1	2050	8389951	0	1785402815
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-30eeb56736c56af5.lock	regular empty file	5035	666	1	2050	8389614	0	1785311864
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-3123de4b1f285e49.lock	regular empty file	5035	666	1	2050	8389211	0	1784885277
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-333068fa70d90504.lock	regular empty file	5035	666	1	2050	8389790	0	1785324556
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-356075443194eb21.lock	regular empty file	5035	666	1	2050	8389827	0	1785328641
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-377c3c53efbf55ab.lock	regular empty file	5035	666	1	2050	8389839	0	1785330697
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-3921ed298fd4ff1d.lock	regular empty file	5035	666	1	2050	8389886	0	1785339339
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-3b001352eeca6128.lock	regular empty file	5035	666	1	2050	8389830	0	1785329162
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-3d16cee0f3155d43.lock	regular empty file	5035	666	1	2050	8389873	0	1785337116
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-3e544d762d64baab.lock	regular empty file	5035	666	1	2050	8389825	0	1785328333
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-3e9c22f26421fec9.lock	regular empty file	5035	666	1	2050	8389783	0	1785323304
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-40762d62a4904655.lock	regular empty file	5035	666	1	2050	8389872	0	1785336905
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-42599d724ecfcd13.lock	regular empty file	5035	666	1	2050	8389377	0	1785243584
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-441e32c426945464.lock	regular empty file	5035	666	1	2050	8389672	0	1785317899
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-45f73f64dd59fec5.lock	regular empty file	5035	666	1	2050	8389952	0	1785402859
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-473b18606db1cad6.lock	regular empty file	5035	666	1	2050	8389901	0	1785341221
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-4bddda79e6af7377.lock	regular empty file	5035	666	1	2050	8389895	0	1785340478
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-509e29b4715c1457.lock	regular empty file	5035	666	1	2050	8389813	0	1785325808
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-50ceaf864cfc1404.lock	regular empty file	5035	666	1	2050	8389833	0	1785329904
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-512c61eda014ed6c.lock	regular empty file	5035	666	1	2050	8389212	0	1784893888
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-5289d4f7b72daa82.lock	regular empty file	5035	666	1	2050	8389683	0	1785318904
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-534b7c9e2efcdcb3.lock	regular empty file	5035	666	1	2050	8389869	0	1785336425
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-5389f73e648170e6.lock	regular empty file	5035	666	1	2050	8389879	0	1785338269
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-53e5d9931f753018.lock	regular empty file	5035	666	1	2050	8389786	0	1785324145
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-5478f62e95d40a54.lock	regular empty file	5035	666	1	2050	8389788	0	1785591746
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-55439c443b5b9899.lock	regular empty file	5035	666	1	2050	8389834	0	1785330057
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-55798fe28c3c5789.lock	regular empty file	5035	666	1	2050	8389877	0	1785337767
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-568a5bf0ade99f12.lock	regular empty file	5035	666	1	2050	8389633	0	1785315392
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-58017b1e99c60812.lock	regular empty file	5035	666	1	2050	8390022	0	1785461430
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-597928af2f298dd1.lock	regular empty file	5035	666	1	2050	8389617	0	1785313289
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-5a1fb5d34074df89.lock	regular empty file	5035	666	1	2050	8389867	0	1785336005
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-5b05e0c9f4b279a3.lock	regular empty file	5035	666	1	2050	8390027	0	1785467071
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-5f8f91d45f4b1a33.lock	regular empty file	5035	666	1	2050	8389858	0	1785334181
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-603eb13efec97f76.lock	regular empty file	5035	666	1	2050	8389703	0	1785319747
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-63018812dc53aaf9.lock	regular empty file	5035	666	1	2050	8389870	0	1785336639
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-67111684f5db27df.lock	regular empty file	5035	666	1	2050	8389785	0	1785323844
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-672fc45f9ba6c8db.lock	regular empty file	5035	666	1	2050	8389841	0	1785330938
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-69ac39de8fb91ce7.lock	regular empty file	5035	666	1	2050	8389906	0	1785342300
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-6c662285199c68ca.lock	regular empty file	5035	666	1	2050	8389239	0	1784941440
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-71d7e0b52734ebaa.lock	regular empty file	5035	666	1	2050	8389850	0	1785332585
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-7382c0df25a0c3ea.lock	regular empty file	5035	666	1	2050	8389685	0	1785319048
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-75b2c54e3b72a5e7.lock	regular empty file	5035	666	1	2050	8389659	0	1785317369
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-78566a1a2a34f657.lock	regular empty file	5035	666	1	2050	8389897	0	1785340669
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-7a1cfc2ec657d03a.lock	regular empty file	5035	666	1	2050	8389918	0	1785344451
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-7c53faef7ce174bb.lock	regular empty file	5035	666	1	2050	8390068	0	1785586942
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-8275b13e17f37e66.lock	regular empty file	5035	666	1	2050	8389881	0	1785338701
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-83984c18f6e293d0.lock	regular empty file	5035	666	1	2050	8389748	0	1785320902
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-83ae0192a6a05883.lock	regular empty file	5035	666	1	2050	8389857	0	1785334021
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-84040fbcadf12809.lock	regular empty file	5035	666	1	2050	8389704	0	1785320213
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-853dec8642f98ace.lock	regular empty file	5035	666	1	2050	8389856	0	1785333807
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-858f439d83ab44a5.lock	regular empty file	5035	666	1	2050	8390053	0	1785441563
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-85952a79643175a7.lock	regular empty file	5035	666	1	2050	8389635	0	1785315650
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-86ff83ca47c25278.lock	regular empty file	5035	666	1	2050	8389808	0	1785341053
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-8f720cabdd7c7db6.lock	regular empty file	5035	666	1	2050	8389977	0	1785420853
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-9112c86535356af1.lock	regular empty file	5035	666	1	2050	8389805	0	1785325182
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-913ab0e5e33c9366.lock	regular empty file	5035	666	1	2050	8389802	0	1785324982
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-945c237a7f624a24.lock	regular empty file	5035	666	1	2050	8389979	0	1785455297
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-96c2801518227fc8.lock	regular empty file	5035	666	1	2050	8389817	0	1785326895
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-972f0c80630be2bc.lock	regular empty file	5035	666	1	2050	8389824	0	1785328162
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-97745f7ed688acbc.lock	regular empty file	5035	666	1	2050	8389962	0	1785405465
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-9ae24436ea2b5e3b.lock	regular empty file	5035	666	1	2050	8389967	0	1785407548
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-9c006771d05fec26.lock	regular empty file	5035	666	1	2050	8389838	0	1785330355
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-9e3ee078469a0f01.lock	regular empty file	5035	666	1	2050	8389878	0	1785338070
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-a18f0add9f4bdb64.lock	regular empty file	5035	666	1	2050	8389852	0	1785332806
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-a2b44be8076888ac.lock	regular empty file	5035	666	1	2050	8389385	0	1785244170
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-a2c4544ff184c5d8.lock	regular empty file	5035	666	1	2050	8388953	0	1784986946
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-a7c873f3a6d19129.lock	regular empty file	5035	666	1	2050	8389831	0	1785329413
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-a90da3afa1d4ffe0.lock	regular empty file	5035	666	1	2050	8389861	0	1785334539
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-aefa13a2eeb6d472.lock	regular empty file	5035	666	1	2050	8389622	0	1785313815
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-b235fcf75d3853fc.lock	regular empty file	5035	666	1	2050	8389657	0	1785317205
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-b2db61a37a67f60f.lock	regular empty file	5035	666	1	2050	8389868	0	1785336212
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-b36a4cd1876f3c6b.lock	regular empty file	5035	666	1	2050	8389782	0	1785322924
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-b38d4615473938cb.lock	regular empty file	5035	666	1	2050	8389607	0	1785371142
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-b568384d69cd9c7b.lock	regular empty file	5035	666	1	2050	8389859	0	1785334337
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-b6a2edc9e73b09e8.lock	regular empty file	5035	666	1	2050	8389966	0	1785406663
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-bad0ecd617bb7e6e.lock	regular empty file	5035	666	1	2050	8389842	0	1785331199
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-bf92d168867bdee5.lock	regular empty file	5035	666	1	2050	8389820	0	1785327448
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-bfcb2df33b812ca3.lock	regular empty file	5035	666	1	2050	8389269	0	1785123130
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-c0e30628efda5ba7.lock	regular empty file	5035	666	1	2050	8389860	0	1785334692
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-c29c068049a7f4db.lock	regular empty file	5035	666	1	2050	8389846	0	1785331433
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-c353bb55a2476ceb.lock	regular empty file	5035	666	1	2050	8389809	0	1785325413
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-c3708960a4f0bba2.lock	regular empty file	5035	666	1	2050	8389510	0	1785283622
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-c5b2dc19a2379a97.lock	regular empty file	5035	666	1	2050	8389629	0	1785314766
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-c79a066321a61111.lock	regular empty file	5035	666	1	2050	8389875	0	1785337287
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-c9c284676590f2b3.lock	regular empty file	5035	666	1	2050	8389894	0	1785340237
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-cd0df65daa0638ad.lock	regular empty file	5035	666	1	2050	8389566	0	1785307808
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-ceebc71369f3660a.lock	regular empty file	5035	666	1	2050	8389577	0	1785310197
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-cf333a964567113e.lock	regular empty file	5035	666	1	2050	8389876	0	1785337572
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-d2643f7695ff4fa7.lock	regular empty file	5035	666	1	2050	8389515	0	1785284720
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-d2a8eb00eca1ab43.lock	regular empty file	5035	666	1	2050	8389821	0	1785327702
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-d52bdc8bb6cd1d77.lock	regular empty file	5035	666	1	2050	8389242	0	1785319327
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-d539dac7ab996ca6.lock	regular empty file	5035	666	1	2050	8389271	0	1785123816
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-daeec687d21a9faf.lock	regular empty file	5035	666	1	2050	8389651	0	1785316913
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-deeb275dbddd4a7d.lock	regular empty file	5035	666	1	2050	8389650	0	1785316497
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-df5474d9cfc7070a.lock	regular empty file	5035	666	1	2050	8389864	0	1785335370
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-e02a587a99daa8bb.lock	regular empty file	5035	666	1	2050	8389784	0	1785323560
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-e2d151b3a17e556a.lock	regular empty file	5035	666	1	2050	8389652	0	1785320513
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-e31384e3e2005e81.lock	regular empty file	5035	666	1	2050	8389615	0	1785372196
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-e3d936e80b654bf7.lock	regular empty file	5035	666	1	2050	8389854	0	1785333465
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-e697400d237dc739.lock	regular empty file	5035	666	1	2050	8389774	0	1785321334
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-eb30e54e38f55333.lock	regular empty file	5035	666	1	2050	8389668	0	1785317705
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-eb8adbd4d47f8bf4.lock	regular empty file	5035	666	1	2050	8389632	0	1785315133
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-ec5de306b4bdebc5.lock	regular empty file	5035	666	1	2050	8389885	0	1785339148
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-ec7cf7a7989e4b34.lock	regular empty file	5035	666	1	2050	8389823	0	1785327932
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-ef9855f81ef3608d.lock	regular empty file	5035	666	1	2050	8389880	0	1785338480
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-f149e2c8705bc19d.lock	regular empty file	5035	666	1	2050	8389787	0	1785324356
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-f4318a13322644d0.lock	regular empty file	5035	666	1	2050	8389889	0	1785339574
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-f4d270712e7a6be1.lock	regular empty file	5035	666	1	2050	8389847	0	1785331665
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-f599a2ed80a1fa04.lock	regular empty file	5035	666	1	2050	8389342	0	1785305498
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-f7556cb6b08ee3bb.lock	regular empty file	5035	666	1	2050	8389675	0	1785318373
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-f7f64e3160d70287.lock	regular empty file	5035	666	1	2050	8389904	0	1785341498
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-fb0ee9dd86d005a8.lock	regular empty file	5035	666	1	2050	8389891	0	1785339998
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-fedf777bbb42b575.lock	regular empty file	5035	666	1	2050	8389849	0	1785332301
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-fef8e6ad3f98bc9a.lock	regular empty file	5035	666	1	2050	8389828	0	1785328893
+delete-lock	old-zero-byte-tool-lock	/tmp/uv-ff0d06c8e3b197fb.lock	regular empty file	5035	666	1	2050	8389978	0	1785447570
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-abstract-parser-v0.23.0.py	regular file	5035	664	1	2050	8389323	32879	1785164448
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-abstract-parser-v0.26.0.py	regular file	5035	664	1	2050	8389324	36559	1785164449
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-prefix-test-v0.23.0.py	regular file	5035	664	1	2050	8389433	129256	1785168932
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-prefix-test-v0.26.0.py	regular file	5035	664	1	2050	8389434	156181	1785168933
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-prefix-v0.23.0.md	regular file	5035	664	1	2050	8389431	13917	1785168886
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-prefix-v0.26.0.md	regular file	5035	664	1	2050	8389432	13916	1785168886
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-protocol-v0.23.0.py	regular file	5035	664	1	2050	8389423	127	1785168846
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-protocol-v0.26.0.py	regular file	5035	664	1	2050	8389424	127	1785168847
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-v0.23.0-chat_completion.py	regular file	5035	664	1	2050	8389425	41080	1785168868
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-v0.23.0-completion.py	regular file	5035	664	1	2050	8389426	21247	1785168868
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-v0.23.0-responses.py	regular file	5035	664	1	2050	8389427	30411	1785168869
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-v0.26.0-chat_completion.py	regular file	5035	664	1	2050	8389428	44823	1785168869
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-v0.26.0-completion.py	regular file	5035	664	1	2050	8389429	25303	1785168870
+archive-delete	completed-swallow-task-artifact	/tmp/vllm-v0.26.0-responses.py	regular file	5035	664	1	2050	8389430	32315	1785168871
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/wbd004_crops	directory	5035	775	2	2050	8688337	4096	1784828952
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/yokota-20260718-210932-wbd-003-13509a-rtbyt1c_	directory	5035	700	14	2050	8652937	4096	1784376573
+sensitive-delete	stale-browser-or-opaque-temp	/tmp/yokota-20260718-211048-wbd-003-0a7014-1y2wrq3z	directory	5035	700	15	2050	8658412	4096	1784376744

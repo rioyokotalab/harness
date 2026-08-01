@@ -19,17 +19,11 @@ Next free ID: T-373.
 
 ### T-369 — Evidence-first portfolio reset and guarded cleanup
 
-**Phase:** active until 2026-08-02 12:00 JST; discovery and benchmark
-freeze are in progress. Material changes stop at 10:45 JST.
+**Phase:** active until 2026-08-02 12:00 JST; four protected repository resets
+and the guarded cleanup are published, while Website's validated worker handoff
+remains local for its driver. Material changes stop at 10:45 JST.
 
 **Record:** `docs/tasks/T-369.md`.
-
-### T-372 — Complete interrupted worktree teardown
-
-**Phase:** active defect found by independent T-370 review. Durable checkpoints
-exist, but actual later-invocation completion is not yet implemented or tested.
-
-**Record:** `docs/tasks/T-372.md`.
 
 ### T-371 — Migrate legacy managed primary branches
 

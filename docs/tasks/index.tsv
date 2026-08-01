@@ -1,5 +1,5 @@
 task	state	summary	source
-T-372	active	Complete interrupted worktree teardown from durable state	TODO.md;docs/tasks/T-372.md
+T-372	complete	Complete interrupted worktree teardown from durable state	docs/tasks/T-372.md
 T-371	active	Migrate legacy managed primary branches at a safe session boundary	TODO.md;docs/tasks/T-371.md
 T-370	complete	Enforce symmetric task-worktree lifecycle	docs/tasks/T-370.md
 T-369	active	Evidence-first portfolio reset and guarded cleanup	TODO.md;docs/tasks/T-369.md;docs/audits/t369-portfolio-review-2026-08-02.md
