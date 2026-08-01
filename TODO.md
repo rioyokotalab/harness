@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-373.
+Next free ID: T-374.
 
 ## Resume contract
 
@@ -24,6 +24,13 @@ and the guarded cleanup are published, while Website's validated worker handoff
 remains local for its driver. Material changes stop at 10:45 JST.
 
 **Record:** `docs/tasks/T-369.md`.
+
+### T-373 — Bound housekeeping archive growth
+
+**Phase:** queued report-first retention design; current archives are healthy
+and no bundle, receipt, plan, or manifest is yet disposable.
+
+**Record:** `docs/tasks/T-373.md`.
 
 ### T-371 — Migrate legacy managed primary branches
 
