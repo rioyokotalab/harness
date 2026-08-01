@@ -32,6 +32,12 @@ exact tip, guarded-removes the tree and administration record, audits the
 archive, and deletes the task branch with an expected-old transaction.
 Interrupted stages remain durably recorded; rerun discovery rather than
 assuming a missing path means completion.
+If the recorded phase is `directory-deleted` or `admin-deleted`, run the
+explicit repository-scoped `harness housekeeping --recover-worktree --receipt
+STATE` path. It revalidates the immutable plan, archive, current merge
+classification, missing directory, administration identity, and exact-old
+branch; it creates a fresh guarded administration manifest instead of reusing
+an expired token. Unstarted bulk candidates remain for a fresh normal plan.
 
 For duration work, stop starting material changes at the frozen cutoff. Use
 the final window for full regression, live-settings readback, fleet health,
