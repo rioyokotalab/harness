@@ -230,6 +230,44 @@ if house --archive --items "$ITEMS" --transaction orphan-gc-proof --source synth
 fi
 house --audit --receipt "$GC_RECEIPT" | grep -Fq 'status=pass' || fail "repeat rejection changed archive"
 
+# A generation receipt is published only after an independent bare restore
+# proves its exact head set. Inventory re-audits the immutable inputs and
+# bundle but exposes no generation creation or deletion route.
+GENERATION_DIR=$STATE/generations
+mkdir -m 700 "$GENERATION_DIR"
+GENERATION_ID=generation-test
+GEN_MAIN_REF=refs/harness-housekeeping/generation/$GENERATION_ID/main
+GEN_TIP_REF=refs/harness-housekeeping/generation/$GENERATION_ID/tip
+git -C "$REPO" update-ref "$GEN_MAIN_REF" "$BASE"
+git -C "$REPO" update-ref "$GEN_TIP_REF" "$DRIFT"
+GEN_BUNDLE=$GENERATION_DIR/$GENERATION_ID.bundle
+git -C "$REPO" bundle create "$GEN_BUNDLE" "$GEN_MAIN_REF" "$GEN_TIP_REF"
+chmod 600 "$GEN_BUNDLE"
+GEN_RESTORE=$TEST_ROOT/generation-restore.git
+git init -q --bare "$GEN_RESTORE"
+git -C "$GEN_RESTORE" fetch -q "$GEN_BUNDLE" \
+    "$GEN_MAIN_REF:$GEN_MAIN_REF" "$GEN_TIP_REF:$GEN_TIP_REF"
+[ "$(git -C "$GEN_RESTORE" rev-parse "$GEN_MAIN_REF")" = "$BASE" ] ||
+    fail "generation restore changed protected main"
+[ "$(git -C "$GEN_RESTORE" rev-parse "$GEN_TIP_REF")" = "$DRIFT" ] ||
+    fail "generation restore changed retained tip"
+GEN_HEADSET=$(python3 -B - "$GEN_MAIN_REF" "$BASE" "$GEN_TIP_REF" "$DRIFT" <<'PY'
+import hashlib
+import json
+import sys
+
+rows = sorted(((sys.argv[1], sys.argv[2]), (sys.argv[3], sys.argv[4])))
+print(hashlib.sha256(json.dumps(rows, separators=(",", ":")).encode()).hexdigest())
+PY
+)
+GEN_RECEIPT=$GENERATION_DIR/$GENERATION_ID.json
+ARCHIVE_NAME=$(basename "$ARCHIVE")
+GC_NAME=$(basename "$GC_RECEIPT")
+cat >"$GEN_RECEIPT" <<EOF
+{"schema":"harness-housekeeping-generation-v1","generation":"$GENERATION_ID","created_utc":"2026-08-02T00:00:00Z","source_receipts":[{"name":"$ARCHIVE_NAME","sha256":"$(sha256sum "$ARCHIVE" | awk '{print $1}')"},{"name":"$GC_NAME","sha256":"$(sha256sum "$GC_RECEIPT" | awk '{print $1}')"}],"repositories":[{"repository_canonical":"$REPO","repository_id":[$(stat -c %d "$REPO"),$(stat -c %i "$REPO")],"protected_main":{"ref":"refs/remotes/origin/main","tip":"$BASE"},"bundle":"$GEN_BUNDLE","bundle_sha256":"$(sha256sum "$GEN_BUNDLE" | awk '{print $1}')","heads":[{"ref":"$GEN_MAIN_REF","tip":"$BASE"},{"ref":"$GEN_TIP_REF","tip":"$DRIFT"}],"restore_drill":{"method":"independent-bare-fetch-exact-heads-v1","verified_utc":"2026-08-02T00:01:00Z","headset_sha256":"$GEN_HEADSET"}}]}
+EOF
+chmod 600 "$GEN_RECEIPT"
+
 # Archive retention discovery audits every receipt but remains report-only and
 # does not create another plan merely by observing the state directory.
 printf 'legacy bundle identity only\n' >"$STATE/legacy.bundle"
@@ -249,6 +287,9 @@ printf '%s\n' "$OUT" | grep -Fq \
 printf '%s\n' "$OUT" | grep -Fq \
     'incomplete_applies=0 unbound_bundles=1 evidence_payloads=1' ||
     fail "archive auxiliary inventory changed"
+printf '%s\n' "$OUT" | grep -Fq \
+    'generations=1 generation_trigger=no' ||
+    fail "archive generation trigger changed"
 printf '%s\n' "$OUT" | grep -Fq 'audit=pass candidate=no' ||
     fail "archive inventory omitted receipt audit"
 printf '%s\n' "$OUT" | grep -Fq \
@@ -257,9 +298,24 @@ printf '%s\n' "$OUT" | grep -Fq \
 printf '%s\n' "$OUT" | grep -Fq \
     'type=evidence-payload name=legacy.tar.gz' ||
     fail "archive inventory omitted evidence payload"
+printf '%s\n' "$OUT" | grep -Fq \
+    'type=generation name=generation-test.json' ||
+    fail "archive inventory omitted verified generation"
 ARCHIVE_FILES_AFTER=$(find "$STATE" -type f | wc -l)
 [ "$ARCHIVE_FILES_BEFORE" -eq "$ARCHIVE_FILES_AFTER" ] ||
     fail "archive inventory created durable state"
+chmod 640 "$GEN_RECEIPT"
+if house --plan --routine archives >/dev/null 2>&1; then
+    fail "archive inventory accepted mutable generation receipt identity"
+fi
+chmod 600 "$GEN_RECEIPT"
+THRESHOLD_PAYLOAD=$STATE/threshold.tar.gz
+truncate -s 537000000 "$THRESHOLD_PAYLOAD"
+chmod 600 "$THRESHOLD_PAYLOAD"
+OUT=$(house --plan --routine archives)
+printf '%s\n' "$OUT" | grep -Fq 'generation_trigger=bytes' ||
+    fail "archive byte trigger was not measured"
+unlink "$THRESHOLD_PAYLOAD"
 if house --apply --routine archives >/dev/null 2>&1; then
     fail "archive inventory accepted apply"
 fi

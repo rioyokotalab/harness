@@ -21,8 +21,12 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 
 ARCHIVE_SCHEMA = "harness-housekeeping-archive-v2"
+GENERATION_SCHEMA = "harness-housekeeping-generation-v1"
 PLAN_SCHEMA = "harness-housekeeping-plan-v2"
 MAX_PLAN_AGE = 900
+GENERATION_BYTES_TRIGGER = 512 * 1024 * 1024
+GENERATION_RECEIPTS_TRIGGER = 30
+GENERATION_AGE_DAYS_TRIGGER = 30
 OID_RE = re.compile(r"^[0-9a-f]{40}$")
 TXN_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}$")
 CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
@@ -383,6 +387,150 @@ def archive_audit(repo: Path, receipt_path: Path) -> Dict[str, Any]:
     return {"items": len(parsed["items"]), "live": live, "bundled": bundled}
 
 
+def generation_headset_digest(heads: Sequence[Dict[str, str]]) -> str:
+    rows = sorted((row["ref"], row["tip"]) for row in heads)
+    payload = json.dumps(rows, separators=(",", ":")).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def parse_generation_receipt(path: Path, state: Path) -> Dict[str, Any]:
+    validate_private_file(path)
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HousekeepingError("archive generation receipt is malformed") from exc
+    if not isinstance(value, dict) or value.get("schema") != GENERATION_SCHEMA:
+        die("archive generation receipt schema is unsupported")
+    if not isinstance(value.get("generation"), str) or not TXN_RE.fullmatch(
+        value["generation"]
+    ):
+        die("archive generation identity is malformed")
+    try:
+        datetime.strptime(value["created_utc"], "%Y-%m-%dT%H:%M:%SZ")
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HousekeepingError("archive generation creation time is malformed") from exc
+    sources = value.get("source_receipts")
+    repositories = value.get("repositories")
+    if (
+        not isinstance(sources, list)
+        or not sources
+        or not isinstance(repositories, list)
+        or not repositories
+    ):
+        die("archive generation receipt is incomplete")
+    source_names: set[str] = set()
+    for source in sources:
+        if (
+            not isinstance(source, dict)
+            or set(source) != {"name", "sha256"}
+            or not isinstance(source["name"], str)
+            or Path(source["name"]).name != source["name"]
+            or not re.fullmatch(r"[0-9a-f]{64}", str(source["sha256"]))
+            or source["name"] in source_names
+        ):
+            die("archive generation source receipt is malformed")
+        source_names.add(source["name"])
+        existing = state / source["name"]
+        if existing.exists() or existing.is_symlink():
+            validate_private_file(existing)
+            if digest(existing) != source["sha256"]:
+                die("archive generation source receipt changed")
+    repository_paths: set[str] = set()
+    for repository in repositories:
+        if not isinstance(repository, dict) or set(repository) != {
+            "repository_canonical",
+            "repository_id",
+            "protected_main",
+            "bundle",
+            "bundle_sha256",
+            "heads",
+            "restore_drill",
+        }:
+            die("archive generation repository row is malformed")
+        canonical = repository["repository_canonical"]
+        identity = repository["repository_id"]
+        protected = repository["protected_main"]
+        bundle_value = repository["bundle"]
+        heads = repository["heads"]
+        drill = repository["restore_drill"]
+        if (
+            not isinstance(canonical, str)
+            or not Path(canonical).is_absolute()
+            or canonical in repository_paths
+            or not isinstance(identity, list)
+            or len(identity) != 2
+            or any(not isinstance(item, int) or item < 0 for item in identity)
+            or not isinstance(protected, dict)
+            or set(protected) != {"ref", "tip"}
+            or protected["ref"] != "refs/remotes/origin/main"
+            or not OID_RE.fullmatch(str(protected["tip"]))
+            or not isinstance(bundle_value, str)
+            or not Path(bundle_value).is_absolute()
+            or not re.fullmatch(r"[0-9a-f]{64}", str(repository["bundle_sha256"]))
+            or not isinstance(heads, list)
+            or not heads
+            or not isinstance(drill, dict)
+            or set(drill) != {"method", "verified_utc", "headset_sha256"}
+            or drill["method"] != "independent-bare-fetch-exact-heads-v1"
+            or not re.fullmatch(r"[0-9a-f]{64}", str(drill["headset_sha256"]))
+        ):
+            die("archive generation repository identity is malformed")
+        repository_paths.add(canonical)
+        try:
+            datetime.strptime(drill["verified_utc"], "%Y-%m-%dT%H:%M:%SZ")
+        except (TypeError, ValueError) as exc:
+            raise HousekeepingError("archive generation restore time is malformed") from exc
+        refs: set[str] = set()
+        tips: set[str] = set()
+        for head in heads:
+            if (
+                not isinstance(head, dict)
+                or set(head) != {"ref", "tip"}
+                or not isinstance(head["ref"], str)
+                or not head["ref"].startswith("refs/harness-housekeeping/generation/")
+                or run(
+                    ["git", "check-ref-format", head["ref"]], check=False
+                ).returncode
+                != 0
+                or not OID_RE.fullmatch(str(head["tip"]))
+                or head["ref"] in refs
+                or head["tip"] in tips
+            ):
+                die("archive generation head row is malformed")
+            refs.add(head["ref"])
+            tips.add(head["tip"])
+        if protected["tip"] not in tips:
+            die("archive generation omitted protected main")
+        if generation_headset_digest(heads) != drill["headset_sha256"]:
+            die("archive generation restore proof changed")
+        bundle = Path(bundle_value)
+        validate_private_file(bundle)
+        if bundle.resolve(strict=True).parent != path.parent.resolve(strict=True):
+            die("archive generation bundle is outside its generation directory")
+        if digest(bundle) != repository["bundle_sha256"]:
+            die("archive generation bundle digest changed")
+        owner = canonical_repo(Path(canonical))
+        if list(path_id(owner)) != identity:
+            die("archive generation repository identity changed")
+        git(owner, "bundle", "verify", str(bundle))
+        bundled_heads: Dict[str, str] = {}
+        for line in text(git(owner, "bundle", "list-heads", str(bundle))).splitlines():
+            fields = line.split(" ", 1)
+            if len(fields) == 2:
+                bundled_heads[fields[1]] = fields[0]
+        if bundled_heads != {head["ref"]: head["tip"] for head in heads}:
+            die("archive generation bundle head set changed")
+    return value
+
+
+def state_tree_bytes(state: Path) -> int:
+    return sum(
+        path.lstat().st_size
+        for path in state.rglob("*")
+        if path.is_file() and not path.is_symlink()
+    )
+
+
 def pr_tree_status(
     repo: Path,
     row: Dict[str, str],
@@ -450,13 +598,44 @@ def artifact_age_days(info: os.stat_result) -> int:
 def plan_archives(coordinator_repo: Path) -> None:
     _lexical, state = state_directory()
     receipts = sorted(state.glob("*.receipt"))
+    generation_directory = state / "generations"
+    if generation_directory.exists() or generation_directory.is_symlink():
+        generation_info = generation_directory.lstat()
+        if (
+            generation_directory.is_symlink()
+            or not generation_directory.is_dir()
+            or generation_info.st_uid != os.getuid()
+            or stat.S_IMODE(generation_info.st_mode) != 0o700
+        ):
+            die("archive generation directory identity is unsafe")
+    generation_receipts = (
+        sorted(generation_directory.glob("*.json"))
+        if generation_directory.is_dir()
+        else []
+    )
+    generation_values = [
+        (path, parse_generation_receipt(path, state))
+        for path in generation_receipts
+    ]
+    state_bytes = state_tree_bytes(state)
     if not receipts:
         print(
             "HOUSEKEEPING routine=archives mode=report receipts=0 items=0 "
             "unique_tips=0 bytes=0 archive_only=0 pr_equal=0 "
             "pr_unknown=0 ledger_yes=0 ledger_unknown=0 "
+            f"state_bytes={state_bytes} generations={len(generation_receipts)} "
+            f"generation_trigger={'bytes' if state_bytes > GENERATION_BYTES_TRIGGER else 'no'} "
             "candidates=0 apply=unavailable"
         )
+        for path, value in generation_values:
+            print(
+                "  AUX "
+                f"type=generation name={path.name} bytes={path.lstat().st_size} "
+                f"age_days={artifact_age_days(path.lstat())} "
+                f"repositories={len(value['repositories'])} "
+                f"sources={len(value['source_receipts'])} "
+                "restore_drill=pass status=valid candidate=no"
+            )
         return
     total_items = 0
     total_bytes = 0
@@ -624,8 +803,16 @@ def plan_archives(coordinator_repo: Path) -> None:
             "status=valid candidate=no"
         )
     all_bundles = sorted(state.rglob("*.bundle"))
+    generation_bundles = {
+        Path(repository["bundle"]).resolve(strict=True)
+        for _path, value in generation_values
+        for repository in value["repositories"]
+    }
     unbound_bundles = [
-        path for path in all_bundles if path.resolve(strict=True) not in bound_bundles
+        path
+        for path in all_bundles
+        if path.resolve(strict=True) not in bound_bundles
+        and path.resolve(strict=True) not in generation_bundles
     ]
     for path in unbound_bundles:
         info = validate_private_file(path)
@@ -646,6 +833,27 @@ def plan_archives(coordinator_repo: Path) -> None:
             f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
             "status=preserved candidate=no"
         )
+    for path, value in generation_values:
+        info = validate_private_file(path)
+        output_rows.append(
+            "  AUX "
+            f"type=generation name={path.name} bytes={info.st_size} "
+            f"age_days={artifact_age_days(info)} "
+            f"repositories={len(value['repositories'])} "
+            f"sources={len(value['source_receipts'])} "
+            "restore_drill=pass status=valid candidate=no"
+        )
+    oldest_days = max(
+        artifact_age_days(validate_private_file(receipt)) for receipt in receipts
+    )
+    trigger_reasons = []
+    if state_bytes > GENERATION_BYTES_TRIGGER:
+        trigger_reasons.append("bytes")
+    if len(receipts) > GENERATION_RECEIPTS_TRIGGER:
+        trigger_reasons.append("receipts")
+    if oldest_days >= GENERATION_AGE_DAYS_TRIGGER:
+        trigger_reasons.append("age")
+    trigger = ",".join(trigger_reasons) if trigger_reasons else "no"
     print(
         "HOUSEKEEPING routine=archives mode=report "
         f"receipts={len(receipts)} items={total_items} "
@@ -657,6 +865,8 @@ def plan_archives(coordinator_repo: Path) -> None:
         f"incomplete_applies={incomplete_applies} "
         f"unbound_bundles={len(unbound_bundles)} "
         f"evidence_payloads={len(evidence_payloads)} "
+        f"state_bytes={state_bytes} oldest_days={oldest_days} "
+        f"generations={len(generation_receipts)} generation_trigger={trigger} "
         "candidates=0 apply=unavailable"
     )
     for row in output_rows:

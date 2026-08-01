@@ -36,6 +36,11 @@ value-free status. It never emits source payloads or Personal values. An item
 available only from its archive ref/bundle remains independently protected even
 when a merge tree is equal.
 
+The report also measures the complete state tree and evaluates the frozen
+generation triggers. The current readback is 421,791,676 bytes, 20 receipts,
+oldest receipt below one day, zero generation receipts, and
+`generation_trigger=no`.
+
 ## Measured consolidation opportunity
 
 A temporary benchmark bundled protected Harness `main` plus all 39 then-live
@@ -64,3 +69,30 @@ that removing an exact older generation preserves every required tip, ledger
 reference, rollback, and interrupted-closeout path. Current state meets none of
 those deletion gates, so immediate compaction would trade recoverability for
 only 409 MiB of storage and is rejected.
+
+## Generation receipt and restore contract
+
+`harness-housekeeping-generation-v1` is deliberately audit-only. One immutable
+mode-0600 JSON receipt binds a unique generation ID and creation time, every
+source receipt name and SHA-256 digest, and one row per owning repository. A
+repository row binds the canonical path and filesystem identity, the exact
+protected `refs/remotes/origin/main` tip, one sibling mode-0600 bundle and its
+digest, the complete unique head set, and a restore proof.
+
+The restore proof uses `independent-bare-fetch-exact-heads-v1`: initialize a
+new bare repository outside the source, fetch every generation head from the
+bundle, compare every restored ref to its expected tip, and only then record
+the verification time and deterministic SHA-256 digest of the sorted head set.
+Inventory independently rechecks receipt and bundle identity, source receipt
+digests while those receipts exist, repository identity, bundle verification,
+the exact bundle head set, inclusion of protected main, and the restore-proof
+digest. Missing source receipts may eventually be valid after a later guarded
+compaction, so their names and digests remain bound even when their files do
+not; any existing source receipt must still match exactly.
+
+The focused test creates a synthetic bundle, restores it into an independent
+bare repository, verifies protected main and a retained non-main tip, publishes
+the receipt only after that success, and proves report-mode re-audit. Production
+inventory creates no generation, plan, or delete candidate. This keeps the
+mechanism testable now without spending recovery redundancy before a measured
+trigger.
