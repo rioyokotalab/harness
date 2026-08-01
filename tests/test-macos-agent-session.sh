@@ -57,7 +57,16 @@ cat >"$BIN/tmux" <<SH
 STATE=$STATE
 case \$1 in
     has-session)
-        case "\$3" in
+        target=\$3
+        case "\$target" in
+            =*) target=\${target#=} ;;
+            harness)
+                # Unanchored: real tmux prefix-matches, which would hit the
+                # legacy session. Fail the suite loudly instead.
+                printf 'UNANCHORED_TARGET %s\n' "\$target" >>"$TEST_ROOT/tmux-calls"
+                target=harness-codex-resume ;;
+        esac
+        case "\$target" in
             harness-codex-resume) [ "\${FAKE_LEGACY:-0}" = 1 ] || exit 1; exit 0 ;;
         esac
         grep -q '^session\$' "\$STATE" || exit 1; exit 0 ;;
@@ -208,5 +217,8 @@ agent --rollback "$TXN" >/dev/null || fail "rollback failed"
 if agent --rollback 'bad id' >/dev/null 2>&1; then
     fail "malformed transaction id accepted"
 fi
+
+grep -Fq 'UNANCHORED_TARGET' "$TEST_ROOT/tmux-calls" 2>/dev/null &&
+    fail "a tmux target was not anchored with = and would prefix-match"
 
 printf 'Managed-Mac agent session tests: PASS\n'

@@ -80,12 +80,12 @@ repo_root() {
 TMUX=$(tmux_bin)
 
 session_exists() {
-    $TMUX has-session -t "$SESSION" 2>/dev/null
+    $TMUX has-session -t "=$SESSION" 2>/dev/null
 }
 
 window_live() {
     # A window counts as live only when it exists and its pane is not dead.
-    dead=$($TMUX display-message -p -t "$SESSION:$1" '#{pane_dead}' 2>/dev/null || printf '')
+    dead=$($TMUX display-message -p -t "=$SESSION:$1" '#{pane_dead}' 2>/dev/null || printf '')
     [ "$dead" = 0 ]
 }
 
@@ -106,7 +106,7 @@ legacy_codex_live() {
     # supervisor keys its state file by name. Two live supervisors would fight
     # over one state file, so the codex window is deferred until the legacy
     # session is retired. The claude window has no such conflict.
-    $TMUX has-session -t "$LEGACY_SESSION" 2>/dev/null
+    $TMUX has-session -t "=$LEGACY_SESSION" 2>/dev/null
 }
 
 ensure_session() {
@@ -123,22 +123,22 @@ ensure_session() {
     fi
     if legacy_codex_live; then
         created="$created codex-deferred-legacy"
-    elif ! $TMUX list-windows -t "$SESSION" -F '#{window_name}' 2>/dev/null |
+    elif ! $TMUX list-windows -t "=$SESSION" -F '#{window_name}' 2>/dev/null |
         grep -qx "$CODEX_WINDOW"; then
-        $TMUX new-window -d -t "$SESSION" -n "$CODEX_WINDOW" \
+        $TMUX new-window -d -t "=$SESSION" -n "$CODEX_WINDOW" \
             -c "$(repo_root)" "$(codex_command)"
         created="$created codex"
     elif ! window_live "$CODEX_WINDOW"; then
-        $TMUX respawn-window -t "$SESSION:$CODEX_WINDOW" "$(codex_command)"
+        $TMUX respawn-window -t "=$SESSION:$CODEX_WINDOW" "$(codex_command)"
         created="$created codex-respawn"
     fi
-    if ! $TMUX list-windows -t "$SESSION" -F '#{window_name}' 2>/dev/null |
+    if ! $TMUX list-windows -t "=$SESSION" -F '#{window_name}' 2>/dev/null |
         grep -qx "$CLAUDE_WINDOW"; then
-        $TMUX new-window -d -t "$SESSION" -n "$CLAUDE_WINDOW" \
+        $TMUX new-window -d -t "=$SESSION" -n "$CLAUDE_WINDOW" \
             -c "$(repo_root)" "$(claude_command)"
         created="$created claude"
     elif ! window_live "$CLAUDE_WINDOW"; then
-        $TMUX respawn-window -t "$SESSION:$CLAUDE_WINDOW" "$(claude_command)"
+        $TMUX respawn-window -t "=$SESSION:$CLAUDE_WINDOW" "$(claude_command)"
         created="$created claude-respawn"
     fi
     printf '%s' "${created:- none}"
