@@ -680,6 +680,32 @@ def generation_covers_source(
     return set(tips).issubset(covered)
 
 
+def generation_covers_declared_sources(
+    state: Path, generation: Dict[str, Any]
+) -> bool:
+    for source in generation["source_receipts"]:
+        receipt = state / source["name"]
+        if not receipt.exists() or receipt.is_symlink():
+            return False
+        parsed = parse_archive_receipt(receipt)
+        repository = parsed["values"].get("repository_canonical")
+        rows = [
+            row
+            for row in generation["repositories"]
+            if row["repository_canonical"] == repository
+        ]
+        covered = {head["tip"] for row in rows for head in row["heads"]}
+        if (
+            not repository
+            or {"name": receipt.name, "sha256": source["sha256"]}
+            not in generation["source_receipts"]
+            or len(rows) != 1
+            or not {item["tip"] for item in parsed["items"]}.issubset(covered)
+        ):
+            return False
+    return True
+
+
 def audit_compaction(
     repo: Path,
     compaction_path: Path,
@@ -926,19 +952,57 @@ def state_tree_bytes(state: Path) -> int:
     )
 
 
-def generation_trigger_reasons(state: Path, receipts: Sequence[Path]) -> List[str]:
+def generation_trigger_facts(
+    state: Path,
+    receipts: Sequence[Path],
+    latest: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    covered = (
+        {
+            (source["name"], source["sha256"])
+            for source in latest["source_receipts"]
+        }
+        if latest is not None
+        else set()
+    )
+    uncovered = []
+    for receipt in receipts:
+        validate_private_file(receipt)
+        if (receipt.name, digest(receipt)) not in covered:
+            uncovered.append(receipt)
     oldest_days = max(
-        (artifact_age_days(validate_private_file(receipt)) for receipt in receipts),
+        (artifact_age_days(validate_private_file(receipt)) for receipt in uncovered),
         default=0,
     )
+    if not receipts:
+        trigger_bytes = 0
+        basis = "delta" if latest is not None else "bootstrap"
+    elif latest is None:
+        trigger_bytes = state_tree_bytes(state)
+        basis = "bootstrap"
+    else:
+        bundles: set[Path] = set()
+        for receipt in uncovered:
+            bundle = Path(parse_archive_receipt(receipt)["values"]["bundle"])
+            if bundle.exists() or bundle.is_symlink():
+                validate_private_file(bundle)
+                bundles.add(bundle.resolve(strict=True))
+        trigger_bytes = sum(validate_private_file(bundle).st_size for bundle in bundles)
+        basis = "delta"
     reasons = []
-    if state_tree_bytes(state) > GENERATION_BYTES_TRIGGER:
+    if trigger_bytes > GENERATION_BYTES_TRIGGER:
         reasons.append("bytes")
-    if len(receipts) > GENERATION_RECEIPTS_TRIGGER:
+    if len(uncovered) > GENERATION_RECEIPTS_TRIGGER:
         reasons.append("receipts")
     if oldest_days >= GENERATION_AGE_DAYS_TRIGGER:
         reasons.append("age")
-    return reasons
+    return {
+        "basis": basis,
+        "uncovered": len(uncovered),
+        "bytes": trigger_bytes,
+        "oldest_days": oldest_days,
+        "reasons": reasons,
+    }
 
 
 def remove_restore_tree(repo: Path, target: Path) -> None:
@@ -967,19 +1031,40 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
     receipts = sorted(state.glob("*.receipt"))
     if not receipts:
         die("archive generation requires source receipts")
-    reasons = generation_trigger_reasons(state, receipts)
-    if not reasons:
+    directory = state / "generations"
+    existing_generations = []
+    if directory.exists() or directory.is_symlink():
+        info = directory.lstat()
+        if (
+            directory.is_symlink()
+            or not directory.is_dir()
+            or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != 0o700
+        ):
+            die("archive generation directory identity is unsafe")
+        for receipt in sorted(directory.glob("*.json")):
+            value = parse_generation_receipt(receipt, state)
+            created = datetime.strptime(
+                value["created_utc"], "%Y-%m-%dT%H:%M:%SZ"
+            ).replace(tzinfo=timezone.utc)
+            existing_generations.append((created, value))
+    trigger_generations = [
+        row
+        for row in existing_generations
+        if generation_covers_declared_sources(state, row[1])
+    ]
+    latest = (
+        max(trigger_generations, key=lambda row: row[0])[1]
+        if trigger_generations
+        else None
+    )
+    trigger = generation_trigger_facts(state, receipts, latest)
+    if not trigger["reasons"]:
         die("archive generation trigger is not met")
     generation = transaction_id("generation")
-    directory = state / "generations"
     directory.mkdir(mode=0o700, exist_ok=True)
     info = directory.lstat()
-    if (
-        directory.is_symlink()
-        or not directory.is_dir()
-        or info.st_uid != os.getuid()
-        or stat.S_IMODE(info.st_mode) != 0o700
-    ):
+    if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o700:
         die("archive generation directory identity is unsafe")
 
     sources = []
@@ -1001,13 +1086,6 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
         for item in parsed["items"]:
             row["tips"].setdefault(item["tip"], audit["recovery_sources"][item["tip"]])
 
-    existing_generations = []
-    for receipt in sorted(directory.glob("*.json")):
-        value = parse_generation_receipt(receipt, state)
-        created = datetime.strptime(
-            value["created_utc"], "%Y-%m-%dT%H:%M:%SZ"
-        ).replace(tzinfo=timezone.utc)
-        existing_generations.append((created, value))
     if existing_generations:
         created, latest = max(existing_generations, key=lambda row: row[0])
         current_main = {
@@ -1202,7 +1280,9 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
             "repositories": len(prepared),
             "heads": sum(len(repository["heads"]) for repository in prepared),
             "bytes": sum(path.lstat().st_size for path in linked_bundles),
-            "trigger": ",".join(reasons),
+            "trigger": ",".join(trigger["reasons"]),
+            "trigger_basis": trigger["basis"],
+            "uncovered": trigger["uncovered"],
         }
     except BaseException:
         if published_receipt is not None and published_receipt.exists():
@@ -1330,6 +1410,22 @@ def plan_archives(coordinator_repo: Path) -> None:
         for path in generation_receipts
     ]
     generation_cache = {path: value for path, value in generation_values}
+    trigger_generations = [
+        row
+        for row in generation_values
+        if generation_covers_declared_sources(state, row[1])
+    ]
+    latest_generation = (
+        max(
+            trigger_generations,
+            key=lambda row: datetime.strptime(
+                row[1]["created_utc"], "%Y-%m-%dT%H:%M:%SZ"
+            ),
+        )[1]
+        if trigger_generations
+        else None
+    )
+    trigger_facts = generation_trigger_facts(state, receipts, latest_generation)
     state_bytes = state_tree_bytes(state)
     if not receipts:
         print(
@@ -1337,7 +1433,10 @@ def plan_archives(coordinator_repo: Path) -> None:
             "unique_tips=0 bytes=0 archive_only=0 pr_equal=0 "
             "pr_unknown=0 ledger_yes=0 ledger_unknown=0 "
             f"state_bytes={state_bytes} generations={len(generation_receipts)} "
-            f"generation_trigger={'bytes' if state_bytes > GENERATION_BYTES_TRIGGER else 'no'} "
+            f"generation_trigger={','.join(trigger_facts['reasons']) or 'no'} "
+            f"generation_trigger_basis={trigger_facts['basis']} "
+            f"generation_uncovered={trigger_facts['uncovered']} "
+            f"generation_trigger_bytes={trigger_facts['bytes']} "
             "candidates=0 apply=unavailable"
         )
         for path, value in generation_values:
@@ -1604,14 +1703,7 @@ def plan_archives(coordinator_repo: Path) -> None:
     oldest_days = max(
         artifact_age_days(validate_private_file(receipt)) for receipt in receipts
     )
-    trigger_reasons = []
-    if state_bytes > GENERATION_BYTES_TRIGGER:
-        trigger_reasons.append("bytes")
-    if len(receipts) > GENERATION_RECEIPTS_TRIGGER:
-        trigger_reasons.append("receipts")
-    if oldest_days >= GENERATION_AGE_DAYS_TRIGGER:
-        trigger_reasons.append("age")
-    trigger = ",".join(trigger_reasons) if trigger_reasons else "no"
+    trigger = ",".join(trigger_facts["reasons"]) or "no"
     print(
         "HOUSEKEEPING routine=archives mode=report "
         f"receipts={len(receipts)} items={total_items} "
@@ -1626,6 +1718,9 @@ def plan_archives(coordinator_repo: Path) -> None:
         f"evidence_payloads={len(evidence_payloads)} "
         f"state_bytes={state_bytes} oldest_days={oldest_days} "
         f"generations={len(generation_receipts)} generation_trigger={trigger} "
+        f"generation_trigger_basis={trigger_facts['basis']} "
+        f"generation_uncovered={trigger_facts['uncovered']} "
+        f"generation_trigger_bytes={trigger_facts['bytes']} "
         f"compactions={len(compaction_paths)} "
         "candidates=0 apply=unavailable"
     )
@@ -2868,6 +2963,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             f"generation={result['generation']} "
             f"repositories={result['repositories']} heads={result['heads']} "
             f"bytes={result['bytes']} trigger={result['trigger']} "
+            f"trigger_basis={result['trigger_basis']} "
+            f"uncovered={result['uncovered']} "
             f"receipt={result['receipt']} restore=pass status=verified"
         )
         return 0

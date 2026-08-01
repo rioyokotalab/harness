@@ -1,4 +1,5 @@
 task	state	summary	source
+T-374	complete	Baseline archive-generation triggers on latest covered sources	docs/tasks/T-374.md
 T-373	complete	Bound housekeeping archive growth with restore-proven retention	docs/tasks/T-373.md
 T-372	complete	Complete interrupted worktree teardown from durable state	docs/tasks/T-372.md
 T-371	active	Migrate legacy managed primary branches at a safe session boundary	TODO.md;docs/tasks/T-371.md
