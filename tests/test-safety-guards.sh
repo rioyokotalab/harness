@@ -143,4 +143,12 @@ cmp "$command_log" "$TEMP_DIR/expected.log" >/dev/null ||
 grep -F 'use harness guarded-delete' "$TEMP_DIR/refusals.err" >/dev/null ||
     fail 'safe deletion route diagnostic'
 
+# `att` must attach this host's canonical session: projects only on Local.
+att_local=$(HARNESS_LOGICAL_HOST=local bash -c '. shell/common-aliases.sh; alias att')
+case $att_local in *'-t projects'*) ;; *) fail 'att on Local must attach projects' ;; esac
+att_mac=$(HARNESS_LOGICAL_HOST=office bash -c '. shell/common-aliases.sh; alias att')
+case $att_mac in *'-t harness'*) ;; *) fail 'att on a managed Mac must attach harness' ;; esac
+att_default=$(env -u HARNESS_LOGICAL_HOST bash -c '. shell/common-aliases.sh; alias att')
+case $att_default in *'-t harness'*) ;; *) fail 'att must default to harness' ;; esac
+
 printf '%s\n' 'PASS: interactive destructive-command safeguards'
