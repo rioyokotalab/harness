@@ -325,7 +325,7 @@ assert_contains 'Never create an autonomous' "$REMOTE/SKILL.md" \
     'remote-agent loop refusal'
 assert_contains 'Never retry an acknowledged delivery' "$REMOTE/SKILL.md" \
     'remote-agent acknowledgement boundary'
-assert_contains 'unique current-user Codex pane in `projects`' \
+assert_contains 'unique current-user Codex pane in `harness:cowork.0`' \
     "$REMOTE/SKILL.md" \
     'remote-agent canonical Local session'
 assert_contains 'Do not put' "$REMOTE/references/delivery.md" \
@@ -334,7 +334,7 @@ assert_contains 'does not use `ssh login`' "$REMOTE/references/request.md" \
     'remote-agent request route independence'
 assert_contains 'Never invoke it twice' "$REMOTE/references/fallback.md" \
     'remote-agent fallback replay refusal'
-if grep -F 'unique Codex pane in the `harness` session' \
+if grep -F 'unique current-user Codex pane in `projects`' \
     "$REMOTE/SKILL.md" >/dev/null; then
     fail 'remote-agent retains stale Local session'
 fi

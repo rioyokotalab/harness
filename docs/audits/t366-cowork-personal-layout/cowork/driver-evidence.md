@@ -72,3 +72,26 @@ option established at launch or by verified metadata, and recover with exact
 plan/apply/rollback layout command that skips same-index moves and records exact
 IDs. Require a content-blind runtime method and owner phone confirmation for
 remote-control acceptance before retiring either Swallow pane.
+
+## Post-incident recovery evidence
+
+After the owner explicitly selected direct final reconstruction, read-only
+state proved the tmux server and every former pane/monitor/helper process still
+absent. Codex durable roots remain exact from pre-incident argv: Harness
+`019fa3ae-6ad0-7642-aeca-b7b52421f576` and Students
+`019fb2bc-52ab-78f0-88a4-00c9bdb0f271`.
+
+Claude filename and directory metadata only—no transcript bytes—identified
+the most recently active Harness candidate
+`f09e496b-a80d-4eff-91a1-7e0b4fab6895` and shutdown-touched Students root
+`7b44875e-f58d-498e-8f3c-1bb6adba82f8`. T-358 independently binds the older
+Harness lineage `f44a1376-1af5-490f-aace-349bf3ff5594`; the newer candidate's
+session environment was created at 11:04 JST and its transcript metadata was
+last touched after the older lineage during server teardown, making it the
+best value-free active-session candidate. Exact `--resume UUID` launch remains
+an acceptance test, not proof of semantic continuity.
+
+The user instruction “Reconstruct directly into the final harness topology”
+is execution go for the revised scope. It authorizes new accepted processes
+and distinct Personal roots, but not replaying prompts, reading content, or
+claiming destroyed process preservation.

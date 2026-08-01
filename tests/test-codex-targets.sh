@@ -31,7 +31,6 @@ fail() {
 resolver=$ROOT/libexec/harness_codex_targets.py
 test_harness=$TEST_ROOT/harness
 students=$TEST_ROOT/students
-swallow=$TEST_ROOT/swallow
 profile=$TEST_ROOT/targets.tsv
 fake_home=$TEST_ROOT/home
 launcher_capture=$TEST_ROOT/launcher-capture
@@ -39,17 +38,17 @@ poison_control=$TEST_ROOT/poison-control
 mkdir -p "$fake_home/.local/bin" "$launcher_capture" \
     "$poison_control/libexec"
 
-for repository in "$test_harness" "$students" "$swallow"; do
+for repository in "$test_harness" "$students"; do
     mkdir -p "$repository/.codex"
     git -C "$repository" init -q -b main
     printf '%s\n' 'model = "gpt-5.6-sol"' \
         'model_reasoning_effort = "high"' \
         >"$repository/.codex/config.toml"
 done
-printf '# target\tpane_index\tcanonical_repository\n' >"$profile"
-printf 'harness\t0\t@HARNESS_ROOT@\n' >>"$profile"
-printf 'students\t1\t%s\n' "$students" >>"$profile"
-printf 'swallow\t2\t%s\n' "$swallow" >>"$profile"
+printf '# target\twindow_index\twindow_name\tpane_index\tcanonical_repository\n' >"$profile"
+printf 'harness\t0\tcowork\t0\t@HARNESS_ROOT@\n' >>"$profile"
+printf 'personal\t1\tcodex\t0\t@HARNESS_ROOT@\n' >>"$profile"
+printf 'students\t1\tcodex\t1\t%s\n' "$students" >>"$profile"
 
 run_resolver() {
     PYTHONDONTWRITEBYTECODE=1 HARNESS_TESTING=1 \
@@ -65,8 +64,10 @@ grep -F 'CODEX_TARGETS status=ready count=3' "$TEST_ROOT/ready.out" \
     >/dev/null || fail "closed target map validation"
 [ "$(run_resolver repository students)" = "$students" ] ||
     fail "Students target lookup"
-[ "$(run_resolver target-for-repository "$swallow")" = swallow ] ||
-    fail "Swallow reverse target lookup"
+[ "$(run_resolver target-for-repository "$test_harness")" = harness ] ||
+    fail "same-root reverse lookup must default to Harness"
+[ "$(run_resolver validate-target personal)" = "$test_harness" ] ||
+    fail "explicit Personal same-root validation"
 PYTHONPATH="$ROOT/libexec" PYTHONDONTWRITEBYTECODE=1 HARNESS_TESTING=1 \
     HARNESS_CONTROL_ROOT="$ROOT" HARNESS_TARGET_ROOT="$test_harness" \
     HARNESS_TEST_CODEX_TARGETS_FILE="$profile" \
@@ -76,20 +77,20 @@ from harness_codex_targets import (
     INITIAL_LAYOUT,
     PANE_ROLE_OPTION,
     SESSION_NAME,
-    WINDOW_INDEX,
-    WINDOW_NAME,
     cwd_allowed,
+    location_for,
 )
 
 harness, students = sys.argv[1:]
-assert SESSION_NAME == "projects"
-assert WINDOW_INDEX == 0
-assert WINDOW_NAME == "codex"
+assert SESSION_NAME == "harness"
 assert INITIAL_LAYOUT == "even-horizontal"
 assert PANE_ROLE_OPTION == "@harness_target"
 assert cwd_allowed("students", students)
 assert not cwd_allowed("students", harness)
-assert not cwd_allowed("swallow", harness)
+assert cwd_allowed("personal", harness)
+assert location_for("harness") == (0, "cowork", 0)
+assert location_for("personal") == (1, "codex", 0)
+assert location_for("students") == (1, "codex", 1)
 PY
     fail "target-native CWD eligibility"
 if run_resolver target-for-repository "$TEST_ROOT" \
@@ -98,13 +99,13 @@ if run_resolver target-for-repository "$TEST_ROOT" \
 fi
 
 cp "$profile" "$TEST_ROOT/targets.valid"
-printf 'swallow\t2\t%s\n' "$students" \
+printf 'students\t1\tcodex\t0\t%s\n' "$students" \
     >"$TEST_ROOT/duplicate-line"
 sed '$d' "$profile" >"$TEST_ROOT/profile-prefix"
 cp "$TEST_ROOT/profile-prefix" "$profile"
 cat "$TEST_ROOT/duplicate-line" >>"$profile"
 if run_resolver validate-all >"$TEST_ROOT/duplicate.out" 2>&1; then
-    fail "duplicate repository admitted"
+    fail "duplicate pane location admitted"
 fi
 cp "$TEST_ROOT/targets.valid" "$profile"
 
@@ -231,6 +232,5 @@ run_direct_launcher() {
 
 run_direct_launcher harness "$ROOT"
 run_direct_launcher students "$students"
-run_direct_launcher swallow "$swallow"
 
 printf '%s\n' 'PASS: repository-native Codex target map'

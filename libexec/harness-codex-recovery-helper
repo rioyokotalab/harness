@@ -28,8 +28,6 @@ os.environ.pop("HARNESS_ROOT", None)
 sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
 from harness_codex_targets import (  # noqa: E402
     SESSION_NAME,
-    WINDOW_INDEX,
-    WINDOW_NAME,
     PANE_ROLE_OPTION,
     TargetError,
     cwd_allowed,
@@ -40,7 +38,15 @@ SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 SAFE_WINDOW_ID = re.compile(r"^@[0-9]+$")
 SAFE_PANE_ID = re.compile(r"^%[0-9]+$")
 TARGETS = load_targets()
-EXPECTED = tuple((value["name"], value["index"]) for value in TARGETS)
+EXPECTED = tuple(
+    (
+        value["name"],
+        value["window_index"],
+        value["window_name"],
+        value["pane_index"],
+    )
+    for value in TARGETS
+)
 PANE_ROLE_FORMAT = "#{" + PANE_ROLE_OPTION + "}"
 TARGET_PATHS = {
     value["name"]: value["repository"] for value in TARGETS
@@ -320,6 +326,7 @@ def claude_blocked_identity(arguments):
         "pane_pid": arguments.pane_pid,
         "pane_start": safe_id(arguments.pane_start, "pane start"),
         "relaunch": arguments.relaunch,
+        "session_id": safe_id(arguments.session_id, "Claude session"),
     }
 
 
@@ -410,6 +417,8 @@ def tmux_mapping():
             pane_pid = int(fields[6])
         except ValueError:
             continue
+        if not fields[4]:
+            continue
         rows.append(
             {
                 "window_index": window_index,
@@ -425,17 +434,12 @@ def tmux_mapping():
         )
     if len(rows) != len(EXPECTED):
         return None
-    windows = {
-        (row["window_index"], row["window_name"], row["window_id"])
+    if sorted(
+        (row["window_index"], row["window_name"], row["index"], row["name"])
         for row in rows
-    }
-    if len(windows) != 1:
-        return None
-    window_index, window_name, _window_id = next(iter(windows))
-    if window_index != WINDOW_INDEX or window_name != WINDOW_NAME:
-        return None
-    if sorted((row["index"], row["name"]) for row in rows) != sorted(
-        (index, name) for name, index in EXPECTED
+    ) != sorted(
+        (window_index, window_name, index, name)
+        for name, window_index, window_name, index in EXPECTED
     ) or any(row["dead"] for row in rows):
         return None
     mapping = {}
@@ -514,14 +518,14 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
         )
     else:
         receipt["mismatch_classes"].append("remote-control-count")
-    for role, index in EXPECTED:
+    for role, window_index, window_name, index in EXPECTED:
         mapped = bool(
             mapping
             and role in mapping
             and mapping[role].get("index") == index
             and mapping[role].get("pane_id")
-            and mapping[role].get("window_index") == WINDOW_INDEX
-            and mapping[role].get("window_name") == WINDOW_NAME
+            and mapping[role].get("window_index") == window_index
+            and mapping[role].get("window_name") == window_name
             and mapped_cwd_allowed(role, mapping[role].get("cwd", ""))
         )
         receipt["roles"][role] = {
@@ -562,7 +566,7 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
                 tuple(roots) + INTERACTIVE_SOURCES,
             ).fetchall()
         )
-        for role, _index in EXPECTED:
+        for role, *_location in EXPECTED:
             canonical_rows[role] = connection.execute(
                 "SELECT archived, COALESCE(NULLIF(name, ''), title), cwd, "
                 "source, rollout_path FROM threads WHERE id = ?",
@@ -586,7 +590,7 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
         receipt["mismatch_classes"].append("canonical-root-inactive")
 
     role_mismatches = {}
-    for role, _index in EXPECTED:
+    for role, *_location in EXPECTED:
         checks = receipt["roles"][role]
         row = canonical_rows.get(role)
         if row:
@@ -652,7 +656,7 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
                 "cwd": mapping[role]["cwd"],
                 "native_cwd": mapping[role]["cwd"] == target_paths[role],
             }
-            for role, _index in EXPECTED
+            for role, *_location in EXPECTED
         ],
         "extras": extras,
         "missing": missing,
@@ -752,8 +756,9 @@ target pane itself must not be selected by an attached client. If exact
 blocked/unsafe-tail evidence remains, use bridge-first fresh-root recovery:
 create and accept one distinct provisional root/window/runtime before
 promotion. Move only the fully accepted provisional pane into
-`projects:0:codex`; assign its exact pane-local `@harness_target` role, title,
-and index; preserve peer panes and attached clients; and retire only the old
+its profile-declared `harness` session location; assign its exact pane-local
+`@harness_target` role, title, and index; preserve peer panes and attached
+clients; and retire only the old
 exact TUI leaf. Reversibly archive the retired blocked root and any rejected
 helper-created provisional root after exact zero-reference and inactivity
 proof. Never identify a target by the shared window alone.
@@ -865,6 +870,8 @@ def claude_recovery_command(identity):
         identity["pane_start"],
         "--relaunch",
         identity["relaunch"],
+        "--session-id",
+        identity["session_id"],
     ]
 
 
@@ -1099,7 +1106,8 @@ def parse_arguments():
     parser.add_argument("--pane-index", type=int)
     parser.add_argument("--pane-pid", type=int)
     parser.add_argument("--pane-start")
-    parser.add_argument("--relaunch", choices=("continue", "plain"))
+    parser.add_argument("--relaunch", choices=("exact",))
+    parser.add_argument("--session-id")
     arguments = parser.parse_args()
     if not 5 <= arguments.interval <= 3600:
         parser.error("--interval must be between 5 and 3600 seconds")
@@ -1118,7 +1126,7 @@ def parse_arguments():
         "app_server_pid",
         "app_server_start",
     )
-    claude_fields = ("pane_pid", "pane_start", "relaunch")
+    claude_fields = ("pane_pid", "pane_start", "relaunch", "session_id")
     if arguments.enqueue_blocked:
         if any(
             getattr(arguments, field) is None

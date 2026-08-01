@@ -47,9 +47,12 @@ os.environ["HARNESS_ROOT"] = os.environ["HARNESS_MONITOR_ROOT"]
 module = importlib.machinery.SourceFileLoader(
     "tmux_monitor_test", os.environ["HARNESS_MONITOR_PATH"]
 ).load_module()
-assert module.SESSION_NAME == "projects"
-assert module.WINDOW_INDEX == 0
-assert module.WINDOW_NAME == "codex"
+assert module.SESSION_NAME == "harness"
+assert module.TARGET_LOCATIONS == {
+    "harness": (0, "cowork", 0),
+    "personal": (1, "codex", 0),
+    "students": (1, "codex", 1),
+}
 assert module.PANE_ROLE_OPTION == "@harness_target"
 with open(os.environ["HARNESS_MONITOR_PATH"], "r") as stream:
     source = stream.read()
@@ -133,7 +136,7 @@ with tempfile.TemporaryDirectory() as helper_root:
             "rollout_exists": True,
             "interactive_source": True,
         }
-        for name, _index in module.EXPECTED
+        for name, *_location in module.EXPECTED
     }
     receipt = {
         "schema": 1,
@@ -155,8 +158,8 @@ with tempfile.TemporaryDirectory() as helper_root:
     assert module.phone_mirror_health() == "healthy"
     assert module.phone_mirror_health(processes={os.getpid(): current}) == "healthy"
     receipt["status"] = "degraded"
-    receipt["roles"]["swallow"]["interactive_source"] = False
-    receipt["mismatch_classes"] = ["interactive_source:swallow"]
+    receipt["roles"]["personal"]["interactive_source"] = False
+    receipt["mismatch_classes"] = ["interactive_source:personal"]
     module.atomic_json(os.path.join(helper_root, "phone-mirror.json"), receipt)
     assert module.phone_mirror_health() == "degraded"
     receipt["epoch"] -= 121
@@ -183,7 +186,7 @@ health = {
             "pane_id": "%0",
             "window_index": 0,
             "window_id": "@0",
-            "window_name": "codex",
+            "window_name": "cowork",
             "path": os.environ["HARNESS_MONITOR_ROOT"],
         },
     }
@@ -199,7 +202,7 @@ assert module.mapping_snapshot(mapping, health) == {
         "pane_id": "%0",
         "window_index": 0,
         "window_id": "@0",
-        "window_name": "codex",
+        "window_name": "cowork",
         "cwd": os.environ["HARNESS_MONITOR_ROOT"],
         "native_cwd": True,
     },
@@ -317,7 +320,7 @@ codex_0146 = module.collect_health(
     [
         {
             "index": 1,
-            "window_index": 0,
+            "window_index": 1,
             "window_id": "@fixture",
             "window_name": "codex",
             "name": "students",
@@ -334,7 +337,7 @@ assert codex_0146["students"]["reason"] == "native-cwd"
 native_pane = [
     {
         "index": 1,
-        "window_index": 0,
+        "window_index": 1,
         "window_id": "@fixture",
         "window_name": "codex",
         "name": "students",
@@ -384,7 +387,7 @@ legacy_harness = module.collect_health(
             "index": 0,
             "window_index": 0,
             "window_id": "@fixture",
-            "window_name": "codex",
+            "window_name": "cowork",
             "name": "harness",
             "title": "harness",
             "pane_id": "%fixture",
@@ -452,7 +455,7 @@ unsafe_0146 = module.collect_health(
     [
         {
             "index": 1,
-            "window_index": 0,
+            "window_index": 1,
             "window_id": "@fixture",
             "window_name": "codex",
             "name": "students",
@@ -479,7 +482,7 @@ other_blocked = module.collect_health(
     [
         {
             "index": 1,
-            "window_index": 0,
+            "window_index": 1,
             "window_id": "@fixture",
             "window_name": "codex",
             "name": "students",
@@ -497,17 +500,17 @@ assert other_blocked["students"]["reason"] == "watcher-state"
 panes = [
     {
         "index": index,
-        "window_index": 0,
+        "window_index": window_index,
         "window_id": "@0",
-        "window_name": "codex",
+        "window_name": window_name,
         "name": name,
         "title": name,
-        "pane_id": "%{}".format(index),
+        "pane_id": "%{}-{}".format(window_name, index),
         "pane_pid": 10 + index,
         "path": module.TARGET_PATHS[name],
         "dead": False,
     }
-    for name, index in module.EXPECTED
+    for name, window_index, window_name, index in module.EXPECTED
 ]
 assert module.canonical_topology(panes)
 wrong_window = copy.deepcopy(panes)
@@ -517,8 +520,8 @@ wrong_title = copy.deepcopy(panes)
 wrong_title[0]["title"] = "application-title"
 assert module.canonical_topology(wrong_title)
 reordered = copy.deepcopy(panes)
-for pane, index in zip(reordered, (1, 2, 0)):
-    pane["index"] = index
+next(pane for pane in reordered if pane["name"] == "personal")["index"] = 1
+next(pane for pane in reordered if pane["name"] == "students")["index"] = 0
 reordered[0]["title"] = "application-title"
 original_run = module.run
 original_tmux_panes = module.tmux_panes
@@ -539,9 +542,10 @@ try:
     module.run = swap
     ordered, action = module.enforce_order(copy.deepcopy(reordered))
     assert action == "ordered"
-    assert [(pane["name"], pane["index"]) for pane in sorted(
-        ordered, key=lambda pane: pane["index"]
-    )] == list(module.EXPECTED)
+    assert all(
+        next(pane for pane in ordered if pane["name"] == name)["index"] == index
+        for name, _window_index, _window_name, index in module.EXPECTED
+    )
     assert order_calls
 finally:
     module.run = original_run
@@ -551,7 +555,7 @@ health = {
     name: {
         "state": "healthy",
         "reason": "ready",
-        "pane": panes[index],
+        "pane": next(pane for pane in panes if pane["name"] == name),
         "app_server_pid": 99,
         "identity": {
             "runtime": "{}-runtime".format(name),
@@ -559,14 +563,14 @@ health = {
         },
         "recovery": {"phase": "watching", "reason": "thread-idle"},
     }
-    for name, index in module.EXPECTED
+    for name, _window_index, _window_name, index in module.EXPECTED
 }
-health["swallow"] = {
+health["personal"] = {
     "state": "blocked",
     "reason": "unsafe-tail",
-    "pane": panes[2],
+    "pane": next(pane for pane in panes if pane["name"] == "personal"),
     "app_server_pid": 99,
-    "identity": {"runtime": "swallow-runtime", "thread": "swallow-thread"},
+    "identity": {"runtime": "personal-runtime", "thread": "personal-thread"},
     "watcher": {"pid": 42, "start": "watcher-start"},
     "recovery": {
         "phase": "blocked",
@@ -578,10 +582,10 @@ health["swallow"] = {
 candidates, selection = module.recovery_candidates(panes, health, [])
 assert selection == "candidates"
 assert len(candidates) == 1
-assert candidates[0]["target"] == "swallow"
+assert candidates[0]["target"] == "personal"
 assert candidates[0]["window_id"] == "@0"
-assert candidates[0]["pane_id"] == "%2"
-assert module.recovery_candidates(panes, health, [("7", "@0", "%2")]) == (
+assert candidates[0]["pane_id"] == "%codex-0"
+assert module.recovery_candidates(panes, health, [("7", "@0", "%codex-0")]) == (
     [],
     "deferred-target-attached",
 )
@@ -604,10 +608,12 @@ health["harness"] = {
 }
 candidates, selection = module.recovery_candidates(panes, health, [])
 assert selection == "candidates"
-assert [value["target"] for value in candidates] == ["harness", "swallow"]
-assert module.recovery_candidates(panes, health, [("7", "@0", "%0")])[0][0][
+assert [value["target"] for value in candidates] == ["harness", "personal"]
+assert module.recovery_candidates(
+    panes, health, [("7", "@0", "%cowork-0")]
+)[0][0][
     "target"
-] == "swallow"
+] == "personal"
 
 class Result:
     returncode = 0
@@ -624,7 +630,7 @@ assert "--pane-index" in calls[0]
 PY
 
 cat >"$TEST_ROOT/healthy.json" <<'EOF'
-{"panes":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"healthy"}}}
+{"panes":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"personal","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"personal":{"state":"healthy"}}}
 EOF
 run_fixture "$TEST_ROOT/healthy.json" --enforce-order \
     >"$TEST_ROOT/healthy.out"
@@ -632,7 +638,7 @@ grep -F 'phase=healthy healthy=3 phone_mirror=healthy order_action=none repair_a
     "$TEST_ROOT/healthy.out" >/dev/null || fail "healthy classification"
 
 cat >"$TEST_ROOT/ordered.json" <<'EOF'
-{"out_of_order":true,"panes":[{"name":"swallow","index":0},{"name":"harness","index":1},{"name":"students","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"healthy"}}}
+{"out_of_order":true,"panes":[{"name":"personal","index":0},{"name":"harness","index":1},{"name":"students","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"personal":{"state":"healthy"}}}
 EOF
 run_fixture "$TEST_ROOT/ordered.json" --enforce-order \
     >"$TEST_ROOT/ordered.out"
@@ -640,7 +646,7 @@ grep -F 'order_action=ordered' "$TEST_ROOT/ordered.out" >/dev/null ||
     fail "order correction classification"
 
 cat >"$TEST_ROOT/extra.json" <<'EOF'
-{"panes":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2},{"name":"extra","index":3}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"healthy"},"extra":{"state":"healthy"}}}
+{"panes":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"personal","index":2},{"name":"extra","index":3}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"personal":{"state":"healthy"},"extra":{"state":"healthy"}}}
 EOF
 if run_fixture "$TEST_ROOT/extra.json" --enforce-order \
     >"$TEST_ROOT/extra.out"; then
@@ -650,7 +656,7 @@ grep -F 'order_action=deferred-ambiguous' "$TEST_ROOT/extra.out" >/dev/null ||
     fail "extra window did not fail closed"
 
 cat >"$TEST_ROOT/degraded.json" <<'EOF'
-{"panes":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"unhealthy","reason":"watcher-absent"},"swallow":{"state":"healthy"}}}
+{"panes":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"personal","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"unhealthy","reason":"watcher-absent"},"personal":{"state":"healthy"}}}
 EOF
 if run_fixture "$TEST_ROOT/degraded.json" \
     >"$TEST_ROOT/degraded.out"; then
@@ -660,7 +666,7 @@ grep -F 'repair_action=none' "$TEST_ROOT/degraded.out" >/dev/null ||
     fail "generic degradation selected recovery"
 
 cat >"$TEST_ROOT/phone-degraded.json" <<'EOF'
-{"phone_mirror":"degraded","panes":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"healthy"}}}
+{"phone_mirror":"degraded","panes":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"personal","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"personal":{"state":"healthy"}}}
 EOF
 if run_fixture "$TEST_ROOT/phone-degraded.json" \
     >"$TEST_ROOT/phone-degraded.out"; then
@@ -671,7 +677,7 @@ grep -F 'phase=degraded healthy=3 phone_mirror=degraded' \
     fail "phone eligibility did not degrade monitor"
 
 cat >"$TEST_ROOT/requested.json" <<'EOF'
-{"repair_action":"helper-queued-1","panes":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"blocked","reason":"unsafe-tail"}}}
+{"repair_action":"helper-queued-1","panes":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"personal","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"personal":{"state":"blocked","reason":"unsafe-tail"}}}
 EOF
 if run_fixture "$TEST_ROOT/requested.json" \
     >"$TEST_ROOT/requested.out"; then

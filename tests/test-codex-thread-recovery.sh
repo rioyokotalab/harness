@@ -39,20 +39,20 @@ sessions=$codex_home/sessions/2026/07/27
 message_state=$TEST_ROOT/message-state
 target_harness=$TEST_ROOT/repositories/harness
 target_students=$TEST_ROOT/repositories/students
-target_swallow=$TEST_ROOT/repositories/swallow
+target_personal=$TEST_ROOT/repositories/personal
 target_profile=$TEST_ROOT/targets.tsv
 mkdir -p "$runtime" "$sessions" "$message_state"
-for repository in "$target_harness" "$target_students" "$target_swallow"; do
+for repository in "$target_harness" "$target_students" "$target_personal"; do
     mkdir -p "$repository/.codex"
     git -C "$repository" init -q -b main
     printf '%s\n' 'model = "gpt-5.6-sol"' \
         >"$repository/.codex/config.toml"
 done
 {
-    printf '# target\tindex\tcanonical_repository\n'
-    printf 'harness\t0\t@HARNESS_ROOT@\n'
-    printf 'students\t1\t%s\n' "$target_students"
-    printf 'swallow\t2\t%s\n' "$target_swallow"
+    printf '# target\twindow_index\twindow_name\tpane_index\tcanonical_repository\n'
+    printf 'harness\t0\tcowork\t0\t@HARNESS_ROOT@\n'
+    printf 'personal\t1\tcodex\t0\t%s\n' "$target_personal"
+    printf 'students\t1\tcodex\t1\t%s\n' "$target_students"
 } >"$target_profile"
 chmod 700 "$runtime" "$codex_home" "$codex_home/sessions" \
     "$codex_home/sessions/2026" "$codex_home/sessions/2026/07" \

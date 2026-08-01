@@ -167,12 +167,10 @@ alias_names=$(sed -n 's/^alias \([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' \
     "$ROOT/shell/common-aliases.sh")
 [ "$alias_names" = "$(printf '%s\n' "$alias_names" | LC_ALL=C sort -u)" ] ||
     fail 'common aliases are not unique and alphabetic'
-# `att` attaches this host's canonical session: `projects` on Local, and the
-# unified `harness` session everywhere else, including when the logical host
-# is unset.
+# `att` attaches the unified `harness` session on every managed host.
 att_local=$(HARNESS_LOGICAL_HOST=local bash -c '. "$1"; alias att' _ \
     "$ROOT/shell/common-aliases.sh")
-[ "$att_local" = "alias att='tmux attach -t projects'" ] ||
+[ "$att_local" = "alias att='tmux attach -t harness'" ] ||
     fail 'common att alias on Local changed'
 att_managed=$(HARNESS_LOGICAL_HOST=office bash -c '. "$1"; alias att' _ \
     "$ROOT/shell/common-aliases.sh")

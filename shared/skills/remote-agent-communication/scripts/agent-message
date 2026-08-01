@@ -194,7 +194,7 @@ def claude_processes(tty: str) -> int:
 
 
 def select_controller_pane() -> Pane:
-    session = "projects"
+    session = "harness"
     exact_session(session)
     harness = str(Path.home() / "harness")
     candidates = [
@@ -202,7 +202,7 @@ def select_controller_pane() -> Pane:
         for pane in list_panes(session, all_session=True)
         if pane.dead == "0"
         and pane.window_index == "0"
-        and pane.window_name == "codex"
+        and pane.window_name == "cowork"
         and pane.pane_index == "0"
         and pane.pane_role == "harness"
         and pane.path == harness
@@ -214,16 +214,16 @@ def select_controller_pane() -> Pane:
 
 
 def select_local_claude_pane() -> Pane:
-    session = "projects"
+    session = "harness"
     exact_session(session)
     harness = str(Path.home() / "harness")
     candidates = [
         pane
         for pane in list_panes(session, all_session=True)
         if pane.dead == "0"
-        and pane.window_index == "1"
-        and pane.window_name == "claude"
-        and pane.pane_index == "0"
+        and pane.window_index == "0"
+        and pane.window_name == "cowork"
+        and pane.pane_index == "1"
         and pane.claude_role == "harness"
         and pane.path == harness
         and claude_processes(pane.tty) == 1

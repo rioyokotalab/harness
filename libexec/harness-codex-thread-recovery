@@ -22,7 +22,7 @@ import time
 
 
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
-MANAGED_TARGETS = ("harness", "students", "swallow")
+MANAGED_TARGETS = ("harness", "personal", "students")
 MAX_ROLLBACK_TURNS = 8
 MAX_WEBSOCKET_MESSAGE = 64 * 1024 * 1024
 LOCK_WAIT_SECONDS = 30

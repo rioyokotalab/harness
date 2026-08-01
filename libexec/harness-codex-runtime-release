@@ -56,7 +56,7 @@ case "$HARNESS_TARGET_ROOT" in
         ;;
 esac
 case ${HARNESS_CODEX_RELEASE_TARGET:-} in
-    harness|students|swallow) release_target=$HARNESS_CODEX_RELEASE_TARGET ;;
+    harness|personal|students) release_target=$HARNESS_CODEX_RELEASE_TARGET ;;
     *)
         echo "harness: Codex runtime release target is unavailable" >&2
         exit 2

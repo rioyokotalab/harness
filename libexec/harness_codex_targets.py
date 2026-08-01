@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Closed repository map for the three managed Local Codex sessions."""
+"""Closed location and repository map for managed Local Codex sessions."""
 
 from __future__ import print_function
 
@@ -9,12 +9,10 @@ import subprocess
 import sys
 
 
-SESSION_NAME = "projects"
-WINDOW_INDEX = 0
-WINDOW_NAME = "codex"
+SESSION_NAME = "harness"
 INITIAL_LAYOUT = "even-horizontal"
 PANE_ROLE_OPTION = "@harness_target"
-TARGET_NAMES = ("harness", "students", "swallow")
+TARGET_NAMES = ("harness", "personal", "students")
 HARNESS_TOKEN = "@HARNESS_ROOT@"
 
 
@@ -88,11 +86,12 @@ def load_targets():
         if not line or line.startswith("#"):
             continue
         fields = line.split("\t")
-        if len(fields) != 3:
+        if len(fields) != 5:
             fail("Codex target profile line {} is malformed".format(line_number))
-        name, raw_index, repository = fields
+        name, raw_window_index, window_name, raw_pane_index, repository = fields
         try:
-            index = int(raw_index)
+            window_index = int(raw_window_index)
+            pane_index = int(raw_pane_index)
         except ValueError:
             fail("Codex target index is malformed")
         if repository == HARNESS_TOKEN:
@@ -107,12 +106,30 @@ def load_targets():
         ):
             fail("Codex target repository is malformed")
         values.append(
-            {"name": name, "index": index, "repository": repository}
+            {
+                "name": name,
+                "window_index": window_index,
+                "window_name": window_name,
+                "pane_index": pane_index,
+                "index": pane_index,
+                "repository": repository,
+            }
         )
     if (
         tuple(value["name"] for value in values) != TARGET_NAMES
-        or tuple(value["index"] for value in values) != tuple(range(len(TARGET_NAMES)))
-        or len(set(value["repository"] for value in values)) != len(values)
+        or any(
+            value["window_index"] < 0
+            or value["pane_index"] < 0
+            or not value["window_name"]
+            or not value["window_name"].replace("-", "").isalnum()
+            for value in values
+        )
+        or len(
+            {
+                (value["window_index"], value["window_name"], value["pane_index"])
+                for value in values
+            }
+        ) != len(values)
     ):
         fail("Codex target profile is not the closed canonical map")
     return tuple(values)
@@ -127,6 +144,14 @@ def repository_for(name):
     if name not in mapping:
         fail("unknown Codex target")
     return mapping[name]["repository"]
+
+
+def location_for(name):
+    mapping = target_map()
+    if name not in mapping:
+        fail("unknown Codex target")
+    value = mapping[name]
+    return value["window_index"], value["window_name"], value["pane_index"]
 
 
 def _reject_symlink_components(path):
@@ -191,6 +216,8 @@ def target_for_repository(path, validate=True):
         for value in load_targets()
         if value["repository"] == path
     ]
+    if len(matches) > 1 and "harness" in matches:
+        matches = ["harness"]
     if len(matches) != 1:
         fail("Codex repository is outside the closed target map")
     if validate:
@@ -215,12 +242,15 @@ def main(arguments):
     if len(arguments) == 2 and arguments[0] == "target-for-repository":
         print(target_for_repository(arguments[1]))
         return 0
+    if len(arguments) == 2 and arguments[0] == "validate-target":
+        print(validate_repository(repository_for(arguments[1])))
+        return 0
     if len(arguments) == 1 and arguments[0] == "validate-all":
         validate_all()
         print("CODEX_TARGETS status=ready count=3")
         return 0
     fail("usage: harness_codex_targets.py repository TARGET | "
-         "target-for-repository PATH | validate-all")
+         "target-for-repository PATH | validate-target TARGET | validate-all")
 
 
 if __name__ == "__main__":

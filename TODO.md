@@ -19,9 +19,9 @@ Next free ID: T-367.
 
 ### T-366 — Unified Harness cowork and Personal tmux layout
 
-**Phase:** owner-review stop after the Claude co-pilot's synthetic test escaped
-its sandbox and killed the live tmux server; no reconstruction or retry is
-authorized from the invalidated baseline.
+**Phase:** executing after the owner authorized direct reconstruction into the
+final topology. Repository changes are under focused validation; live launch
+remains gated on protected publication and exact one-shot identity checks.
 
 **Record:** `docs/tasks/T-366.md`.
 

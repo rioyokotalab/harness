@@ -62,10 +62,10 @@ for repo in "$REPO_A" "$REPO_B" "$REPO_C"; do
     printf '@AGENTS.md\n' > "$repo/CLAUDE.md"
 done
 {
-    printf '# target\tpane_index\tcanonical_repository\n'
-    printf 'harness\t0\t%s\n' "$REPO_A"
-    printf 'students\t1\t%s\n' "$REPO_B"
-    printf 'swallow\t2\t%s\n' "$REPO_C"
+    printf '# target\twindow_index\twindow_name\tpane_index\tcanonical_repository\n'
+    printf 'harness\t0\tcowork\t1\t%s\n' "$REPO_A"
+    printf 'personal\t2\tclaude\t0\t%s\n' "$REPO_A"
+    printf 'students\t2\tclaude\t1\t%s\n' "$REPO_C"
 } > "$PROFILE"
 
 # --- module unit tests ----------------------------------------------------
@@ -86,17 +86,26 @@ module = importlib.machinery.SourceFileLoader(
 test_root = sys.argv[2]
 
 REPOS = {value["name"]: value["repository"] for value in module.TARGETS}
+SESSIONS = {
+    "harness": "00000000-0000-4000-8000-000000000001",
+    "personal": "00000000-0000-4000-8000-000000000002",
+    "students": "00000000-0000-4000-8000-000000000003",
+}
+PIDS = {"harness": 4000, "personal": 4001, "students": 4002}
+PID_SESSIONS = {value: SESSIONS[name] for name, value in PIDS.items()}
 
 
 def pane(name, index, **overrides):
+    window_index, window_name, expected_index = module.TARGET_LOCATIONS[name]
     value = {
-        "window_index": 1,
+        "window_index": window_index,
         "window_id": "@9",
-        "window_name": "claude",
-        "pane_index": index,
-        "pane_id": "%{}".format(10 + index),
+        "window_name": window_name,
+        "pane_index": expected_index,
+        "pane_id": "%{}".format(10 + PIDS[name] - 4000),
         "role": name,
-        "pane_pid": 4000 + index,
+        "session_id": SESSIONS[name],
+        "pane_pid": PIDS[name],
         "path": REPOS[name],
         "dead": False,
     }
@@ -104,26 +113,26 @@ def pane(name, index, **overrides):
     return value
 
 
-HEALTHY = [pane("harness", 0), pane("students", 1), pane("swallow", 2)]
+HEALTHY = [pane("harness", 1), pane("personal", 0), pane("students", 1)]
 
 # healthy matrix
 module.process_identity = lambda pid: {
     "pid": pid,
     "uid": os.getuid(),
     "start": "1",
-    "argv": ["claude", "--model", "fable"],
+    "argv": ["claude", "--resume", PID_SESSIONS[pid]],
 }
 health = module.collect_health(HEALTHY)
 assert all(value["state"] == "healthy" for value in health.values()), health
 
 # dead pane -> blocked/pane-dead (dead panes report an empty cwd)
-dead = [pane("harness", 0, dead=True, path=""), pane("students", 1), pane("swallow", 2)]
+dead = [pane("harness", 1, dead=True, path=""), pane("personal", 0), pane("students", 1)]
 health = module.collect_health(dead)
 assert health["harness"]["state"] == "blocked"
 assert health["harness"]["reason"] == "pane-dead"
 
 # wrong cwd -> native-cwd
-wrong = [pane("harness", 0, path="/somewhere"), pane("students", 1), pane("swallow", 2)]
+wrong = [pane("harness", 1, path="/somewhere"), pane("personal", 0), pane("students", 1)]
 health = module.collect_health(wrong)
 assert health["harness"]["reason"] == "native-cwd"
 
@@ -144,7 +153,7 @@ module.process_identity = lambda pid: {
     "pid": pid,
     "uid": os.getuid(),
     "start": "1",
-    "argv": ["claude", "--model", "fable"],
+    "argv": ["claude", "--resume", PID_SESSIONS[pid]],
 }
 
 ROOT_DIR = module.runtime_root()
@@ -177,9 +186,10 @@ candidates, selection = module.recovery_candidates(
 )
 assert selection == "candidates" and len(candidates) == 1
 assert candidates[0]["target"] == "harness"
-assert candidates[0]["relaunch"] == "continue"
+assert candidates[0]["relaunch"] == "exact"
+assert candidates[0]["session_id"] == SESSIONS["harness"]
 
-# rate limit: three recent events defer, prior failure selects plain
+# rate limit: three recent events defer; exact resume never changes selector
 events_dir = os.path.join(module.helper_runtime_root(), "events")
 receipts_dir = os.path.join(module.helper_runtime_root(), "receipts")
 os.makedirs(events_dir, mode=0o700, exist_ok=True)
@@ -207,7 +217,7 @@ write_event("aa", "failed")
 candidates, selection = module.recovery_candidates(
     dead, module.collect_health(dead), ROOT_DIR
 )
-assert candidates and candidates[0]["relaunch"] == "plain"
+assert candidates and candidates[0]["relaunch"] == "exact"
 
 write_event("bb", "completed")
 write_event("cc", "completed")
@@ -234,17 +244,19 @@ assert module.enqueue_helper_recovery(
     {
         "target": "harness",
         "window_id": "@9",
-        "window_index": 1,
+        "window_index": 0,
         "pane_id": "%10",
-        "pane_index": 0,
+        "pane_index": 1,
         "pane_pid": 4000,
-        "relaunch": "continue",
+        "relaunch": "exact",
+        "session_id": SESSIONS["harness"],
     }
 )
 argv = calls[0]
 assert argv[0].endswith("harness-codex-recovery-helper")
 assert "--enqueue-claude-blocked" in argv
-assert "--relaunch" in argv and "continue" in argv
+assert "--relaunch" in argv and "exact" in argv
+assert "--session-id" in argv and SESSIONS["harness"] in argv
 print("module unit tests: PASS")
 PY
 
@@ -252,8 +264,8 @@ PY
 FIXTURE=$TEST_ROOT/fixture.json
 cat > "$FIXTURE" <<'JSON'
 {"health": {"harness": {"state": "healthy", "reason": "ready"},
-            "students": {"state": "healthy", "reason": "ready"},
-            "swallow": {"state": "healthy", "reason": "ready"}}}
+            "personal": {"state": "healthy", "reason": "ready"},
+            "students": {"state": "healthy", "reason": "ready"}}}
 JSON
 OUTPUT=$(HARNESS_TESTING=1 HARNESS_TEST_TMUX_CLAUDE_FIXTURE="$FIXTURE" \
     "$HARNESS" tmux-claude-monitor --once)
@@ -263,8 +275,8 @@ printf '%s\n' "$OUTPUT" | grep -Fq \
 
 cat > "$FIXTURE" <<'JSON'
 {"health": {"harness": {"state": "blocked", "reason": "pane-dead"},
-            "students": {"state": "healthy", "reason": "ready"},
-            "swallow": {"state": "healthy", "reason": "ready"}},
+            "personal": {"state": "healthy", "reason": "ready"},
+            "students": {"state": "healthy", "reason": "ready"}},
  "repair_action": "helper-queued-1"}
 JSON
 if OUTPUT=$(HARNESS_TESTING=1 HARNESS_TEST_TMUX_CLAUDE_FIXTURE="$FIXTURE" \
@@ -288,7 +300,7 @@ FAKE_RECOVERY=$TEST_ROOT/fake-claude-recovery
 cat > "$FAKE_RECOVERY" <<SH
 #!/bin/sh
 printf '%s\n' "\$*" > "$CAPTURE/recovery-arguments"
-printf 'RECOVERY_RESULT status=accepted target=harness pane=%%10 relaunch=continue\n'
+printf 'RECOVERY_RESULT status=accepted target=harness pane=%%10 relaunch=exact\n'
 SH
 chmod 700 "$FAKE_RECOVERY"
 HELPER_RUNTIME=$TEST_ROOT/helper-e2e
@@ -302,16 +314,18 @@ helper() {
         "$HARNESS" codex-recovery-helper "$@"
 }
 OUTPUT=$(helper --enqueue-claude-blocked --target harness \
-    --window-id @9 --window-index 1 --pane-id %10 --pane-index 0 \
-    --pane-pid 4000 --pane-start 12345 --relaunch continue)
+    --window-id @9 --window-index 0 --pane-id %10 --pane-index 1 \
+    --pane-pid 4000 --pane-start 12345 --relaunch exact \
+    --session-id 00000000-0000-4000-8000-000000000001)
 printf '%s\n' "$OUTPUT" | grep -Fq "enqueue=queued" || fail "claude enqueue failed"
 OUTPUT=$(helper --enqueue-claude-blocked --target harness \
-    --window-id @9 --window-index 1 --pane-id %10 --pane-index 0 \
-    --pane-pid 4000 --pane-start 12345 --relaunch continue)
+    --window-id @9 --window-index 0 --pane-id %10 --pane-index 1 \
+    --pane-pid 4000 --pane-start 12345 --relaunch exact \
+    --session-id 00000000-0000-4000-8000-000000000001)
 printf '%s\n' "$OUTPUT" | grep -Fq "enqueue=already-queued" ||
     fail "claude enqueue dedup failed"
 helper --once --interval 5 >/dev/null || fail "helper once failed"
-grep -q -- "--relaunch continue" "$CAPTURE/recovery-arguments" ||
+grep -q -- "--relaunch exact" "$CAPTURE/recovery-arguments" ||
     fail "recovery worker arguments missing"
 python3 -B - "$HELPER_RUNTIME" <<'PY'
 import json
@@ -340,9 +354,9 @@ cat > "$FAKE_TMUX" <<SH
 #!/bin/sh
 if [ "\$1" = "display-message" ]; then
     if [ "\$(cat "$STATE")" = "dead" ]; then
-        printf 'projects\t@9\tclaude\t%%10\t1\t0\t\tharness\n'
+        printf 'harness\t@9\tcowork\t0\t%%10\t1\t1\t0\t\tharness\t00000000-0000-4000-8000-000000000001\n'
     else
-        printf 'projects\t@9\tclaude\t%%10\t0\t%s\t$REPO_A\tharness\n' "\$PPID"
+        printf 'harness\t@9\tcowork\t0\t%%10\t1\t0\t%s\t$REPO_A\tharness\t00000000-0000-4000-8000-000000000001\n' "\$PPID"
     fi
     exit 0
 fi
@@ -362,12 +376,13 @@ OUTPUT=$(HARNESS_TESTING=1 \
     HARNESS_TEST_TMUX="$FAKE_TMUX" \
     HARNESS_TEST_CLAUDE="$FAKE_CLAUDE" \
     "$HARNESS" claude-pane-recovery --target harness --window-id @9 \
-    --window-index 1 --pane-id %10 --pane-index 0 --pane-pid 4000 \
-    --pane-start 12345 --relaunch continue)
+    --window-index 0 --pane-id %10 --pane-index 1 --pane-pid 4000 \
+    --pane-start 12345 --relaunch exact \
+    --session-id 00000000-0000-4000-8000-000000000001)
 printf '%s\n' "$OUTPUT" | grep -Fq "RECOVERY_RESULT status=accepted" ||
     fail "recovery worker did not accept"
-grep -q -- "--continue" "$CAPTURE/tmux-respawn" ||
-    fail "respawn command missing --continue"
+grep -q -- "--resume 00000000-0000-4000-8000-000000000001" \
+    "$CAPTURE/tmux-respawn" || fail "respawn command missing exact resume"
 grep -q "respawn-pane -t %10" "$CAPTURE/tmux-respawn" ||
     fail "respawn target missing"
 
@@ -379,8 +394,9 @@ if OUTPUT=$(HARNESS_TESTING=1 \
     HARNESS_TEST_TMUX="$FAKE_TMUX" \
     HARNESS_TEST_CLAUDE="$FAKE_CLAUDE" \
     "$HARNESS" claude-pane-recovery --target harness --window-id @9 \
-    --window-index 1 --pane-id %10 --pane-index 0 --pane-pid 4000 \
-    --pane-start 12345 --relaunch continue); then
+    --window-index 0 --pane-id %10 --pane-index 1 --pane-pid 4000 \
+    --pane-start 12345 --relaunch exact \
+    --session-id 00000000-0000-4000-8000-000000000001); then
     fail "alive pane must be rejected"
 else
     printf '%s\n' "$OUTPUT" | grep -Fq "status=rejected reason=pane-alive" ||

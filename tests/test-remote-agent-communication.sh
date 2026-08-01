@@ -68,20 +68,20 @@ command=$1
 shift
 case "$command" in
     list-sessions)
-        printf '%s\n' "${FAKE_SESSION:-projects}"
+        printf '%s\n' "${FAKE_SESSION:-harness}"
         ;;
     list-panes)
         tty=${FAKE_TTY:-/dev/pts/7}
         pane_path=${FAKE_PANE_PATH:-$HOME/harness}
         if [ "${FAKE_TARGET_CLIENT:-codex}" = claude ]; then
-            window_index=${FAKE_WINDOW_INDEX:-1}
-            window_name=${FAKE_WINDOW_NAME:-claude}
-            pane_index=${FAKE_PANE_INDEX:-0}
+            window_index=${FAKE_WINDOW_INDEX:-0}
+            window_name=${FAKE_WINDOW_NAME:-cowork}
+            pane_index=${FAKE_PANE_INDEX:-1}
             role=
             claude_role=${FAKE_CLAUDE_ROLE:-harness}
         else
             window_index=${FAKE_WINDOW_INDEX:-0}
-            window_name=${FAKE_WINDOW_NAME:-codex}
+            window_name=${FAKE_WINDOW_NAME:-cowork}
             pane_index=${FAKE_PANE_INDEX:-0}
             role=${FAKE_PANE_ROLE:-harness}
             claude_role=
@@ -190,7 +190,7 @@ chmod 755 "$home/.local/bin/harness-codex"
 
 run_helper() {
     HOME=$home FAKE_STATE=$state \
-        FAKE_SESSION=${FAKE_SESSION:-projects} \
+        FAKE_SESSION=${FAKE_SESSION:-harness} \
         FAKE_ATTACHED=${FAKE_ATTACHED:-0} \
         FAKE_AMBIGUOUS=${FAKE_AMBIGUOUS:-0} \
         FAKE_CODEX_COUNT=${FAKE_CODEX_COUNT:-1} \
@@ -366,7 +366,7 @@ if printf '%s\n' "$local_claude_message" |
     fail "wrong Local Claude pane role accepted"
 fi
 if printf '%s\n' "$local_claude_message" |
-    FAKE_TARGET_CLIENT=claude FAKE_WINDOW_NAME=codex \
+    FAKE_TARGET_CLIENT=claude FAKE_WINDOW_NAME=claude \
     run_helper send-local-claude --source local \
     >"$state/local-claude-window.out" 2>&1; then
     fail "wrong Local Claude window accepted"

@@ -134,7 +134,7 @@ else
 fi
 if [ -n "$target" ]; then
     require_safe_id "$target"
-    case "$target" in harness|students|swallow) ;; *)
+    case "$target" in harness|personal|students) ;; *)
         die "Codex resilient target is outside the managed target map"
         ;;
     esac
@@ -151,13 +151,17 @@ if [ "$mode" != status ]; then
     current_repository=$(
         CDPATH='' cd -- "$current_repository" 2>/dev/null && pwd -P
     ) || die "Codex resilient repository is unavailable"
-    resolved_target=$(
-        python3 "$target_resolver" target-for-repository "$current_repository"
-    ) || die "Codex resilient repository is outside the managed target map"
-    if [ -n "$target" ] && [ "$target" != "$resolved_target" ]; then
-        die "Codex resilient target does not match its repository"
+    if [ -n "$target" ]; then
+        expected_repository=$(
+            python3 "$target_resolver" validate-target "$target"
+        ) || die "Codex resilient target repository is invalid"
+        [ "$current_repository" = "$expected_repository" ] ||
+            die "Codex resilient target does not match its repository"
+    else
+        target=$(
+            python3 "$target_resolver" target-for-repository "$current_repository"
+        ) || die "Codex resilient repository is outside the managed target map"
     fi
-    target=$resolved_target
     if [ "$release_active" = yes ] &&
         [ "$target" != "$HARNESS_CODEX_RELEASE_TARGET" ]; then
         die "Codex runtime release target does not match its repository"
@@ -360,7 +364,7 @@ if [ "$mode" = status ]; then
     else
         scoped_count=0
         scoped_target=
-        for candidate_target in harness students swallow; do
+        for candidate_target in harness personal students; do
             candidate_file=$state_root/$candidate_target/$name.state
             if [ -e "$candidate_file" ] || [ -L "$candidate_file" ]; then
                 scoped_count=$((scoped_count + 1))

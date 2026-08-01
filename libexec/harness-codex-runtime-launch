@@ -14,7 +14,7 @@ export HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
 unset HARNESS_ROOT
 
 case ${HARNESS_CODEX_RELEASE_TARGET:-} in
-    harness|students|swallow)
+    harness|personal|students)
         release_target=$HARNESS_CODEX_RELEASE_TARGET
         ;;
     *)
@@ -58,7 +58,7 @@ target=$(python3 "$target_resolver" target-for-repository "$project_root") || {
     exit 2
 }
 case "$target" in
-    harness|students|swallow) ;;
+    harness|personal|students) ;;
     *) echo "harness-codex: target resolver returned an invalid target" >&2; exit 2 ;;
 esac
 if [ "$release_target" != "$target" ]; then

@@ -26,8 +26,8 @@ session identities remove same-cwd resume ambiguity.
 7. Construct and accept provisional Personal Codex and Claude panes without
    touching old panes. Stop on any ambiguous launch or required phone gate.
 8. Move exact Harness and Students panes into final windows, rename the
-   session, revalidate, then retire only exact Swallow panes and normalize
-   layout. Roll back exact moved panes if acceptance fails before retirement.
+   session, revalidate, confirm Swallow absence without recreating it, and
+   normalize layout. Roll back exact moved panes if acceptance fails.
 9. Validate monitors, helper, exact resume, both remote-control surfaces,
    local agent messaging, `att`, attached client, and fleet health; complete
    the ledger and protected closeout.

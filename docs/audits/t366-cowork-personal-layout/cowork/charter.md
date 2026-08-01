@@ -13,8 +13,9 @@ Codex is the sole target writer and runtime driver; Claude is the native
 co-pilot. Planning and evidence are read-only against the live topology. Never
 read panes or transcripts, inspect credentials, disturb unrelated work, or
 retry an ambiguous client launch, message submission, or tmux promotion.
-Preserve `%87`, `%99`, `%108`, and `%109`; retire only `%100` and `%110`, and
-only after accepted Personal replacements. Non-goals include T-363 workspace
+The destroyed pane/PID identities are historical evidence only. Reconstruct
+accepted processes from exact durable session identities and do not recreate
+Swallow. Non-goals include T-363 workspace
 lifecycle, T-354 repository relocation, fleet hardening, and unrelated cleanup.
 
 Owner authority covers the exact repository, Local tmux, alias, monitor,
@@ -36,8 +37,8 @@ directory outside the target, exchange, and both sandboxes.
 ## Acceptance
 
 Every benchmark case passes on matched baseline evidence, focused tests and
-phase one pass, protected `main` publication succeeds, and live promotion
-preserves exact accepted pane/process identities. Both Personal clients have
-distinct exact resume identities and supported phone control before Swallow is
-retired. Final metadata, monitor/helper, message routing, alias, attachment,
+phase one pass, protected `main` publication succeeds, and reconstruction
+creates exact accepted pane/process identities. Both Personal clients have
+distinct exact resume identities and supported phone control before final
+acceptance. Final metadata, monitor/helper, message routing, alias, attachment,
 resume, remote-control, fleet-health, and rollback checks are value-minimized.
