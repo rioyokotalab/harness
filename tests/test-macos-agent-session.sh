@@ -44,6 +44,9 @@ for required in ("--permission-mode bypassPermissions", "--model fable",
                  "--effort high", "--remote-control", "--continue",
                  "RunAtLoad", "StartInterval"):
     assert required in source, required
+# launchd supplies a minimal PATH; Homebrew must be located explicitly or the
+# agent cannot find tmux and every scheduled run fails.
+assert "PATH=/opt/homebrew/bin:" in source
 PY
 
 # --- stub environment ----------------------------------------------------
@@ -133,7 +136,7 @@ agent() {
     HARNESS_TEST_CODEX_LAUNCHER="$BIN/harness-codex" \
     HARNESS_TEST_LAUNCH_AGENTS="$TEST_ROOT/agents" \
     HARNESS_TEST_AGENT_REPO="$TEST_ROOT/repo" \
-    PATH="$BIN:$PATH" \
+    HARNESS_TEST_BIN="$BIN" \
         "$HARNESS" macos-agent-session "$@"
 }
 

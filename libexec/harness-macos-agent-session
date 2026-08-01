@@ -9,6 +9,16 @@
 # durability and failure auto-resume.
 set -eu
 
+# launchd starts agents with a minimal PATH that omits Homebrew, so tmux and
+# the other native tools must be located explicitly, exactly as the tunnel
+# watchdog and reboot-recovery helper already do.
+if [ -n "${HARNESS_TEST_BIN:-}" ] && [ "${HARNESS_TESTING:-}" = 1 ]; then
+    PATH=$HARNESS_TEST_BIN:$PATH
+else
+    PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+fi
+export PATH
+
 HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)}
 export HARNESS_ROOT
 
