@@ -233,6 +233,12 @@ duplicate post-merge run. Organization billing totals remain unknown because
 the available read-only GitHub identity lacks `admin:org`; no scope expansion
 was requested or needed for the repository-local correction.
 
+The post-change sample contains 48 owner PR workflow events: the 47 earlier
+allocated jobs plus PR #555's zero-runtime skipped proof. Their aggregate event
+wall time is 4,652 seconds, with a 131-second median and 142-second p90. This is
+not billable private usage, but it quantifies the normal protected-merge wait
+removed from owner tasks while leaving non-owner isolation unchanged.
+
 ## Recovery and retained-branch drills
 
 The three unpublished handoff bundles were restored into independent bare
