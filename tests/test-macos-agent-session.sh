@@ -80,6 +80,11 @@ case \$1 in
             prev=\$a
         done
         printf '%s\n' "\$*" >>"$TEST_ROOT/tmux-calls"; exit 0 ;;
+    list-panes)
+        grep -v '^session\$' "\$STATE" | while read -r w; do
+            printf '%s|900\n' "\$w"
+        done
+        exit 0 ;;
     respawn-window) printf '%s\n' "\$*" >>"$TEST_ROOT/tmux-calls"; printf 'respawn\n' >>"$TEST_ROOT/respawned"; exit 0 ;;
     list-windows)
         # Honour the requested format: names only, or name|pane_dead.
@@ -127,6 +132,13 @@ chmod 700 "$BIN/id"
 
 cat >"$BIN/ps" <<'SH'
 #!/bin/sh
+case "$*" in
+    *pid=*)
+        # supervisor-orphan probe
+        [ "${FAKE_ORPHAN_SUPERVISOR:-0}" = 1 ] &&
+            echo "4242 /bin/sh /tmp/harness-codex-resilient --run --name harness-codex-resume"
+        exit 0 ;;
+esac
 if [ "${FAKE_RC_READY:-0}" = 1 ]; then
     echo "managed-owner /path/codex app-server --remote-control --listen unix://"
     echo "managed-owner /path/codex app-server daemon pid-update-loop"
@@ -208,6 +220,17 @@ FAKE_RC_READY=1 agent --host office --run-once |
     fail "a live daemon pair was not recognized"
 [ ! -f "$TEST_ROOT/rc-started" ] ||
     fail "codex remote control was restarted while already live"
+
+# --- an orphaned supervisor defers codex instead of thrashing ------------
+printf 'session\nclaude\n' >"$STATE"
+: >"$TEST_ROOT/tmux-calls"
+FAKE_ORPHAN_SUPERVISOR=1 agent --host office --run-once >"$TEST_ROOT/orphan.out" ||
+    fail "orphan-aware run failed"
+grep -Fq 'codex-deferred-legacy' "$TEST_ROOT/orphan.out" ||
+    fail "an orphaned supervisor did not defer the codex window"
+grep -Fq 'codex-resilient' "$TEST_ROOT/tmux-calls" &&
+    fail "codex window was created while a supervisor was still alive"
+printf 'session\ncodex\nclaude\n' >"$STATE"
 
 # --- a missing window is never reported live -----------------------------
 printf 'session\nclaude\n' >"$STATE"

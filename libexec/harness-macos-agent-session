@@ -118,11 +118,24 @@ claude_command() {
 }
 
 legacy_codex_live() {
-    # The legacy session runs codex-resilient under the same --name, and that
-    # supervisor keys its state file by name. Two live supervisors would fight
-    # over one state file, so the codex window is deferred until the legacy
-    # session is retired. The claude window has no such conflict.
-    $TMUX has-session -t "=$LEGACY_SESSION" 2>/dev/null
+    # codex-resilient keys its state file by --name, so a second supervisor
+    # under the same name exits immediately. Deferring only on the legacy
+    # tmux session is not enough: killing that session can leave the
+    # supervisor orphaned but alive, and the codex window would then be
+    # recreated and die on every scheduled tick. Defer whenever a supervisor
+    # for this name is alive anywhere outside the unified session.
+    if $TMUX has-session -t "=$LEGACY_SESSION" 2>/dev/null; then
+        return 0
+    fi
+    unified_pid=$($TMUX list-panes -t "=$SESSION" \
+        -F '#{window_name}|#{pane_pid}' 2>/dev/null |
+        awk -F '|' -v w="$CODEX_WINDOW" '$1 == w { print $2; exit }')
+    ps -axo pid=,args= 2>/dev/null |
+        awk -v mine="${unified_pid:-0}" '
+            $1 == mine { next }
+            /harness-codex-resilient|codex-resilient/ { found = 1 }
+            END { exit found ? 0 : 1 }
+        '
 }
 
 ensure_session() {
