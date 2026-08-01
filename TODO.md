@@ -17,13 +17,6 @@ Next free ID: T-366.
 
 ## Active queue
 
-### T-365 — Direct Local Codex-to-Claude messages
-
-**Phase:** implementation validated; publish the protected change, then
-reconcile rollout without sending a live message.
-
-**Record:** `docs/tasks/T-365.md`.
-
 ### T-363 — Workspace lifecycle for alternating clients
 
 **Phase:** proposal; awaiting an owner decision between per-turn worktrees and
