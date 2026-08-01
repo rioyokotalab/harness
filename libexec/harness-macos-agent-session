@@ -119,11 +119,27 @@ codex_command() {
         "$HARNESS_ROOT/bin/harness" harness-codex-resume
 }
 
+claude_projects_dir() {
+    if [ -n "${HARNESS_TEST_CLAUDE_PROJECTS:-}" ]; then
+        [ "${HARNESS_TESTING:-}" = 1 ] || die "test projects override is unsafe"
+        printf '%s' "$HARNESS_TEST_CLAUDE_PROJECTS"
+        return
+    fi
+    printf '%s' "$HOME/.claude/projects"
+}
+
 claude_command() {
     # Frozen launch contract: bypass permissions, Fable, high effort, remote
-    # control named for the logical host, resuming the latest conversation.
-    printf 'exec %s --permission-mode bypassPermissions --model fable --effort high --remote-control %s --continue' \
-        "$(claude_bin)" "$logical_host"
+    # control named for the logical host. Resume only when this account has a
+    # conversation to resume: --continue on a host with none exits with "No
+    # deferred tool marker found", which would kill the window and make the
+    # scheduled tick recreate it forever.
+    resume=
+    if [ -n "$(ls -A "$(claude_projects_dir)" 2>/dev/null)" ]; then
+        resume=" --continue"
+    fi
+    printf 'exec %s --permission-mode bypassPermissions --model fable --effort high --remote-control %s%s' \
+        "$(claude_bin)" "$logical_host" "$resume"
 }
 
 legacy_codex_live() {
