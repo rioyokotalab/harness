@@ -1,10 +1,12 @@
 task	state	summary	source
+T-370	blocked	Enforce symmetric task-worktree lifecycle after T-369	TODO.md;docs/tasks/T-370.md
+T-369	active	Evidence-first portfolio reset and guarded cleanup	TODO.md;docs/tasks/T-369.md;docs/audits/t369-portfolio-review-2026-08-02.md
 T-368	complete	Retired the Codex-Claude Cowork skill	docs/tasks/T-368.md
 T-367	complete	Post-reorganization quick fixes	docs/tasks/T-367.md
 T-366	complete	Unified Harness cowork and Personal tmux layout	docs/tasks/T-366.md;docs/audits/t366-cowork-personal-layout/cowork
 T-365	complete	Direct Local Codex-to-Claude messages	docs/tasks/T-365.md
 T-364	complete	Safe repository cleanup and durable recovery evidence	docs/tasks/T-364.md;docs/plans/t364-housekeeping-cleanup-safety.md;docs/audits/t364-housekeeping-cleanup/audit.md
-T-363	active	Workspace lifecycle for alternating clients	TODO.md;docs/tasks/T-363.md
+T-363	complete	Workspace lifecycle decision superseded by simpler T-370 design	docs/tasks/T-363.md;docs/tasks/T-370.md
 T-362	complete	Routine housekeeping workflow	docs/tasks/T-362.md
 T-361	complete	Unified managed-Mac agent session with Claude parity	docs/tasks/T-361.md
 T-360	complete	Correct Mac remote-control readiness detection	docs/tasks/T-360.md
@@ -13,7 +15,7 @@ T-358	complete	Overnight duration run: claude tmux window and multi-repo develop
 T-357	complete	Personal owned-calendar write controller	docs/tasks/T-357.md
 T-356	complete	Personal-only email/calendar connector boundary	docs/tasks/T-356.md;docs/plans/t356-personal-connector-isolation.md
 T-355	complete	Private Personal operations project	docs/tasks/T-355.md;docs/plans/t355-personal-project.md
-T-354	blocked	Relocate repository-native Codex roots under projects	TODO.md;docs/tasks/T-354.md
+T-354	complete	Relocation canceled because risk exceeds cosmetic value	docs/tasks/T-354.md;docs/tasks/T-369.md
 T-353	complete	Graceful Claude Fable-to-Opus fallback	docs/tasks/T-353.md
 T-352	complete	Pane-native Local Codex session	docs/tasks/T-352.md;docs/plans/t352-pane-native-projects.md
 T-351	complete	Autonomy and execution-efficiency duration task	docs/tasks/T-351.md;docs/plans/t351-autonomy-efficiency.md;docs/audits/t351-autonomy-efficiency/time-slices.md

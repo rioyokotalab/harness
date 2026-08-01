@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-369.
+Next free ID: T-371.
 
 ## Resume contract
 
@@ -17,20 +17,22 @@ Next free ID: T-369.
 
 ## Active queue
 
-### T-363 — Workspace lifecycle for alternating clients
+### T-369 — Evidence-first portfolio reset and guarded cleanup
 
-**Phase:** proposal; awaiting an owner decision between per-turn worktrees and
-the same plus an observability lease, and on the enforcement surface. Nothing
-implemented.
+**Phase:** active until 2026-08-02 12:00 JST; discovery and benchmark
+freeze are in progress. Material changes stop at 10:45 JST.
 
-**Record:** `docs/tasks/T-363.md`.
+**Record:** `docs/tasks/T-369.md`.
 
-### T-354 — Relocate repository-native Codex roots under `projects`
+### T-370 — Enforce symmetric task-worktree lifecycle
 
-**Phase:** blocked until the live checkout occupying the exact Students
-destination is retired; no direct rename is safe.
+**Phase:** queued after T-369; design A is frozen: isolated worktree per task,
+reference checkout kept clean on `main`, and mandatory guarded teardown. No
+lease is required for correctness.
 
-**Record:** `docs/tasks/T-354.md`.
+**Record:** `docs/tasks/T-370.md`.
+
+## Deferred gates
 
 ### T-196 — Backup lifecycle phase 2
 
@@ -49,6 +51,12 @@ destination is retired; no direct rename is safe.
 **Phase:** blocked on trusted administrator or console verification.
 
 **Record:** `docs/tasks/T-303.md`. Do not retry the unverified network path.
+
+## Canceled or superseded in T-369
+
+- T-363 is superseded by the simpler frozen T-370 design.
+- T-354 is canceled: relocating healthy canonical roots is cosmetic and does
+  not justify the saved-root, runtime, encrypted-state, and phone cutover risk.
 
 ## Completed-task lookup
 
