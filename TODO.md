@@ -19,9 +19,11 @@ Next free ID: T-367.
 
 ### T-366 — Unified Harness cowork and Personal tmux layout
 
-**Phase:** final topology is live and healthy; awaiting only the owner's
-physical-phone confirmation for Harness, Personal, and Students in both Codex
-and Claude before durable closeout.
+**Phase:** the missing Codex Personal initialization turn was submitted once
+and is complete; monitor regression coverage now rejects empty canonical
+roots. Awaiting fresh physical-phone confirmation. Preserve the inactive
+failed Claude Harness lineage pending a supported product-side retirement
+path.
 
 **Record:** `docs/tasks/T-366.md`.
 

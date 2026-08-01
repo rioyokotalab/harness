@@ -188,7 +188,7 @@ connection = sqlite3.connect(str(database))
 connection.execute(
     "CREATE TABLE threads ("
     "id TEXT PRIMARY KEY, rollout_path TEXT, source TEXT, cwd TEXT, "
-    "title TEXT, archived INTEGER, name TEXT)"
+    "title TEXT, archived INTEGER, name TEXT, tokens_used INTEGER)"
 )
 locations = {
     "harness": (0, "cowork", 0),
@@ -202,7 +202,7 @@ for role in ("harness", "personal", "students"):
     rollout.write_text("{}\n")
     os.chmod(str(rollout), 0o600)
     connection.execute(
-        "INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (
             thread,
             str(rollout),
@@ -211,6 +211,7 @@ for role in ("harness", "personal", "students"):
             role,
             0,
             role,
+            1,
         ),
     )
     mapping[role] = {
@@ -267,6 +268,21 @@ assert healthy["status"] == "healthy"
 assert healthy["mismatch_classes"] == []
 
 connection.execute(
+    "UPDATE threads SET tokens_used = 0 WHERE id = 'thread-personal'"
+)
+connection.commit()
+empty_personal, _drift = module.phone_mirror_snapshot(
+    mapping, str(database), processes, target_paths, str(codex_home)
+)
+assert empty_personal["status"] == "degraded"
+assert empty_personal["roles"]["personal"]["initialized_turn"] is False
+assert "initialized_turn:personal" in empty_personal["mismatch_classes"]
+connection.execute(
+    "UPDATE threads SET tokens_used = 1 WHERE id = 'thread-personal'"
+)
+connection.commit()
+
+connection.execute(
     "UPDATE threads SET source = 'exec' WHERE id = 'thread-personal'"
 )
 connection.commit()
@@ -310,7 +326,7 @@ connection.execute(
 extra_rollout = sessions / "extra.jsonl"
 extra_rollout.write_text("{}\n")
 connection.execute(
-    "INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     (
         "thread-extra",
         str(extra_rollout),
@@ -319,10 +335,11 @@ connection.execute(
         "extra",
         0,
         "extra",
+        1,
     ),
 )
 connection.execute(
-    "INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     (
         "thread-subagent",
         str(extra_rollout),
@@ -331,10 +348,11 @@ connection.execute(
         "subagent",
         0,
         "subagent",
+        1,
     ),
 )
 connection.execute(
-    "INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     (
         "thread-exec",
         str(extra_rollout),
@@ -343,6 +361,7 @@ connection.execute(
         "exec",
         0,
         "exec",
+        1,
     ),
 )
 connection.commit()
