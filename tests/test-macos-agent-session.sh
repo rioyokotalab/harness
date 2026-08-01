@@ -121,6 +121,13 @@ chmod 700 "$BIN/tmux"
 
 cat >"$BIN/claude" <<'SH'
 #!/bin/sh
+if [ "${1:-}" = auth ]; then
+    if [ "${FAKE_CLAUDE_LOGGED_OUT:-0}" = 1 ]; then
+        echo '{"loggedIn":false,"authMethod":"none"}'
+    else
+        echo '{"loggedIn":true,"authMethod":"claude.ai"}'
+    fi
+fi
 exit 0
 SH
 chmod 700 "$BIN/claude"
@@ -257,6 +264,20 @@ grep -Fq 'codex-deferred-legacy' "$TEST_ROOT/orphan.out" ||
     fail "an orphaned supervisor did not defer the codex window"
 grep -Fq 'codex-resilient' "$TEST_ROOT/tmux-calls" &&
     fail "codex window was created while a supervisor was still alive"
+printf 'session\ncodex\nclaude\n' >"$STATE"
+
+# --- an unauthenticated host defers instead of thrashing -----------------
+printf 'session\ncodex\n' >"$STATE"
+: >"$TEST_ROOT/tmux-calls"
+FAKE_CLAUDE_LOGGED_OUT=1 agent --host office --run-once >"$TEST_ROOT/noauth.out" ||
+    fail "unauthenticated run failed"
+grep -Fq 'claude-deferred-unauthenticated' "$TEST_ROOT/noauth.out" ||
+    fail "an unauthenticated host did not defer the claude window"
+grep -Fq 'bypassPermissions' "$TEST_ROOT/tmux-calls" &&
+    fail "a claude window was launched without credentials"
+FAKE_CLAUDE_LOGGED_OUT=1 agent --host office --status >"$TEST_ROOT/noauth-status.out" 2>&1 || true
+grep -Fq 'claude_auth=unauthenticated' "$TEST_ROOT/noauth-status.out" ||
+    fail "status did not report the unauthenticated reason"
 printf 'session\ncodex\nclaude\n' >"$STATE"
 
 # --- a command that merely mentions the supervisor must not defer --------
