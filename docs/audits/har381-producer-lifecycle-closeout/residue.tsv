@@ -1,6 +1,7 @@
 path_or_pattern	count	classification	disposition
 /tmp/harness-connection-monitor.*	1	live-monitor-state	retain
 /tmp/harness-har381-portfolio-progress	1	active-nightly-worktree	retain-until-final-publication
+/tmp/*reference*	12	reconstructed-archive-audit-anchors	retain-until-archive-ownership-migration
 /tmp/personal-pending-record-fix	1	preexisting-dirty-linked-worktree	preserve
 /tmp/personal-per012-readme-ledger-map	1	preexisting-dirty-linked-worktree	preserve
 /tmp/personal-per013-implementation	1	policy-invalid-dirty-linked-worktree	preserve-and-report

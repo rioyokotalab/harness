@@ -66,6 +66,22 @@ on its absent repository-mandated fixed SSH socket. Slice 2 will independently
 audit lifecycle invariants, validation cost, archive receipts, and remaining
 local/remote classifications without touching consumers or gated targets.
 
+The archive audit immediately exposed a nested cleanup defect. Although the
+clean reference clones were exact protected-main copies, their deletion made
+the archive receipts' Git common-directory pathnames absent. The immutable
+bundles remained intact, so the exact six roots removed in slice 1 plus six
+older missing historical roots were reconstructed locally. All 83 archive
+receipts then passed. A new 205,638,273-byte generation independently restored
+121 heads across 17 repository identities; the post-generation report has
+zero uncovered receipts, zero incomplete applies, and no candidate.
+
+The finding produced a focused prevention change: worktree housekeeping plan
+and apply now reject a scratch-root repository as archive owner, while still
+allowing the task worktree itself in scratch. Its focused suite passes. The
+reconstructed roots remain classified archive anchors rather than being
+deleted a second time; future work must migrate historical archive ownership
+before those exact pathnames can safely disappear.
+
 ## Slice 3 — 03:00–04:00
 
 Pending.
