@@ -679,7 +679,21 @@ substituted for Har-383's real parser, schema, Git, and hostile-path benchmark.
 
 ## Slice 7 — 07:00–08:00
 
-Pending.
+Initial checkpoint at 07:00 JST: candidate
+`e4f21a956a555c7c5c02dc378a0cdf9ed0e369d1` is clean and exactly matches its
+remote branch. Slice 6 closed with no late state mutation. The productive-idle
+result is now frozen as one 7,583-byte execution contract, 19 normative
+scenarios, 18 acceptance measures, a 27,449-byte lookup-only research design,
+and a 20-fact compaction check. Har-382 and Har-383 remain the only new
+follow-up allocations planned for final producer reconciliation.
+
+No further nonterminal documentation or implementation byte is planned. The
+one final integrated R3 phase-one run is therefore advanced from its
+conservative 07:40 target to this boundary, increasing closeout margin without
+repeating a check. It must cover the exact committed tree after this boundary
+checkpoint. Later terminal board/record/index/receipt bytes remain
+writer-bounded documentation and receive the separately planned plain ledger,
+consumer diff, and R0 checks before publication.
 
 ## Slice 8 — 08:00–09:00
 
