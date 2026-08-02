@@ -6,7 +6,7 @@ indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
 Current and future Harness tasks use the `Har-NNN` namespace. Historical
 `T-NNN` identifiers remain unchanged in the completed-task index and archives.
-Next free ID: Har-378.
+Next free ID: Har-379.
 
 ## Resume contract
 
@@ -18,6 +18,13 @@ Next free ID: Har-378.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### Har-378 — Repository-local producer/consumer task protocol
+
+**Phase:** interviewing; no target-repository or runtime mutation is authorized
+until the owner completes the decision register and gives an explicit `go`.
+
+**Record:** `docs/tasks/Har-378.md`.
 
 ### Har-371 — Migrate legacy managed primary branches
 
