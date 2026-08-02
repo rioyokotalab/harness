@@ -180,6 +180,45 @@ with a small run-manifest schema and three commands:
 - `nightly-receive` accepts one completion, blocked, skipped, or interrupted
   receipt and enforces one terminal disposition for every pulled card.
 
+Keep the implementation separate from the 317-line task-ledger selector during
+the pilot. The current task tool and its 370-line unit suite protect durable
+goal allocation and lifecycle convergence; reserve-card selection is a
+different state machine and should not enlarge that trusted surface until the
+pilot proves a common abstraction. A small `tools/nightly-queue.py` can share
+only strict metadata helpers after equivalence tests exist.
+
+The writer-compatible layout is:
+
+```text
+docs/producer/nightly/
+├── index.tsv                 # bounded persistent reserve catalog
+├── cards/<opaque-id>.md      # immutable repository-local card
+└── runs/<run-id>.tsv         # immutable admitted-card manifest
+docs/consumer/nightly-receipts/<run-id>/<opaque-id>.md
+docs/audits/<run-id>/         # execution benchmark and value-free summary
+```
+
+The catalog and admitted manifest are producer-owned and are frozen before
+target execution. The consumer-side executor writes only receipts and task
+evidence. Final producer reconciliation closes the run disposition without
+rewriting card or manifest bytes. This mirrors the already-proven task packet
+and receipt lifecycle instead of creating a second mutable shared board.
+
+Each repository owns its detailed cards. Harness's portfolio manifest contains
+only opaque repository-local IDs and digests, so a private objective or path
+never crosses into the public repository. Persistent catalogs are capped at
+12 open cards per repository; a thirteenth requires completing, expiring, or
+superseding an existing card. The ordinary producer cycle replenishes catalogs
+from demonstrated findings. An empty catalog is valid and cannot be treated as
+permission to generate work recursively.
+
+To avoid a producer PR in every repository before every night, cards live in
+protected state before selection. The one Harness preparation transition
+freezes the portfolio run manifest by opaque ID and protected base digest. On
+execution, the producer opens only the selected repository-local card and
+revalidates its named predicate. A card absent from protected state at freeze
+time is not executable that night.
+
 Repository-local cards and receipts remain private to their repositories. A
 Harness portfolio manifest contains only repository, opaque card ID, class,
 minutes, conflict key, and disposition. The selector must be deterministic and
@@ -192,6 +231,21 @@ task during final reconciliation. This prevents a nightly from flooding
 `TODO.md` merely because it explored alternatives. Producer changes selected
 within one repository should share at most one producer publication candidate
 for that night, but producer and consumer writer surfaces remain separate.
+
+The default catalog accepts only `read-only`, `repository-local`, and ordinary
+protected-publication cards already covered by the run's frozen authority.
+Credentials, account/hosting settings, deployments, external messages,
+consumer-runtime mutation, destructive remote operations, and any owner gate
+are never reserve work merely because time remains. They may appear only as a
+blocked observation or as a separately frozen primary objective.
+
+Selection pseudocode is intentionally small: verify manifest and packet
+digests; exclude terminal receipts; evaluate built-in named predicates against
+freshness receipts; reject expired, unauthorized, stale-base, privacy-unsafe,
+or held-conflict cards; enforce latest safe start; then sort by primary flag,
+priority, repository fairness age, expiry, and opaque ID. If no card survives,
+consume the one bounded discovery allowance or return the exact wait state.
+No card supplies a shell command or executable predicate from Markdown.
 
 ## Validation experiment
 

@@ -544,6 +544,17 @@ replaying a prompt. Sixteen normative scenarios now cover fit, authority,
 privacy, conflicts, stale bases, cached reads, bounded discovery, owner
 interrupts, overruns, fairness, task-local LIFO, and exact terminal receipts.
 
+Feasibility against the existing writer validator then resolved a role
+ambiguity. The immutable reserve catalog and per-run manifest belong under a
+repository's producer-owned paths and are frozen before execution; the active
+executor writes only repository-local receipts and audit evidence. Final
+producer reconciliation closes dispositions without packet rewrites. Harness
+holds only opaque sibling card IDs and digests. A separate pilot selector is
+preferred over enlarging the current 317-line durable task selector and its
+370-line unit suite before equivalence is proven. Catalogs remain bounded,
+cards carry no executable shell predicates, and external/credential/deployment
+or consumer-runtime actions can never become reserve work by elapsed time.
+
 ## Slice 7 — 07:00–08:00
 
 Pending.
