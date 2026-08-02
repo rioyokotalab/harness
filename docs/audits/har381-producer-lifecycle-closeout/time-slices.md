@@ -555,6 +555,14 @@ preferred over enlarging the current 317-line durable task selector and its
 cards carry no executable shell predicates, and external/credential/deployment
 or consumer-runtime actions can never become reserve work by elapsed time.
 
+The changed owner input also changes final producer allocation. Har-382 remains
+the priority-1 archive-owner migration already justified by recovered anchor
+cost. Har-383 becomes a priority-2 Harness-only productive-idle pilot pointing
+to the new design and scenarios; the next free ID advances to Har-384. Both
+packets remain compact and immutable, and no sibling protocol rollout is part
+of Har-383. The final producer transition is still one writer-pure candidate,
+so the protected closeout count and timing do not increase.
+
 ## Slice 7 — 07:00–08:00
 
 Pending.
