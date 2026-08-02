@@ -202,10 +202,11 @@ generic `go`; no packet can widen a closer safety boundary.
 
 ### D-002 — Strength of producer-only write enforcement
 
-Open. Recommended: instruction + validator + role-aware repository command,
-with no new credential. This is strong for compliant Codex/Claude agents but
-not cryptographic because all sessions share the owner's identities. A truly
-cryptographic boundary requires a separate producer Git identity/credential.
+Selected: instruction + validator + role-aware repository command restricted
+to `harness:cowork.0` Codex, with no new credential. This is strong for
+compliant Codex/Claude agents but not cryptographic because all sessions share
+the owner's identities. The added account and credential-management burden of
+a separate producer identity is not warranted.
 
 ### D-003 — Top-level task selection order
 
@@ -227,6 +228,7 @@ retains its native validation and deployment boundaries.
 
 ## Exact next action
 
-Ask D-002 only. Record the answer before asking D-003. No target repository,
+Ask D-003 only using numbered choices. Record the answer before asking D-004.
+No target repository,
 runtime, schedule, assignment, or external state may change before all five
 decisions are frozen and the owner gives an explicit `go`.
