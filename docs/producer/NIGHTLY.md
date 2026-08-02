@@ -18,7 +18,8 @@ consumer mutation.
    checks pass and measured time or token cost improves.
 5. Preserve existing goals and gates. Only the producer may create, cancel, or
    reprioritize durable goals; consumers remain idle throughout compaction.
-6. Validate and publish this repository independently through its native
+6. Run `python3 tools/producer-ledger.py validate --require-converged`, then
+   validate and publish this repository independently through its native
    protected workflow. One blocked repository must not hold another's branch,
    worktree, or ledger.
 7. Use guarded cleanup for recursive or multi-path residue. Finish with clean
