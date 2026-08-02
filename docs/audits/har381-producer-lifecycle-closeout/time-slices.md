@@ -470,6 +470,38 @@ facts match the 04:00 report, but the duplicate read is retained here as an
 execution incident rather than misreported as a single sample. No archive,
 plan, manifest, generation, compaction, or repository byte was written.
 
+Final public-audit timing is now fixed to avoid an artificial self-referential
+commit loop. The terminal consumer commit will be audited before its protected
+push; the value-free report is parsed into the closeout decision but not added
+as another tracked artifact that would itself require a new audit commit. The
+producer reconciliation adds only the already-reviewed queue, config, index,
+and bounded packet bytes. After that second merge, protected main receives one
+fresh read-only public audit, whose exact result belongs in the owner handoff
+rather than a third writer transition. Any new finding count, exposed value,
+unsafe output identity, or audit failure stops publication. A private exact
+temporary output pathname is checked absent before use and unlinked
+non-recursively after parsing; no recursive cleanup is needed.
+
+Validation remains similarly finite and risk-proportional. The one final R3
+phase-one run covers the complete implementation and nonterminal evidence tree
+at 07:40. Terminal board, record, index, receipt, and audit-summary changes are
+then covered by diff check, plain ledger validation, the consumer writer
+boundary, and routed R0. The separate producer-only candidate is covered by
+strict convergence, producer writer-boundary validation, and routed R0.
+Protected-main readback after both merges verifies that the final tree selects
+Har-382, has no reconciliation pending, and preserves approvals at zero. No
+unchanged runtime suite is rerun between those gates.
+
+Hosted publication remains evidence, not delegated validation. Each PR is
+created only from a freshly resolved exact branch head. The expected
+trusted-owner result is exactly one skipped `portable-phase1` check, as already
+observed on the same workflow contract. Before each squash merge, the PR head,
+base, draft flag, conflict state, check name, workflow, state, and bucket are
+read back. A pending, failed, absent, additional, or differently named result
+is unknown and stops rather than being normalized into the expected skip.
+`--match-head-commit` binds the merge to the read head; remote-branch deletion
+remains disabled and no branch cleanup flag is used.
+
 ## Slice 6 — 06:00–07:00
 
 Pending.
