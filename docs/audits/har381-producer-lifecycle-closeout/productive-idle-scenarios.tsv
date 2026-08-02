@@ -27,3 +27,4 @@ lower-tail-shortage	p50-and-p90-cover-window-p10-does-not	report-lower-tail-shor
 admission-headroom	eligible-card-remains-before-32-card-cap	admit-card	p50-coverage-never-stops-reserve-admission
 cross-repository-privacy	public-controller-requests-private-priority-or-expiry	reject	ready-idle-block-is-only-cross-repository-card-status
 discovery-scope	short-coverage-with-unrelated-history-branches-tmp-and-web	delta-routed-scan-only	no-broad-search-to-fill-time
+event-rewrite	selected-event-truncated-replaced-inserted-or-resequenced	reject	event-journal-is-append-only

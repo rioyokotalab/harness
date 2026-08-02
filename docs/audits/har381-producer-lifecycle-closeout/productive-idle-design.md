@@ -351,8 +351,9 @@ preparation transitions while keeping new goals and reusable opportunities on
 the producer-only surface.
 
 Repository-local cards, manifests, and receipts remain private to their
-repositories. The selector must be deterministic and side-effect free. No
-service, dependency, or hosted scheduler is required.
+repositories. Candidate calculation must be deterministic and side-effect
+free; only `nightly-start` writes the atomic selection event. No service,
+dependency, or hosted scheduler is required.
 
 Catalog entries are bounded opportunity templates, not durable repository task
 IDs. Admission creates a run-scoped `(run-token, opportunity-id)` instance.
@@ -406,9 +407,11 @@ manifest, opportunity packet, and digest; exclude terminal run-instance
 receipts; evaluate built-in named predicates against freshness receipts;
 reject expired, unauthorized, stale-base, privacy-unsafe, or held-conflict
 cards; enforce latest safe start; then sort by primary flag, priority,
-repository fairness age, expiry, and opaque ID. If no card survives, consume
-the one bounded discovery allowance or return the exact wait state. No card
-supplies a shell command or executable predicate from Markdown.
+expiry, and opaque ID inside that repository. The private controller ring
+chooses among repositories that report ready; local priority never enters a
+cross-repository sort. If no card survives, consume the one bounded discovery
+allowance or return the exact wait state. No card supplies a shell command or
+executable predicate from Markdown.
 
 Selection also needs a crash boundary. `nightly-start` appends a `selected`
 event to `docs/audits/<run-token>/events.tsv`; the controller checkpoints it
@@ -421,6 +424,14 @@ receipt as an idempotent no-op, while a payload mismatch is rejected. This
 small event journal resolves the tension between pure candidate calculation
 and at-most-once mutation: candidate calculation stays read-only, but execution
 cannot begin until its selection event is durable.
+
+The event journal is append-only rather than merely schema-valid. Every update
+must preserve the previous committed blob as an exact prefix and append one
+complete row with the next sequence number. Truncation, replacement, insertion,
+duplicate selection, or non-fast-forward ancestry fails before target action.
+Receipts are immutable after first atomic publication. This gives cold recovery
+evidence that an unresolved selection was not erased locally to make a replay
+appear eligible.
 
 ## Owner and progress experience
 
@@ -451,7 +462,7 @@ Run one matched two-night pilot before changing all five protocols:
    not repeated checks.
 2. Seed synthetic cards covering ready, gated, expired, conflicting,
    too-large, private, and authority-blocked cases. Assert deterministic
-   selection, privacy isolation, no starvation at equal priority, and exact
+   selection, privacy isolation, no starvation among ready repositories, and exact
    terminal receipts.
 3. Compare current and proposed protocols on active minutes, repeated mutable
    reads, commentary/checkpoint count, routed bytes, command count, validation
@@ -473,7 +484,7 @@ controller, or touch a sibling repository. Synthetic fixtures exercise local
 catalog and admission paths without crossing the producer writer boundary.
 
 After the consumer receipt, normal producer reconciliation closes Har-383. If
-and only if all 28 scenarios and 25 acceptance measures pass, that producer
+and only if all 29 scenarios and 26 acceptance measures pass, that producer
 transition may allocate a later Harness rollout task. The rollout task—not
 Har-383—may seed a protected Harness opportunity catalog and update the nightly
 protocol. Sibling rollout remains a further evidence-gated decision. This
@@ -481,7 +492,7 @@ keeps code validation, producer-owned state, and policy activation in their
 proper writer phases and makes rejection of the experiment cheap.
 
 The normative scenario table is `productive-idle-scenarios.tsv`. At minimum,
-a prototype must satisfy all 28 rows, including changed owner input, stale
+a prototype must satisfy all 29 rows, including changed owner input, stale
 target state, p90 overrun, private metadata rejection, dirty or rewritten
 admissions, late catalog cards, honest shortage forecasts, work-conserving
 selection, crash recovery, idempotent receipts, one-way finalization, exact

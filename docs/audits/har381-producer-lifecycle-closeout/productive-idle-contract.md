@@ -90,6 +90,13 @@ types, oversized content, arbitrary executable predicates, and overwrite of an
 existing admission or receipt. Fixture writes are atomic and interruption
 tests cover failure before and after publication.
 
+`events.tsv` is append-only. Relative to its last committed blob, a write must
+preserve the exact byte prefix and add one complete schema-valid row with the
+next sequence number; truncation, replacement, row insertion, duplicate
+selection, and non-fast-forward history are rejected. A receipt is immutable
+after its first atomic publication. These checks apply to dirty recovery state
+before any new selection.
+
 Owner input arriving during a wait is an exact task amendment, not a manifest
 rewrite or reusable card. It invalidates the one-shot wait token. Finish or
 safely checkpoint any current atomic action first, and reconcile an ambiguous
@@ -126,7 +133,7 @@ no-op; a changed duplicate is rejected. Selection is never completion. The
 same predicate cannot run twice in one night after a no-change receipt.
 
 Selection is work-conserving within the frozen scope: it may return wait only
-when no eligible card fits. It recalculates remaining p50/p90 coverage after
+when no eligible card fits. It recalculates remaining p10/p50/p90 indicators after
 every terminal receipt because a completed card may change another card's
 predicate. A shortfall discovered after `go` changes the forecast to
 `planned-wait`; it does not admit late work.
@@ -175,7 +182,7 @@ sentence is sufficient for its hourly evidence slice.
 ## Pilot acceptance
 
 Use `productive-idle-scenarios.tsv` and `productive-idle-acceptance.tsv` as
-normative data. All 28 scenarios and all 25 measures must pass, including the
+normative data. All 29 scenarios and all 26 measures must pass, including the
 matched replay from checkpoint `c508483`, zero early duplicate reads, no more
 than one wait checkpoint, unchanged always-read bytes, zero billable Actions
 increase, no extra protected transition, no value exposure or writer violation,

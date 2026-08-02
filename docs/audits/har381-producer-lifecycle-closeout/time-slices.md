@@ -746,8 +746,15 @@ artifact per proposal. It does not sweep unrelated history, branches,
 worktrees, `/tmp`, fleet state, or the web. Missing promotion evidence is a
 valid empty result. A ninth scenario and seventh measure enforce zero unrelated
 discovery reads. Current normative totals are 28 scenarios and 25 measures.
-The final required route is 14,918 bytes versus 35,721 bytes with lookup
-rationale, a 20,803-byte (58.238%) reduction. These are
+The recovery journal itself was then made append-only: every update preserves
+the last committed blob as an exact prefix and adds one sequenced row;
+truncation, replacement, insertion, duplicate selection, or non-fast-forward
+ancestry fails before action, and receipts are immutable. This closes the case
+where an unresolved selection could be erased to make replay appear eligible.
+A tenth scenario and eighth measure cover rewrite attempts. Current normative
+totals are 29 scenarios and 26 measures. The final required route is 15,506
+bytes versus 36,577 bytes with lookup rationale, a 21,071-byte (57.607%)
+reduction. These are
 documentation-only follow-up-contract changes; the live nightly remains
 untouched. Terminal board/record/index/receipt bytes and these late
 documentation deltas receive the planned ledger, consumer-diff, and R0 checks
