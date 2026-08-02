@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-375.
+Next free ID: T-376.
 
 ## Resume contract
 
@@ -47,15 +47,10 @@ checkpoint. All eight chains stay 2/8 pending snapshot/private-state acceptance.
 
 **Record:** `docs/tasks/T-303.md`. Do not retry the unverified network path.
 
-## Canceled or superseded in T-369
-
-- T-363 is superseded by the simpler frozen T-370 design.
-- T-354 is canceled: relocating healthy canonical roots is cosmetic and does
-  not justify the saved-root, runtime, encrypted-state, and phone cutover risk.
-
 ## Completed-task lookup
 
 The exact pre-T-351 board is preserved at
 `docs/history/TODO-full-archive-2026-07-30.md`. Use
-`docs/tasks/index.tsv` to locate one completed task's plan or evidence; chat
-history and client memory are never authoritative.
+`docs/tasks/index.tsv` to locate completed, canceled, or superseded work,
+including T-354 and T-363; chat history and client memory are never
+authoritative.
