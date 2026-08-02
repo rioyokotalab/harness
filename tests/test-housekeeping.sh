@@ -527,6 +527,11 @@ for reason in tracked-residue untracked-residue ignored-residue nested-repositor
 done
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
+if HARNESS_TEST_ENFORCE_DURABLE_ARCHIVE_OWNER=1 \
+    house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN" \
+    >/dev/null 2>&1; then
+    fail "scratch-root repository applied a worktree archive plan"
+fi
 OUT=$(house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN") || fail "guarded worktree apply failed"
 printf '%s\n' "$OUT" | grep -Fq 'removed=1' || fail "worktree apply count changed"
 [ ! -e "$TEST_ROOT/wt-clean" ] || fail "clean worktree directory survived"
