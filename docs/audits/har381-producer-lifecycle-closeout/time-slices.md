@@ -82,6 +82,13 @@ reconstructed roots remain classified archive anchors rather than being
 deleted a second time; future work must migrate historical archive ownership
 before those exact pathnames can safely disappear.
 
+The resulting clean checkpoint passed the complete 96-suite R3 phase-one gate
+in 77.85 seconds. The owning housekeeping suite passed in 30.62 seconds, and
+all lifecycle, recovery, fleet, public-audit, guarded-delete, policy, routing,
+and source-contract suites passed. Native MPI was correctly skipped because
+this is not a declared MPI environment. The receipt is explicitly a local
+same-trust self-attestation, not independent CI.
+
 ## Slice 3 — 03:00–04:00
 
 Pending.
