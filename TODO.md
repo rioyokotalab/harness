@@ -7,7 +7,6 @@ indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
 Current and future Harness tasks use the `Har-NNN` namespace. Historical
 `T-NNN` identifiers remain unchanged in the completed-task index and archives.
-
 ## Resume contract
 
 1. Read root `AGENTS.md`, `PRODUCER.md`, and the selected packet.
