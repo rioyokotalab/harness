@@ -200,6 +200,29 @@ narrate. The wait controller should emit only a start checkpoint, named wake
 reason, and resume checkpoint. If the product requires a heartbeat, it should
 be machine-generated and value-free rather than consume model turns.
 
+### 5. Anti-make-work constraints
+
+A reserve card is invalid when its only acceptance is elapsed time, command
+count, commit count, prose volume, repeated observation, or creation of more
+cards. Splitting one objective into multiple cards does not increase coverage;
+cards sharing an evidence predicate and enduring output are one unit. A due
+scan that finds no issue may close `no-change`, but the same predicate cannot
+run again in that night. Discovery may propose at most three future cards and
+cannot select its own proposals until a later producer freeze.
+
+An enduring output is one of: accepted code/test/policy improvement; a measured
+decision that adopts, adapts, experiments, rejects, or leaves unresolved a
+specific option; a terminal receipt that changes executable queue state; or a
+bounded owner decision packet. Progress narration, a fresh timestamp, and an
+unchanged read are evidence transport, not outputs.
+
+Autonomy comes from freezing card authority classes with the owner's initial
+`go`, not from asking at every pull. Efficiency comes from returning one packet
+path and reusing freshness receipts, not from loading every catalog. Safety is
+then enforced at the card boundary through immutable scope, conflict keys,
+latest start, privacy class, and exact receipts. Missing authority remains a
+blocked disposition and never becomes a reason to spend the remaining window.
+
 ## Minimal repository-native shape
 
 Do not add a heavyweight workflow engine. Extend the existing producer tool
@@ -235,6 +258,12 @@ target execution. The consumer-side executor writes only receipts and task
 evidence. Final producer reconciliation closes the run disposition without
 rewriting card or manifest bytes. This mirrors the already-proven task packet
 and receipt lifecycle instead of creating a second mutable shared board.
+
+Dedicated Personal and Students consumers remain idle during a producer
+nightly and never pull reserve cards. Cards are executed by the sole producer
+in isolated repository-native worktrees. A finding that deserves later
+consumer implementation is promoted at final reconciliation into a normal
+durable task, rather than injected into a sleeping consumer's board.
 
 Each repository owns its detailed cards and byte-binding digests. Harness's
 public portfolio manifest contains only repository, opaque run/card token,
@@ -272,6 +301,14 @@ Credentials, account/hosting settings, deployments, external messages,
 consumer-runtime mutation, destructive remote operations, and any owner gate
 are never reserve work merely because time remains. They may appear only as a
 blocked observation or as a separately frozen primary objective.
+
+Estimate calibration stays deliberately simple. A first-run card declares p50
+and uses at least twice p50 as p90 unless direct matched evidence supports a
+tighter bound. After five comparable terminal receipts, use observed median
+and empirical p90, excluding explicitly recorded deferred intervals. An
+estimate may not shrink before that sample count. Receipt timestamps use UTC
+and requested timezone; active minutes include validation and local tool wait,
+but exclude a successful durable deferral.
 
 Conflict keys may represent shared capacity as well as one repository writer.
 For example, independent repository analysis can proceed concurrently, while

@@ -14,5 +14,5 @@ private_value_exposure	0	0	public-audit-and-canary-tests
 writer_boundary_violations	0	0	producer-consumer-diff-tests
 prompt_replays_after_wake	0	0	wake-revision-tests
 extra_protected_transitions	0	0	publication-receipt
-hosted_actions_increase	0	0	workflow-run-readback
+billable_hosted_minutes_increase	0	0	workflow-run-readback
 final_integrated_validation	R3-pass	R3-pass	harness-validate-receipt

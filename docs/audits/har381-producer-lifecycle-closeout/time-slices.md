@@ -584,6 +584,14 @@ transition or Actions use, unchanged always-read bytes, at most 1,024 selector
 bytes before the chosen card, 16/16 scenario behavior, zero value exposure,
 and p95 selection at most 100 ms over 60 synthetic cards.
 
+Anti-make-work constraints now reject cards accepted only by elapsed time,
+commands, commits, prose, repeated reads, or recursive card generation.
+Discovery can propose at most three future cards and cannot execute them until
+a later producer freeze. First-run p90 defaults to at least twice p50; estimates
+cannot shrink until five comparable receipts exist. Dedicated consumers stay
+idle, and a reserve finding needing later implementation is promoted through
+normal producer reconciliation rather than injected into their boards.
+
 ## Slice 7 — 07:00–08:00
 
 Pending.
