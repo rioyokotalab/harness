@@ -86,7 +86,7 @@ assert_contains 'not merely because a session resumed' "$AGENTS" \
     'unchanged validation reuse'
 assert_contains 'Git, `PRODUCER.md`, and `TODO.md` are durable truth' "$AGENTS" \
     'durable source of truth'
-assert_contains 'its first ready packet' "$AGENTS" \
+assert_contains 'tools/producer-ledger.py next-ready' "$AGENTS" \
     'selected active-task route'
 assert_contains 'never expand it with task chronology' "$AGENTS" \
     'compact board handoff gate'
