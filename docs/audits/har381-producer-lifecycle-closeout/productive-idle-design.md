@@ -243,11 +243,13 @@ independent value, and stopping condition.
 
 ## Minimal repository-native shape
 
-Do not add a heavyweight workflow engine. Extend the existing producer tool
-with a small run-manifest schema and three commands:
+Do not add a heavyweight workflow engine. Add a separate pilot tool with a
+small admission schema and four commands:
 
-- `nightly-plan --until ...` validates the primary packet and admitted cards,
-  conflict keys, authority classes, estimates, and finalization reserve.
+- `nightly-plan --until ...` read-only reports eligible catalog coverage,
+  conflict classes, authority classes, estimates, and finalization reserve.
+- `nightly-admit --run ...` writes an execution manifest after `go`, binding a
+  subset of already-protected producer cards and their exact catalog revision.
 - `nightly-next --remaining-minutes ...` returns one ready card or an exact
   wait/finalize state without requiring the agent to read unrelated packets.
 - `nightly-receive` accepts one completion, blocked, skipped, or interrupted
@@ -267,17 +269,18 @@ their run-scoped admission instances, independently in every repository:
 each repository/
 ├── docs/producer/nightly/index.tsv
 ├── docs/producer/nightly/cards/<opaque-opportunity-id>.md
-├── docs/producer/nightly/runs/<run-token>.tsv
-└── docs/consumer/nightly-receipts/<run-token>/<opaque-id>.md
-docs/audits/<run-token>/
+├── docs/consumer/nightly-receipts/<run-token>/<opaque-id>.md
+└── docs/audits/<run-token>/admissions.tsv
 ```
 
-Repository-local catalogs and admission manifests are producer-owned and
-frozen before target execution. The consumer-side executor writes only local
-run-instance receipts and task evidence. Final producer reconciliation closes
-each local run disposition without rewriting opportunity or manifest bytes.
-This mirrors the already-proven immutable packet and receipt lifecycle instead
-of creating a second mutable shared board.
+Repository-local catalogs are producer-owned and protected before planning.
+After owner `go`, the sole producer creates the execution manifest on the
+active task branch; strict validation permits only an exact subset of the
+frozen catalog revision and makes the manifest immutable after its first
+commit. The executor then writes local run-instance receipts and task evidence.
+Final producer reconciliation is needed only to promote, add, expire, or
+supersede catalog opportunities. This preserves producer-owned goal creation
+without requiring a receipt-only preparation PR for every participating repo.
 
 Dedicated Personal and Students consumers remain idle during a producer
 nightly and never pull reserve cards. Cards are executed by the sole producer
@@ -293,14 +296,13 @@ existing card. The ordinary producer cycle replenishes catalogs from
 demonstrated findings. An empty catalog is valid and cannot be treated as
 permission to generate work recursively.
 
-Cards live in protected state before selection. A participating repository
-gets one small producer preparation transition for its local run manifest;
-repositories with no admitted card get none. Those transitions can proceed in
-parallel and must report billable hosted minutes separately. On execution, the
-producer opens only the selected local card and revalidates its named
-predicate. A card absent from protected state at freeze time is not executable
-that night. The added preparation cost is part of the pilot comparison and
-must not be hidden to preserve an elegant schema.
+Cards live in protected state before selection. `nightly-admit` can select only
+cards that existed at the exact protected catalog revision reviewed before
+`go`; it cannot create a packet, change authority, or admit a later catalog
+row. On execution, the producer opens only the selected local card and
+revalidates its named predicate. This gives later rollout zero mandatory
+preparation transitions while keeping new goals and reusable opportunities on
+the producer-only surface.
 
 Repository-local cards, manifests, and receipts remain private to their
 repositories. The selector must be deterministic and side-effect free. No

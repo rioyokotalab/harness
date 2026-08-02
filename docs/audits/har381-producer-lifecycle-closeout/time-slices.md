@@ -548,11 +548,13 @@ interrupts, overruns, fairness, task-local LIFO, and exact terminal receipts.
 Feasibility against the existing writer validator then resolved a role
 ambiguity. Immutable reserve catalogs and admission manifests stay in their
 owning repositories; public Harness has no private card row, token, digest,
-timing, or disposition. A participating repository receives at most one local
-producer preparation transition, while an unrepresented repository receives
-none. The active executor writes only local run-instance receipts and audit
-evidence, and final producer reconciliation closes local dispositions without
-packet rewrites. A separate pilot selector is preferred over enlarging the
+timing, or disposition. Producer-owned catalogs are protected before `go`;
+after `go`, a validated execution manifest may admit only an exact subset of
+that frozen catalog revision and becomes immutable after its first commit. The
+active executor writes only local run-instance receipts and audit evidence.
+No receipt-only preparation PR is needed; final producer reconciliation occurs
+only for catalog maintenance or durable task promotion. A separate pilot
+selector is preferred over enlarging the
 current 317-line durable task selector and its
 370-line unit suite before equivalence is proven. Catalogs remain bounded,
 cards carry no executable shell predicates, and external/credential/deployment
@@ -580,9 +582,8 @@ Privacy review then tightened the model twice: a digest of a small predictable
 private packet could serve as a dictionary oracle, and even opaque per-card
 timing or disposition reveals private workload shape. All admission detail now
 remains inside the owning repository. The acceptance matrix fixes 18 measures,
-including no extra transition in the Harness-only pilot, at most one
-preparation transition per participating repository before later rollout, zero
-billable Actions increase, unchanged always-read bytes, at most 1,024 selector
+including no extra transition in the Harness-only pilot or later admission,
+zero billable Actions increase, unchanged always-read bytes, at most 1,024 selector
 bytes before the chosen card, 16/16 scenario behavior, zero value exposure,
 and p95 selection at most 100 ms over 60 synthetic cards.
 
