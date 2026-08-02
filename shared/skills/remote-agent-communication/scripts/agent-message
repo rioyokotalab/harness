@@ -234,15 +234,19 @@ def select_local_claude_pane() -> Pane:
 
 
 def select_mac_pane(allow_attached: bool) -> Pane:
-    session = "harness-codex-resume"
-    exact_session(session)
+    sessions = tmux_output(["list-sessions", "-F", "#{session_name}"]).splitlines()
+    modern = sessions.count("harness") == 1
+    legacy = sessions.count("harness-codex-resume") == 1
+    if modern == legacy:
+        raise MessageError("target Mac session is absent or ambiguous")
+    session = "harness" if modern else "harness-codex-resume"
     if not allow_attached:
         attached = tmux_output(
             ["display-message", "-p", "-t", session, "#{session_attached}"]
         ).strip()
         if attached != "0":
             raise MessageError("target Mac session is attached")
-    panes = list_panes(session)
+    panes = list_panes(session, all_session=modern)
     harness = str(Path.home() / "harness")
     candidates = [
         pane
@@ -250,8 +254,16 @@ def select_mac_pane(allow_attached: bool) -> Pane:
         if pane.dead == "0"
         and pane.path == harness
         and codex_processes(pane.tty) == 1
+        and (
+            not modern
+            or (
+                pane.window_index == "1"
+                and pane.window_name == "codex"
+                and pane.pane_index == "0"
+            )
+        )
     ]
-    if len(panes) != 1 or len(candidates) != 1:
+    if (not modern and len(panes) != 1) or len(candidates) != 1:
         raise MessageError("target Mac Codex pane is absent or ambiguous")
     return candidates[0]
 

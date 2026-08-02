@@ -71,9 +71,17 @@ case "$command" in
         printf '%s\n' "${FAKE_SESSION:-harness}"
         ;;
     list-panes)
+        all_session=0
+        [ "${1:-}" = -s ] && all_session=1
         tty=${FAKE_TTY:-/dev/pts/7}
         pane_path=${FAKE_PANE_PATH:-$HOME/harness}
-        if [ "${FAKE_TARGET_CLIENT:-codex}" = claude ]; then
+        if [ "${FAKE_REQUIRE_ALL:-0}" -eq 1 ] && [ "$all_session" -ne 1 ]; then
+            window_index=0
+            window_name=claude
+            pane_index=0
+            role=
+            claude_role=harness
+        elif [ "${FAKE_TARGET_CLIENT:-codex}" = claude ]; then
             window_index=${FAKE_WINDOW_INDEX:-0}
             window_name=${FAKE_WINDOW_NAME:-cowork}
             pane_index=${FAKE_PANE_INDEX:-1}
@@ -197,6 +205,7 @@ run_helper() {
         FAKE_CLAUDE_COUNT=${FAKE_CLAUDE_COUNT:-1} \
         FAKE_TARGET_CLIENT=${FAKE_TARGET_CLIENT:-codex} \
         FAKE_CLIENT=${FAKE_CLIENT:-codex} \
+        FAKE_REQUIRE_ALL=${FAKE_REQUIRE_ALL:-0} \
         FAKE_PANE_ROLE=${FAKE_PANE_ROLE:-harness} \
         FAKE_CLAUDE_ROLE=${FAKE_CLAUDE_ROLE:-harness} \
         FAKE_WINDOW_INDEX=${FAKE_WINDOW_INDEX:-} \
@@ -260,6 +269,21 @@ FAKE_SESSION=harness-codex-resume FAKE_ATTACHED=1 FAKE_TTY=/dev/ttys000 \
 FAKE_SESSION=harness-codex-resume FAKE_ATTACHED=1 FAKE_TTY=/dev/ttys000 \
     run_helper receive --source riken --target-role mac --allow-attached \
     <"$state/message" >"$state/attached-allowed.out"
+
+FAKE_SESSION=harness FAKE_ATTACHED=0 FAKE_TTY=/dev/ttys000 \
+    FAKE_REQUIRE_ALL=1 \
+    FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+    run_helper receive --source riken --target-role mac \
+    <"$state/message" >"$state/modern-mac.out"
+grep -F -x \
+    'AGENT_MESSAGE_RECEIVE source=riken target_role=mac client=codex status=submitted' \
+    "$state/modern-mac.out" >/dev/null || fail "modern Mac receive output"
+if FAKE_SESSION=harness FAKE_ATTACHED=0 FAKE_TTY=/dev/ttys000 \
+    FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
+    run_helper receive --source riken --target-role mac \
+    <"$state/message" >"$state/modern-mac-wrong-pane.out" 2>&1; then
+    fail "wrong modern Mac pane accepted"
+fi
 
 if FAKE_AMBIGUOUS=1 run_helper receive --source riken \
     --target-role controller <"$state/message" \
