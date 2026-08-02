@@ -77,6 +77,32 @@ class ProducerLedgerTests(unittest.TestCase):
             check=False,
         )
 
+    def write_receipt(self, root: Path, *, status: str = "complete") -> None:
+        (root / "docs/consumer/receipts/Fix-001.md").write_text(
+            "task: Fix-001\n"
+            f"status: {status}\n"
+            "updated: 2026-08-03\n"
+            "validation: pass\n"
+            "---\nTerminal fixture evidence.\n",
+            encoding="utf-8",
+        )
+
+    def reconcile_terminal(
+        self, root: Path, *, state: str = "complete", receipt: str = "complete"
+    ) -> None:
+        index = root / "docs/producer/index.tsv"
+        index.write_text(
+            index.read_text(encoding="utf-8").replace(
+                "Fix-001\tready\t10", f"Fix-001\t{state}\t999"
+            ),
+            encoding="utf-8",
+        )
+        (root / "TODO.md").write_text("# Board\n", encoding="utf-8")
+        (root / "docs/producer/assignment.tsv").write_text(
+            "client\tslot\tstate\nany\tfixture\tidle\n", encoding="utf-8"
+        )
+        self.write_receipt(root, status=receipt)
+
     def mutate_packet(self, root: Path, transform) -> None:
         path = root / "docs/producer/tasks/Fix-001.md"
         path.write_text(transform(path.read_text(encoding="utf-8")), encoding="utf-8")
@@ -95,6 +121,65 @@ class ProducerLedgerTests(unittest.TestCase):
     def test_valid_contract(self) -> None:
         result = self.run_tool(self.fixture(), "validate")
         self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("reconciliation_pending=0", result.stdout)
+
+    def test_terminal_receipt_is_not_selected_while_reconciliation_pends(self) -> None:
+        root = self.fixture()
+        self.write_receipt(root)
+        (root / "TODO.md").write_text("# Board\n", encoding="utf-8")
+        (root / "docs/producer/assignment.tsv").write_text(
+            "client\tslot\tstate\nany\tfixture\tidle\n", encoding="utf-8"
+        )
+        result = self.run_tool(root, "validate")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("reconciliation_pending=1", result.stdout)
+        strict = self.run_tool(root, "validate", "--require-converged")
+        self.assertNotEqual(strict.returncode, 0, strict.stdout)
+        self.assertIn("receipt-disposition", strict.stdout)
+        selection = self.run_tool(root, "next-ready")
+        self.assertEqual(selection.returncode, 0, selection.stdout)
+        self.assertIn("status=idle", selection.stdout)
+
+    def test_terminal_reconciliation_preserves_published_packet(self) -> None:
+        root = self.fixture()
+        packet = root / "docs/producer/tasks/Fix-001.md"
+        before = hashlib.sha256(packet.read_bytes()).hexdigest()
+        self.reconcile_terminal(root)
+        result = self.run_tool(root, "validate", "--require-converged")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(hashlib.sha256(packet.read_bytes()).hexdigest(), before)
+
+    def test_terminal_disposition_requires_matching_receipt(self) -> None:
+        root = self.fixture()
+        self.reconcile_terminal(root)
+        (root / "docs/consumer/receipts/Fix-001.md").unlink()
+        result = self.run_tool(root, "validate")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("terminal-receipt", result.stdout)
+
+    def test_active_assignment_requires_executable_task(self) -> None:
+        root = self.fixture()
+        self.reconcile_terminal(root)
+        (root / "docs/producer/assignment.tsv").write_text(
+            "client\tslot\tstate\nany\tfixture\tactive\n", encoding="utf-8"
+        )
+        result = self.run_tool(root, "validate")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("assignment-without-executable-task", result.stdout)
+
+    def test_next_ready_ignores_terminal_receipts(self) -> None:
+        root = self.fixture()
+        selection = self.run_tool(root, "next-ready")
+        self.assertEqual(selection.returncode, 0, selection.stdout)
+        self.assertIn("status=ready task=Fix-001", selection.stdout)
+        self.write_receipt(root, status="blocked")
+        (root / "TODO.md").write_text("# Board\n", encoding="utf-8")
+        (root / "docs/producer/assignment.tsv").write_text(
+            "client\tslot\tstate\nany\tfixture\tidle\n", encoding="utf-8"
+        )
+        selection = self.run_tool(root, "next-ready")
+        self.assertEqual(selection.returncode, 0, selection.stdout)
+        self.assertIn("status=idle", selection.stdout)
 
     def test_ready_packet_may_await_consumer_record(self) -> None:
         root = self.fixture()
@@ -108,7 +193,7 @@ class ProducerLedgerTests(unittest.TestCase):
         result = self.run_tool(root, "validate")
         self.assertEqual(result.returncode, 0, result.stdout)
 
-    def test_nonready_packet_requires_record(self) -> None:
+    def test_claimed_disposition_uses_deterministic_record_without_packet_rewrite(self) -> None:
         root = self.fixture()
         packet = root / "docs/producer/tasks/Fix-001.md"
         packet.write_text(
@@ -125,8 +210,11 @@ class ProducerLedgerTests(unittest.TestCase):
             encoding="utf-8",
         )
         result = self.run_tool(root, "validate")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        (root / "docs/tasks/Fix-001.md").unlink()
+        result = self.run_tool(root, "validate")
         self.assertNotEqual(result.returncode, 0, result.stdout)
-        self.assertIn("pending-record-state", result.stdout)
+        self.assertIn("task-record", result.stdout)
 
     def test_packet_failures_close(self) -> None:
         cases = {
@@ -181,6 +269,17 @@ class ProducerLedgerTests(unittest.TestCase):
         result = self.run_tool(root, "validate")
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("receipt-authority", result.stdout)
+
+    def test_receipt_filename_must_match_task(self) -> None:
+        root = self.fixture()
+        (root / "docs/consumer/receipts/Fix-002.md").write_text(
+            "task: Fix-001\nstatus: blocked\nupdated: 2026-08-03\n"
+            "validation: not-run\n---\nBlocked fixture evidence.\n",
+            encoding="utf-8",
+        )
+        result = self.run_tool(root, "validate")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("receipt-identity", result.stdout)
 
     def test_writer_boundaries(self) -> None:
         producer_root = self.fixture()

@@ -72,8 +72,10 @@ remain mandatory project refinements.
 ## Harness repository
 
 - Git, `PRODUCER.md`, and `TODO.md` are durable truth; chat and client memory
-  are optional. At cold start read this file and `PRODUCER.md`. Consumers read
-  its first ready packet, `TODO.md`, and the matching record, or remain idle.
+  are optional. At cold start read this file and `PRODUCER.md`. Consumers run
+  `python3 tools/producer-ledger.py next-ready`; read only its selected packet,
+  `TODO.md`, and matching record, or remain idle. Never select a packet with a
+  terminal receipt.
   Inspect Git and only routed evidence; never preload another record or
   `docs/history/`. Fetch before changing collaborative work.
 - Only the portfolio producer edits `PRODUCER.md` or `docs/producer/`.

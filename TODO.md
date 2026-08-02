@@ -1,9 +1,10 @@
 # Personal harness task board
 
-This is the consumer-owned execution board. Read `PRODUCER.md` first, then its
-first ready packet, this board, and only the matching linked record and routed
-policy. If no producer packet is ready, remain idle. Completed chronology is
-indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
+This is the consumer-owned execution board. Read `PRODUCER.md` first, resolve
+the executable packet with `python3 tools/producer-ledger.py next-ready`, then
+read this board and only the matching linked record and routed policy. If the
+selector reports idle, remain idle. Completed chronology is indexed by
+`docs/tasks/index.tsv`; do not preload the historical snapshot.
 
 Current and future Harness tasks use the `Har-NNN` namespace. Historical
 `T-NNN` identifiers remain unchanged in the completed-task index and archives.
@@ -16,6 +17,13 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### Har-381 — Converge producer lifecycle and close portfolio residue
+
+**Phase:** executing the owner-started 01:00–09:00 JST producer nightly.
+Material changes stop at 08:00; consumer sessions remain metadata-idle.
+
+**Record:** `docs/tasks/Har-381.md`.
 
 ### Har-371 — Migrate legacy managed primary branches
 

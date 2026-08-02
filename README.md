@@ -70,7 +70,7 @@ connector, or credential.
 The producer queue lives in [PRODUCER.md](PRODUCER.md); consumers then use
 [TODO.md](TODO.md) and the matching execution record. Completed command-level
 evidence lives in Git history and [docs/audits/](docs/audits/). A cold-started
-agent reads the root `AGENTS.md` or `CLAUDE.md`, the first ready producer packet,
+agent reads the root `AGENTS.md` or `CLAUDE.md`, the repository-native selected producer packet,
 the consumer board, and only the matching record. It reads the canonical
 [fleet inventory](docs/fleet-inventory.md) only for fleet or host work.
 

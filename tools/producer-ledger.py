@@ -86,7 +86,9 @@ def read_rows() -> list[dict[str, str]]:
     return rows
 
 
-def validate() -> None:
+def validate(
+    *, require_converged: bool = False, emit: bool = True
+) -> tuple[dict[str, object], list[dict[str, str]], dict[str, dict[str, str]]]:
     config = read_config()
     assignment_path = ROOT / "docs/producer/assignment.tsv"
     with assignment_path.open(encoding="utf-8", newline="") as handle:
@@ -117,6 +119,7 @@ def validate() -> None:
     rows = read_rows()
     seen: set[str] = set()
     numbers: list[int] = []
+    packets: dict[str, dict[str, str]] = {}
     prior_order: tuple[int, str, str] | None = None
     producer_text = PRODUCER_PATH.read_text(encoding="utf-8")
     if len(producer_text.encode()) > 4096:
@@ -152,15 +155,20 @@ def validate() -> None:
         }
         if set(values) != required:
             fail(f"packet-schema:{row['task']}")
-        for key in ("task", "state", "priority", "created"):
+        for key in ("task", "created"):
             if values[key] != row[key]:
                 fail(f"packet-index-mismatch:{row['task']}:{key}")
+        if values["state"] not in ALLOWED_STATES:
+            fail(f"packet-state:{row['task']}")
+        try:
+            packet_priority = int(values["priority"])
+        except ValueError:
+            fail(f"packet-priority:{row['task']}")
+        if not 0 <= packet_priority <= 999:
+            fail(f"packet-priority:{row['task']}")
         if values["repository"] != repository or values["consumer"] not in ALLOWED_CONSUMERS:
             fail(f"packet-routing:{row['task']}")
-        if values["record"] == "pending":
-            if row["state"] != "ready":
-                fail(f"pending-record-state:{row['task']}")
-        else:
+        if values["record"] != "pending":
             record = Path(values["record"])
             if (
                 record.is_absolute()
@@ -174,6 +182,7 @@ def validate() -> None:
             r"PRIVATE_(?:PERSONAL|STUDENTS)_CANARY", packet_text
         ):
             fail(f"public-privacy-canary:{row['task']}")
+        packets[row["task"]] = values
     if max(numbers) >= int(config["next_id"]):
         fail("next-id-not-free")
     board_text = (ROOT / "TODO.md").read_text(encoding="utf-8")
@@ -181,18 +190,74 @@ def validate() -> None:
     if not board_ids <= seen:
         fail(f"unproduced-board-task:{','.join(sorted(board_ids - seen))}")
     receipt_dir = ROOT / "docs/consumer/receipts"
+    receipts: dict[str, dict[str, str]] = {}
     for path in sorted(receipt_dir.glob(f"{prefix}-*.md")) if receipt_dir.is_dir() else []:
         values, text = metadata(path, 4096)
         if set(values) != {"task", "status", "updated", "validation"}:
             fail(f"receipt-schema:{path.name}")
         if values["task"] not in seen or values["status"] not in {"complete", "blocked"}:
             fail(f"receipt-routing:{path.name}")
+        if path.stem != values["task"] or values["task"] in receipts:
+            fail(f"receipt-identity:{path.name}")
         if re.search(r"(?im)^authority(?: granted)?:", text):
             fail(f"receipt-authority:{path.name}")
-    print(
-        f"PRODUCER_LEDGER status=pass repository={repository} "
-        f"tasks={len(rows)} board_tasks={len(board_ids)}"
-    )
+        receipts[values["task"]] = values
+
+    reconciliation_pending: list[str] = []
+    executable: list[dict[str, str]] = []
+    for row in rows:
+        task = row["task"]
+        state = row["state"]
+        receipt = receipts.get(task)
+        record_path = ROOT / f"docs/tasks/{task}.md"
+        if state in {"claimed", "complete"} and not record_path.is_file():
+            fail(f"task-record:{task}")
+        if state == "complete":
+            if not receipt or receipt["status"] != "complete":
+                fail(f"terminal-receipt:{task}")
+        elif state == "gated" and receipt and receipt["status"] == "blocked":
+            pass
+        elif receipt:
+            reconciliation_pending.append(task)
+        if state in {"ready", "claimed"} and receipt is None:
+            executable.append(row)
+        if state in {"complete", "cancelled"} and task in board_ids:
+            fail(f"terminal-board-task:{task}")
+        if receipt and task in board_ids:
+            fail(f"receipt-board-task:{task}")
+
+    for assignment in assignments:
+        if assignment["state"] != "active":
+            continue
+        client = assignment["client"]
+        if not any(
+            client == "any"
+            or packets[row["task"]]["consumer"] in {"any", client}
+            for row in executable
+        ):
+            fail(f"assignment-without-executable-task:{assignment['slot']}")
+
+    if require_converged and reconciliation_pending:
+        fail(f"receipt-disposition:{reconciliation_pending[0]}")
+    if emit:
+        print(
+            f"PRODUCER_LEDGER status=pass repository={repository} "
+            f"tasks={len(rows)} board_tasks={len(board_ids)} "
+            f"reconciliation_pending={len(reconciliation_pending)}"
+        )
+    return config, rows, receipts
+
+
+def next_ready() -> None:
+    _config, rows, receipts = validate(emit=False)
+    for row in rows:
+        if row["state"] == "ready" and row["task"] not in receipts:
+            print(
+                "PRODUCER_LEDGER_SELECTION status=ready "
+                f"task={row['task']} packet={row['packet']}"
+            )
+            return
+    print("PRODUCER_LEDGER_SELECTION status=idle")
 
 
 def changed_paths(base: str) -> list[str]:
@@ -233,13 +298,17 @@ def check_diff(base: str, role: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("validate")
+    validate_parser = sub.add_parser("validate")
+    validate_parser.add_argument("--require-converged", action="store_true")
+    sub.add_parser("next-ready")
     for role in ("producer", "consumer"):
         command = sub.add_parser(f"check-{role}-diff")
         command.add_argument("--base", required=True)
     args = parser.parse_args()
     if args.command == "validate":
-        validate()
+        validate(require_converged=args.require_converged)
+    elif args.command == "next-ready":
+        next_ready()
     else:
         check_diff(args.base, args.command.removeprefix("check-").removesuffix("-diff"))
 
