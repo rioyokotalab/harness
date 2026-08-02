@@ -194,12 +194,11 @@ failed gate, each protected merge, each rollout/activation, and final cleanup.
 
 ### D-001 — Does a producer packet authorize automatic consumer execution?
 
-Open. Recommended: yes, but only for the packet's explicit repository-local
-scope. Existing external writes, deployment, messages, credentials, scheduler,
+Selected: yes, but only for the packet's explicit repository-local scope.
+Existing external writes, deployment, messages, credentials, scheduler,
 hosting settings, destructive operations, and person-only gates still require
-their normal exact authority. Consequence: consumers can work asynchronously
-without asking for another generic `go`, while no packet can widen a closer
-safety boundary.
+their normal exact authority. Consumers work asynchronously without another
+generic `go`; no packet can widen a closer safety boundary.
 
 ### D-002 — Strength of producer-only write enforcement
 
@@ -228,6 +227,6 @@ retains its native validation and deployment boundaries.
 
 ## Exact next action
 
-Ask D-001 only. Record the answer before asking D-002. No target repository,
+Ask D-002 only. Record the answer before asking D-003. No target repository,
 runtime, schedule, assignment, or external state may change before all five
 decisions are frozen and the owner gives an explicit `go`.
