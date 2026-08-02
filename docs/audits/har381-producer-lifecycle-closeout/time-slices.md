@@ -101,8 +101,8 @@ is intentionally held for one final protected transition rather than creating
 extra Actions churn during intermediate slices.
 
 Independent live readback adds two boundaries to the slice. All twelve earlier
-portfolio pull requests remain merged; path-aware hosted jobs are skipped for
-these changes and none is failed or pending. Every ruleset is active, retains
+portfolio pull requests remain merged; trusted-owner job gates skipped hosted
+execution and none is failed or pending. Every ruleset is active, retains
 one bypass actor, and still requires zero approvals. Students' code-owner and
 last-push flags currently read false, so the older T-311 intent is recorded as
 a separate owner decision rather than silently restored. Website protected
@@ -234,13 +234,19 @@ final integrated tree will receive the one required closing audit.
 
 The active record itself was then compacted only after its chronology and
 tables were durable in linked artifacts and a remote checkpoint. Routed
-Harness context fell from 27,867 to 17,078 bytes, saving 10,789 bytes (38.716%)
+Harness context fell from 27,867 to 17,576 bytes, saving 10,291 bytes (36.929%)
 while preserving the exact authority, stop conditions, protected revisions,
 validation receipts, blockers, failures, cleanup classifications, next action,
-and evidence map. The record remains 1,583 words—well above its required
+and evidence map. The record remains 1,660 words—well above its required
 400-word durable summary—and ledger plus strict producer validation pass. The
 other four routed contexts are byte-identical to baseline. This is a measured
 capability-preserving reduction, not a deletion of evidence.
+
+The record now states that cold resume begins from the record alone and that
+its evidence map is a lookup index, not a mandatory bundle. A recovering agent
+reads only the current hourly slice or one named table when the next action
+actually needs that fact. The 17,576-byte routed measure therefore does not
+hide an instruction to preload the audit directory.
 
 Routed policy and skill text was measured separately from task context. The 20
 actually selected resources total 41,403 bytes and 5,644 words: 30,788 bytes
@@ -252,6 +258,17 @@ repositories depend on another checkout during cold recovery, while ordinary
 consumer tasks do not read all five copies. That small producer-night-only
 saving fails the independence and capability-equivalence condition, so
 `routing-footprint.tsv` records a measured no-change decision.
+
+Workflow-source readback corrected the earlier skip attribution. Harness and
+Swallow each gate their one portable job on both PR author and sender;
+Students applies the same gate to its portable and boundary jobs. The nine
+hosted check rows were therefore skipped by the trusted-owner job conditions,
+not by changed-path classification. This is the intended Actions-minute model:
+native validation supplies correctness for owner PRs, while weekly/manual and
+non-owner PR paths retain hosted backstops. The final PR should receive the same
+skipped disposition if author and sender remain exact; no workflow was changed.
+The focused Actions sustainability contract passes, confirming ordinary
+Harness push CI is absent while weekly and manual backstops remain present.
 
 ## Slice 4 — 04:00–05:00
 
