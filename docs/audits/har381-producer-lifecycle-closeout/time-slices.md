@@ -431,6 +431,16 @@ readback. The 08:55–09:00 interval remains handoff buffer. These are targets,
 not permission to skip a failed gate; an overrun preserves state and reports
 the exact unfinished transition.
 
+The producer reconciliation is now field-level rehearsed against the current
+ledger contract. Har-381's immutable packet remains byte-identical while its
+index row becomes `complete` at priority 999. Har-382 becomes the sole ready
+priority-1 row, `next_id` and the entrypoint advance to Har-383, and the
+existing producer/Aist assignment rows remain unchanged. The new packet uses
+`record: pending`, points to this audit's archive-owner follow-up rather than
+duplicating its 5,011-byte design, and stays below the configured 4,096-byte
+packet limit. This shape leaves no active assignment without an executable
+task and preserves the consumer/producer writer split across the two merges.
+
 ## Slice 5 — 05:00–06:00
 
 Pending.
