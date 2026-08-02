@@ -8,7 +8,7 @@ required. Do not split or invent observations to simulate cadence.
 | 1 | 13:47:47–14:47:47 | complete |
 | 2 | 14:47:47–15:47:47 | complete |
 | 3 | 15:47:47–16:47:47 | complete |
-| 4 | 16:47:47–17:47:47 | pending |
+| 4 | 16:47:47–17:47:47 | complete |
 | 5 | 17:47:47–18:47:47 | pending |
 | 6 | 18:47:47–19:47:47 | pending |
 | 7 | 19:47:47–20:47:47 | pending |
@@ -114,6 +114,22 @@ from one ad hoc command, not repository-native tooling, and is handled LIFO by
 preserving its bounded effect and requiring fail-fast guards on all later Git
 publication. It neither authorizes a speculative product change nor blocks
 Har-379, so no blocked task receipt is warranted.
+
+## Slice 4 — 16:47:47–17:47:47 JST
+
+- Repository identity: the exact 17:47:47 sample found clean, aligned
+  protected `main` at `69ba0a6` and the clean task checkpoint at `533578e`.
+- Connection state: both Aist aliases remained loaded/running with
+  `managed=1 external=0` and ready unattended auth. The watchdog's 17:47:15
+  JST run classified the pair healthy with no recovery attempt. Fresh
+  Local-vantage probes at 17:47:54 reported both Aist routes and every other
+  declared pair healthy.
+- Unexpected findings and Claude evidence: none. The retained midpoint review
+  is reconciled in the active record; it found no T-293 self-healing defect
+  and did not authorize any target or implementation change.
+- Next safe action: remain observation-only through slice 5. Preserve the
+  observer-dependent branch and all stale refs; do not repeat any Claude
+  request or the completed pilot.
 
 ## Final durable summary
 
