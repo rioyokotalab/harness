@@ -1,3 +1,4 @@
 repository	head	seconds	commits	objects	blobs	findings	credential_assignment	credential_path	known_token_shape	private_key_header	high_entropy_credential	suspicious_path	large_blob	operational_absolute_path	value_exposed	disposition
 Harness	8068159fd22ca590a2b7d9802a8378bcdfa207af	31.56	1615	11476	4993	2144	31	854	1	9	0	0	3	1246	false	sensitive-shape-findings-confined-to-synthetic-test-fixtures
+Harness-candidate	3c779cc52600f1498a9d6355c7bd1a1fd6773a83	not-retimed	1625	11573	5034	2144	31	854	1	9	0	0	3	1246	false	pass-no-new-finding-counts
 Website	0bde9e7ec4712ea024cf11425ed92ad0d82363f0	23.65	460	8530	4745	399	3	116	0	0	0	0	16	264	false	assignment-shapes-confined-to-vendored-jquery-and-test-fixture

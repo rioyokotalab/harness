@@ -224,6 +224,24 @@ and Swallow producer-main worktrees are clean and exactly equal protected main.
 Thus no retained row changed disposition, and no guarded-delete plan was
 created.
 
+The committed candidate at `3c779cc` passed R0 and a fresh value-free all-ref
+public audit. The repository now contains 1,625 commits, 11,573 objects, and
+5,034 blobs, but total and retained findings remain exactly 2,144 and 144.
+Every finding-class count is unchanged from protected baseline, including zero
+high-entropy credential and zero suspicious path, and the audit exposed no
+matched value. Runtime was not remeasured merely to populate a table cell; the
+final integrated tree will receive the one required closing audit.
+
+The active record itself was then compacted only after its chronology and
+tables were durable in linked artifacts and a remote checkpoint. Routed
+Harness context fell from 27,867 to 16,755 bytes, saving 11,112 bytes (39.875%)
+while preserving the exact authority, stop conditions, protected revisions,
+validation receipts, blockers, failures, cleanup classifications, next action,
+and evidence map. The record remains 1,546 words—well above its required
+400-word durable summary—and ledger plus strict producer validation pass. The
+other four routed contexts are byte-identical to baseline. This is a measured
+capability-preserving reduction, not a deletion of evidence.
+
 ## Slice 4 — 04:00–05:00
 
 Pending.
