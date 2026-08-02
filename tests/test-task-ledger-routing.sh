@@ -18,6 +18,7 @@ if not __debug__:
 root = Path(sys.argv[1])
 board = root / "TODO.md"
 producer = root / "PRODUCER.md"
+producer_index = root / "docs/producer/index.tsv"
 archive = root / "docs/history/TODO-full-archive-2026-07-30.md"
 index = root / "docs/tasks/index.tsv"
 task_files = {}
@@ -104,8 +105,13 @@ for prefix, numbers in task_numbers.items():
         prefix,
         numbers,
     )
-expected_free_id = f"Next free ID: Har-{max(task_numbers['Har']) + 1}."
 producer_text = producer.read_text(encoding="utf-8")
+with producer_index.open(encoding="utf-8", newline="") as handle:
+    producer_rows = list(csv.DictReader(handle, delimiter="\t"))
+producer_numbers = [
+    int(row["task"].split("-", 1)[1]) for row in producer_rows
+]
+expected_free_id = f"Next free ID: Har-{max(producer_numbers) + 1}."
 assert expected_free_id in producer_text, ("next free ID", expected_free_id)
 producer_tasks = set(re.findall(r"docs/producer/tasks/(Har-\d+)\.md", producer_text))
 assert set(board_tasks) <= producer_tasks, (board_tasks, sorted(producer_tasks))

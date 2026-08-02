@@ -96,6 +96,38 @@ class ProducerLedgerTests(unittest.TestCase):
         result = self.run_tool(self.fixture(), "validate")
         self.assertEqual(result.returncode, 0, result.stdout)
 
+    def test_ready_packet_may_await_consumer_record(self) -> None:
+        root = self.fixture()
+        packet = root / "docs/producer/tasks/Fix-001.md"
+        packet.write_text(
+            packet.read_text(encoding="utf-8").replace(
+                "record: docs/tasks/Fix-001.md", "record: pending"
+            ),
+            encoding="utf-8",
+        )
+        result = self.run_tool(root, "validate")
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_nonready_packet_requires_record(self) -> None:
+        root = self.fixture()
+        packet = root / "docs/producer/tasks/Fix-001.md"
+        packet.write_text(
+            packet.read_text(encoding="utf-8")
+            .replace("state: ready", "state: claimed")
+            .replace("record: docs/tasks/Fix-001.md", "record: pending"),
+            encoding="utf-8",
+        )
+        index = root / "docs/producer/index.tsv"
+        index.write_text(
+            index.read_text(encoding="utf-8").replace(
+                "Fix-001\tready", "Fix-001\tclaimed"
+            ),
+            encoding="utf-8",
+        )
+        result = self.run_tool(root, "validate")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("pending-record-state", result.stdout)
+
     def test_packet_failures_close(self) -> None:
         cases = {
             "sensitive-field": lambda text: text.replace(
