@@ -10,7 +10,7 @@ required. Do not split or invent observations to simulate cadence.
 | 3 | 15:47:47–16:47:47 | complete |
 | 4 | 16:47:47–17:47:47 | complete |
 | 5 | 17:47:47–18:47:47 | complete |
-| 6 | 18:47:47–19:47:47 | pending |
+| 6 | 18:47:47–19:47:47 | complete |
 | 7 | 19:47:47–20:47:47 | pending |
 
 ## Pre-pilot evidence
@@ -146,6 +146,24 @@ Har-379, so no blocked task receipt is warranted.
 - Next safe action: remain observation-only through slice 6. Preserve the
   observer-dependent branch and all stale refs; do not repeat any Claude
   request or the completed pilot.
+
+## Slice 6 — 18:47:47–19:47:47 JST
+
+- Repository identity: the exact 19:47:47 sample found clean, aligned
+  protected `main` at `45e1119` and the clean task checkpoint at `2214550`.
+- Connection state: both Aist aliases remained loaded/running with
+  `managed=1 external=0` and ready unattended auth. The watchdog's 19:47:50
+  JST run classified the pair healthy with no recovery attempt. Fresh
+  Local-vantage probes at 19:47:54–19:47:55 reported both Aist routes and
+  every other declared pair healthy.
+- Unexpected findings and Claude evidence: none. Protected Har-380 was
+  reconciled before this slice with both task-index rows preserved; all routed
+  checks passed and no target state changed. No T-293 self-healing defect is
+  demonstrated.
+- Next safe action: the 19:47:47 material cutoff has passed. Permit no target
+  or implementation mutation; retain the one-shot final Claude acceptance
+  review, run integrated validation, and record slice 7 only from the exact
+  observer output after 20:47:47 JST.
 
 ## Final durable summary
 
