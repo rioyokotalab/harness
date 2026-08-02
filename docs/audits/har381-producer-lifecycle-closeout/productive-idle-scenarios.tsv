@@ -10,7 +10,7 @@ cached-read	mutable-read-ttl-valid	reuse-receipt	no-cadence-only-repeat
 empty-unscanned	no-ready-card-discovery-unused	one-bounded-discovery	one-scan-per-repository
 empty-scanned	no-ready-card-discovery-consumed	durable-wait	no-recursive-discovery
 wake-event	wait-event-key-changed	resume-and-reselect	no-prompt-replay
-owner-interrupt	new-owner-input	revise-run-manifest	finish-or-checkpoint-current-atomic-action
+owner-interrupt	new-owner-input	record-task-amendment-and-reselect	immutable-manifest-and-atomic-action-preserved
 card-overrun	elapsed-greater-than-1.5-estimate	checkpoint-and-readmit	no-silent-window-consumption
 equal-priority	multiple-repositories-equal-priority	round-robin	no-repository-starvation
 task-local-defect	active-card-nested-defect	lifo-within-card	no-global-lifo-starvation

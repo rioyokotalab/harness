@@ -533,8 +533,9 @@ facts are applied, not imported wholesale, in
 `productive-idle-design.md`; stable primary-source URLs are recorded there.
 
 The design was then threat-modeled against the current producer/consumer
-contract. Reserve cards are run-scoped rather than new durable goals; only the
-sole producer may promote an unfinished card later. Cross-repository status is
+contract. Reserve admissions are run-scoped instances of bounded opportunity
+templates rather than new durable goals; only the sole producer may promote an
+unfinished instance later. Cross-repository status is
 opaque and value-free, while details stay inside the selected repository.
 Selection uses p50/p90 active-time estimates, a conservative finalization
 buffer, one mutation conflict key at a time, and fair ordering among equal
@@ -545,12 +546,13 @@ privacy, conflicts, stale bases, cached reads, bounded discovery, owner
 interrupts, overruns, fairness, task-local LIFO, and exact terminal receipts.
 
 Feasibility against the existing writer validator then resolved a role
-ambiguity. The immutable reserve catalog and per-run manifest belong under a
-repository's producer-owned paths and are frozen before execution; the active
-executor writes only repository-local receipts and audit evidence. Final
-producer reconciliation closes dispositions without packet rewrites. Harness
-holds only opaque sibling card tokens and never a private packet digest that
-could become a dictionary oracle. A separate pilot selector is
+ambiguity. Immutable reserve catalogs stay in their owning repositories, while
+one value-free admission manifest belongs to Harness; all are producer-owned
+and frozen before execution. The active executor writes only repository-local
+run-instance receipts and audit evidence. Final producer reconciliation closes
+the Harness run disposition without packet rewrites. Harness holds only opaque
+sibling card tokens and never a private packet digest that could become a
+dictionary oracle. A separate pilot selector is
 preferred over enlarging the current 317-line durable task selector and its
 370-line unit suite before equivalence is proven. Catalogs remain bounded,
 cards carry no executable shell predicates, and external/credential/deployment
@@ -601,6 +603,15 @@ be one sentence. Example reserve cards are limited to measured toil removal,
 one benchmarked optimization, one demonstrated context regression, one due
 decision packet, one reproduced failure test, or a head-triggered public delta
 audit—not broad search or generic cleanup.
+
+A consistency review removed two latent shared-ledger conflicts. Persistent
+repository-local opportunity packets are distinct from run-scoped admission
+instances; Harness owns the immutable value-free admission manifest, while the
+selected repository owns the exact instance receipt and packet digest. Also,
+new owner input during execution records a consumer-side task amendment and
+invalidates the wait token—it does not rewrite the producer manifest. This
+matches the live 05:57 redirect and preserves writer purity; any reusable
+follow-up is considered only during final producer reconciliation.
 
 ## Slice 7 — 07:00–08:00
 

@@ -260,21 +260,25 @@ different state machine and should not enlarge that trusted surface until the
 pilot proves a common abstraction. A small `tools/nightly-queue.py` can share
 only strict metadata helpers after equivalence tests exist.
 
-The writer-compatible layout is:
+The writer-compatible layout distinguishes persistent local opportunities from
+their run-scoped admission instances:
 
 ```text
-docs/producer/nightly/
-├── index.tsv                 # bounded persistent reserve catalog
-├── cards/<opaque-id>.md      # immutable repository-local card
-└── runs/<run-id>.tsv         # immutable admitted-card manifest
-docs/consumer/nightly-receipts/<run-id>/<opaque-id>.md
-docs/audits/<run-id>/         # execution benchmark and value-free summary
+each repository/
+├── docs/producer/nightly/index.tsv
+├── docs/producer/nightly/cards/<opaque-opportunity-id>.md
+└── docs/consumer/nightly-receipts/<run-token>/<opaque-id>.md
+
+Harness only/
+├── docs/producer/nightly/runs/<run-id>.tsv
+└── docs/audits/<run-id>/
 ```
 
-The catalog and admitted manifest are producer-owned and are frozen before
-target execution. The consumer-side executor writes only receipts and task
-evidence. Final producer reconciliation closes the run disposition without
-rewriting card or manifest bytes. This mirrors the already-proven task packet
+Repository-local catalogs and the value-free Harness admission manifest are
+producer-owned and frozen before target execution. The consumer-side executor
+writes only repository-local run-instance receipts and task evidence. Final
+producer reconciliation closes the Harness run disposition without rewriting
+opportunity or manifest bytes. This mirrors the already-proven immutable packet
 and receipt lifecycle instead of creating a second mutable shared board.
 
 Dedicated Personal and Students consumers remain idle during a producer
@@ -305,13 +309,17 @@ Harness portfolio manifest contains only repository, opaque card ID, class,
 minutes, conflict key, and disposition. The selector must be deterministic and
 side-effect free. No service, dependency, or hosted scheduler is required.
 
-Cards are run-scoped IDs, not durable repository task IDs. Completion removes
-them from the run manifest through a receipt; interruption or demonstrated
-future value may cause the sole producer to promote one into the next durable
-task during final reconciliation. This prevents a nightly from flooding
-`TODO.md` merely because it explored alternatives. Producer changes selected
-within one repository should share at most one producer publication candidate
-for that night, but producer and consumer writer surfaces remain separate.
+Catalog entries are bounded opportunity templates, not durable repository task
+IDs. Admission creates a run-scoped `(run-token, opportunity-id)` instance.
+The immutable manifest never removes a row; one exact local receipt makes that
+instance terminal and selector-ineligible. The underlying opportunity remains
+available only when its named predicate changes or freshness expires.
+Interruption or demonstrated future value may cause the sole producer to
+promote one instance into the next durable task during final reconciliation.
+This prevents a nightly from flooding `TODO.md` merely because it explored
+alternatives. Producer changes selected within one repository should share at
+most one producer publication candidate for that night, but producer and
+consumer writer surfaces remain separate.
 
 The default catalog accepts only `read-only`, `repository-local`, and ordinary
 protected-publication cards already covered by the run's frozen authority.
@@ -343,14 +351,15 @@ have capacity one. Keys are opaque in the public portfolio manifest. The pilot
 starts sequentially; parallel reserve execution is a later optimization only
 if receipts prove enough work and non-overlap to repay dispatch and review.
 
-Selection pseudocode is intentionally small: verify the local manifest and
-packet digest inside its owning repository; exclude terminal receipts;
-evaluate built-in named predicates against freshness receipts; reject expired,
-unauthorized, stale-base, privacy-unsafe, or held-conflict cards; enforce
-latest safe start; then sort by primary flag, priority, repository fairness
-age, expiry, and opaque ID. If no card survives, consume the one bounded
-discovery allowance or return the exact wait state. No card supplies a shell
-command or executable predicate from Markdown.
+Selection pseudocode is intentionally small: verify the admission token in the
+Harness manifest, then verify the opportunity packet and digest inside its
+owning repository; exclude terminal run-instance receipts; evaluate built-in
+named predicates against freshness receipts; reject expired, unauthorized,
+stale-base, privacy-unsafe, or held-conflict cards; enforce latest safe start;
+then sort by primary flag, priority, repository fairness age, expiry, and
+opaque ID. If no card survives, consume the one bounded discovery allowance or
+return the exact wait state. No card supplies a shell command or executable
+predicate from Markdown.
 
 ## Owner and progress experience
 
@@ -362,11 +371,15 @@ waiting” prose. The final summary retains exactly one evidence-backed slice pe
 requested hour, but a deferred hour can be one sentence naming the unchanged
 wake contract.
 
-If owner input arrives during a wait, it becomes a new manifest revision. If it
-arrives during a repository-local atomic action, finish or safely checkpoint
-that action first, then replan. If it arrives after an ambiguous external
-write, reconcile the write before selection. In no case does a new card cause
-the previous prompt to be replayed.
+If owner input arrives during a wait, it becomes an exact task amendment and
+invalidates the one-shot wait token; the immutable producer manifest is not
+rewritten from the consumer surface. The amended work is bounded direct owner
+input, not a reusable reserve card, and final producer reconciliation decides
+whether any follow-up belongs in a later catalog. If input arrives during a
+repository-local atomic action, finish or safely checkpoint that action first,
+then replan. If it arrives after an ambiguous external write, reconcile the
+write before selection. In no case does an amendment cause the previous prompt
+to be replayed.
 
 ## Validation experiment
 
