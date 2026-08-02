@@ -5,13 +5,14 @@ producer may modify this file or `docs/producer/`. Consumers resolve the first
 executable packet with `python3 tools/producer-ledger.py next-ready`, then read
 their own board and matching execution record. If it reports idle, remain idle.
 
-Next free ID: Har-382.
+Next free ID: Har-384.
 
 ## Queue
 
 | Task | State | Priority | Packet |
 | --- | --- | ---: | --- |
-| Har-381 | ready | 1 | `docs/producer/tasks/Har-381.md` |
+| Har-382 | ready | 1 | `docs/producer/tasks/Har-382.md` |
+| Har-383 | ready | 2 | `docs/producer/tasks/Har-383.md` |
 | Har-371 | gated | 10 | `docs/producer/tasks/Har-371.md` |
 | Har-196 | gated | 20 | `docs/producer/tasks/Har-196.md` |
 | Har-328 | gated | 30 | `docs/producer/tasks/Har-328.md` |
