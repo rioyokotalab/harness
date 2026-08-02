@@ -125,6 +125,15 @@ Estimated reserve coverage should reach the material cutoff when real
 opportunities exist. A short queue is reported honestly; it is never padded
 with polling, revalidation, generic cleanup, or speculative goal creation.
 
+The owner-facing proposal should show one compact coverage table: requested
+window, finalization reserve, mandatory p50/p90, reserve p50/p90, uncovered
+expected minutes, repositories represented, and authority/conflict classes.
+Private card titles remain in their repositories. If coverage is short, the
+producer automatically performs the one allowed pre-run opportunity scan and
+then reports the remaining expected wait. It does not require a second owner
+answer when the original duration is firm, but it does not claim to be fully
+loaded either.
+
 ### 2. Four pull lanes
 
 1. **Mandatory:** execute the frozen packet and task-owned LIFO findings.
@@ -223,6 +232,15 @@ then enforced at the card boundary through immutable scope, conflict keys,
 latest start, privacy class, and exact receipts. Missing authority remains a
 blocked disposition and never becomes a reason to spend the remaining window.
 
+Good reserve candidates are narrow and predicate-driven: remove one measured
+source of repeated operator work; prototype one validator or selector
+optimization against a frozen baseline; compact one demonstrated routed-byte
+regression; prepare one decision packet for a due event gate; add a regression
+test for one reproduced failure class; or run a public-content delta audit
+after the protected head changes. “Search broadly,” “check again,” “find more
+tasks,” and “clean everything” are not cards without a hypothesis, bound,
+independent value, and stopping condition.
+
 ## Minimal repository-native shape
 
 Do not add a heavyweight workflow engine. Extend the existing producer tool
@@ -310,6 +328,14 @@ estimate may not shrink before that sample count. Receipt timestamps use UTC
 and requested timezone; active minutes include validation and local tool wait,
 but exclude a successful durable deferral.
 
+Freshness receipts carry `input_key`, value-free identity, observation time,
+expiry, and the acceptance decision they supported. Immutable Git bytes reuse
+the exact OID; hosted or filesystem state uses a declared TTL or event key.
+Computing a full expensive report merely to learn whether its input changed is
+not reuse: each integration needs a cheap generation, revision, or status
+identity. Har-383 should model this boundary synthetically rather than invent a
+generic production freshness registry during its first pilot.
+
 Conflict keys may represent shared capacity as well as one repository writer.
 For example, independent repository analysis can proceed concurrently, while
 hosted validation, archive-heavy I/O, or one protected repository writer can
@@ -325,6 +351,22 @@ latest safe start; then sort by primary flag, priority, repository fairness
 age, expiry, and opaque ID. If no card survives, consume the one bounded
 discovery allowance or return the exact wait state. No card supplies a shell
 command or executable predicate from Markdown.
+
+## Owner and progress experience
+
+Progress messages correspond to state transitions: plan frozen, card selected,
+card terminal, durable wait entered, wake reason observed, finalization begun,
+or blocker requiring owner action. A long validation still receives ordinary
+progress updates. A durable wait does not generate model-authored “still
+waiting” prose. The final summary retains exactly one evidence-backed slice per
+requested hour, but a deferred hour can be one sentence naming the unchanged
+wake contract.
+
+If owner input arrives during a wait, it becomes a new manifest revision. If it
+arrives during a repository-local atomic action, finish or safely checkpoint
+that action first, then replan. If it arrives after an ambiguous external
+write, reconcile the write before selection. In no case does a new card cause
+the previous prompt to be replayed.
 
 ## Validation experiment
 

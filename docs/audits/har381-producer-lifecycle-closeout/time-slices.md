@@ -592,6 +592,16 @@ cannot shrink until five comparable receipts exist. Dedicated consumers stay
 idle, and a reserve finding needing later implementation is promoted through
 normal producer reconciliation rather than injected into their boards.
 
+The proposed pre-`go` experience now exposes supply directly: mandatory and
+reserve p50/p90, finalization reserve, uncovered expected minutes, represented
+repositories, and authority/conflict classes. One automatic opportunity scan
+may reduce a shortfall; any remainder is reported as expected wait rather than
+hidden. Progress maps to state transitions, while deferred hourly slices may
+be one sentence. Example reserve cards are limited to measured toil removal,
+one benchmarked optimization, one demonstrated context regression, one due
+decision packet, one reproduced failure test, or a head-triggered public delta
+audit—not broad search or generic cleanup.
+
 ## Slice 7 — 07:00–08:00
 
 Pending.
