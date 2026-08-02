@@ -532,6 +532,18 @@ Kubernetes CronJob API makes overlap and missed-start policy explicit. These
 facts are applied, not imported wholesale, in
 `productive-idle-design.md`; stable primary-source URLs are recorded there.
 
+The design was then threat-modeled against the current producer/consumer
+contract. Reserve cards are run-scoped rather than new durable goals; only the
+sole producer may promote an unfinished card later. Cross-repository status is
+opaque and value-free, while details stay inside the selected repository.
+Selection uses p50/p90 active-time estimates, a conservative finalization
+buffer, one mutation conflict key at a time, and fair ordering among equal
+priorities. A durable wait releases active model execution and carries only a
+one-shot wake signal; waking resumes the saved task and reselects without
+replaying a prompt. Sixteen normative scenarios now cover fit, authority,
+privacy, conflicts, stale bases, cached reads, bounded discovery, owner
+interrupts, overruns, fairness, task-local LIFO, and exact terminal receipts.
+
 ## Slice 7 — 07:00–08:00
 
 Pending.

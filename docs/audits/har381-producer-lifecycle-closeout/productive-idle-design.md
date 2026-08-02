@@ -49,6 +49,11 @@ nightly is meant to remove.
   the slot concept as repository/conflict keys and estimated cost, without
   importing Airflow as a dependency.
   Source: [Airflow pools](https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/pools.html).
+- Airflow's deferrable operators suspend an idle task, release its worker slot,
+  and resume from an event signal. Adapt the state transition, not the service:
+  a Harness nightly should checkpoint and release active model execution while
+  a lightweight wait controller owns only the wake signal.
+  Source: [Airflow deferrable operators](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/deferring.html).
 - AWS recommends bounding queues and isolating workloads so one source cannot
   starve others. Its queue guidance also treats LIFO as a selective overload
   strategy, not a universal ordering rule. Adapt isolation per repository and
@@ -85,6 +90,13 @@ cards. A card is admitted only if it has:
 - benchmark, acceptance, validation, and stop condition;
 - expiry or supersession rule.
 
+Use two estimates rather than a false-precision point value: expected active
+minutes and a conservative p90 bound derived from comparable receipts or a
+declared first-run assumption. Report `coverage_expected` and
+`coverage_conservative` before `go`; do not reject a valid run merely because
+the reserve queue is short. A card starts only when its p90 active time plus
+its validation and publication p90 fits before the material cutoff and buffer.
+
 Estimated reserve coverage should reach the material cutoff when real
 opportunities exist. A short queue is reported honestly; it is never padded
 with polling, revalidation, generic cleanup, or speculative goal creation.
@@ -104,6 +116,14 @@ with polling, revalidation, generic cleanup, or speculative goal creation.
    mutable input expires or an event occurs. Hourly slices record the wait as
    one concise evidence delta, not fabricated activity.
 
+The wait controller must never own repository, tmux, app-server, or external
+service mutation. It stores only run identity, checkpoint revision, `wake_at`,
+event keys, and a one-shot resume token. On wake, the producer resumes the
+saved task, reconciles durable state, and reselects; it does not replay the
+last prompt. If a product-native recurring wait is available, prefer it. A
+shell sleep loop is not the target architecture because it occupies a client,
+has weak recovery semantics, and encourages narration without decisions.
+
 Lanes are monotonic for one run except that a changed input may make a
 previously declared reserve card ready. Discovery cannot recursively create
 more discovery during the same night.
@@ -117,6 +137,13 @@ stores only value-free portfolio status. Selection should round-robin among
 repositories at equal priority so a large Swallow or Harness backlog cannot
 starve another project. Task-local defects remain LIFO because they affect the
 active acceptance path; independent reserve cards remain priority ordered.
+
+Deterministic ordering is mandatory before fairness: primary status, integer
+priority, least-recently-selected repository among ties, earliest expiry, then
+opaque card ID. The cross-portfolio manifest must not contain a private title,
+path, evidence excerpt, or task body. It may contain only repository, opaque
+card ID, privacy class, mutation class, conflict key, p50/p90 minutes, and
+disposition. The selected repository's own producer packet carries its detail.
 
 ### 4. Time and evidence budgets
 
@@ -134,6 +161,13 @@ slice individually. Command count, active minutes, wait minutes, reserve hit
 rate, estimate error, repeated-read count, and enduring artifacts become the
 efficiency benchmark.
 
+The current 60-second progress expectation should apply while commands,
+research, validation, or an unresolved decision are actively advancing. Once
+the durable wait transition succeeds, there is no active worker operation to
+narrate. The wait controller should emit only a start checkpoint, named wake
+reason, and resume checkpoint. If the product requires a heartbeat, it should
+be machine-generated and value-free rather than consume model turns.
+
 ## Minimal repository-native shape
 
 Do not add a heavyweight workflow engine. Extend the existing producer tool
@@ -150,6 +184,14 @@ Repository-local cards and receipts remain private to their repositories. A
 Harness portfolio manifest contains only repository, opaque card ID, class,
 minutes, conflict key, and disposition. The selector must be deterministic and
 side-effect free. No service, dependency, or hosted scheduler is required.
+
+Cards are run-scoped IDs, not durable repository task IDs. Completion removes
+them from the run manifest through a receipt; interruption or demonstrated
+future value may cause the sole producer to promote one into the next durable
+task during final reconciliation. This prevents a nightly from flooding
+`TODO.md` merely because it explored alternatives. Producer changes selected
+within one repository should share at most one producer publication candidate
+for that night, but producer and consumer writer surfaces remain separate.
 
 ## Validation experiment
 
@@ -171,6 +213,11 @@ Run one matched two-night pilot before changing all five protocols:
 5. Adopt across repositories only if the pilot reduces repeated reads and
    narration while preserving or improving accepted outputs and routed
    context. Otherwise retain the current protocol and the design as evidence.
+
+The normative scenario table is `productive-idle-scenarios.tsv`. At minimum,
+a prototype must satisfy all 16 rows, including changed owner input, stale
+target state, p90 overrun, private metadata rejection, exact completion
+receipts, and the distinction between task-local LIFO and portfolio fairness.
 
 ## Alternatives
 
