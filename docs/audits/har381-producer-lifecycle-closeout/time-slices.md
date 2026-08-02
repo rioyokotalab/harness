@@ -424,6 +424,13 @@ Canonical update uses an exact main fetch refspec followed by `--ff-only` and
 exact hosted/local equality readback. No implicit branch push, force, rebase,
 or deletion is part of closeout.
 
+Conservative target times now reserve 07:40 for the one final R3 run, 08:00
+for terminal consumer bytes, 08:10 and 08:38 for the two protected merges,
+08:22 and 08:45 for their separate local cleanups, and 08:50 for final
+readback. The 08:55–09:00 interval remains handoff buffer. These are targets,
+not permission to skip a failed gate; an overrun preserves state and reports
+the exact unfinished transition.
+
 ## Slice 5 — 05:00–06:00
 
 Pending.
