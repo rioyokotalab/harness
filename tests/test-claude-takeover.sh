@@ -79,11 +79,12 @@ do
         "$ROOT/config/agent-clients/claude-sentinel.md" >/dev/null ||
         fail "Claude launch sentinel root: $managed_root"
 done
-grep -F 'non-managed bounded root' "$ROOT/.codex/AGENTS.md" >/dev/null ||
-    fail 'Codex Personal non-managed classification'
-grep -F 'non-managed bounded root' \
+grep -F 'Personal and Website are non-managed bounded' \
+    "$ROOT/.codex/AGENTS.md" >/dev/null ||
+    fail 'Codex bounded-root classification'
+grep -F 'Personal and Website are non-managed bounded' \
     "$ROOT/config/agent-clients/claude-sentinel.md" >/dev/null ||
-    fail 'Claude Personal non-managed classification'
+    fail 'Claude bounded-root classification'
 grep -F "Never apply one repository's policy to another" \
     "$ROOT/.codex/AGENTS.md" >/dev/null ||
     fail "Codex cross-repository policy isolation"
