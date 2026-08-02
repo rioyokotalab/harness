@@ -20,6 +20,33 @@ protected workflows; all three strict validators pass. Website stopped before
 transport because its required fixed SSH socket is absent. No consumer pane,
 private payload, deployment, fleet service, or gated task target was touched.
 
+The initial benchmark measured always-read and selected routed bytes for every
+repository and sampled strict-validator cost independently. Harness totals
+7,663 always-read and 12,301 routed bytes; Students 8,714 and 3,460; Swallow
+8,473 and 4,125; Personal 4,289 and 906; Website 8,255 and 3,349. Strict
+validation completed in 41–52 ms on the four converged implementations;
+Website's 52 ms result is explicitly legacy rather than strict convergence.
+
+Cleanup remained receipt-driven. Three merged Harness worktrees were archived
+and removed. Students and Swallow generated caches were removed under guarded
+manifests before their six merged worktrees and two exact-main reference clones
+were removed. Durable producer-main worktrees were retained and advanced to
+the final protected revisions, while active primary task branches were left
+untouched. One dirty, policy-invalid Personal implementation worktree and the
+blocked Website candidate were preserved rather than normalized. Website's
+fixture audit passed, and its 23.65-second value-free all-history audit found
+no private-key, known-token, high-entropy credential, or suspicious-path
+class. It emitted no matched values.
+
+The broader residue pass then closed thirteen older merged child worktrees,
+four clean reference clones, and four ancestor-only Harness branches through
+the same archive-first paths. The remaining `/tmp` set is fully classified:
+live monitor candidates, this active worktree, dirty pre-existing Personal and
+Website worktrees, durable Students and Swallow producer-main worktrees, three
+other-owner Swallow evaluation trees, and the blocked Website candidate.
+Remote branches remain report-only. No ambiguous or other-owner directory was
+deleted.
+
 ## Slice 2 — 02:00–03:00
 
 Pending.
