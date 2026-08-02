@@ -353,7 +353,51 @@ merge. No producer byte is staged on the current consumer branch.
 
 ## Slice 4 — 04:00–05:00
 
-Pending.
+Initial checkpoint at 04:00 JST: the worktree is clean at remote checkpoint
+`09571f5`, 17 commits and 20 changed paths above protected Harness main. The
+archive report is byte-for-byte stable at 84 receipts, 113 items, 106 unique
+tips, zero incomplete applies, one uncovered 133,401-byte receipt below the
+generation threshold, and no deletion candidate. No new plan, manifest,
+apply, generation, compaction, or evidence payload appeared.
+
+The final validation router was rehearsed without executing it. Relative to
+protected main, the lifecycle-sensitive housekeeping runtime and its validator
+test correctly select full R3 phase one; the later evidence files do not
+silently downgrade that integrated requirement. Exact code head `f3d57c7`
+already has a passing 96-suite receipt, but root policy additionally requires
+one phase-one pass on the final integrated tree before protected publication.
+That run remains scheduled after all nonterminal documentation bytes are prepared and
+will not be repeated before then. Documentation-only checkpoints continue to
+use R0 against their exact preceding code/evidence base.
+
+`closeout-sequence.tsv` now freezes the ten ordered closeout transitions. The
+consumer surface first receives final R3, then terminal receipt/board/index
+bytes receive R0, plain lifecycle validation, and the consumer diff. Only then
+may the exact branch be pushed and merged. Canonical main is advanced before
+the merged worktree is archived and guarded-removed. A fresh producer-only
+branch then closes Har-381, publishes compact Har-382, advances the next ID,
+passes strict convergence plus the producer diff, and uses a second protected
+merge. Final portfolio, archive, public, ruleset, monitor, and residue reads
+are read-only. The merged producer worktree receives its own archive-first
+guarded cleanup before those reads; it is not left as residue merely because
+the consumer worktree was already removed. No writer surface is combined
+merely to save a PR.
+
+Review size is also bounded: the 20-path branch has 767 insertions and 100
+deletions. Runtime plus owning tests account for only 32 insertions and zero
+deletions; 735 insertions and all 100 deletions are ledger/evidence, including
+the measured active-record compaction. This split makes the safety change
+independently reviewable from the long-run report and supplies no reason for
+another implementation refactor.
+
+Independent runtime review confirms the guard is narrow: one 20-line helper
+builds the existing configured scratch set, adds real non-symlink `/tmp` and
+`/var/tmp`, and refuses an owner equal to or below any boundary. Exactly two
+call sites protect worktree plan and apply before archive ownership can be
+created or consumed; recovery remains available. The owning test adds static
+call-count, plan-refusal, and apply-refusal coverage while retaining ordinary
+synthetic housekeeping through its explicit test-mode bypass. No archive,
+delete, recovery, remote, or credential behavior is otherwise changed.
 
 ## Slice 5 — 05:00–06:00
 
