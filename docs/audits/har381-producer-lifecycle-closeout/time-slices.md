@@ -563,6 +563,16 @@ packets remain compact and immutable, and no sibling protocol rollout is part
 of Har-383. The final producer transition is still one writer-pure candidate,
 so the protected closeout count and timing do not increase.
 
+A matched retrospective fixed the pilot baseline at checkpoint `c508483`. The
+pre-redirect interval then made three commits, all on the chronology, totaling
+58 insertions and one deletion; no runtime, test, packet, ledger, or target byte
+changed. Under the proposal, queue drain would produce one clean pushed wait
+checkpoint and no early mutable reads. The 05:57 owner input would invalidate
+that one-shot wait revision and select the new design work as an event, exactly
+as the live run did manually. Wait admission now also requires a clean remote
+checkpoint, no ambiguous external write, UTC plus requested-timezone wake
+identity, and p90 fit before latest safe start.
+
 ## Slice 7 — 07:00–08:00
 
 Pending.

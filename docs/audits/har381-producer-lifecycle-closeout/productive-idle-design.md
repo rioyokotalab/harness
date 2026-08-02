@@ -31,6 +31,30 @@ The problem is therefore workload admission and scheduling, not a lack of
 checks. Adding more mandatory checks would increase the exact toil that the
 nightly is meant to remove.
 
+### Matched Har-381 baseline
+
+Use the interval after exact checkpoint
+`c50848382f1f3e8031b4ab921b421723f4cf49e8` as the replay baseline. Before the
+owner redirected the run to this design, that interval produced three commits
+touching only `time-slices.md`, with 58 insertions and one deletion. Runtime,
+tests, packets, ledgers, and target state were unchanged. A deferred selector
+should instead emit one wait checkpoint at queue drain, perform no early
+mutable read, and wake at the predeclared finalization time. The 05:57 owner
+input is then a changed event: invalidate the old one-shot wake revision,
+reselect the new bounded design work, and preserve the already-complete target
+state. This is a reproducible comparison, not a claim that all three evidence
+commits were intrinsically valueless.
+
+For planning, exclude the finalization reserve from available engineering
+time. Define `coverage_expected` as admitted p50 active minutes divided by the
+remaining pre-cutoff minutes and `coverage_conservative` using admitted p90
+minutes. These are workload-supply indicators, not utilization targets. A
+ratio below one prompts reserve admission or an explicit expected wait; it
+never licenses low-value work. The retrospective observed queue-drain envelope
+was roughly 195 minutes into a 420-minute pre-cutoff window, demonstrating why
+the missing coverage should have been visible before execution even though
+exact task duration could not be known.
+
 ## Evidence adopted
 
 - Google SRE defines toil as manual, repetitive, automatable, tactical work
@@ -123,6 +147,14 @@ saved task, reconciles durable state, and reselects; it does not replay the
 last prompt. If a product-native recurring wait is available, prefer it. A
 shell sleep loop is not the target architecture because it occupies a client,
 has weak recovery semantics, and encourages narration without decisions.
+
+A wait transition is allowed only after the current atomic action is terminal,
+the branch is clean and remotely checkpointed, no external write is ambiguous,
+and the task record names its wake conditions. Store requested timezone and an
+UTC instant; use monotonic time only for in-process intervals. Duplicate or
+late wake signals compare the one-shot token and checkpoint revision, then
+either no-op or enter finalization. A wake after the card's latest safe start
+cannot begin that card.
 
 Lanes are monotonic for one run except that a changed input may make a
 previously declared reserve card ready. Discovery cannot recursively create
@@ -238,6 +270,13 @@ Credentials, account/hosting settings, deployments, external messages,
 consumer-runtime mutation, destructive remote operations, and any owner gate
 are never reserve work merely because time remains. They may appear only as a
 blocked observation or as a separately frozen primary objective.
+
+Conflict keys may represent shared capacity as well as one repository writer.
+For example, independent repository analysis can proceed concurrently, while
+hosted validation, archive-heavy I/O, or one protected repository writer can
+have capacity one. Keys are opaque in the public portfolio manifest. The pilot
+starts sequentially; parallel reserve execution is a later optimization only
+if receipts prove enough work and non-overlap to repay dispatch and review.
 
 Selection pseudocode is intentionally small: verify manifest and packet
 digests; exclude terminal receipts; evaluate built-in named predicates against
