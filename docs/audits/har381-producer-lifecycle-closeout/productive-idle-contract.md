@@ -28,6 +28,7 @@ inside that repository:
 docs/producer/nightly/index.tsv
 docs/producer/nightly/cards/<opaque-opportunity-id>.md
 docs/audits/<run-token>/admissions.tsv
+docs/audits/<run-token>/events.tsv
 docs/consumer/nightly-receipts/<run-token>/<opaque-id>.md
 ```
 
@@ -43,7 +44,10 @@ measured reduction justify a refactor.
 
 `nightly-plan --until ...` is read-only. It reports requested window,
 finalization reserve, mandatory and reserve p50/p90, uncovered expected
-minutes, repository representation, and authority/conflict classes. One
+minutes, repository representation, authority/conflict classes, and one of
+`covered`, `shortfall`, or `planned-wait`. Only cards whose predicate is ready
+and whose authority, conflict, privacy, and time-fit checks currently pass
+contribute coverage. One
 bounded structural opportunity scan is allowed before `go`; a remaining gap is
 reported as expected wait, never padded.
 
@@ -63,7 +67,7 @@ first-add blob. A card added after `go`, or changed/removed afterward, is not
 substituted. A later protected-head change may continue only if selected packet
 bytes remain identical and the named target predicate still passes.
 
-Catalog, card, manifest, and receipt schemas are closed. Require regular
+Catalog, card, manifest, event, and receipt schemas are closed. Require regular
 non-symlink, non-executable files; bounded bytes; unique identities; exact
 fields; repository-local relative paths; and no sensitive metadata keys or
 public privacy canaries. Reject unknown fields, duplicate IDs/receipts, unsafe
@@ -89,11 +93,24 @@ flag, integer priority, least-recently-selected repository among ties, earliest
 expiry, then opaque ID. Task-local defects remain LIFO; independent portfolio
 opportunities do not.
 
-`nightly-next` emits one packet path or exact wait/finalize state and at most
-1,024 bytes before that packet is read. `nightly-receive` accepts one complete,
-no-change, blocked, skipped, or interrupted receipt for each pulled instance.
-Selection is never completion. The same predicate cannot run twice in one
-night after a no-change receipt.
+`nightly-next` emits one candidate identity or exact wait/finalize state.
+`nightly-start --expected-candidate ...` revalidates that candidate, atomically
+appends one `selected` event, and emits its packet path. Together they route at
+most 1,024 bytes before that packet is read. Before target action, the
+controller must durably checkpoint the event. An unresolved selected
+event is the only resumable card: recovery reconciles its exact target state
+and records `interrupted` or a terminal receipt before another selection. It
+never invokes the target action again merely because the receipt is absent.
+`nightly-receive` accepts one complete, no-change, blocked, skipped, or
+interrupted receipt for each selected instance. An exact retry is an idempotent
+no-op; a changed duplicate is rejected. Selection is never completion. The
+same predicate cannot run twice in one night after a no-change receipt.
+
+Selection is work-conserving within the frozen scope: it may return wait only
+when no eligible card fits. It recalculates remaining p50/p90 coverage after
+every terminal receipt because a completed card may change another card's
+predicate. A shortfall discovered after `go` changes the forecast to
+`planned-wait`; it does not admit late work.
 
 Cards may use only read-only, repository-local, or ordinary protected
 publication authority already frozen for the run. Credentials, account or
@@ -116,8 +133,9 @@ expensive report merely to discover whether its input changed.
 A wait begins only from a clean remotely checkpointed branch, with no ambiguous
 write and explicit UTC/requested-timezone `wake_at`, `wake_on`, `finalize_at`,
 checkpoint revision, and one-shot token. Duplicate or late wakes no-op or enter
-finalization. A wake after latest start cannot launch the card. The pilot tests
-this state machine but starts no live controller.
+finalization. Finalization is one-way: after it begins, reserve work cannot
+restart. A wake after latest start cannot launch the card. The pilot tests this
+state machine but starts no live controller.
 
 ## Anti-make-work and progress
 
@@ -135,8 +153,9 @@ sentence is sufficient for its hourly evidence slice.
 ## Pilot acceptance
 
 Use `productive-idle-scenarios.tsv` and `productive-idle-acceptance.tsv` as
-normative data. All 19 scenarios and all 18 measures must pass, including the
+normative data. All 24 scenarios and all 21 measures must pass, including the
 matched replay from checkpoint `c508483`, zero early duplicate reads, no more
 than one wait checkpoint, unchanged always-read bytes, zero billable Actions
 increase, no extra protected transition, no value exposure or writer violation,
-p95 at most 100 ms over 60 synthetic cards, and complete Harness validation.
+p95 at most 100 ms over 60 synthetic cards, crash-safe selection recovery,
+honest shortfall reporting, and complete Harness validation.

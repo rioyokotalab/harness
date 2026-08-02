@@ -18,3 +18,8 @@ terminal-card	pulled-card-terminal	exact-one-receipt	selection-is-not-completion
 dirty-admission	new-manifest-not-committed	refuse-selection	validated-manifest-must-be-checkpointed-first
 manifest-rewrite	first-add-blob-differs-from-current	reject	admission-immutable-after-first-commit
 late-catalog-card	card-created-after-frozen-catalog-revision	reject	go-cannot-authorize-later-card
+short-plan	ready-card-p90-below-pre-cutoff-envelope	report-shortfall-or-planned-wait	coverage-never-counts-unready-work
+work-conserving	one-eligible-card-fits-and-discovery-unused	pull-card	wait-forbidden-while-fit-work-exists
+crash-after-selection	selected-event-durable-receipt-absent	reconcile-exact-card	no-target-action-replay
+duplicate-receipt	exact-retry-then-changed-retry	no-op-then-reject	exactly-one-terminal-disposition
+late-wake	wake-at-or-after-finalization	finalize	finalization-never-reopens-reserve

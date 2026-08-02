@@ -9,7 +9,7 @@ card_packet_bytes	4096-task-packet-limit	at-most-4096	strict-metadata-validator
 admitted_cards	not-available	at-most-32-per-run	run-manifest-validator
 open_catalog_cards	not-available	at-most-12-per-repository	catalog-validator
 selector_latency_60_cards	not-available	p95-at-most-100ms	matched-20-run-sample
-normative_scenarios	0	19-of-19-pass	productive-idle-scenarios.tsv
+normative_scenarios	0	24-of-24-pass	productive-idle-scenarios.tsv
 private_value_exposure	0	0	public-audit-and-canary-tests
 writer_boundary_violations	0	0	producer-consumer-diff-tests
 prompt_replays_after_wake	0	0	wake-revision-tests
@@ -17,3 +17,6 @@ pilot_extra_protected_transitions	0	0	publication-receipt
 rollout_preparation_transitions	not-available	0	admission-and-publication-receipts
 billable_hosted_minutes_increase	0	0	workflow-run-readback
 final_integrated_validation	R3-pass	R3-pass	harness-validate-receipt
+coverage_false_positives	not-available	0	short-plan-and-stale-base-scenarios
+wait_with_fit_card	not-available	0	work-conserving-scenario
+target_replays_after_unreceipted_selection	0	0	crash-after-selection-scenario

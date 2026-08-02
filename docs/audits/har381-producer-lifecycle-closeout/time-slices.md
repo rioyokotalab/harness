@@ -681,19 +681,41 @@ substituted for Har-383's real parser, schema, Git, and hostile-path benchmark.
 
 Initial checkpoint at 07:00 JST: candidate
 `e4f21a956a555c7c5c02dc378a0cdf9ed0e369d1` is clean and exactly matches its
-remote branch. Slice 6 closed with no late state mutation. The productive-idle
-result is now frozen as one 7,583-byte execution contract, 19 normative
+remote branch. Slice 6 closed with no late state mutation. At that boundary,
+the productive-idle result was one 7,583-byte execution contract, 19 normative
 scenarios, 18 acceptance measures, a 27,449-byte lookup-only research design,
 and a 20-fact compaction check. Har-382 and Har-383 remain the only new
 follow-up allocations planned for final producer reconciliation.
 
-No further nonterminal documentation or implementation byte is planned. The
-one final integrated R3 phase-one run is therefore advanced from its
-conservative 07:40 target to this boundary, increasing closeout margin without
-repeating a check. It must cover the exact committed tree after this boundary
-checkpoint. Later terminal board/record/index/receipt bytes remain
-writer-bounded documentation and receive the separately planned plain ledger,
-consumer diff, and R0 checks before publication.
+The one final integrated R3 phase-one run was advanced from its conservative
+07:40 target to this boundary, increasing closeout margin without repeating a
+check. It passed all 96 phase-one suites in 75.47 seconds on exact commit
+`f93ef18f9853f395922e67d3695c01bb7a903898`, tree
+`aa97e154c43e00bb434cf88e4ea98341bb8cd0e8`, with receipt identity
+`54a5403342b9e2e88e6b9765eaf5093871c6bceba8a91261195a3b66a5ae7a6d`.
+
+The owner then asked that the remaining pre-cutoff time be used to strengthen
+the queue-exhaustion design. A failure-mode review found a real missing crash
+boundary: selection followed by target mutation and interruption before the
+receipt could allow a cold recovery to select the same action again. The
+contract now separates pure `nightly-next` candidate calculation from an
+atomic `nightly-start` event. Target work is forbidden until that selected
+event is durably checkpointed; recovery reconciles the exact unresolved card,
+and exact duplicate receipts are idempotent while changed duplicates fail.
+
+The review also made planning honest and work-conserving. Only currently ready,
+authorized, privacy-safe, conflict-free, time-fitting cards contribute
+coverage; the plan reports `covered`, `shortfall`, or `planned-wait`; and the
+selector may not wait while a fit eligible card exists. Finalization is
+one-way. Five additional threat scenarios and three acceptance measures cover
+short supply, false waits, crash recovery, duplicate receipts, and late wakes.
+The current normative totals are 24 scenarios and 21 measures. Schema and
+whitespace-normalized contract checks pass. The compact required route is now
+12,689 bytes versus 33,083 bytes with lookup rationale, a 20,394-byte (61.645%)
+reduction. These are documentation-only follow-up-contract changes; the live
+nightly remains untouched. Terminal board/record/index/receipt bytes and these
+late documentation deltas receive the planned ledger, consumer-diff, and R0
+checks before publication; the unchanged runtime retains the exact R3 receipt.
 
 ## Slice 8 — 08:00–09:00
 

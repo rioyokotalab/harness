@@ -128,6 +128,11 @@ with polling, revalidation, generic cleanup, or speculative goal creation.
 The owner-facing proposal should show one compact coverage table: requested
 window, finalization reserve, mandatory p50/p90, reserve p50/p90, uncovered
 expected minutes, repositories represented, and authority/conflict classes.
+It labels the result `covered`, `shortfall`, or `planned-wait`. Only cards that
+are ready and currently pass authority, privacy, conflict, and time-fit checks
+contribute to either coverage sum; blocked or merely discoverable work counts
+as zero. Recompute the forecast after each terminal receipt because target
+changes can invalidate another admitted card.
 Private card titles remain in their repositories. If coverage is short, the
 producer automatically performs the one allowed pre-run opportunity scan and
 then reports the remaining expected wait. It does not require a second owner
@@ -168,6 +173,11 @@ cannot begin that card.
 Lanes are monotonic for one run except that a changed input may make a
 previously declared reserve card ready. Discovery cannot recursively create
 more discovery during the same night.
+
+The selector is work-conserving inside the frozen manifest: it cannot return a
+wait while an eligible card fits the remaining envelope. This is not a promise
+of full utilization. If readiness changes consume the forecast after `go`, the
+run reports `planned-wait` and does not backfill from a late card.
 
 ### 3. Isolation and fairness
 
@@ -244,14 +254,17 @@ independent value, and stopping condition.
 ## Minimal repository-native shape
 
 Do not add a heavyweight workflow engine. Add a separate pilot tool with a
-small admission schema and four commands:
+small admission schema and five commands:
 
 - `nightly-plan --until ...` read-only reports eligible catalog coverage,
   conflict classes, authority classes, estimates, and finalization reserve.
 - `nightly-admit --run ...` writes an execution manifest after `go`, binding a
   subset of already-protected producer cards and their exact catalog revision.
-- `nightly-next --remaining-minutes ...` returns one ready card or an exact
-  wait/finalize state without requiring the agent to read unrelated packets.
+- `nightly-next --remaining-minutes ...` returns one candidate identity or an
+  exact wait/finalize state without reading unrelated packets.
+- `nightly-start --expected-candidate ...` revalidates the candidate, appends
+  its selection event atomically, and returns the packet path; target work is
+  forbidden until that event is durably checkpointed.
 - `nightly-receive` accepts one completion, blocked, skipped, or interrupted
   receipt and enforces one terminal disposition for every pulled card.
 
@@ -270,7 +283,8 @@ each repository/
 ├── docs/producer/nightly/index.tsv
 ├── docs/producer/nightly/cards/<opaque-opportunity-id>.md
 ├── docs/consumer/nightly-receipts/<run-token>/<opaque-id>.md
-└── docs/audits/<run-token>/admissions.tsv
+├── docs/audits/<run-token>/admissions.tsv
+└── docs/audits/<run-token>/events.tsv
 ```
 
 Repository-local catalogs are producer-owned and protected before planning.
@@ -370,6 +384,18 @@ repository fairness age, expiry, and opaque ID. If no card survives, consume
 the one bounded discovery allowance or return the exact wait state. No card
 supplies a shell command or executable predicate from Markdown.
 
+Selection also needs a crash boundary. `nightly-start` appends a `selected`
+event to `docs/audits/<run-token>/events.tsv`; the controller checkpoints it
+durably before target action. A run with one unresolved selected event cannot
+select another card.
+On cold recovery, reconcile the named card's exact target state and then write
+an interrupted or terminal receipt; absence of a receipt is not permission to
+repeat the action. An exact duplicate receipt request returns the existing
+receipt as an idempotent no-op, while a payload mismatch is rejected. This
+small event journal resolves the tension between pure candidate calculation
+and at-most-once mutation: candidate calculation stays read-only, but execution
+cannot begin until its selection event is durable.
+
 ## Owner and progress experience
 
 Progress messages correspond to state transitions: plan frozen, card selected,
@@ -421,7 +447,7 @@ controller, or touch a sibling repository. Synthetic fixtures exercise local
 catalog and admission paths without crossing the producer writer boundary.
 
 After the consumer receipt, normal producer reconciliation closes Har-383. If
-and only if all 19 scenarios and 18 acceptance measures pass, that producer
+and only if all 24 scenarios and 21 acceptance measures pass, that producer
 transition may allocate a later Harness rollout task. The rollout task—not
 Har-383—may seed a protected Harness opportunity catalog and update the nightly
 protocol. Sibling rollout remains a further evidence-gated decision. This
@@ -429,10 +455,12 @@ keeps code validation, producer-owned state, and policy activation in their
 proper writer phases and makes rejection of the experiment cheap.
 
 The normative scenario table is `productive-idle-scenarios.tsv`. At minimum,
-a prototype must satisfy all 19 rows, including changed owner input, stale
+a prototype must satisfy all 24 rows, including changed owner input, stale
 target state, p90 overrun, private metadata rejection, dirty or rewritten
-admissions, late catalog cards, exact completion receipts, and the distinction
-between task-local LIFO and portfolio fairness.
+admissions, late catalog cards, honest shortage forecasts, work-conserving
+selection, crash recovery, idempotent receipts, one-way finalization, exact
+completion receipts, and the distinction between task-local LIFO and portfolio
+fairness.
 
 ## Alternatives
 
