@@ -13,6 +13,13 @@ complete Har-379 record and receipt alongside a ready packet/index/queue; the
 current validator incorrectly passes. Implementation begins from an isolated
 worktree with no consumer checkout mutation.
 
+Before the slice boundary, Harness corrected the lifecycle and converged the
+Har-379 receipt without packet mutation. Students, Swallow, and Personal then
+published equivalent repository-native changes through their independent
+protected workflows; all three strict validators pass. Website stopped before
+transport because its required fixed SSH socket is absent. No consumer pane,
+private payload, deployment, fleet service, or gated task target was touched.
+
 ## Slice 2 — 02:00–03:00
 
 Pending.
