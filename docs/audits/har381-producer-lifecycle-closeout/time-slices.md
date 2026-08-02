@@ -546,14 +546,14 @@ privacy, conflicts, stale bases, cached reads, bounded discovery, owner
 interrupts, overruns, fairness, task-local LIFO, and exact terminal receipts.
 
 Feasibility against the existing writer validator then resolved a role
-ambiguity. Immutable reserve catalogs stay in their owning repositories, while
-one value-free admission manifest belongs to Harness; all are producer-owned
-and frozen before execution. The active executor writes only repository-local
-run-instance receipts and audit evidence. Final producer reconciliation closes
-the Harness run disposition without packet rewrites. Harness holds only opaque
-sibling card tokens and never a private packet digest that could become a
-dictionary oracle. A separate pilot selector is
-preferred over enlarging the current 317-line durable task selector and its
+ambiguity. Immutable reserve catalogs and admission manifests stay in their
+owning repositories; public Harness has no private card row, token, digest,
+timing, or disposition. A participating repository receives at most one local
+producer preparation transition, while an unrepresented repository receives
+none. The active executor writes only local run-instance receipts and audit
+evidence, and final producer reconciliation closes local dispositions without
+packet rewrites. A separate pilot selector is preferred over enlarging the
+current 317-line durable task selector and its
 370-line unit suite before equivalence is proven. Catalogs remain bounded,
 cards carry no executable shell predicates, and external/credential/deployment
 or consumer-runtime actions can never become reserve work by elapsed time.
@@ -576,13 +576,13 @@ as the live run did manually. Wait admission now also requires a clean remote
 checkpoint, no ambiguous external write, UTC plus requested-timezone wake
 identity, and p90 fit before latest safe start.
 
-Privacy review then tightened the portfolio manifest: even a cryptographic
-digest of a small predictable private packet could serve as a dictionary
-oracle. Detailed packet bytes, protected-base binding, and digests therefore
-remain inside the owning private repository. Public Harness carries only an
-opaque token plus value-free class, timing, and disposition. The pilot
-acceptance matrix now fixes 17 measures, including no extra protected
-transition or Actions use, unchanged always-read bytes, at most 1,024 selector
+Privacy review then tightened the model twice: a digest of a small predictable
+private packet could serve as a dictionary oracle, and even opaque per-card
+timing or disposition reveals private workload shape. All admission detail now
+remains inside the owning repository. The acceptance matrix fixes 18 measures,
+including no extra transition in the Harness-only pilot, at most one
+preparation transition per participating repository before later rollout, zero
+billable Actions increase, unchanged always-read bytes, at most 1,024 selector
 bytes before the chosen card, 16/16 scenario behavior, zero value exposure,
 and p95 selection at most 100 ms over 60 synthetic cards.
 
@@ -605,13 +605,13 @@ decision packet, one reproduced failure test, or a head-triggered public delta
 audit—not broad search or generic cleanup.
 
 A consistency review removed two latent shared-ledger conflicts. Persistent
-repository-local opportunity packets are distinct from run-scoped admission
-instances; Harness owns the immutable value-free admission manifest, while the
-selected repository owns the exact instance receipt and packet digest. Also,
-new owner input during execution records a consumer-side task amendment and
-invalidates the wait token—it does not rewrite the producer manifest. This
-matches the live 05:57 redirect and preserves writer purity; any reusable
-follow-up is considered only during final producer reconciliation.
+local opportunity packets are distinct from run-scoped admission instances;
+the owning repository retains its manifest, receipt, and packet digest, with
+no public cross-ledger. Also, new owner input during execution records a
+consumer-side task amendment and invalidates the wait token—it does not rewrite
+the producer manifest. This matches the live 05:57 redirect and preserves
+writer purity; any reusable follow-up is considered only during final producer
+reconciliation.
 
 ## Slice 7 — 07:00–08:00
 

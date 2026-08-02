@@ -102,9 +102,9 @@ particular reserve task is valuable; each card still needs local evidence.
 
 ### 1. Admission before `go`
 
-The producer creates a value-free run manifest after planning and before target
-execution. It contains the mandatory packet plus independently optional reserve
-cards. A card is admitted only if it has:
+The producer creates a repository-local run manifest after planning and before
+target execution. It contains that repository's mandatory packet plus
+independently optional reserve cards. A card is admitted only if it has:
 
 - repository and privacy class;
 - objective, evidence predicate, and expected enduring value;
@@ -181,10 +181,10 @@ active acceptance path; independent reserve cards remain priority ordered.
 
 Deterministic ordering is mandatory before fairness: primary status, integer
 priority, least-recently-selected repository among ties, earliest expiry, then
-opaque card ID. The cross-portfolio manifest must not contain a private title,
-path, evidence excerpt, or task body. It may contain only repository, opaque
-card ID, privacy class, mutation class, conflict key, p50/p90 minutes, and
-disposition. The selected repository's own producer packet carries its detail.
+opaque card ID. There is no cross-portfolio card manifest in public Harness.
+Each selector returns only a value-free ready/idle/block status to the active
+controller; private title, path, timing, conflict key, evidence, packet digest,
+and disposition stay in the owning repository.
 
 ### 4. Time and evidence budgets
 
@@ -261,25 +261,23 @@ pilot proves a common abstraction. A small `tools/nightly-queue.py` can share
 only strict metadata helpers after equivalence tests exist.
 
 The writer-compatible layout distinguishes persistent local opportunities from
-their run-scoped admission instances:
+their run-scoped admission instances, independently in every repository:
 
 ```text
 each repository/
 ├── docs/producer/nightly/index.tsv
 ├── docs/producer/nightly/cards/<opaque-opportunity-id>.md
+├── docs/producer/nightly/runs/<run-token>.tsv
 └── docs/consumer/nightly-receipts/<run-token>/<opaque-id>.md
-
-Harness only/
-├── docs/producer/nightly/runs/<run-id>.tsv
-└── docs/audits/<run-id>/
+docs/audits/<run-token>/
 ```
 
-Repository-local catalogs and the value-free Harness admission manifest are
-producer-owned and frozen before target execution. The consumer-side executor
-writes only repository-local run-instance receipts and task evidence. Final
-producer reconciliation closes the Harness run disposition without rewriting
-opportunity or manifest bytes. This mirrors the already-proven immutable packet
-and receipt lifecycle instead of creating a second mutable shared board.
+Repository-local catalogs and admission manifests are producer-owned and
+frozen before target execution. The consumer-side executor writes only local
+run-instance receipts and task evidence. Final producer reconciliation closes
+each local run disposition without rewriting opportunity or manifest bytes.
+This mirrors the already-proven immutable packet and receipt lifecycle instead
+of creating a second mutable shared board.
 
 Dedicated Personal and Students consumers remain idle during a producer
 nightly and never pull reserve cards. Cards are executed by the sole producer
@@ -287,27 +285,26 @@ in isolated repository-native worktrees. A finding that deserves later
 consumer implementation is promoted at final reconciliation into a normal
 durable task, rather than injected into a sleeping consumer's board.
 
-Each repository owns its detailed cards and byte-binding digests. Harness's
-public portfolio manifest contains only repository, opaque run/card token,
-class, p50/p90 minutes, and disposition; it never stores a private packet
-digest that could become a dictionary oracle. Persistent catalogs are capped at
-12 open cards per repository; a thirteenth requires completing, expiring, or
-superseding an existing card. The ordinary producer cycle replenishes catalogs
-from demonstrated findings. An empty catalog is valid and cannot be treated as
+Each repository owns its detailed cards, admission rows, byte-binding digests,
+timing, and receipts. Public Harness stores no private card or admission row at
+all—not even a digest or count. Persistent catalogs are capped at 12 open cards
+per repository; a thirteenth requires completing, expiring, or superseding an
+existing card. The ordinary producer cycle replenishes catalogs from
+demonstrated findings. An empty catalog is valid and cannot be treated as
 permission to generate work recursively.
 
-To avoid a producer PR in every repository before every night, cards live in
-protected state before selection. The one Harness preparation transition
-freezes the public portfolio run manifest by opaque ID only. Each private
-repository's local selector binds its protected packet and base bytes in that
-repository's own evidence. On execution, the producer opens only the selected
-repository-local card and revalidates its named predicate. A card absent from
-protected state at freeze time is not executable that night.
+Cards live in protected state before selection. A participating repository
+gets one small producer preparation transition for its local run manifest;
+repositories with no admitted card get none. Those transitions can proceed in
+parallel and must report billable hosted minutes separately. On execution, the
+producer opens only the selected local card and revalidates its named
+predicate. A card absent from protected state at freeze time is not executable
+that night. The added preparation cost is part of the pilot comparison and
+must not be hidden to preserve an elegant schema.
 
-Repository-local cards and receipts remain private to their repositories. A
-Harness portfolio manifest contains only repository, opaque card ID, class,
-minutes, conflict key, and disposition. The selector must be deterministic and
-side-effect free. No service, dependency, or hosted scheduler is required.
+Repository-local cards, manifests, and receipts remain private to their
+repositories. The selector must be deterministic and side-effect free. No
+service, dependency, or hosted scheduler is required.
 
 Catalog entries are bounded opportunity templates, not durable repository task
 IDs. Admission creates a run-scoped `(run-token, opportunity-id)` instance.
@@ -347,19 +344,20 @@ generic production freshness registry during its first pilot.
 Conflict keys may represent shared capacity as well as one repository writer.
 For example, independent repository analysis can proceed concurrently, while
 hosted validation, archive-heavy I/O, or one protected repository writer can
-have capacity one. Keys are opaque in the public portfolio manifest. The pilot
-starts sequentially; parallel reserve execution is a later optimization only
-if receipts prove enough work and non-overlap to repay dispatch and review.
+have capacity one. Keys remain repository-local; a selector exposes only a
+value-free held/free result to the live controller and no key is tracked in
+public Harness. The pilot starts sequentially; parallel reserve execution is a
+later optimization only if receipts prove enough work and non-overlap to repay
+dispatch and review.
 
-Selection pseudocode is intentionally small: verify the admission token in the
-Harness manifest, then verify the opportunity packet and digest inside its
-owning repository; exclude terminal run-instance receipts; evaluate built-in
-named predicates against freshness receipts; reject expired, unauthorized,
-stale-base, privacy-unsafe, or held-conflict cards; enforce latest safe start;
-then sort by primary flag, priority, repository fairness age, expiry, and
-opaque ID. If no card survives, consume the one bounded discovery allowance or
-return the exact wait state. No card supplies a shell command or executable
-predicate from Markdown.
+Selection pseudocode is intentionally small: verify the local admission
+manifest, opportunity packet, and digest; exclude terminal run-instance
+receipts; evaluate built-in named predicates against freshness receipts;
+reject expired, unauthorized, stale-base, privacy-unsafe, or held-conflict
+cards; enforce latest safe start; then sort by primary flag, priority,
+repository fairness age, expiry, and opaque ID. If no card survives, consume
+the one bounded discovery allowance or return the exact wait state. No card
+supplies a shell command or executable predicate from Markdown.
 
 ## Owner and progress experience
 
