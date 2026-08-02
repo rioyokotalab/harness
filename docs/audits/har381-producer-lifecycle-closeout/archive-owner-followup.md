@@ -12,6 +12,26 @@ new scratch-root owners; it does not rewrite historical receipts.
 
 ## Smallest durable migration
 
+The bounded legacy set is twelve reconstructed roots bound by 28 receipts.
+Each receipt contains one tip, and all 28 source bundles are still present;
+none currently depends only on a retired-bundle compaction. Migration can
+therefore prove aliases against the immutable source bundle first, while still
+testing and preserving the existing generation and compaction recovery route.
+All 28 are archive-v2 receipts with canonical repository identity and exact
+Git common-directory fields, so this migration needs no legacy-schema guess or
+source-receipt rewrite.
+
+The durable-owner mapping is bounded to four already-declared canonical
+repositories: one Personal root, five Students roots, five Swallow roots, and
+one Website root. Alias creation must derive that mapping from normalized
+remote identity and independently read protected main; basename or directory
+proximity is never sufficient evidence of repository identity.
+
+The 28 live source bundles total 377,250,219 bytes and remain durable inputs;
+the migration is not bundle compaction. Its cleanup benefit is the separately
+measured 490,203,636 bytes occupied by reconstructed sparse roots, subject to
+the acceptance checks below.
+
 Add an immutable private alias receipt rather than editing a source receipt.
 The alias should bind the source receipt path and digest, legacy repository and
 Git common-directory paths, source bundle digest and item tips, durable

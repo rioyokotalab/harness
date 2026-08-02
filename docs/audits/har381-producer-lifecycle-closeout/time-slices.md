@@ -146,9 +146,35 @@ superseding R3 receipt. This demonstrates the intended efficiency policy in
 operation rather than rerunning 78 seconds of unrelated suites for
 documentation-only evidence.
 
+The slice-two checkpoint was then pushed by exact refspec and read back at
+`cf3586097a154fb96e729353cad1e0a4f762999a`; the candidate worktree was clean.
+Metadata-only status reports remained healthy for all three managed Codex
+slots and all three managed Claude slots, with Codex phone mirroring healthy
+and no order or repair action. No pane or transcript content was inspected.
+
 ## Slice 3 — 03:00–04:00
 
-Pending.
+Initial checkpoint at 03:00 JST: the exact Website SSH socket is still absent,
+so its failed preflight was not replayed and Web-219 remains local. All five
+repositories still have zero open pull requests. Harness's remote checkpoint
+matches `cf3586097a154fb96e729353cad1e0a4f762999a`; canonical Harness,
+Personal, and Website protected roots remain clean, while the preserved
+Students and Swallow primary task branches remain in place. The archive report
+is unchanged at 84 passing receipts, zero incomplete applies, one small
+uncovered receipt below threshold, and no deletion candidate.
+
+Cold-start context shape was then measured from each repository's protected
+or declared producer-main view. Exact nonblank-line intersection between
+always-read `AGENTS.md` and `PRODUCER.md` is zero in every repository. Their
+combined byte totals remain the previously recorded 7,663 Harness, 8,714
+Students, 8,473 Swallow, 4,289 Personal, and 8,255 Website. The new
+`context-shape.tsv` also records word counts without copying any private text.
+There is therefore no evidence-backed exact deduplication to apply inside the
+always-read pair. Cross-repository common wording would not lower one agent's
+context because repositories are intentionally independent. No speculative
+compaction is made merely because Students, Swallow, and Website have larger
+root agreements; removing project-specific safety or routing clauses would
+fail the frozen capability-equivalence condition.
 
 ## Slice 4 — 04:00–05:00
 

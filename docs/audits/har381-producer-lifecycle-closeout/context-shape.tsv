@@ -1,0 +1,6 @@
+repository	agents_bytes	agents_words	producer_bytes	producer_words	always_read_bytes	exact_shared_nonblank_lines	exact_shared_bytes	disposition
+Harness	6237	824	1426	201	7663	0	0	retain-no-exact-duplication
+Students	7525	968	1189	165	8714	0	0	retain-no-exact-duplication
+Swallow	7225	997	1248	174	8473	0	0	retain-no-exact-duplication
+Personal	3040	384	1249	174	4289	0	0	retain-no-exact-duplication
+Website	7186	964	1069	153	8255	0	0	retain-no-exact-duplication
