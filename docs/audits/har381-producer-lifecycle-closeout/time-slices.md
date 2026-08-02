@@ -670,6 +670,13 @@ publication and existing authority. In-run discovery still cannot execute its
 own proposals. This is the mechanism that keeps future supply available
 without recursive goal creation.
 
+A disposable in-memory reference model tested the proposed deterministic sort
+with the maximum 60 open catalog opportunities (five repositories times 12)
+in 20 fresh Python processes. It selected equal-priority repositories in the
+declared fair order and measured 17.466 ms median and 21.128 ms p95. This proves
+the 100 ms pilot threshold is feasible for the scheduling core; it is not
+substituted for Har-383's real parser, schema, Git, and hostile-path benchmark.
+
 ## Slice 7 — 07:00–08:00
 
 Pending.
