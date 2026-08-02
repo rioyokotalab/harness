@@ -21,8 +21,9 @@ Next free ID: Har-379.
 
 ### Har-378 — Repository-local producer/consumer task protocol
 
-**Phase:** interviewing; no target-repository or runtime mutation is authorized
-until the owner completes the decision register and gives an explicit `go`.
+**Phase:** ready-for-go; the five-decision register is complete and internally
+consistent. Wait for an explicit `go` before target-repository or runtime
+mutation.
 
 **Record:** `docs/tasks/Har-378.md`.
 

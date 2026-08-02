@@ -43,10 +43,10 @@ deployment, and external-action gates remain authoritative.
    branches. Current `origin/main` uses the new `Stu-*` and `Swa-*` namespaces;
    Har-371 forbids moving either runtime before an owner-visible idle or cold
    boundary.
-3. Personal and Students are private. Harness, Swallow, and Website are
-   publicly readable; the requested mandatory public-content audit applies at
-   least to Harness and Website and must never use private repository content
-   as a comparison corpus.
+3. Hosting readback reports Harness and Website public, and Personal, Students,
+   and Swallow private. The mandatory public-content audit applies to Harness
+   and Website and must never use private repository content as a comparison
+   corpus.
 4. Existing always-read byte baselines are:
 
    | Repository | AGENTS | board/session | installed skill text |
@@ -223,14 +223,28 @@ task may propose scheduling with evidence from those runs.
 
 ### D-005 — Publication responsibility
 
-Open. Recommended: consumers publish their own implementation PRs; the
-producer publishes producer-ledger/nightly-compaction PRs. Each repository
-retains its native validation and deployment boundaries.
+Selected: consumers publish their own implementation PRs; the producer
+publishes producer-ledger and nightly-compaction PRs. This maximizes parallel
+progress while each repository retains its native validation, protected-main,
+and deployment boundaries.
+
+## Decision audit
+
+Complete. D-001 through D-005 are mutually consistent: automatic execution is
+bounded by packet scope and closer gates; producer-only files have a strong
+agent-enforced single writer without new credentials; top-level priority/FIFO
+does not conflict with task-local LIFO; nightly activation is staged and
+owner-started; and publication ownership follows the writer partition.
+
+No further owner choice is required. Har-371 remains an event gate rather than
+a design choice: Students or Swallow runtime activation waits for its verified
+idle/cold boundary, while repository work may be developed in isolated
+`origin/main` worktrees.
 
 ## Exact next action
 
-Ask D-005 only using numbered choices. Record the answer, then audit the full
-decision register for contradictions or missing material choices.
-No target repository,
-runtime, schedule, assignment, or external state may change before all five
-decisions are frozen and the owner gives an explicit `go`.
+Wait for an explicit owner `go`. Then read the execution-phase workflows,
+create repository-local task branches/worktrees and ledgers independently,
+validate and publish each repository through its native gates, activate only
+at verified safe boundaries, and finish with portfolio validation and guarded
+cleanup. The `go` does not override any packet-external authority gate.
