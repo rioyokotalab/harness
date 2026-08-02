@@ -94,10 +94,14 @@ frozen card ready; discovery cannot execute its own proposals that night.
 
 For eligible cards, reject terminal receipts, expired or unauthorized scope,
 stale targets, privacy violations, held conflict keys, and cards whose p90 plus
-validation/publication buffer does not fit before latest start. Sort by primary
-flag, integer priority, least-recently-selected repository among ties, earliest
-expiry, then opaque ID. Task-local defects remain LIFO; independent portfolio
-opportunities do not.
+validation/publication buffer does not fit before latest start. Mandatory work
+precedes reserve. The portfolio controller rotates over repositories that
+return only ready/idle/block; inside the chosen repository, its local selector
+sorts by integer priority, earliest expiry, then opaque ID. Card priority,
+expiry, timing, conflict key, and identity never cross into public Harness.
+The rotation cursor is private ephemeral controller state and cannot be
+committed to public Harness. Task-local defects remain LIFO; independent
+portfolio opportunities do not.
 
 `nightly-next` emits one candidate identity or exact wait/finalize state.
 `nightly-start --expected-candidate ...` revalidates that candidate, atomically
@@ -162,7 +166,7 @@ sentence is sufficient for its hourly evidence slice.
 ## Pilot acceptance
 
 Use `productive-idle-scenarios.tsv` and `productive-idle-acceptance.tsv` as
-normative data. All 26 scenarios and all 23 measures must pass, including the
+normative data. All 27 scenarios and all 24 measures must pass, including the
 matched replay from checkpoint `c508483`, zero early duplicate reads, no more
 than one wait checkpoint, unchanged always-read bytes, zero billable Actions
 increase, no extra protected transition, no value exposure or writer violation,

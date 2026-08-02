@@ -9,7 +9,7 @@ card_packet_bytes	4096-task-packet-limit	at-most-4096	strict-metadata-validator
 admitted_cards	not-available	at-most-32-per-run	run-manifest-validator
 open_catalog_cards	not-available	at-most-12-per-repository	catalog-validator
 selector_latency_60_cards	not-available	p95-at-most-100ms	matched-20-run-sample
-normative_scenarios	0	26-of-26-pass	productive-idle-scenarios.tsv
+normative_scenarios	0	27-of-27-pass	productive-idle-scenarios.tsv
 private_value_exposure	0	0	public-audit-and-canary-tests
 writer_boundary_violations	0	0	producer-consumer-diff-tests
 prompt_replays_after_wake	0	0	wake-revision-tests
@@ -22,3 +22,4 @@ wait_with_fit_card	not-available	0	work-conserving-scenario
 target_replays_after_unreceipted_selection	0	0	crash-after-selection-scenario
 lower_tail_false_coverage	not-available	0	lower-tail-shortage-scenario
 eligible_cards_omitted_before_cap	not-available	0	admission-headroom-scenario
+cross_repository_card_metadata_exposure	0	0	cross-repository-privacy-scenario

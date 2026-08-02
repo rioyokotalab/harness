@@ -726,10 +726,19 @@ fills the window discards cheap insurance against early completions. The frozen
 manifest should include every currently eligible, independently valuable card
 up to its 32-card cap while still reading only the selected packet at runtime.
 A seventh scenario and fifth measure make that maximal-within-cap behavior
-testable. The current normative totals are 26 scenarios and 23 measures.
-Schema and whitespace-normalized contract checks pass. The final required
-route is 13,636 bytes versus 34,341 bytes with lookup rationale, a 20,705-byte
-(60.292%) reduction. These are
+testable.
+
+A cross-repository privacy review found that the initial global sort was not
+implementable using only ready/idle/block: comparing priorities or expiry would
+export private card metadata into the public controller. The portfolio layer
+now rotates over ready repositories without seeing card details; priority,
+expiry, identity, timing, and conflict selection remain local to the chosen
+repository. The cursor is private ephemeral controller state, never a public
+Harness ledger row. An eighth scenario and sixth measure test that boundary.
+The current normative totals are 27 scenarios and 24 measures. Schema and
+whitespace-normalized contract checks pass. The final required route is 14,192
+bytes versus 34,893 bytes with lookup rationale, a 20,701-byte (59.326%)
+reduction. These are
 documentation-only follow-up-contract changes; the live nightly remains
 untouched. Terminal board/record/index/receipt bytes and these late
 documentation deltas receive the planned ledger, consumer-diff, and R0 checks

@@ -12,7 +12,7 @@ empty-scanned	no-ready-card-discovery-consumed	durable-wait	no-recursive-discove
 wake-event	wait-event-key-changed	resume-and-reselect	no-prompt-replay
 owner-interrupt	new-owner-input	record-task-amendment-and-reselect	immutable-manifest-and-atomic-action-preserved
 card-overrun	elapsed-greater-than-1.5-estimate	checkpoint-and-readmit	no-silent-window-consumption
-equal-priority	multiple-repositories-equal-priority	round-robin	no-repository-starvation
+equal-priority	multiple-repositories-ready-with-private-local-priorities	round-robin	no-repository-starvation-or-priority-leak
 task-local-defect	active-card-nested-defect	lifo-within-card	no-global-lifo-starvation
 terminal-card	pulled-card-terminal	exact-one-receipt	selection-is-not-completion
 dirty-admission	new-manifest-not-committed	refuse-selection	validated-manifest-must-be-checkpointed-first
@@ -25,3 +25,4 @@ duplicate-receipt	exact-retry-then-changed-retry	no-op-then-reject	exactly-one-t
 late-wake	wake-at-or-after-finalization	finalize	finalization-never-reopens-reserve
 lower-tail-shortage	p50-and-p90-cover-window-p10-does-not	report-lower-tail-shortfall	p90-never-counted-as-supply-floor
 admission-headroom	eligible-card-remains-before-32-card-cap	admit-card	p50-coverage-never-stops-reserve-admission
+cross-repository-privacy	public-controller-requests-private-priority-or-expiry	reject	ready-idle-block-is-only-cross-repository-card-status

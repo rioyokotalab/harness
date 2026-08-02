@@ -193,17 +193,21 @@ run reports `planned-wait` and does not backfill from a late card.
 Use one producer lease for producer-owned paths and one conflict key per
 repository/worktree/external surface. Only one mutation card may hold a given
 key. Cards from Personal or Students remain in those repositories; Harness
-stores only value-free portfolio status. Selection should round-robin among
-repositories at equal priority so a large Swallow or Harness backlog cannot
-starve another project. Task-local defects remain LIFO because they affect the
-active acceptance path; independent reserve cards remain priority ordered.
+stores only value-free portfolio status. After mandatory work, the controller
+round-robins over repositories whose local selector returns ready. Inside the
+chosen repository, cards sort by integer priority, earliest expiry, then opaque
+ID. This prevents a large Swallow or Harness backlog from starving another
+project without exporting private priority or timing. Task-local defects remain
+LIFO because they affect the active acceptance path; independent reserve cards
+remain locally priority ordered.
 
-Deterministic ordering is mandatory before fairness: primary status, integer
-priority, least-recently-selected repository among ties, earliest expiry, then
-opaque card ID. There is no cross-portfolio card manifest in public Harness.
-Each selector returns only a value-free ready/idle/block status to the active
-controller; private title, path, timing, conflict key, evidence, packet digest,
-and disposition stay in the owning repository.
+There is no cross-portfolio card manifest in public Harness. Each repository
+selector returns only value-free ready/idle/block to the active controller;
+private title, identity, priority, path, timing, conflict key, evidence, packet
+digest, and disposition stay in the owning repository. The rotation cursor is
+private ephemeral controller state, never a public Harness ledger row. Cold
+recovery may restart the fixed ring without exposing prior private selections;
+the per-repository unresolved-event rule still prevents target replay.
 
 ### 4. Time and evidence budgets
 
@@ -459,7 +463,7 @@ controller, or touch a sibling repository. Synthetic fixtures exercise local
 catalog and admission paths without crossing the producer writer boundary.
 
 After the consumer receipt, normal producer reconciliation closes Har-383. If
-and only if all 26 scenarios and 23 acceptance measures pass, that producer
+and only if all 27 scenarios and 24 acceptance measures pass, that producer
 transition may allocate a later Harness rollout task. The rollout task—not
 Har-383—may seed a protected Harness opportunity catalog and update the nightly
 protocol. Sibling rollout remains a further evidence-gated decision. This
@@ -467,7 +471,7 @@ keeps code validation, producer-owned state, and policy activation in their
 proper writer phases and makes rejection of the experiment cheap.
 
 The normative scenario table is `productive-idle-scenarios.tsv`. At minimum,
-a prototype must satisfy all 26 rows, including changed owner input, stale
+a prototype must satisfy all 27 rows, including changed owner input, stale
 target state, p90 overrun, private metadata rejection, dirty or rewritten
 admissions, late catalog cards, honest shortage forecasts, work-conserving
 selection, crash recovery, idempotent receipts, one-way finalization, exact
