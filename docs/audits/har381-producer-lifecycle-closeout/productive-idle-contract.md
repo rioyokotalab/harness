@@ -55,6 +55,14 @@ first-add blob. A card added after `go`, or changed/removed afterward, is not
 substituted. A later protected-head change may continue only if selected packet
 bytes remain identical and the named target predicate still passes.
 
+Catalog, card, manifest, and receipt schemas are closed. Require regular
+non-symlink, non-executable files; bounded bytes; unique identities; exact
+fields; repository-local relative paths; and no sensitive metadata keys or
+public privacy canaries. Reject unknown fields, duplicate IDs/receipts, unsafe
+types, oversized content, arbitrary executable predicates, and overwrite of an
+existing admission or receipt. Fixture writes are atomic and interruption
+tests cover failure before and after publication.
+
 Owner input arriving during a wait is an exact task amendment, not a manifest
 rewrite or reusable card. It invalidates the one-shot wait token. Finish or
 safely checkpoint any current atomic action first, and reconcile an ambiguous

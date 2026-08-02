@@ -639,9 +639,9 @@ bytes and contains no absolute cross-repository path, tmux assignment, or
 compact pointers to the already-reviewed designs rather than duplicate them.
 
 The implementation route was then compacted before handoff. The full research
-design plus two normative tables is 30,566 bytes. A new 6,566-byte complete
-execution contract plus the same tables is 9,683 bytes, saving 20,883 bytes
-(68.321%) on the required Har-383 route. The 27,449-byte research design is now
+design plus two normative tables is 30,566 bytes. A new 7,072-byte complete
+execution contract plus the same tables is 10,189 bytes, saving 20,377 bytes
+(66.666%) on the required Har-383 route. The 27,449-byte research design is now
 lookup-only provenance. This preserves every operative decision and test row
 while demonstrating the same progressive-disclosure rule the pilot is meant
 to enforce.
@@ -651,8 +651,16 @@ covering synthetic-only scope, producer exclusions, bounded catalogs, private
 isolation, all four commands, first-add immutability, four lanes, LIFO scope,
 the 1,024-byte selector budget, authority exclusions, finalization reserve,
 freshness reuse, one-shot wake, no prompt replay, anti-make-work, 19 scenarios,
-18 measures, and complete validation. All 20 passed against the 9,683-byte
+18 measures, and complete validation. All 20 passed against the 10,189-byte
 route, and all three lookup artifacts exist.
+
+The pilot's file boundary was finally made explicit: catalog, card, admission,
+and receipt schemas are closed, bounded, regular, non-symlink, non-executable,
+repository-local, and identity-unique. Unknown or sensitive fields, duplicate
+IDs or receipts, unsafe file types, oversized packets, executable predicates,
+and overwrites fail. Synthetic writes must be atomic, with interruption tests
+on both sides of publication. These are owning-validator checks, not new
+nightly work items.
 
 ## Slice 7 — 07:00–08:00
 
