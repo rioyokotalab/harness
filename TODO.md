@@ -17,14 +17,6 @@ Next free ID: T-375.
 
 ## Active queue
 
-### T-369 — Evidence-first portfolio reset and guarded cleanup
-
-**Phase:** active until 2026-08-02 12:00 JST; all five protected repository
-resets and guarded cleanup are published, and restore-proven archive compaction
-is complete. Material changes stop at 10:45 JST.
-
-**Record:** `docs/tasks/T-369.md`.
-
 ### T-371 — Migrate legacy managed primary branches
 
 **Phase:** event-gated until the live Students and Swallow managed sessions

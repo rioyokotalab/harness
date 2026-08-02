@@ -485,3 +485,14 @@ tips and Swallow's untracked evidence remain archived. No deployment,
 scheduler write, credential access, Personal payload read, managed-session
 mutation, ruleset write, generation creation, or remote-branch deletion was
 performed in this reconciliation.
+
+## Final handoff
+
+The comparative disposition above is the final recommendation. The complete
+14-slice chronology, protected identifiers, validation, cleanup evidence, and
+remaining gates are in `docs/tasks/T-369.md`; T-369 is removed from the active
+board and indexed complete. The final implementation candidate passed complete
+Harness phase one on protected `dfa97eb`, all five repositories passed full
+object and worktree-administration checks, and current GitHub readback retained
+zero open PRs plus zero required approvals. No later evidence changed a queue
+judgment or justified another material task.
