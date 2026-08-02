@@ -563,7 +563,8 @@ or consumer-runtime actions can never become reserve work by elapsed time.
 The changed owner input also changes final producer allocation. Har-382 remains
 the priority-1 archive-owner migration already justified by recovered anchor
 cost. Har-383 becomes a priority-2 Harness-only productive-idle pilot pointing
-to the new design and scenarios; the next free ID advances to Har-384. Both
+to the compact contract and normative tables; the next free ID advances to
+Har-384. Both
 packets remain compact and immutable, and no sibling protocol rollout is part
 of Har-383. The final producer transition is still one writer-pure candidate,
 so the protected closeout count and timing do not increase.
@@ -636,6 +637,14 @@ bytes and 141 words; Har-383 is 1,295 bytes and 159 words. Each is below 4,096
 bytes and contains no absolute cross-repository path, tmux assignment, or
 `harness:` coupling. The eventual immutable packets may therefore remain
 compact pointers to the already-reviewed designs rather than duplicate them.
+
+The implementation route was then compacted before handoff. The full research
+design plus two normative tables is 30,566 bytes. A new 6,566-byte complete
+execution contract plus the same tables is 9,683 bytes, saving 20,883 bytes
+(68.321%) on the required Har-383 route. The 27,449-byte research design is now
+lookup-only provenance. This preserves every operative decision and test row
+while demonstrating the same progressive-disclosure rule the pilot is meant
+to enforce.
 
 ## Slice 7 — 07:00–08:00
 
