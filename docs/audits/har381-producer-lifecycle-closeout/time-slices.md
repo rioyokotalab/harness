@@ -234,13 +234,24 @@ final integrated tree will receive the one required closing audit.
 
 The active record itself was then compacted only after its chronology and
 tables were durable in linked artifacts and a remote checkpoint. Routed
-Harness context fell from 27,867 to 16,755 bytes, saving 11,112 bytes (39.875%)
+Harness context fell from 27,867 to 17,078 bytes, saving 10,789 bytes (38.716%)
 while preserving the exact authority, stop conditions, protected revisions,
 validation receipts, blockers, failures, cleanup classifications, next action,
-and evidence map. The record remains 1,546 words—well above its required
+and evidence map. The record remains 1,583 words—well above its required
 400-word durable summary—and ledger plus strict producer validation pass. The
 other four routed contexts are byte-identical to baseline. This is a measured
 capability-preserving reduction, not a deletion of evidence.
+
+Routed policy and skill text was measured separately from task context. The 20
+actually selected resources total 41,403 bytes and 5,644 words: 30,788 bytes
+of common Harness policy/skills, 8,008 bytes across five repository-native
+nightly protocols, and Website's 2,607-byte publication gate. Exact repeated
+lines account for 6,073 bytes, mostly between the self-contained nightly
+protocols. Centralizing those bytes would make independent private/public
+repositories depend on another checkout during cold recovery, while ordinary
+consumer tasks do not read all five copies. That small producer-night-only
+saving fails the independence and capability-equivalence condition, so
+`routing-footprint.tsv` records a measured no-change decision.
 
 ## Slice 4 — 04:00–05:00
 
