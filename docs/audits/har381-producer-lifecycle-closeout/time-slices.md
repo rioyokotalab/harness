@@ -502,9 +502,35 @@ is unknown and stops rather than being normalized into the expected skip.
 `--match-head-commit` binds the merge to the read head; remote-branch deletion
 remains disabled and no branch cleanup flag is used.
 
+At 05:57 the owner redirected the remaining analysis toward preventing future
+nightlies from exhausting useful work. The obsolete quiet-hold controller was
+explicitly terminated. This changes the analysis target, not Har-381's frozen
+repository or publication authority. Slice 6 takes up the resulting
+productive-idle design; the final R3 and writer-separated closeout remain at
+their existing times.
+
 ## Slice 6 — 06:00–07:00
 
-Pending.
+The duration-window diagnosis began at the boundary. Current Har-381 evidence
+is 24 commits and 21 paths above protected main, with 923 insertions, 102
+deletions, 18 task-specific audit files, 4,487 chronology words, and a 1,660
+word active record. The policy requires one evidence slice per requested hour,
+not work in every minute or a minimum size for each slice. All five
+repository-native nightly protocols have the same finite seven-step structure
+and no reserve selector or durable wait state. The run therefore exhausted
+admitted engineering work before its deliberately late final publication
+window; repeated reads or narration could add activity but not enduring value.
+
+Primary-source research supports a bounded queue rather than a larger fixed
+checklist. Google SRE classifies repetitive, automatable work without enduring
+value as toil and recommends ROI- and risk-based iterative reduction. Python's
+queue contract requires an exact completion signal for each accepted item.
+Airflow uses bounded pools, priority, and weighted slots; AWS queue guidance
+uses workload isolation and bounded backlogs; GitHub documents concurrency
+groups but warns that scheduled workflows may be delayed or dropped; and the
+Kubernetes CronJob API makes overlap and missed-start policy explicit. These
+facts are applied, not imported wholesale, in
+`productive-idle-design.md`; stable primary-source URLs are recorded there.
 
 ## Slice 7 — 07:00–08:00
 
