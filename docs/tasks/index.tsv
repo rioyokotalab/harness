@@ -4,7 +4,7 @@ T-373	complete	Bound housekeeping archive growth with restore-proven retention	d
 T-372	complete	Complete interrupted worktree teardown from durable state	docs/tasks/T-372.md
 T-371	active	Migrate legacy managed primary branches at a safe session boundary	TODO.md;docs/tasks/T-371.md
 T-370	complete	Enforce symmetric task-worktree lifecycle	docs/tasks/T-370.md
-T-369	active	Evidence-first portfolio reset and guarded cleanup	TODO.md;docs/tasks/T-369.md;docs/audits/t369-portfolio-review-2026-08-02.md
+T-369	complete	Evidence-first portfolio reset and guarded cleanup	docs/tasks/T-369.md;docs/audits/t369-portfolio-review-2026-08-02.md
 T-368	complete	Retired the Codex-Claude Cowork skill	docs/tasks/T-368.md
 T-367	complete	Post-reorganization quick fixes	docs/tasks/T-367.md
 T-366	complete	Unified Harness cowork and Personal tmux layout	docs/tasks/T-366.md;docs/audits/t366-cowork-personal-layout/cowork
