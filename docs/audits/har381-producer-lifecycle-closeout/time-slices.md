@@ -766,6 +766,11 @@ untouched. Terminal board/record/index/receipt bytes and these late
 documentation deltas receive the planned ledger, consumer-diff, and R0 checks
 before publication; the unchanged runtime retains the exact R3 receipt.
 
+The active-route counter was refreshed after the final record wording: packet,
+board, and active record total 18,476 bytes and 2,395 words. This remains 9,391
+bytes (33.699%) below the 27,867-byte pre-compaction route; the other four
+repository rows are byte-identical to baseline.
+
 ## Slice 8 — 08:00–09:00
 
 Pending.

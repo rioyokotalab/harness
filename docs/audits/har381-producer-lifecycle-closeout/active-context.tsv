@@ -1,5 +1,5 @@
 repository	initial_routed_bytes	precompact_routed_bytes	current_routed_bytes	change_from_initial_bytes	compaction_saved_bytes	compaction_saved_percent	current_routed_words	disposition
-Harness	12301	27867	18375	6074	9492	34.062	2384	active-record-compacted-then-owner-expanded
+Harness	12301	27867	18476	6175	9391	33.699	2395	active-record-compacted-then-owner-expanded
 Students	3460	3460	3460	0	0	0.000	468	unchanged
 Swallow	4125	4125	4125	0	0	0.000	538	unchanged
 Personal	906	906	906	0	0	0.000	132	unchanged
