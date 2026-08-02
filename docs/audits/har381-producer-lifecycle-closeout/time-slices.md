@@ -138,6 +138,14 @@ failed before execution. It was corrected to the already-declared
 producer-main roots without switching, fetching, or modifying either active
 consumer checkout.
 
+After the evidence checkpoint was committed, the validation router compared
+it with exact code head `f3d57c7` and selected only R0: diff checks plus the
+task-ledger suite. The route passed in under 0.08 seconds of recorded steps at
+tree `0f2d086`, while the unchanged runtime and test bytes continue to use the
+superseding R3 receipt. This demonstrates the intended efficiency policy in
+operation rather than rerunning 78 seconds of unrelated suites for
+documentation-only evidence.
+
 ## Slice 3 — 03:00–04:00
 
 Pending.
