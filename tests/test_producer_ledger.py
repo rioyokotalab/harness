@@ -1,0 +1,239 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+SOURCE = Path(__file__).resolve().parents[1] / "tools/producer-ledger.py"
+GIT = shutil.which("git")
+if GIT is None:
+    raise RuntimeError("git is required for producer-ledger tests")
+
+
+class ProducerLedgerTests(unittest.TestCase):
+    def fixture(self, *, public: bool = False) -> Path:
+        root = Path(tempfile.mkdtemp(prefix="producer-ledger-test-"))
+        self.addCleanup(shutil.rmtree, root)
+        (root / "tools").mkdir()
+        (root / "docs/producer/tasks").mkdir(parents=True)
+        (root / "docs/consumer/receipts").mkdir(parents=True)
+        (root / "docs/tasks").mkdir(parents=True)
+        shutil.copy2(SOURCE, root / "tools/producer-ledger.py")
+        config = {
+            "schema": 1,
+            "repository": "fixture",
+            "prefix": "Fix",
+            "next_id": 2,
+            "public": public,
+            "max_packet_bytes": 4096,
+        }
+        (root / "docs/producer/config.json").write_text(
+            json.dumps(config), encoding="utf-8"
+        )
+        (root / "PRODUCER.md").write_text(
+            "# Fixture producer queue\n\nNext free ID: Fix-002.\n",
+            encoding="utf-8",
+        )
+        (root / "docs/producer/index.tsv").write_text(
+            "task\tstate\tpriority\tcreated\tpacket\n"
+            "Fix-001\tready\t10\t2026-08-02\tdocs/producer/tasks/Fix-001.md\n",
+            encoding="utf-8",
+        )
+        (root / "docs/producer/NIGHTLY.md").write_text(
+            "# Owner-started nightly contract\n", encoding="utf-8"
+        )
+        (root / "docs/producer/assignment.tsv").write_text(
+            "client\tslot\tstate\nany\tfixture\tactive\n", encoding="utf-8"
+        )
+        (root / "docs/tasks/Fix-001.md").write_text("# record\n", encoding="utf-8")
+        (root / "TODO.md").write_text("# Board\n\nFix-001\n", encoding="utf-8")
+        (root / "docs/producer/tasks/Fix-001.md").write_text(
+            "task: Fix-001\n"
+            "repository: fixture\n"
+            "state: ready\n"
+            "priority: 10\n"
+            "created: 2026-08-02\n"
+            "consumer: any\n"
+            "record: docs/tasks/Fix-001.md\n"
+            "authority: packet-scope-plus-closer-gates\n"
+            "---\n# Objective\n\nComplete the fixture task.\n",
+            encoding="utf-8",
+        )
+        return root
+
+    def run_tool(self, root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(  # noqa: S603
+            [sys.executable, str(root / "tools/producer-ledger.py"), *args],
+            cwd=root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+
+    def mutate_packet(self, root: Path, transform) -> None:
+        path = root / "docs/producer/tasks/Fix-001.md"
+        path.write_text(transform(path.read_text(encoding="utf-8")), encoding="utf-8")
+
+    def init_git(self, root: Path) -> None:
+        commands = [
+            [GIT, "init", "-q"],
+            [GIT, "config", "user.name", "Fixture"],
+            [GIT, "config", "user.email", "fixture@example.invalid"],
+            [GIT, "add", "."],
+            [GIT, "commit", "-qm", "baseline"],
+        ]
+        for command in commands:
+            subprocess.run(command, cwd=root, check=True)  # noqa: S603
+
+    def test_valid_contract(self) -> None:
+        result = self.run_tool(self.fixture(), "validate")
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_packet_failures_close(self) -> None:
+        cases = {
+            "sensitive-field": lambda text: text.replace(
+                "task: Fix-001", "secret: hidden\ntask: Fix-001"
+            ),
+            "cross-repository-path": lambda text: text + "\n/home/other/repo\n",
+            "assignment-coupling": lambda text: text + "\nharness:codex.0\n",
+            "oversized": lambda text: text + ("x" * 5000),
+        }
+        for reason, transform in cases.items():
+            with self.subTest(reason=reason):
+                root = self.fixture()
+                self.mutate_packet(root, transform)
+                result = self.run_tool(root, "validate")
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertIn(reason, result.stdout)
+
+    def test_public_privacy_canary_fails(self) -> None:
+        root = self.fixture(public=True)
+        self.mutate_packet(root, lambda text: text + "\nPRIVATE_PERSONAL_CANARY\n")
+        result = self.run_tool(root, "validate")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("public-privacy-canary", result.stdout)
+
+    def test_assignment_change_preserves_packet_bytes(self) -> None:
+        root = self.fixture()
+        packet = root / "docs/producer/tasks/Fix-001.md"
+        before = hashlib.sha256(packet.read_bytes()).hexdigest()
+        (root / "docs/producer/assignment.tsv").write_text(
+            "client\tslot\tstate\nclaude\treplacement\tactive\n",
+            encoding="utf-8",
+        )
+        result = self.run_tool(root, "validate")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(hashlib.sha256(packet.read_bytes()).hexdigest(), before)
+
+    def test_unproduced_board_goal_fails(self) -> None:
+        root = self.fixture()
+        (root / "TODO.md").write_text("Fix-001\nFix-002\n", encoding="utf-8")
+        result = self.run_tool(root, "validate")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("unproduced-board-task", result.stdout)
+
+    def test_receipt_cannot_grant_authority(self) -> None:
+        root = self.fixture()
+        (root / "docs/consumer/receipts/Fix-001.md").write_text(
+            "task: Fix-001\nstatus: blocked\nupdated: 2026-08-02\n"
+            "validation: not-run\n---\nauthority granted: yes\n",
+            encoding="utf-8",
+        )
+        result = self.run_tool(root, "validate")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("receipt-authority", result.stdout)
+
+    def test_writer_boundaries(self) -> None:
+        producer_root = self.fixture()
+        self.init_git(producer_root)
+        (producer_root / "PRODUCER.md").write_text(
+            "# changed\nNext free ID: Fix-002.\n", encoding="utf-8"
+        )
+        self.assertEqual(
+            self.run_tool(
+                producer_root, "check-producer-diff", "--base", "HEAD"
+            ).returncode,
+            0,
+        )
+        result = self.run_tool(
+            producer_root, "check-consumer-diff", "--base", "HEAD"
+        )
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+
+        consumer_root = self.fixture()
+        self.init_git(consumer_root)
+        (consumer_root / "TODO.md").write_text("Fix-001\nupdated\n", encoding="utf-8")
+        self.assertEqual(
+            self.run_tool(
+                consumer_root, "check-consumer-diff", "--base", "HEAD"
+            ).returncode,
+            0,
+        )
+        result = self.run_tool(
+            consumer_root, "check-producer-diff", "--base", "HEAD"
+        )
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+
+    def test_consumer_cannot_allocate_task_record(self) -> None:
+        root = self.fixture()
+        self.init_git(root)
+        (root / "docs/tasks/Fix-002.md").write_text("# unauthorized\n", encoding="utf-8")
+        subprocess.run(  # noqa: S603
+            [GIT, "add", "docs/tasks/Fix-002.md"], cwd=root, check=True
+        )
+        subprocess.run(  # noqa: S603
+            [GIT, "commit", "-qm", "unauthorized task"],
+            cwd=root,
+            check=True,
+        )
+        result = self.run_tool(root, "check-consumer-diff", "--base", "HEAD^")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("consumer-writer-boundary", result.stdout)
+
+    def test_disjoint_producer_and_consumer_changes_merge(self) -> None:
+        root = self.fixture()
+        self.init_git(root)
+        base = subprocess.run(  # noqa: S603
+            [GIT, "branch", "--show-current"], cwd=root, check=True,
+            text=True, stdout=subprocess.PIPE,
+        ).stdout.strip()
+        subprocess.run(  # noqa: S603
+            [GIT, "checkout", "-qb", "producer"], cwd=root, check=True
+        )
+        assignment = root / "docs/producer/assignment.tsv"
+        assignment.write_text(
+            "client\tslot\tstate\nclaude\treplacement\tactive\n",
+            encoding="utf-8",
+        )
+        subprocess.run(  # noqa: S603
+            [GIT, "add", "docs/producer/assignment.tsv"], cwd=root, check=True
+        )
+        subprocess.run(  # noqa: S603
+            [GIT, "commit", "-qm", "producer update"], cwd=root, check=True
+        )
+        subprocess.run(  # noqa: S603
+            [GIT, "checkout", "-q", base], cwd=root, check=True
+        )
+        (root / "TODO.md").write_text("Fix-001\nconsumer update\n", encoding="utf-8")
+        subprocess.run(  # noqa: S603
+            [GIT, "add", "TODO.md"], cwd=root, check=True
+        )
+        subprocess.run(  # noqa: S603
+            [GIT, "commit", "-qm", "consumer update"], cwd=root, check=True
+        )
+        result = subprocess.run(  # noqa: S603
+            [GIT, "merge", "--no-edit", "producer"], cwd=root, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+
+if __name__ == "__main__":
+    unittest.main()

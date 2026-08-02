@@ -71,13 +71,15 @@ remain mandatory project refinements.
 
 ## Harness repository
 
-- Treat Git and `TODO.md` as the durable source of truth. Chat history, client
-  summaries, and Claude auto-memory are optional context only.
-- At cold start, read this file and the active board completely, inspect the
-  branch, worktree, and recent commits, and select one task. Read the selected
-  task's board-linked record, then only routed plan and evidence; never preload
-  another active record or `docs/history/`. Before changing collaborative work,
-  fetch and reconcile its remote through the conditional Git policy.
+- Git, `PRODUCER.md`, and `TODO.md` are durable truth; chat and client memory
+  are optional. At cold start read this file and `PRODUCER.md`. Consumers read
+  its first ready packet, `TODO.md`, and the matching record, or remain idle.
+  Inspect Git and only routed evidence; never preload another record or
+  `docs/history/`. Fetch before changing collaborative work.
+- Only the portfolio producer edits `PRODUCER.md` or `docs/producer/`.
+  Consumers create no IDs/goals; handle nested issues LIFO or write a blocked
+  receipt. Before publication run the consumer diff check documented in
+  `PRODUCER.md`.
 - Resume the first unverified recorded action. Revalidate only mutable inputs
   used by that action; a failed query is unknown, not evidence of absence.
 - Keep Harness independent of the sibling `website` repository.

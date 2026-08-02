@@ -1,18 +1,17 @@
 # Personal harness task board
 
-This is the authoritative active queue. Read it completely at cold start, then
-read only the linked record for the selected task. Completed chronology is
+This is the consumer-owned execution board. Read `PRODUCER.md` first, then its
+first ready packet, this board, and only the matching linked record and routed
+policy. If no producer packet is ready, remain idle. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
 Current and future Harness tasks use the `Har-NNN` namespace. Historical
 `T-NNN` identifiers remain unchanged in the completed-task index and archives.
-Next free ID: Har-378.
 
 ## Resume contract
 
-1. Read root `AGENTS.md` and this board.
-2. Select the first executable task, then read its linked task record and only
-   the evidence routed by that record.
+1. Read root `AGENTS.md`, `PRODUCER.md`, and the selected packet.
+2. Read this board, then the matching task record and only its routed evidence.
 3. Confirm branch, worktree, recent commits, ownership, and mutable inputs.
 4. Resume the first unverified recorded action; preserve unrelated work.
 5. A failed mutable-state query is unknown, never evidence of absence.
