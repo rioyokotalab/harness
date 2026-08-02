@@ -34,7 +34,7 @@ packet files:
 ```bash
 ./bin/harness claude-handoff validate \
   --packet STAGE/handoff.json \
-  --expect-task T-NNN --expect-run-id RUN_ID \
+  --expect-task Har-NNN --expect-run-id RUN_ID \
   --expect-root REPOSITORY --expect-baseline FULL_COMMIT \
   --now YYYY-MM-DDTHH:MM:SSZ
 ```
@@ -62,7 +62,7 @@ closed.
 ./bin/harness claude-handoff verify-evidence \
   --packet STAGE/handoff.json --stage STAGE/stage.json \
   --evidence STAGE/evidence.json \
-  --expect-task T-NNN --expect-run-id RUN_ID \
+  --expect-task Har-NNN --expect-run-id RUN_ID \
   --expect-root REPOSITORY --expect-baseline FULL_COMMIT \
   --now YYYY-MM-DDTHH:MM:SSZ
 ```
@@ -122,10 +122,11 @@ The managed Darwin route also exports that fixed Homebrew bin as
 `CODEX_INSTALL_DIR` and places it first on `PATH` before native execution.
 An installer-based update launched by Codex therefore inherits the reviewed
 destination and does not add its default local-bin block to a shell profile.
-The managed live launcher is `~/.local/bin/harness-codex`. Fresh managed
-interactive Bash shells define `co` as the resilient shorthand and leave
-`codex` unaliased, so native subcommands such as `codex --version` resolve
-normally. Non-interactive and batch shells also retain native resolution. The
+The managed live launcher is `~/.local/bin/harness-codex`. Managed interactive
+Bash shells leave `codex` unaliased, so native subcommands such as
+`codex --version` resolve normally; resilient resume is explicit through
+`harness codex-resilient --run --name harness --last`. Non-interactive and
+batch shells also retain native resolution. The
 wrapper uses an absolute native path, preventing recursion or silent fallback,
 and preserves all arguments and subcommands. Client-persisted project trust
 stays only in the private live regular file and never dirties public Git.

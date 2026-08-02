@@ -176,10 +176,10 @@ att_managed=$(HARNESS_LOGICAL_HOST=office bash -c '. "$1"; alias att' _ \
     "$ROOT/shell/common-aliases.sh")
 [ "$att_managed" = "alias att='tmux attach -t harness'" ] ||
     fail 'common att alias on a managed host changed'
-co_alias=$(bash -c '. "$1"; alias co' _ "$ROOT/shell/common-aliases.sh")
-[ "$co_alias" = \
-    "alias co='harness codex-resilient --run --name harness --last'" ] ||
-    fail 'common co alias is not persistent'
+if bash -c 'alias co="stale"; . "$1"; alias co >/dev/null 2>&1' _ \
+    "$ROOT/shell/common-aliases.sh"; then
+    fail 'common aliases do not retire stale co alias'
+fi
 if bash -c '. "$1"; alias codex >/dev/null 2>&1' \
     _ "$ROOT/shell/common-aliases.sh"; then
     fail 'common aliases still hide native codex'

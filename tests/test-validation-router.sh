@@ -38,13 +38,13 @@ cases = [
         True,
     ),
     (
-        ["docs/tasks/T-196.md"],
+        ["docs/tasks/Har-196.md"],
         "R0",
         ["tests/test-task-ledger-routing.sh"],
         True,
     ),
     (
-        ["docs/tasks/T-999.md"],
+        ["docs/tasks/Har-999.md"],
         "R0",
         ["tests/test-task-ledger-routing.sh"],
         True,
