@@ -441,6 +441,16 @@ duplicating its 5,011-byte design, and stays below the configured 4,096-byte
 packet limit. This shape leaves no active assignment without an executable
 task and preserves the consumer/producer writer split across the two merges.
 
+The 04:25 mutable-state sample found all five protected heads unchanged and
+all five repositories with zero open pull requests. Candidate head
+`c50848382f1f3e8031b4ab921b421723f4cf49e8` is clean and matches its explicit
+remote checkpoint. Website's fixed socket remains absent, so no transport was
+retried. The first combined API read incorrectly assumed that Personal shares
+the public organization owner and received a read-only 404 after the first
+three successful repositories. Its credential-free local origin identifies
+the separate private owner; the corrected exact query passed. No repository,
+authentication, or hosting state changed.
+
 ## Slice 5 — 05:00–06:00
 
 Pending.
