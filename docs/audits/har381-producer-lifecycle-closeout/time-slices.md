@@ -47,9 +47,24 @@ other-owner Swallow evaluation trees, and the blocked Website candidate.
 Remote branches remain report-only. No ambiguous or other-owner directory was
 deleted.
 
+One of two connection-monitor roots had current 30-second updates from the
+sole monitor process; the other had been unchanged for roughly twelve hours
+and had no process or open-file evidence. The stale 10-file root was
+guarded-removed, and the live root remains. Fresh hosting reads show no open
+pull request in any portfolio repository. Canonical protected roots remain
+clean where expected; preserved Students and Swallow consumer roots remain on
+their existing task branches, with Swallow's one known unrelated dirty entry.
+
 ## Slice 2 — 02:00–03:00
 
-Pending.
+Initial checkpoint at 02:00 JST: all repository assignment rows are idle (with
+Harness retaining its producer row), all five repositories have zero open pull
+requests, and the four published lifecycle implementations still pass strict
+convergence. Slice 1 produced independent benchmark, packet-immutability, and
+residue inventories. Website remains unchanged and blocked before transport
+on its absent repository-mandated fixed SSH socket. Slice 2 will independently
+audit lifecycle invariants, validation cost, archive receipts, and remaining
+local/remote classifications without touching consumers or gated targets.
 
 ## Slice 3 — 03:00–04:00
 
