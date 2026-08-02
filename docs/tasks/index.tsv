@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-380	complete	Document the producer and consumer repository layout	docs/tasks/Har-380.md
 Har-378	complete	Install repository-local producer and asynchronous consumer ledgers	docs/tasks/Har-378.md;docs/plans/har378-producer-consumer-ledgers.md
 Har-377	complete	Admit the independent Website root in fleet agent sentinels	docs/tasks/Har-377.md
 Har-376	complete	Adopt repository-specific task namespaces and retire the co alias	docs/tasks/Har-376.md

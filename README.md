@@ -8,7 +8,38 @@ provides value-free observation plus fail-closed transactional operations.
 The repository is self-contained. Installation, CI, cleanup, and operation do
 not depend on a sibling checkout.
 
-## Start here
+## Task architecture
+
+```text
+repository/
+├── AGENTS.md                     # Cold-start instructions
+├── PRODUCER.md                   # Producer-owned queue and next free task ID
+├── TODO.md                       # Consumer-owned execution board
+│
+├── docs/
+│   ├── producer/                 # Producer-only writes
+│   │   ├── config.json           # Repository name, prefix, privacy, size limits
+│   │   ├── assignment.tsv        # Current consumer assignment
+│   │   ├── index.tsv             # All producer-created task dispositions
+│   │   ├── NIGHTLY.md            # Owner-started nightly procedure
+│   │   └── tasks/
+│   │       └── <ID>.md           # Immutable task packets
+│   │
+│   ├── tasks/                    # Consumer-owned execution records
+│   │   ├── index.tsv             # Historical/completed-task lookup
+│   │   └── <ID>.md               # Detailed execution state
+│   │
+│   ├── consumer/
+│   │   └── receipts/
+│   │       └── <ID>.md           # Completion or blocked receipts
+│   │
+│   └── history/                  # Archived historical boards and chronology
+│
+└── tools/
+    └── producer-ledger.py        # Schema and writer-boundary validator
+```
+
+ ## Start here
 
 For an existing managed checkout:
 
