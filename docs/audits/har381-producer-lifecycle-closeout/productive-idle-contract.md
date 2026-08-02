@@ -47,6 +47,14 @@ minutes, repository representation, and authority/conflict classes. One
 bounded structural opportunity scan is allowed before `go`; a remaining gap is
 reported as expected wait, never padded.
 
+Reserve supply is maintained before the night, not invented inside it. At each
+ordinary producer reconciliation, consider at most one evidence-backed catalog
+opportunity. When the owner asks to prepare a duration run, the bounded pre-run
+scan may propose at most three additional opportunities across the portfolio;
+publish them through their repository's normal producer workflow only under
+existing authority, then freeze the plan. In-run discovery proposals cannot be
+executed until a later producer cycle.
+
 After exact owner `go`, `nightly-admit --run ...` may write only a subset of
 cards from the reviewed protected catalog revision. It records catalog OID and
 selected packet blob IDs. Selection refuses an uncommitted or dirty manifest.

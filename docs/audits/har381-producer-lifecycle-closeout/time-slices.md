@@ -639,9 +639,9 @@ bytes and contains no absolute cross-repository path, tmux assignment, or
 compact pointers to the already-reviewed designs rather than duplicate them.
 
 The implementation route was then compacted before handoff. The full research
-design plus two normative tables is 30,566 bytes. A new 7,072-byte complete
-execution contract plus the same tables is 10,189 bytes, saving 20,377 bytes
-(66.666%) on the required Har-383 route. The 27,449-byte research design is now
+design plus two normative tables is 30,566 bytes. A new 7,583-byte complete
+execution contract plus the same tables is 10,700 bytes, saving 19,866 bytes
+(64.994%) on the required Har-383 route. The 27,449-byte research design is now
 lookup-only provenance. This preserves every operative decision and test row
 while demonstrating the same progressive-disclosure rule the pilot is meant
 to enforce.
@@ -651,7 +651,7 @@ covering synthetic-only scope, producer exclusions, bounded catalogs, private
 isolation, all four commands, first-add immutability, four lanes, LIFO scope,
 the 1,024-byte selector budget, authority exclusions, finalization reserve,
 freshness reuse, one-shot wake, no prompt replay, anti-make-work, 19 scenarios,
-18 measures, and complete validation. All 20 passed against the 10,189-byte
+18 measures, and complete validation. All 20 passed against the 10,700-byte
 route, and all three lookup artifacts exist.
 
 The pilot's file boundary was finally made explicit: catalog, card, admission,
@@ -661,6 +661,14 @@ IDs or receipts, unsafe file types, oversized packets, executable predicates,
 and overwrites fail. Synthetic writes must be atomic, with interruption tests
 on both sides of publication. These are owning-validator checks, not new
 nightly work items.
+
+Reserve replenishment is now placed outside the active night: each ordinary
+producer reconciliation may add at most one evidence-backed opportunity, and a
+pre-run preparation scan may propose at most three across the portfolio before
+the plan is frozen. Those cards use normal repository-local producer
+publication and existing authority. In-run discovery still cannot execute its
+own proposals. This is the mechanism that keeps future supply available
+without recursive goal creation.
 
 ## Slice 7 — 07:00–08:00
 
