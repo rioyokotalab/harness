@@ -94,6 +94,50 @@ and source-contract suites passed. Native MPI was correctly skipped because
 this is not a declared MPI environment. The receipt is explicitly a local
 same-trust self-attestation, not independent CI.
 
+The final guard bytes add fixed `/tmp` and `/var/tmp` coverage plus an explicit
+apply refusal test. Exact code head `f3d57c7` passed a second complete 96-suite
+R3 run in 78.04 seconds, superseding the earlier code checkpoint. Publication
+is intentionally held for one final protected transition rather than creating
+extra Actions churn during intermediate slices.
+
+Independent live readback adds two boundaries to the slice. All twelve earlier
+portfolio pull requests remain merged; path-aware hosted jobs are skipped for
+these changes and none is failed or pending. Every ruleset is active, retains
+one bypass actor, and still requires zero approvals. Students' code-owner and
+last-push flags currently read false, so the older T-311 intent is recorded as
+a separate owner decision rather than silently restored. Website protected
+main passed its complete credential-free offline suite in 8.10 seconds, with
+no browser installation, live request, or deployment.
+
+A second archive report at 02:42 found the same 84 receipts, 113 items, 106
+unique tips, zero incomplete applies, one 133,401-byte uncovered receipt below
+the generation threshold, and no deletion candidate. Its plan count was one
+higher than the earlier snapshot. Readback attributed that delta to the exact
+Harness worktree plan created at 02:38 for the active Har-381 path during the
+apply-refusal probe; its candidate flag is false, it records three live
+processes, and no apply receipt exists. The plan is durable diagnostic state,
+not evidence that the active worktree is eligible for removal.
+
+Hosted branch pagination also corrected a measurement defect: the earlier
+`remote_nonmain` values came from local tracking refs, which are not an
+authoritative remote inventory when fetches are intentionally gated. The
+hosted counts are Harness 32, Students 2, Swallow 105, Personal 0, and Website
+8. Only Harness' tracking set is identical. The other four have stale or
+missing local tracking state, quantified without publishing private branch
+names in `remote-branches.tsv`. The frozen job is report-only for remote
+branches, so none was fetched, renamed, or deleted. Commit-date aggregation
+shows every hosted non-main branch is recent: the oldest dates are July 25 for
+Swallow, July 29 for Students, and August 1 for Harness and Website. Age alone
+therefore supplies no evidence that any hosted branch is stale.
+
+Fresh convergence reads passed on Harness and Personal protected roots, the
+durable Students and Swallow producer-main worktrees, and Website's legacy
+validator. The first Students/Swallow invocation addressed their intentionally
+preserved older primary branches, where the new tool does not exist, and
+failed before execution. It was corrected to the already-declared
+producer-main roots without switching, fetching, or modifying either active
+consumer checkout.
+
 ## Slice 3 — 03:00–04:00
 
 Pending.
