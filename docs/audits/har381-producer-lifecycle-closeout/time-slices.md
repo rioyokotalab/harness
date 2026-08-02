@@ -366,9 +366,9 @@ test correctly select full R3 phase one; the later evidence files do not
 silently downgrade that integrated requirement. Exact code head `f3d57c7`
 already has a passing 96-suite receipt, but root policy additionally requires
 one phase-one pass on the final integrated tree before protected publication.
-That run remains scheduled after all nonterminal documentation bytes are prepared and
-will not be repeated before then. Documentation-only checkpoints continue to
-use R0 against their exact preceding code/evidence base.
+That run remains scheduled after all nonterminal documentation bytes are
+prepared and will not be repeated before then. Documentation-only checkpoints
+continue to use R0 against their exact preceding code/evidence base.
 
 `closeout-sequence.tsv` now freezes the ten ordered closeout transitions. The
 consumer surface first receives final R3, then terminal receipt/board/index
@@ -398,6 +398,31 @@ created or consumed; recovery remains available. The owning test adds static
 call-count, plan-refusal, and apply-refusal coverage while retaining ordinary
 synthetic housekeeping through its explicit test-mode bypass. No archive,
 delete, recovery, remote, or credential behavior is otherwise changed.
+
+Read-only Harness ruleset detail confirms one strict required status check and
+one always-mode repository-role bypass actor. That is consistent with the nine
+earlier owner PRs: the workflow records a skipped trusted-owner job, and the
+owner role can complete the protected merge without consuming a runner. The
+final procedure will still wait for and read the skipped conclusion before
+using the existing bypass. No check, bypass, approval, or ruleset setting was
+changed.
+
+The same ruleset requires linear history. Each of the three preceding Harness
+PR results has exactly one parent, so the rehearsed final operations use squash
+merge and do not request branch deletion. This preserves linear history while
+respecting Har-381's remote-branch report-only boundary. Repository readback
+allows squash and has automatic branch deletion disabled, so no hidden remote
+deletion follows either merge.
+
+PR #584 provides the exact readback shape for the final gate: one Harness CI
+check named `portable-phase1`, state `SKIPPED`, bucket `skipping`. Final merges
+will require that exact one-row disposition and a conflict-free mergeability
+read, not merely absence of a failed check.
+
+Each merge command will bind `--match-head-commit` to a freshly resolved SHA.
+Canonical update uses an exact main fetch refspec followed by `--ff-only` and
+exact hosted/local equality readback. No implicit branch push, force, rebase,
+or deletion is part of closeout.
 
 ## Slice 5 — 05:00–06:00
 

@@ -2,10 +2,10 @@ order	writer_surface	action	validation	external_transition	status
 1	consumer	freeze-preterminal-runtime-and-evidence	full-R3-phase-one	none	pending
 2	consumer	add-terminal-receipt-retire-board-finalize-index-record	R0-plus-plain-ledger-plus-consumer-diff	none	pending
 3	consumer	commit-and-explicit-refspec-push	exact-head-and-fast-forward-preflight	branch-update	pending
-4	consumer	create-owner-PR-read-checks-and-merge	trusted-owner-skip-plus-conflict-free-readback	protected-main-merge	pending
-5	canonical	fast-forward-main-and-verify	plain-ledger-pending-one-reconciliation	local-main-update	pending
+4	consumer	create-owner-PR-read-checks-and-squash-merge	trusted-owner-skip-plus-conflict-free-readback	protected-main-merge	pending
+5	canonical	exact-fetch-refspec-fast-forward-main-and-verify	plain-ledger-pending-one-reconciliation	local-main-update	pending
 6	canonical	archive-and-guard-remove-merged-Har-381-worktree	housekeeping-plan-archive-apply-audit	local-cleanup	pending
 7	producer	open-isolated-worktree-close-Har-381-publish-Har-382-advance-next-ID	strict-ledger-plus-producer-diff-plus-R0	local-worktree-open	pending
-8	producer	commit-push-create-owner-PR-read-checks-and-merge	exact-refspec-trusted-owner-skip-conflict-free	protected-main-merge	pending
+8	producer	commit-push-create-owner-PR-read-checks-and-squash-merge	exact-refspec-trusted-owner-skip-conflict-free	protected-main-merge	pending
 9	canonical	archive-and-guard-remove-merged-producer-worktree	housekeeping-plan-archive-apply-audit	local-cleanup	pending
 10	canonical	final-portfolio-archive-ruleset-monitor-and-residue-readback	strict-ledger-plus-public-audit	read-only	pending
