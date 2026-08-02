@@ -1,0 +1,6 @@
+repository	ruleset_id	enforcement	bypass_actors	required_approvals	require_code_owner_review	require_last_push_approval	write_performed
+Harness	19127355	active	1	0	false	false	false
+Personal	20104679	active	1	0	false	false	false
+Students	19716717	active	1	0	false	false	false
+Swallow	19734040	active	1	0	false	false	false
+Website	19127356	active	1	0	false	false	false

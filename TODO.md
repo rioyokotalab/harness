@@ -18,13 +18,6 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-### Har-381 — Converge producer lifecycle and close portfolio residue
-
-**Phase:** executing the owner-started 01:00–09:00 JST producer nightly.
-Material changes stop at 08:00; consumer sessions remain metadata-idle.
-
-**Record:** `docs/tasks/Har-381.md`.
-
 ### Har-371 — Migrate legacy managed primary branches
 
 **Phase:** event-gated until the live Students and Swallow managed sessions

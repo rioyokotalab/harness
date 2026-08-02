@@ -1,0 +1,5 @@
+scope	files	bytes	words	exact_duplicate_extra_bytes	disposition
+common-Harness-routed-policy-and-skills	14	30788	4188	250	retain-capability-bearing
+five-repository-nightly-protocols	5	8008	1099	5823	retain-repository-independence
+Website-publish-gate	1	2607	357	0	retain-exact-auth-and-deploy-boundary
+unique-session-total	20	41403	5644	6073	no-safe-current-compaction

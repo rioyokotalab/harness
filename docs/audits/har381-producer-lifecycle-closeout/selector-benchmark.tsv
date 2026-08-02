@@ -1,0 +1,6 @@
+repository	validator_mode	runs	validate_median_ms	validate_max_ms	selector_median_ms	selector_max_ms	disposition
+Harness	strict	10	47.284	49.382	47.412	49.551	pass
+Students	strict	10	40.709	44.525	43.921	44.376	pass
+Swallow	strict	10	44.242	44.577	44.043	46.043	pass
+Personal	strict	10	46.219	61.170	45.676	47.599	pass
+Website	legacy	10	43.201	48.042	unsupported	unsupported	blocked-on-Web-219-publication

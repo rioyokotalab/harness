@@ -51,6 +51,7 @@ assert '"--recover-worktree"' in source
 assert '"--repo"' in source
 assert 'choices=("all", "scratch", "branches", "remotes", "worktrees"' in source
 assert '"--create-generation"' in source
+assert source.count("require_durable_worktree_archive_owner(repo)") == 2
 PY
 
 STATE=$TEST_ROOT/state
@@ -499,6 +500,10 @@ git -C "$REPO" update-ref -d refs/heads/task/other-open "$BASE"
 # Worktree planning rejects every residue and liveness class.
 REPO=$TEST_ROOT/worktrees
 init_repo "$REPO"
+if HARNESS_TEST_ENFORCE_DURABLE_ARCHIVE_OWNER=1 \
+    house --plan --routine worktrees >/dev/null 2>&1; then
+    fail "scratch-root repository was accepted as a durable archive owner"
+fi
 BASE=$(git -C "$REPO" rev-parse main)
 for name in clean dirty untracked ignored nested submodule locked live openfile; do
     git -C "$REPO" branch "$name" "$BASE"
@@ -522,6 +527,11 @@ for reason in tracked-residue untracked-residue ignored-residue nested-repositor
 done
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
+if HARNESS_TEST_ENFORCE_DURABLE_ARCHIVE_OWNER=1 \
+    house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN" \
+    >/dev/null 2>&1; then
+    fail "scratch-root repository applied a worktree archive plan"
+fi
 OUT=$(house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN") || fail "guarded worktree apply failed"
 printf '%s\n' "$OUT" | grep -Fq 'removed=1' || fail "worktree apply count changed"
 [ ! -e "$TEST_ROOT/wt-clean" ] || fail "clean worktree directory survived"

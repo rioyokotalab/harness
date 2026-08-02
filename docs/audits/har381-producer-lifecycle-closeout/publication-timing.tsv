@@ -1,0 +1,6 @@
+repository	transitions	first_created_at	last_merged_at	publication_wall_seconds	disposition
+Harness	3	2026-08-02T15:59:51Z	2026-08-02T16:16:09Z	978	complete
+Students	3	2026-08-02T16:20:26Z	2026-08-02T16:33:39Z	793	complete
+Swallow	3	2026-08-02T16:20:26Z	2026-08-02T16:33:39Z	793	complete
+Personal	3	2026-08-02T16:20:26Z	2026-08-02T16:33:39Z	793	complete
+Website	0	none	none	blocked-before-transport	fixed-socket-absent

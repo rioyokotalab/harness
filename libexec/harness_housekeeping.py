@@ -2089,6 +2089,26 @@ def scratch_boundaries() -> List[Path]:
     return boundaries
 
 
+def require_durable_worktree_archive_owner(repo: Path) -> None:
+    """Keep archive receipts anchored outside disposable scratch roots."""
+    enforce_in_test = testing_override(
+        "HARNESS_TEST_ENFORCE_DURABLE_ARCHIVE_OWNER"
+    )
+    if os.environ.get("HARNESS_TESTING") == "1" and enforce_in_test != "1":
+        return
+    boundaries = set(scratch_boundaries())
+    for standard in (Path("/tmp"), Path("/var/tmp")):
+        if standard.is_dir() and not standard.is_symlink():
+            boundaries.add(standard.resolve(strict=True))
+    for boundary in sorted(boundaries):
+        if repo == boundary or strict_descendant(repo, boundary):
+            die(
+                "worktree housekeeping repository is inside a scratch "
+                "boundary; use the durable canonical repository so archive "
+                "receipts remain auditable"
+            )
+
+
 def status_counts(path: Path) -> Dict[str, int]:
     result = git(
         path,
@@ -2378,6 +2398,7 @@ def select_worktree_records(
 
 
 def plan_worktrees(repo: Path, selected_path: Optional[str] = None) -> None:
+    require_durable_worktree_archive_owner(repo)
     prs = pull_requests(repo)
     main_oid = origin_main(repo)
     rows = worktree_rows(repo)
@@ -2675,6 +2696,7 @@ def guarded_apply(repo: Path, manifest: str, token: str) -> None:
 
 
 def apply_worktrees(repo: Path, receipt_path: Path, token: str) -> None:
+    require_durable_worktree_archive_owner(repo)
     plan = load_plan(receipt_path, token, "worktrees", repo)
     prs = pull_requests(repo)
     main_oid = origin_main(repo)

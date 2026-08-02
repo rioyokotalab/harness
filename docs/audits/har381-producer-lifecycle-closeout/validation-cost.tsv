@@ -1,0 +1,13 @@
+rank	suite	seconds
+1	test-personal-macos-ssh-sync.sh	34.851
+2	test-personal-macos-ssh-supervisor.sh	33.612
+3	test-personal-macos-plan-doctor.sh	32.154
+4	test-housekeeping.sh	30.623
+5	test-personal-macos-homebrew.sh	28.109
+6	test-personal-macos-config-sync.sh	24.515
+7	test-remote-agent-communication.sh	20.857
+8	test-macos-agent-session.sh	18.704
+9	test-development-evaluation.sh	17.459
+10	test-codex-resilient.sh	13.183
+11	test-restic-schedule.sh	12.000
+12	test-personal-macos-update.sh	11.269
