@@ -3,7 +3,8 @@
 alias a='./a.out'
 # `att` attaches the canonical unified agent session on every managed host.
 alias att='tmux attach -t harness'
-alias co='harness codex-resilient --run --name harness --last'
+# Retire the former managed-launch shorthand in shells that re-source this file.
+unalias co 2>/dev/null || true
 alias ducks='du -cks * | sort -rn | head -11'
 alias grep='grep --binary-files=without-match --color=auto'
 alias la='ls -ah'

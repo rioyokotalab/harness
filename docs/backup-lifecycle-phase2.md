@@ -133,5 +133,5 @@ the restored tree with guarded-delete under its canonical scratch boundary.
 4. Approve the exact first live `forget` command and later the separate exact
    `prune` command. These are distinct destructive authority boundaries.
 
-Until those gates are complete, T-196 remains execution-blocked but
+Until those gates are complete, Har-196 remains execution-blocked but
 does not block read-only monitoring or unrelated LLM/HPC readiness work.

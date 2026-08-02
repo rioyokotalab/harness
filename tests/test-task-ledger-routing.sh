@@ -20,10 +20,11 @@ board = root / "TODO.md"
 archive = root / "docs/history/TODO-full-archive-2026-07-30.md"
 index = root / "docs/tasks/index.tsv"
 task_files = {}
-for path in sorted((root / "docs/tasks").glob("T-*.md")):
-    match = re.fullmatch(r"(T-\d+)\.md", path.name)
-    assert match and path.is_file() and not path.is_symlink(), path
-    task_files[match.group(1)] = path
+for pattern in ("Har-*.md", "T-*.md"):
+    for path in sorted((root / "docs/tasks").glob(pattern)):
+        match = re.fullmatch(r"((?:Har|T)-\d+)\.md", path.name)
+        assert match and path.is_file() and not path.is_symlink(), path
+        task_files[match.group(1)] = path
 
 text = board.read_text(encoding="utf-8")
 lines = text.splitlines()
@@ -38,7 +39,7 @@ assert archive_digest == expected_archive_digest, (
     "historical board digest",
     archive_digest,
 )
-board_tasks = re.findall(r"^### (T-\d+) —", text, re.MULTILINE)
+board_tasks = re.findall(r"^### (Har-\d+) —", text, re.MULTILINE)
 assert board_tasks and len(board_tasks) == len(set(board_tasks)), board_tasks
 assert set(board_tasks) <= set(task_files), (board_tasks, sorted(task_files))
 for task in board_tasks:
@@ -78,14 +79,15 @@ assert rows, "task index is empty"
 assert list(rows[0]) == ["task", "state", "summary", "source"], list(rows[0])
 by_task = {row["task"]: row for row in rows}
 assert len(by_task) == len(rows), "task index contains duplicate IDs"
-task_numbers = []
+task_numbers = {"Har": [], "T": []}
 allowed_states = {"active", "time-gated", "blocked", "complete"}
 indexed_sources = set()
 for row in rows:
-    assert re.fullmatch(r"T-\d+", row["task"]), row
+    assert re.fullmatch(r"(?:Har|T)-\d+", row["task"]), row
     assert row["state"] in allowed_states, row
     assert row["summary"] and row["source"], row
-    task_numbers.append(int(row["task"][2:]))
+    prefix, number = row["task"].split("-", 1)
+    task_numbers[prefix].append(int(number))
     for source in row["source"].split(";"):
         indexed_sources.add(source)
         candidate = Path(source)
@@ -95,11 +97,13 @@ for row in rows:
         )
         resolved = root / candidate
         assert resolved.exists() and not resolved.is_symlink(), (row["task"], source)
-assert task_numbers == sorted(task_numbers, reverse=True), (
-    "task index order",
-    task_numbers,
-)
-expected_free_id = f"Next free ID: T-{max(task_numbers) + 1}."
+for prefix, numbers in task_numbers.items():
+    assert numbers == sorted(numbers, reverse=True), (
+        "task index order",
+        prefix,
+        numbers,
+    )
+expected_free_id = f"Next free ID: Har-{max(task_numbers['Har']) + 1}."
 assert expected_free_id in text, ("next free ID", expected_free_id)
 archives = sorted((root / "docs/history").glob("TODO-full-archive-*.md"))
 assert archives, archives
@@ -121,9 +125,11 @@ for task in sorted(set(task_files) - set(board_tasks)):
     assert f"docs/tasks/{task}.md" in sources, task
 for task, state in {
     "T-351": "complete",
-    "T-196": "time-gated",
-    "T-328": "time-gated",
-    "T-303": "blocked",
+    "Har-196": "time-gated",
+    "Har-328": "time-gated",
+    "Har-303": "blocked",
+    "Har-371": "active",
+    "Har-376": "complete",
     "T-350": "complete",
 }.items():
     assert by_task[task]["state"] == state, (
@@ -143,7 +149,12 @@ for first, last in re.findall(r"T-(\d+)[–-]T-(\d+)", completed_text):
     start, stop = sorted((int(first), int(last)))
     completed_anchors.update(f"T-{number}" for number in range(start, stop + 1))
 for task in sorted(archived_records | completed_anchors):
-    assert task in by_task, ("unindexed archived task", task)
+    if task not in by_task:
+        prefix, number = task.split("-", 1)
+        assert prefix == "T" and f"Har-{number}" in by_task, (
+            "unindexed archived task",
+            task,
+        )
 
 print(
     f"TASK_LEDGER status=pass lines={len(lines)} words={len(words)} "

@@ -89,13 +89,11 @@ validation, and the next executable action in that task's record. Change
 
 ### Survive transient Codex service failures
 
-Inside an interactive Harness shell, the common `co` alias resumes the
-repository's most recent chat under the foreground resilience supervisor.
-The unaliased `codex` command remains available for native subcommands such as
-`codex --version`:
+Run the foreground resilience supervisor explicitly to resume the repository's
+most recent chat. The unaliased `codex` command remains available for native
+subcommands such as `codex --version`:
 
 ```bash
-co
 codex --version
 harness codex-resilient --plan --name harness --last
 harness codex-resilient --run --name harness --last
@@ -309,7 +307,7 @@ weekly primary job exists per node. Keep-all remains in force: no scheduled
 timer exists.
 
 The current successor gate is in
-[the T-196 record](docs/tasks/T-196.md). Recovery procedures and the reviewed
+[the Har-196 record](docs/tasks/Har-196.md). Recovery procedures and the reviewed
 topology are in [docs/home-backup.md](docs/home-backup.md).
 
 ## Codex and Claude use the same harness

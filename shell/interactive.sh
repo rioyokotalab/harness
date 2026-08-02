@@ -73,7 +73,8 @@ harness_remote_codex() {
         return 2
     fi
     unset host_profile
-    command ssh -A -t "$1" 'exec bash -lic '\''cd "$HOME" && exec co'\'''
+    command ssh -A -t "$1" \
+        'exec bash -lic '\''cd "$HOME" && exec harness codex-resilient --run --name harness --last'\'''
 }
 
 case ${HARNESS_LOGICAL_HOST:-} in

@@ -1,9 +1,13 @@
 task	state	summary	source
+Har-376	complete	Adopt repository-specific task namespaces and retire the co alias	docs/tasks/Har-376.md
+Har-371	active	Migrate legacy managed primary branches at a safe session boundary	TODO.md;docs/tasks/Har-371.md
+Har-328	time-gated	Deferred Local reboot during Institute outage	TODO.md;docs/tasks/Har-328.md;docs/history/TODO-full-archive-2026-07-30.md
+Har-303	blocked	NFS latency requires trusted server access	TODO.md;docs/tasks/Har-303.md;docs/audits/t303-nfs-observation-2026-07-24.md
+Har-196	time-gated	Backup lifecycle weekly successors	TODO.md;docs/tasks/Har-196.md;docs/backup-lifecycle-phase2.md
 T-375	complete	Compact portfolio task boards to active and pending work	docs/tasks/T-375.md
 T-374	complete	Baseline archive-generation triggers on latest covered sources	docs/tasks/T-374.md
 T-373	complete	Bound housekeeping archive growth with restore-proven retention	docs/tasks/T-373.md
 T-372	complete	Complete interrupted worktree teardown from durable state	docs/tasks/T-372.md
-T-371	active	Migrate legacy managed primary branches at a safe session boundary	TODO.md;docs/tasks/T-371.md
 T-370	complete	Enforce symmetric task-worktree lifecycle	docs/tasks/T-370.md
 T-369	complete	Evidence-first portfolio reset and guarded cleanup	docs/tasks/T-369.md;docs/audits/t369-portfolio-review-2026-08-02.md
 T-368	complete	Retired the Codex-Claude Cowork skill	docs/tasks/T-368.md
@@ -46,7 +50,6 @@ T-332	complete	Preserve codex and use co shorthand	docs/history/TODO-full-archiv
 T-331	complete	Restore disappeared Harness tmux window	docs/history/TODO-full-archive-2026-07-30.md
 T-330	complete	Monitor and order Local tmux Codex windows	docs/history/TODO-full-archive-2026-07-30.md
 T-329	complete	Restore disappeared Swallow tmux window	docs/history/TODO-full-archive-2026-07-30.md
-T-328	time-gated	Deferred Local reboot during Institute outage	TODO.md;docs/tasks/T-328.md;docs/history/TODO-full-archive-2026-07-30.md
 T-327	complete	Align MCP approvals and retire blocked phone sessions	docs/history/TODO-full-archive-2026-07-30.md
 T-326	complete	Exact progress clocks and Sol-high defaults	docs/history/TODO-full-archive-2026-07-30.md
 T-325	complete	Reusable unsafe-tail recovery	docs/history/TODO-full-archive-2026-07-30.md
@@ -70,7 +73,6 @@ T-308	complete	Reboot recovery skill and deterministic helper	docs/history/TODO-
 T-307	complete	Symmetric visible TUI messaging and requests	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t307-remote-agent-communication.md
 T-306	complete	Post-sync managed Codex context refresh	docs/history/TODO-full-archive-2026-07-30.md
 T-305	complete	Fleet Codex managed update convergence	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t305-codex-managed-update.md
-T-303	blocked	NFS latency requires trusted server access	TODO.md;docs/tasks/T-303.md;docs/audits/t303-nfs-observation-2026-07-24.md
 T-302	complete	Accept AL daily authentication	docs/history/TODO-full-archive-2026-07-30.md
 T-301	complete	Shared SSH defaults and multiplex-path hardening	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t301-ssh-defaults-review.md
 T-300	complete	Canonical fleet inventory and node-guide links	docs/history/TODO-full-archive-2026-07-30.md
@@ -98,6 +100,5 @@ T-279	complete	Mac onboarding and ledger foundation	docs/history/TODO-full-archi
 T-274	complete	Bash and Mac onboarding foundation	docs/history/TODO-full-archive-2026-07-30.md
 T-273	complete	Maintenance closeout and durable guardrails	docs/history/TODO-full-archive-2026-07-30.md
 T-210	complete	Earlier Harness lifecycle work	docs/history/TODO-full-archive-2026-07-30.md
-T-196	time-gated	Backup lifecycle weekly successors	TODO.md;docs/tasks/T-196.md;docs/backup-lifecycle-phase2.md
 T-191	complete	First native weekly backups	docs/history/TODO-full-archive-2026-07-30.md
 T-181	complete	Earlier safety acceptance	docs/history/TODO-full-archive-2026-07-30.md

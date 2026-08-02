@@ -337,7 +337,7 @@ env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
     bash --noprofile --norc -ic \
     '. "$HOME/harness/shell/profile.sh"; harness_remote_codex ab' 2>/dev/null
 [ "$(cat "$remote_codex_log")" = \
-    "-A -t ab exec bash -lic 'cd \"\$HOME\" && exec co'" ] ||
+    "-A -t ab exec bash -lic 'cd \"\$HOME\" && exec harness codex-resilient --run --name harness --last'" ] ||
     fail "one-connection remote Codex launcher"
 env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
     HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
@@ -345,7 +345,7 @@ env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
     bash --noprofile --norc -ic \
     '. "$HOME/harness/shell/profile.sh"; harness_remote_codex invented' 2>/dev/null
 [ "$(cat "$remote_codex_log")" = \
-    "-A -t invented exec bash -lic 'cd \"\$HOME\" && exec co'" ] ||
+    "-A -t invented exec bash -lic 'cd \"\$HOME\" && exec harness codex-resilient --run --name harness --last'" ] ||
     fail "profile-derived remote Codex fleet membership"
 if env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
     HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \

@@ -51,11 +51,12 @@ tracked, copied, hashed, or included in transaction state. Other safe aliases
 are common across all nodes. Site-only aliases remain in the relevant live
 `.bashrc` and are unique and alphabetic.
 
-The common `co` alias starts the managed resilient Harness Codex session.
-`codex` is deliberately not aliased, preserving native commands such as
-`codex --version`. Existing shells retain aliases already loaded in memory;
-start a fresh interactive shell, or update one existing shell explicitly with
-`unalias codex 2>/dev/null; . "$HOME/harness/shell/common-aliases.sh"`.
+Start the managed resilient Harness Codex session explicitly with
+`harness codex-resilient --run --name harness --last`. Neither `co` nor
+`codex` is aliased, preserving native commands such as `codex --version`.
+Existing shells retain aliases already loaded in memory; start a fresh
+interactive shell, or update one existing shell explicitly with
+`. "$HOME/harness/shell/common-aliases.sh"`.
 
 ## Interactive destructive-command safeguards
 
