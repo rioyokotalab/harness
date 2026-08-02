@@ -541,7 +541,7 @@ Selection uses p50/p90 active-time estimates, a conservative finalization
 buffer, one mutation conflict key at a time, and fair ordering among equal
 priorities. A durable wait releases active model execution and carries only a
 one-shot wake signal; waking resumes the saved task and reselects without
-replaying a prompt. Sixteen normative scenarios now cover fit, authority,
+replaying a prompt. Nineteen normative scenarios now cover fit, authority,
 privacy, conflicts, stale bases, cached reads, bounded discovery, owner
 interrupts, overruns, fairness, task-local LIFO, and exact terminal receipts.
 
@@ -584,7 +584,7 @@ timing or disposition reveals private workload shape. All admission detail now
 remains inside the owning repository. The acceptance matrix fixes 18 measures,
 including no extra transition in the Harness-only pilot or later admission,
 zero billable Actions increase, unchanged always-read bytes, at most 1,024 selector
-bytes before the chosen card, 16/16 scenario behavior, zero value exposure,
+bytes before the chosen card, 19/19 scenario behavior, zero value exposure,
 and p95 selection at most 100 ms over 60 synthetic cards.
 
 Anti-make-work constraints now reject cards accepted only by elapsed time,
@@ -613,6 +613,14 @@ consumer-side task amendment and invalidates the wait token—it does not rewrit
 the producer manifest. This matches the live 05:57 redirect and preserves
 writer purity; any reusable follow-up is considered only during final producer
 reconciliation.
+
+Admission immutability now uses Git evidence rather than another mutable lock
+file. Selection refuses a dirty or uncommitted manifest; after the first
+commit, the current blob must equal the first-add blob. The manifest binds the
+frozen catalog OID and selected packet blobs, so cards created after `go` are
+ineligible. A later protected-head change can continue only with byte-identical
+selected packets and freshly valid predicates. Three added scenarios cover
+dirty admission, manifest rewrite, and a late catalog card.
 
 ## Slice 7 — 07:00–08:00
 

@@ -15,3 +15,6 @@ card-overrun	elapsed-greater-than-1.5-estimate	checkpoint-and-readmit	no-silent-
 equal-priority	multiple-repositories-equal-priority	round-robin	no-repository-starvation
 task-local-defect	active-card-nested-defect	lifo-within-card	no-global-lifo-starvation
 terminal-card	pulled-card-terminal	exact-one-receipt	selection-is-not-completion
+dirty-admission	new-manifest-not-committed	refuse-selection	validated-manifest-must-be-checkpointed-first
+manifest-rewrite	first-add-blob-differs-from-current	reject	admission-immutable-after-first-commit
+late-catalog-card	card-created-after-frozen-catalog-revision	reject	go-cannot-authorize-later-card

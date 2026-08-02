@@ -282,6 +282,15 @@ Final producer reconciliation is needed only to promote, add, expire, or
 supersede catalog opportunities. This preserves producer-owned goal creation
 without requiring a receipt-only preparation PR for every participating repo.
 
+Immutability is Git-derived rather than asserted by a second mutable file. The
+admission command records the protected catalog OID and selected packet blob
+IDs. `nightly-next` refuses an uncommitted or dirty manifest. Once committed,
+validation locates the first-add commit for that path and requires the current
+blob to match it exactly. A card added after the frozen catalog OID is never
+admissible. A later protected-main change may proceed only when each selected
+packet blob remains identical and its target predicate is freshly valid; a
+changed or removed card is skipped, never silently substituted.
+
 Dedicated Personal and Students consumers remain idle during a producer
 nightly and never pull reserve cards. Cards are executed by the sole producer
 in isolated repository-native worktrees. A finding that deserves later
@@ -403,9 +412,10 @@ Run one matched two-night pilot before changing all five protocols:
    context. Otherwise retain the current protocol and the design as evidence.
 
 The normative scenario table is `productive-idle-scenarios.tsv`. At minimum,
-a prototype must satisfy all 16 rows, including changed owner input, stale
-target state, p90 overrun, private metadata rejection, exact completion
-receipts, and the distinction between task-local LIFO and portfolio fairness.
+a prototype must satisfy all 19 rows, including changed owner input, stale
+target state, p90 overrun, private metadata rejection, dirty or rewritten
+admissions, late catalog cards, exact completion receipts, and the distinction
+between task-local LIFO and portfolio fairness.
 
 ## Alternatives
 
