@@ -1,0 +1,6 @@
+repository	protected_head	primary_branch	primary_head	primary_dirty	assignment	selector	strict_convergence	open_prs	local_branches	remote_nonmain	linked_worktrees	status
+Harness	8068159fd22ca590a2b7d9802a8378bcdfa207af	main	8068159fd22ca590a2b7d9802a8378bcdfa207af	0	idle-plus-producer	Har-381	pass	0	2	32	2	active-nightly
+Students	80a0297dc8b217cd6d174a8fb02d1b33a7710b7a	claude/t043-bg003-replacement-app	2f8771894fd5007046683a3dba5c40ef8813855d	0	idle	Stu-052	pass	0	2	1	2	consumer-primary-preserved
+Swallow	0b692de4274b3df2a49a56cde5934cb897fbbb9f	sw034-continuation-20260731	ec809eaf8668b9490ff27fa9862677636f3f640b	1	idle	Swa-040	pass	0	2	0	2	consumer-primary-and-unrelated-dirty-entry-preserved
+Personal	6abd50ab48f344a7f28e3c5b3dea50c7e180d35	main	6abd50ab48f344a7f28e3c5b3dea50c7e180d35	0	idle	idle	pass	0	4	3	4	protected-main-clean
+Website	0bde9e7ec4712ea024cf11425ed92ad0d82363f0	main	0bde9e7ec4712ea024cf11425ed92ad0d82363f0	0	idle	legacy-unavailable	legacy-only	0	4	4	4	Web-219-local-fixed-socket-blocked

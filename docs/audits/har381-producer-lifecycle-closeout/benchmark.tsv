@@ -1,6 +1,6 @@
-repository	protected_revision	selection	always_read_bytes	routed_bytes	strict_validate_ms	strict_status	full_validation	publication_transitions	cleanup_state
-Harness	8068159fd22ca590a2b7d9802a8378bcdfa207af	Har-381	7663	12301	42	pass	R3-phase-one-pass	3	three-merged-worktrees-removed
-Students	80a0297dc8b217cd6d174a8fb02d1b33a7710b7a	Stu-052	8714	3460	41	pass	713-tests-38-subtests-pass	3	task-worktrees-caches-removed-reference-anchor-retained
-Swallow	0b692de4274b3df2a49a56cde5934cb897fbbb9f	Swa-040	8473	4125	42	pass	static-suite-pass	3	task-worktrees-cache-removed-reference-anchor-retained
-Personal	6abd50ab48f344a7f28e3c5b3dea50c7e180d35	idle	4289	906	44	pass	24-tests-plus-complete-validation-pass	3	merged-worktree-removed-reference-anchor-and-dirty-residue-retained
-Website	0bde9e7ec4712ea024cf11425ed92ad0d82363f0	Web-213-pending	8255	3349	52	pass-legacy	public-audit-tests-pass	0	Web-219-and-reference-anchor-preserved-blocked
+repository	protected_revision	selection	always_read_bytes	routed_bytes	strict_validate_ms	strict_status	focused_lifecycle_seconds	full_validation	publication_transitions	cleanup_state
+Harness	8068159fd22ca590a2b7d9802a8378bcdfa207af	Har-381	7663	12301	42	pass	1.235	R3-phase-one-pass	3	three-merged-worktrees-removed
+Students	80a0297dc8b217cd6d174a8fb02d1b33a7710b7a	Stu-052	8714	3460	41	pass	1.231	713-tests-38-subtests-pass	3	task-worktrees-caches-removed-reference-anchor-retained
+Swallow	0b692de4274b3df2a49a56cde5934cb897fbbb9f	Swa-040	8473	4125	42	pass	1.219	static-suite-pass	3	task-worktrees-cache-removed-reference-anchor-retained
+Personal	6abd50ab48f344a7f28e3c5b3dea50c7e180d35	idle	4289	906	44	pass	1.231	24-tests-plus-complete-validation-pass	3	merged-worktree-removed-reference-anchor-and-dirty-residue-retained
+Website	0bde9e7ec4712ea024cf11425ed92ad0d82363f0	Web-213-pending	8255	3349	52	pass-legacy	null	public-audit-tests-pass	0	Web-219-and-reference-anchor-preserved-blocked

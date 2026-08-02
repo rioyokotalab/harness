@@ -73,14 +73,19 @@ bundles remained intact, so the exact six roots removed in slice 1 plus six
 older missing historical roots were reconstructed locally. All 83 archive
 receipts then passed. A new 205,638,273-byte generation independently restored
 121 heads across 17 repository identities; the post-generation report has
-zero uncovered receipts, zero incomplete applies, and no candidate.
+zero uncovered receipts, zero incomplete applies, and no candidate at that
+checkpoint. A subsequent Personal branch cleanup created one new 133,401-byte
+receipt below the next-generation threshold. All 84 current receipts pass;
+the current report therefore shows one uncovered receipt, no incomplete apply,
+and no deletion candidate.
 
 The finding produced a focused prevention change: worktree housekeeping plan
 and apply now reject a scratch-root repository as archive owner, while still
 allowing the task worktree itself in scratch. Its focused suite passes. The
 reconstructed roots remain classified archive anchors rather than being
 deleted a second time; future work must migrate historical archive ownership
-before those exact pathnames can safely disappear.
+before those exact pathnames can safely disappear. Their clean sparse
+checkouts preserve auditability, and all receipts passed again afterward.
 
 The resulting clean checkpoint passed the complete 96-suite R3 phase-one gate
 in 77.85 seconds. The owning housekeeping suite passed in 30.62 seconds, and
