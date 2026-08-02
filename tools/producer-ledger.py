@@ -91,18 +91,19 @@ def validate() -> None:
     assignment_path = ROOT / "docs/producer/assignment.tsv"
     with assignment_path.open(encoding="utf-8", newline="") as handle:
         assignments = list(csv.DictReader(handle, delimiter="\t"))
-    if (
-        len(assignments) != 1
-        or list(assignments[0]) != ["client", "slot", "state"]
-    ):
+    if not assignments or list(assignments[0]) != ["client", "slot", "state"]:
         fail("assignment-schema")
-    assignment = assignments[0]
-    if assignment["client"] not in ALLOWED_CONSUMERS:
-        fail("assignment-client")
-    if not re.fullmatch(r"[a-z][a-z0-9-]*", assignment["slot"]):
-        fail("assignment-slot")
-    if assignment["state"] not in {"active", "idle", "producer"}:
-        fail("assignment-state")
+    slots: set[str] = set()
+    for assignment in assignments:
+        if assignment["client"] not in ALLOWED_CONSUMERS:
+            fail("assignment-client")
+        if not re.fullmatch(r"[a-z][a-z0-9-]*", assignment["slot"]):
+            fail("assignment-slot")
+        if assignment["slot"] in slots:
+            fail("assignment-duplicate-slot")
+        slots.add(assignment["slot"])
+        if assignment["state"] not in {"active", "idle", "producer"}:
+            fail("assignment-state")
     nightly = ROOT / "docs/producer/NIGHTLY.md"
     if (
         not nightly.is_file()
@@ -156,9 +157,17 @@ def validate() -> None:
                 fail(f"packet-index-mismatch:{row['task']}:{key}")
         if values["repository"] != repository or values["consumer"] not in ALLOWED_CONSUMERS:
             fail(f"packet-routing:{row['task']}")
-        record = Path(values["record"])
-        if record.is_absolute() or ".." in record.parts or not (ROOT / record).is_file():
-            fail(f"packet-record:{row['task']}")
+        if values["record"] == "pending":
+            if row["state"] != "ready":
+                fail(f"pending-record-state:{row['task']}")
+        else:
+            record = Path(values["record"])
+            if (
+                record.is_absolute()
+                or ".." in record.parts
+                or not (ROOT / record).is_file()
+            ):
+                fail(f"packet-record:{row['task']}")
         if "tmux" in packet_text.lower() or "harness:" in packet_text.lower():
             fail(f"assignment-coupling:{row['task']}")
         if bool(config["public"]) and re.search(
