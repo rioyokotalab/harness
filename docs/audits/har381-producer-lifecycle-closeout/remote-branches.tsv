@@ -1,6 +1,6 @@
-repository	hosted_nonmain	local_tracking_nonmain	intersection	hosted_only	local_only	committed_le_30d	committed_31_90d	committed_91_365d	committed_gt_365d	oldest_commit_date	newest_commit_date	disposition
-Harness	32	32	32	0	0	32	0	0	0	2026-08-01	2026-08-02	recent-report-only
-Students	2	1	0	2	1	2	0	0	0	2026-07-29	2026-07-29	recent-report-only
-Swallow	105	0	0	105	0	105	0	0	0	2026-07-25	2026-08-02	recent-report-only
-Personal	0	3	0	0	3	0	0	0	0	none	none	stale-local-tracking-report-only
-Website	8	4	4	4	0	8	0	0	0	2026-08-01	2026-08-02	recent-report-only
+repository	hosted_nonmain	local_tracking_nonmain	intersection	hosted_only	local_only	fetch_scope	committed_le_30d	committed_31_90d	committed_91_365d	committed_gt_365d	oldest_commit_date	newest_commit_date	disposition
+Harness	32	32	32	0	0	all-heads	32	0	0	0	2026-08-01	2026-08-02	recent-report-only
+Students	2	1	0	2	1	main-only	2	0	0	0	2026-07-29	2026-07-29	recent-report-only
+Swallow	105	0	0	105	0	main-only	105	0	0	0	2026-07-25	2026-08-02	recent-report-only
+Personal	0	3	0	0	3	all-heads	0	0	0	0	none	none	stale-local-tracking-report-only
+Website	8	4	4	4	0	all-heads	8	0	0	0	2026-08-01	2026-08-02	recent-report-only

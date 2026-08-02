@@ -176,6 +176,54 @@ compaction is made merely because Students, Swallow, and Website have larger
 root agreements; removing project-specific safety or routing clauses would
 fail the frozen capability-equivalence condition.
 
+A ten-run process-level sample then separated strict validation cost from task
+selection cost. Median strict validation stayed between 40.709 and 47.284 ms
+for the four converged repositories; median `next-ready` stayed between 43.921
+and 47.412 ms. Website's legacy validator median was 43.201 ms, but its tool
+does not yet implement `next-ready`. The combined sampler first attempted that
+known-missing Website subcommand and stopped after its first Website validation
+without mutation; the corrected run measured only the remaining ten Website
+validator invocations and labels selector cost unsupported. These results are
+recorded in `selector-benchmark.tsv`, and none supplies a reason to weaken the
+new strict invariants.
+
+Hosting timestamps provide a reproducible wall-time measure for the protected
+publication streams rather than an estimate from shell history. Harness's
+three required writer-separated transitions span 978 seconds from first PR
+creation to final merge. Students, Swallow, and Personal were safely parallel
+and each span 793 seconds across their three independent transitions. Website
+has zero transitions and no synthetic duration because it stopped before
+transport. `publication-timing.tsv` keeps the timestamp basis explicit; the
+action-group count remains the stable command-level measure because incidental
+shell subcommands are neither portable nor reconstructable after recovery.
+
+The live acceptance matrix now distinguishes completed proof from remaining
+cadence work. Har-379 immutability, public audits, benchmark dimensions,
+excluded-write boundaries, and guarded cleanup all have passing evidence.
+Website is a value-free protected-state blocker, not a hidden failure. The only
+planned closeout work is completing slices 3–8, final changed-tree public and
+ledger checks, removing this merged worktree after publication, and performing
+the producer reconciliation as a separate diff. No new repository goal is
+introduced by the matrix.
+
+The remote-tracking mismatch also has a configuration explanation. Students
+and Swallow deliberately fetch only `origin/main`, so hosted task branches are
+expected to be absent from local tracking state. Harness, Personal, and Website
+use all-head fetch refspecs; Personal's three local-only refs and Website's four
+hosted-only refs reflect unpruned or not-yet-fetched observations, not a basis
+for mutation. Hosted pagination remains the authoritative report for this
+slice, and no refspec, fetch, prune, or branch was changed.
+
+Fresh status classification also confirms why the retained task worktrees are
+not cleanup candidates. The three Personal and two older Website worktrees are
+all ancestors of current protected main but collectively retain 15 tracked and
+four untracked changes. Har-381 neither equates ancestor status with
+disposability nor reads those payloads into Harness. Web-219 is clean and a
+descendant containing only its unpublished producer transition; the Students
+and Swallow producer-main worktrees are clean and exactly equal protected main.
+Thus no retained row changed disposition, and no guarded-delete plan was
+created.
+
 ## Slice 4 — 04:00–05:00
 
 Pending.
