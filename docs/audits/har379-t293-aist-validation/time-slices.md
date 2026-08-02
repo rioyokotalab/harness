@@ -11,7 +11,7 @@ required. Do not split or invent observations to simulate cadence.
 | 4 | 16:47:47–17:47:47 | complete |
 | 5 | 17:47:47–18:47:47 | complete |
 | 6 | 18:47:47–19:47:47 | complete |
-| 7 | 19:47:47–20:47:47 | pending |
+| 7 | 19:47:47–20:47:47 | complete |
 
 ## Pre-pilot evidence
 
@@ -181,8 +181,93 @@ interpretation and disclosed file-tooling deviation, distinguish the healthy
 T-293 system from the task-execution incident, and preserve every stale ref
 through observer completion.
 
+## Slice 7 — 19:47:47–20:47:47 JST
+
+- Repository identity: the exact 20:47:47 sample found clean, aligned
+  protected `main` at `45e1119` and the clean task checkpoint at `5d2f8f0`.
+- Connection state: both Aist aliases remained loaded/running with
+  `managed=1 external=0` and ready unattended auth. The watchdog's 20:47:28
+  JST run classified the pair healthy with no recovery attempt. Fresh
+  Local-vantage probes at 20:48:01 reported both Aist routes and every other
+  declared pair healthy.
+- Unexpected findings and Claude evidence: none. The retained final Claude
+  review was independently reconciled and correctly remained
+  `ACCEPT-PENDING-CLOSURE` until this exact sample. No T-293 self-healing
+  defect was demonstrated in the complete window.
+- Next safe action: record the two frozen seven-entry summaries, run final
+  integrated validation, and publish only evidence and consumer-ledger bytes
+  through protected Git. Preserve every stale ref; no target or implementation
+  mutation is permitted.
+
 ## Final durable summary
 
-Pending completion. It must contain exactly one evidence-backed entry for each
-hour above, the validated outcome, residual risks, and the exact next action,
-and must total at least 350 words.
+1. **Slice 1, 13:47:47–14:47:47.** Protected main and the isolated task tree
+   were clean at the observer sample. Both Aist aliases were loaded and
+   running with exclusive managed ownership, unattended authentication ready,
+   and the watchdog healthy; fresh Local-vantage probes found both Aist routes
+   and every other declared pair healthy. Earlier in this slice the sole
+   bounded pilot changed the primary generation and recovered in three seconds
+   while the sibling stayed ready. The task identity collision was reconciled
+   without target mutation or overwritten history. Claude's conditional-go
+   review had been independently resolved before the pilot.
+
+2. **Slice 2, 14:47:47–15:47:47.** The exact observer evidence again showed
+   clean repositories, exclusive `managed=1 external=0` ownership, ready
+   unattended auth, a healthy no-attempt watchdog result, and all Local-
+   vantage route pairs ready. Protected main introduced the producer protocol
+   and consumed the temporary Har-378 identity. A checkpoint command then
+   continued after detecting the unexpected base because it lacked a
+   fail-fast guard; its sole external effect was advancing the already-stale
+   Har-378 branch. No PR, merge, rollout, tunnel command, or target mutation
+   followed, and that ref remains preserved.
+
+3. **Slice 3, 15:47:47–16:47:47.** Protected main and the task checkpoint were
+   clean after the producer assigned Har-379 and the consumer reconciled only
+   its allowed paths. Both routes remained exclusively managed and
+   authentication-ready; the watchdog was healthy without recovery, and every
+   fresh Local-vantage pair passed. The one-shot midpoint Claude review found
+   no T-293 defect and accepted the pilot, while requiring explicit treatment
+   of evidence provenance, wording deviations, observer dependencies, stale
+   refs, and the publication incident. The driver independently reconciled
+   those findings without speculative implementation work.
+
+4. **Slice 4, 16:47:47–17:47:47.** The exact sample preserved clean repository
+   identity and the same healthy connection invariants: two loaded/running
+   managed services, no external owners, ready unattended authentication, a
+   healthy watchdog with no attempts, and every declared pair ready from
+   Local. Nothing unexpected occurred. The midpoint finding remained advisory
+   and independently verified; it did not authorize target or code changes.
+   Evidence is the timestamped value-free narrative retained here, not claimed
+   raw-output provenance. The stale branch and both local preservation refs
+   remained untouched.
+
+5. **Slice 5, 17:47:47–18:47:47.** Clean protected and task revisions were
+   observed at the boundary. Both Aist routes retained exclusive managed
+   ownership and ready auth, the watchdog classified them healthy without a
+   recovery attempt, and fresh Local-vantage checks passed the entire declared
+   fleet. No self-healing fault or new anomaly appeared. The original baseline
+   hash is treated as the clean start benchmark rather than an instruction to
+   reject legitimate protected-main advances. Claude's repository-scoped file
+   tools are the disclosed deviation from the literal "no tools" shorthand;
+   the no-target and credential boundaries held.
+
+6. **Slice 6, 18:47:47–19:47:47.** Protected Har-380 was merged and reconciled
+   with both task-index rows preserved; the sampled primary and task trees were
+   clean. Both Aist services remained loaded/running and exclusively managed,
+   auth stayed ready, the watchdog remained healthy with no attempts, and all
+   fresh Local-vantage pairs passed. At 19:47:47 the material cutoff closed all
+   implementation and target mutation. The final one-shot Claude transport
+   returned no acknowledgement and was never retried; its later regular-file
+   artifact proved completion and was independently reconciled as
+   `ACCEPT-PENDING-CLOSURE`.
+
+7. **Slice 7, 19:47:47–20:47:47.** The exact final sample found clean
+   protected main at `45e1119` and the clean task checkpoint at `5d2f8f0`.
+   Both aliases were still loaded/running with `managed=1 external=0`, both
+   unattended-auth checks were ready, and the 20:47:28 watchdog run was
+   healthy with no attempts. At 20:48:01 fresh Local-vantage probes found all
+   declared route pairs healthy. Across the full window no credential bytes
+   were accessed and no T-293 defect was demonstrated; the separate execution
+   incident stayed bounded. The exact next action is final validation and
+   protected publication of evidence/ledger bytes only, while preserving all
+   stale refs pending separate deletion authority.

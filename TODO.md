@@ -17,14 +17,6 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-### Har-379 — Revalidate T-293 from Aist with Claude co-pilot
-
-**Phase:** executing the authorized seven-hour window through 2026-08-02
-20:47:47 JST; the sole frozen pilot and Claude plan critique passed, so target
-behavior is observation-only through the remaining slices and final audit.
-
-**Record:** `docs/tasks/Har-379.md`.
-
 ### Har-371 — Migrate legacy managed primary branches
 
 **Phase:** event-gated until the live Students and Swallow managed sessions
