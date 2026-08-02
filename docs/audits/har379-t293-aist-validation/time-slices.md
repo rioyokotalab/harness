@@ -98,6 +98,13 @@ required. Do not split or invent observations to simulate cadence.
   never retry an acknowledged or ambiguous submission, and then remain
   observation-only through slice 4.
 
+## Midpoint review request
+
+Request `aist-20260802-midpoint-01` was submitted once at 16:49 JST through
+the installed content-blind Claude transport. Local `status=submitted` proves
+submission only; the private input was exact-unlinked, no retry is permitted,
+and the named artifact remained pending after the first bounded poll.
+
 ## Final durable summary
 
 Pending completion. It must contain exactly one evidence-backed entry for each
