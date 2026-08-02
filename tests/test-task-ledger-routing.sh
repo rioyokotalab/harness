@@ -17,6 +17,7 @@ if not __debug__:
 
 root = Path(sys.argv[1])
 board = root / "TODO.md"
+producer = root / "PRODUCER.md"
 archive = root / "docs/history/TODO-full-archive-2026-07-30.md"
 index = root / "docs/tasks/index.tsv"
 task_files = {}
@@ -104,7 +105,10 @@ for prefix, numbers in task_numbers.items():
         numbers,
     )
 expected_free_id = f"Next free ID: Har-{max(task_numbers['Har']) + 1}."
-assert expected_free_id in text, ("next free ID", expected_free_id)
+producer_text = producer.read_text(encoding="utf-8")
+assert expected_free_id in producer_text, ("next free ID", expected_free_id)
+producer_tasks = set(re.findall(r"docs/producer/tasks/(Har-\d+)\.md", producer_text))
+assert set(board_tasks) <= producer_tasks, (board_tasks, sorted(producer_tasks))
 archives = sorted((root / "docs/history").glob("TODO-full-archive-*.md"))
 assert archives, archives
 for archive_path in archives:

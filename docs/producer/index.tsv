@@ -1,0 +1,6 @@
+task	state	priority	created	packet
+Har-371	gated	10	2026-08-02	docs/producer/tasks/Har-371.md
+Har-196	gated	20	2026-08-02	docs/producer/tasks/Har-196.md
+Har-328	gated	30	2026-08-02	docs/producer/tasks/Har-328.md
+Har-303	gated	40	2026-08-02	docs/producer/tasks/Har-303.md
+Har-378	claimed	999	2026-08-02	docs/producer/tasks/Har-378.md

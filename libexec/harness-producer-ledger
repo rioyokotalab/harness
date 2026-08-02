@@ -1,0 +1,79 @@
+#!/bin/sh
+set -eu
+
+fail() {
+    printf 'PRODUCER_ROLE status=failed reason=%s\n' "$1" >&2
+    exit 1
+}
+
+usage() {
+    printf '%s\n' \
+        'Usage: harness producer-ledger role-check --pane PANE' \
+        '       harness producer-ledger validate REPOSITORY' \
+        '       harness producer-ledger check-producer-diff REPOSITORY BASE --pane PANE'
+}
+
+role_check() {
+    [ "${1:-}" = --pane ] && [ "$#" -eq 2 ] || fail pane-required
+    pane=$2
+    case "$pane" in
+        %*) ;;
+        *) fail invalid-pane ;;
+    esac
+    command -v tmux >/dev/null 2>&1 || fail tmux-unavailable
+    facts=$(tmux display-message -p -t "$pane" \
+        '#{session_name}|#{window_name}|#{pane_index}|#{@harness_target}|#{pane_current_command}' \
+        2>/dev/null) || fail pane-unavailable
+    IFS='|' read -r session window index target command <<EOF
+$facts
+EOF
+    [ "$session" = harness ] || fail wrong-session
+    [ "$window" = cowork ] || fail wrong-window
+    [ "$index" = 0 ] || fail wrong-pane-index
+    [ "$target" = harness ] || fail wrong-target
+    case "$command" in
+        sh|bash|codex) ;;
+        *) fail wrong-client-command ;;
+    esac
+    printf 'PRODUCER_ROLE status=pass pane=%s\n' "$pane"
+}
+
+repository_tool() {
+    repository=$1
+    [ -d "$repository" ] && [ ! -L "$repository" ] || fail unsafe-repository
+    root=$(git -C "$repository" rev-parse --show-toplevel 2>/dev/null) ||
+        fail not-repository
+    [ "$root" = "$(CDPATH='' cd -- "$repository" && pwd -P)" ] ||
+        fail repository-not-root
+    tool=$root/tools/producer-ledger.py
+    [ -f "$tool" ] && [ ! -L "$tool" ] || fail validator-unavailable
+    printf '%s\n' "$tool"
+}
+
+command_name=${1:-}
+[ "$#" -gt 0 ] && shift || true
+case "$command_name" in
+    role-check)
+        role_check "$@"
+        ;;
+    validate)
+        [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+        tool=$(repository_tool "$1")
+        exec python3 "$tool" validate
+        ;;
+    check-producer-diff)
+        [ "$#" -eq 4 ] && [ "$3" = --pane ] || {
+            usage >&2
+            exit 2
+        }
+        repository=$1
+        base=$2
+        role_check --pane "$4" >/dev/null
+        tool=$(repository_tool "$repository")
+        exec python3 "$tool" check-producer-diff --base "$base"
+        ;;
+    *)
+        usage >&2
+        exit 2
+        ;;
+esac
