@@ -18,14 +18,6 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-### Har-378 — Repository-local producer/consumer task protocol
-
-**Phase:** executing; the five-decision register is complete and the owner gave
-`go`. Bootstrap repository-local ledgers in isolated worktrees before any
-runtime activation.
-
-**Record:** `docs/tasks/Har-378.md`.
-
 ### Har-371 — Migrate legacy managed primary branches
 
 **Phase:** event-gated until the live Students and Swallow managed sessions

@@ -241,10 +241,11 @@ a design choice: Students or Swallow runtime activation waits for its verified
 idle/cold boundary, while repository work may be developed in isolated
 `origin/main` worktrees.
 
-## Exact next action
+## Execution outcome
 
-Wait for an explicit owner `go`. Then read the execution-phase workflows,
-create repository-local task branches/worktrees and ledgers independently,
-validate and publish each repository through its native gates, activate only
-at verified safe boundaries, and finish with portfolio validation and guarded
-cleanup. The `go` does not override any packet-external authority gate.
+Implemented after the owner's `go`. The five repository-local contracts,
+assignment-neutral packets, receipts, validators, negative tests, routed
+nightly protocol, public privacy checks, and cold-start rules are published in
+Personal, Students, Swallow, and Website. Harness publication and final guarded
+cleanup are the remaining closeout actions. Runtime activation for Students and
+Swallow remains event-gated by Har-371 and no packet-external gate changed.

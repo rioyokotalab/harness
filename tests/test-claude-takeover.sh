@@ -50,9 +50,9 @@ grep -Fx '@AGENTS.md' "$ROOT/CLAUDE.md" >/dev/null ||
     fail "Claude project instructions do not import AGENTS.md"
 [ ! -e "$ROOT/.claude/CLAUDE.md" ] ||
     fail "redundant project .claude/CLAUDE.md remains"
-grep -F 'Git and `TODO.md` as the durable source of truth' "$ROOT/AGENTS.md" \
+grep -F 'Git, `PRODUCER.md`, and `TODO.md` are durable truth' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project takeover source of truth"
-grep -F 'Claude auto-memory are optional context only' "$ROOT/AGENTS.md" \
+grep -F 'chat and client memory' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project cross-client handoff policy"
 grep -F 'Owner approval alone never' \
     "$ROOT/docs/agent-policy/external-operations.md" \

@@ -71,21 +71,15 @@ remain mandatory project refinements.
 
 ## Harness repository
 
-- Treat Git, `PRODUCER.md`, and `TODO.md` as the durable source of truth. Chat
-  history, client summaries, and Claude auto-memory are optional context only.
-- At cold start, read this file and `PRODUCER.md` completely. Consumers select
-  its first ready packet, then read the active board and matching execution
-  record; if none is ready, remain idle. Inspect the branch, worktree, and
-  recent commits, then read only routed plan and evidence; never preload
-  another active record or `docs/history/`. Before changing collaborative
-  work, fetch and reconcile its remote through the conditional Git policy.
-- Only the portfolio producer may modify `PRODUCER.md` or `docs/producer/`.
-  Consumers never allocate durable IDs or durable goals. Resolve nested
-  in-scope issues LIFO inside the current task, and write a bounded blocked
-  receipt under `docs/consumer/receipts/` for anything outside scope or behind
-  an ungranted authority gate.
-- Before consumer publication run
-  `python3 tools/producer-ledger.py check-consumer-diff --base origin/main`.
+- Git, `PRODUCER.md`, and `TODO.md` are durable truth; chat and client memory
+  are optional. At cold start read this file and `PRODUCER.md`. Consumers read
+  its first ready packet, `TODO.md`, and the matching record, or remain idle.
+  Inspect Git and only routed evidence; never preload another record or
+  `docs/history/`. Fetch before changing collaborative work.
+- Only the portfolio producer edits `PRODUCER.md` or `docs/producer/`.
+  Consumers create no IDs/goals; handle nested issues LIFO or write a blocked
+  receipt. Before publication run the consumer diff check documented in
+  `PRODUCER.md`.
 - Resume the first unverified recorded action. Revalidate only mutable inputs
   used by that action; a failed query is unknown, not evidence of absence.
 - Keep Harness independent of the sibling `website` repository.

@@ -15,8 +15,6 @@ Next free ID: Har-379.
 | Har-196 | gated | 20 | `docs/producer/tasks/Har-196.md` |
 | Har-328 | gated | 30 | `docs/producer/tasks/Har-328.md` |
 | Har-303 | gated | 40 | `docs/producer/tasks/Har-303.md` |
-| Har-378 | claimed | 999 | `docs/producer/tasks/Har-378.md` |
-
 ## Writer contract
 
 Consumers never modify producer-owned paths or allocate durable IDs. They keep

@@ -36,11 +36,11 @@ preserves every credential and runtime-state file, and records rollback
 preimages. It never installs or authorizes a plugin, marketplace, MCP server,
 connector, or credential.
 
-The compact queue lives in [TODO.md](TODO.md); each active item links one
-task-specific record containing its exact resume checkpoint. Completed
-command-level evidence lives in Git history and [docs/audits/](docs/audits/).
-A cold-started agent reads the root `AGENTS.md` or `CLAUDE.md`, the queue, and
-only the selected task record. It reads the canonical
+The producer queue lives in [PRODUCER.md](PRODUCER.md); consumers then use
+[TODO.md](TODO.md) and the matching execution record. Completed command-level
+evidence lives in Git history and [docs/audits/](docs/audits/). A cold-started
+agent reads the root `AGENTS.md` or `CLAUDE.md`, the first ready producer packet,
+the consumer board, and only the matching record. It reads the canonical
 [fleet inventory](docs/fleet-inventory.md) only for fleet or host work.
 
 For a new account that does not share the owner's hidden files, credentials,
@@ -73,8 +73,9 @@ requiring an active controller session. See
 
 ### Resume work safely
 
-Both clients reconstruct unfinished work from Git, [TODO.md](TODO.md), and the
-selected task record—not conversation history or client-local memory:
+Both clients reconstruct unfinished work from Git, [PRODUCER.md](PRODUCER.md),
+[TODO.md](TODO.md), and the selected task records—not conversation history or
+client-local memory:
 
 ```bash
 cd "$HOME/harness"

@@ -1,5 +1,5 @@
 task	state	summary	source
-Har-378	active	Design repository-local producer and asynchronous consumer ledgers	TODO.md;docs/tasks/Har-378.md;docs/plans/har378-producer-consumer-ledgers.md
+Har-378	complete	Install repository-local producer and asynchronous consumer ledgers	docs/tasks/Har-378.md;docs/plans/har378-producer-consumer-ledgers.md
 Har-377	complete	Admit the independent Website root in fleet agent sentinels	docs/tasks/Har-377.md
 Har-376	complete	Adopt repository-specific task namespaces and retire the co alias	docs/tasks/Har-376.md
 Har-371	active	Migrate legacy managed primary branches at a safe session boundary	TODO.md;docs/tasks/Har-371.md
