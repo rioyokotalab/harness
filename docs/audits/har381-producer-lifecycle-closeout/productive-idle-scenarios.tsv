@@ -26,3 +26,4 @@ late-wake	wake-at-or-after-finalization	finalize	finalization-never-reopens-rese
 lower-tail-shortage	p50-and-p90-cover-window-p10-does-not	report-lower-tail-shortfall	p90-never-counted-as-supply-floor
 admission-headroom	eligible-card-remains-before-32-card-cap	admit-card	p50-coverage-never-stops-reserve-admission
 cross-repository-privacy	public-controller-requests-private-priority-or-expiry	reject	ready-idle-block-is-only-cross-repository-card-status
+discovery-scope	short-coverage-with-unrelated-history-branches-tmp-and-web	delta-routed-scan-only	no-broad-search-to-fill-time

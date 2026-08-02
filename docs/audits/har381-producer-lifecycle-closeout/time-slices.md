@@ -736,9 +736,18 @@ expiry, identity, timing, and conflict selection remain local to the chosen
 repository. The cursor is private ephemeral controller state, never a public
 Harness ledger row. An eighth scenario and sixth measure test that boundary.
 The current normative totals are 27 scenarios and 24 measures. Schema and
-whitespace-normalized contract checks pass. The final required route is 14,192
-bytes versus 34,893 bytes with lookup rationale, a 20,701-byte (59.326%)
-reduction. These are
+whitespace-normalized contract checks pass.
+
+Reserve replenishment was then bounded to prevent the solution from recreating
+the original problem as an open-ended discovery sweep. A producer cycle reads
+only the current receipt's promotion slot, changed validator/efficiency
+receipts since its repository-local watermark, and at most one linked evidence
+artifact per proposal. It does not sweep unrelated history, branches,
+worktrees, `/tmp`, fleet state, or the web. Missing promotion evidence is a
+valid empty result. A ninth scenario and seventh measure enforce zero unrelated
+discovery reads. Current normative totals are 28 scenarios and 25 measures.
+The final required route is 14,918 bytes versus 35,721 bytes with lookup
+rationale, a 20,803-byte (58.238%) reduction. These are
 documentation-only follow-up-contract changes; the live nightly remains
 untouched. Terminal board/record/index/receipt bytes and these late
 documentation deltas receive the planned ledger, consumer-diff, and R0 checks

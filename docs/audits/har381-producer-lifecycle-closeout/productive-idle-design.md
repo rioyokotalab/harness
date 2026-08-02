@@ -332,6 +332,16 @@ existing card. The ordinary producer cycle replenishes catalogs from
 demonstrated findings. An empty catalog is valid and cannot be treated as
 permission to generate work recursively.
 
+Replenishment is delta-routed. The ordinary producer cycle may read the current
+consumer receipt's optional promotion slot plus validator or efficiency
+receipts changed since a repository-local producer watermark. It may open at
+most one directly linked evidence artifact per proposed card. It does not sweep
+unrelated task history, branches, worktrees, `/tmp`, fleet state, or the web
+merely because coverage is short. An absent promotion slot closes no-change.
+This lets a consumer report one bounded opportunity without allocating a goal,
+while the producer remains the only writer that can promote it into the
+protected catalog.
+
 Cards live in protected state before selection. `nightly-admit` can select only
 cards that existed at the exact protected catalog revision reviewed before
 `go`; it cannot create a packet, change authority, or admit a later catalog
@@ -463,7 +473,7 @@ controller, or touch a sibling repository. Synthetic fixtures exercise local
 catalog and admission paths without crossing the producer writer boundary.
 
 After the consumer receipt, normal producer reconciliation closes Har-383. If
-and only if all 27 scenarios and 24 acceptance measures pass, that producer
+and only if all 28 scenarios and 25 acceptance measures pass, that producer
 transition may allocate a later Harness rollout task. The rollout task—not
 Har-383—may seed a protected Harness opportunity catalog and update the nightly
 protocol. Sibling rollout remains a further evidence-gated decision. This
@@ -471,7 +481,7 @@ keeps code validation, producer-owned state, and policy activation in their
 proper writer phases and makes rejection of the experiment cheap.
 
 The normative scenario table is `productive-idle-scenarios.tsv`. At minimum,
-a prototype must satisfy all 27 rows, including changed owner input, stale
+a prototype must satisfy all 28 rows, including changed owner input, stale
 target state, p90 overrun, private metadata rejection, dirty or rewritten
 admissions, late catalog cards, honest shortage forecasts, work-conserving
 selection, crash recovery, idempotent receipts, one-way finalization, exact

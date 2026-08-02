@@ -62,6 +62,15 @@ publish them through their repository's normal producer workflow only under
 existing authority, then freeze the plan. In-run discovery proposals cannot be
 executed until a later producer cycle.
 
+Opportunity discovery is delta-routed, not a broad repository, `/tmp`, fleet,
+or web search. It may read the current task receipt's explicit promotion slot,
+changed validator/efficiency receipts since the repository-local scan
+watermark, and at most one directly linked evidence artifact per proposal.
+Unrelated task records, history, branches, worktrees, and web sources stay
+unread. A missing promotion slot is a valid empty result. The watermark,
+candidate detail, and any private proposal remain only in the owning
+repository.
+
 After exact owner `go`, `nightly-admit --run ...` may write only a subset of
 cards from the reviewed protected catalog revision. To reduce avoidable queue
 exhaustion, it admits every currently eligible, independently valuable card up
@@ -166,7 +175,7 @@ sentence is sufficient for its hourly evidence slice.
 ## Pilot acceptance
 
 Use `productive-idle-scenarios.tsv` and `productive-idle-acceptance.tsv` as
-normative data. All 27 scenarios and all 24 measures must pass, including the
+normative data. All 28 scenarios and all 25 measures must pass, including the
 matched replay from checkpoint `c508483`, zero early duplicate reads, no more
 than one wait checkpoint, unchanged always-read bytes, zero billable Actions
 increase, no extra protected transition, no value exposure or writer violation,
