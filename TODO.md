@@ -21,9 +21,9 @@ Next free ID: Har-379.
 
 ### Har-378 — Repository-local producer/consumer task protocol
 
-**Phase:** ready-for-go; the five-decision register is complete and internally
-consistent. Wait for an explicit `go` before target-repository or runtime
-mutation.
+**Phase:** executing; the five-decision register is complete and the owner gave
+`go`. Bootstrap repository-local ledgers in isolated worktrees before any
+runtime activation.
 
 **Record:** `docs/tasks/Har-378.md`.
 
