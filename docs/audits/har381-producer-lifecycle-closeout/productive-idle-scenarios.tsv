@@ -23,3 +23,5 @@ work-conserving	one-eligible-card-fits-and-discovery-unused	pull-card	wait-forbi
 crash-after-selection	selected-event-durable-receipt-absent	reconcile-exact-card	no-target-action-replay
 duplicate-receipt	exact-retry-then-changed-retry	no-op-then-reject	exactly-one-terminal-disposition
 late-wake	wake-at-or-after-finalization	finalize	finalization-never-reopens-reserve
+lower-tail-shortage	p50-and-p90-cover-window-p10-does-not	report-lower-tail-shortfall	p90-never-counted-as-supply-floor
+admission-headroom	eligible-card-remains-before-32-card-cap	admit-card	p50-coverage-never-stops-reserve-admission

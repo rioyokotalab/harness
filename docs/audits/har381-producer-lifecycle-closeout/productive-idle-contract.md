@@ -43,9 +43,12 @@ measured reduction justify a refactor.
 ## Admission and immutability
 
 `nightly-plan --until ...` is read-only. It reports requested window,
-finalization reserve, mandatory and reserve p50/p90, uncovered expected
-minutes, repository representation, authority/conflict classes, and one of
-`covered`, `shortfall`, or `planned-wait`. Only cards whose predicate is ready
+finalization reserve, mandatory and reserve p10/p50/p90, lower-tail and
+expected minutes, repository representation, authority/conflict classes, and
+one of `covered`, `shortfall`, or `planned-wait`. p50 estimates expected supply,
+p10 signals early-exhaustion risk but is not a probabilistic portfolio
+guarantee, and p90 guards latest start and cutoff;
+p90 must never be reported as conservative supply. Only cards whose predicate is ready
 and whose authority, conflict, privacy, and time-fit checks currently pass
 contribute coverage. One
 bounded structural opportunity scan is allowed before `go`; a remaining gap is
@@ -60,8 +63,11 @@ existing authority, then freeze the plan. In-run discovery proposals cannot be
 executed until a later producer cycle.
 
 After exact owner `go`, `nightly-admit --run ...` may write only a subset of
-cards from the reviewed protected catalog revision. It records catalog OID and
-selected packet blob IDs. Selection refuses an uncommitted or dirty manifest.
+cards from the reviewed protected catalog revision. To reduce avoidable queue
+exhaustion, it admits every currently eligible, independently valuable card up
+to the 32-card run cap; reaching expected p50 coverage is not a stopping rule.
+It records catalog OID and selected packet blob IDs. Selection refuses an
+uncommitted or dirty manifest.
 After the first commit that adds the manifest, its current blob must equal the
 first-add blob. A card added after `go`, or changed/removed afterward, is not
 substituted. A later protected-head change may continue only if selected packet
@@ -121,7 +127,10 @@ operations, and owner gates are never reserve work.
 
 Reserve at least the larger of 60 minutes or 15% of the window for finalization.
 A first-run p90 is at least twice p50 unless matched evidence supports less. Do
-not reduce estimates until five comparable terminal receipts exist. A 50%
+not reduce p90 until 20 comparable terminal receipts exist. Five receipts may
+calibrate p50; empirical p10/p90 require 20. A card without matched lower-tail
+evidence contributes zero to the lower-tail indicator and is labeled unknown.
+A 50%
 overrun checkpoints and readmits remaining work. Active minutes include local
 tools and validation but exclude successful durable deferral.
 
@@ -153,7 +162,7 @@ sentence is sufficient for its hourly evidence slice.
 ## Pilot acceptance
 
 Use `productive-idle-scenarios.tsv` and `productive-idle-acceptance.tsv` as
-normative data. All 24 scenarios and all 21 measures must pass, including the
+normative data. All 26 scenarios and all 23 measures must pass, including the
 matched replay from checkpoint `c508483`, zero early duplicate reads, no more
 than one wait checkpoint, unchanged always-read bytes, zero billable Actions
 increase, no extra protected transition, no value exposure or writer violation,

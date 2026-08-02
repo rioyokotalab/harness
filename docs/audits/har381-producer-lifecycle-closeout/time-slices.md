@@ -709,13 +709,31 @@ coverage; the plan reports `covered`, `shortfall`, or `planned-wait`; and the
 selector may not wait while a fit eligible card exists. Finalization is
 one-way. Five additional threat scenarios and three acceptance measures cover
 short supply, false waits, crash recovery, duplicate receipts, and late wakes.
-The current normative totals are 24 scenarios and 21 measures. Schema and
-whitespace-normalized contract checks pass. The compact required route is now
-12,689 bytes versus 33,083 bytes with lookup rationale, a 20,394-byte (61.645%)
-reduction. These are documentation-only follow-up-contract changes; the live
-nightly remains untouched. Terminal board/record/index/receipt bytes and these
-late documentation deltas receive the planned ledger, consumer-diff, and R0
-checks before publication; the unchanged runtime retains the exact R3 receipt.
+
+A fixed-seed 200,000-trial sensitivity model then exposed a direction error in
+the first coverage metric. Twelve synthetic cards had a summed p50 of 240
+minutes and summed p90 of 456 minutes, yet their aggregate duration was below a
+213-minute reserve window in 27.19% of trials. p90 is an upper-tail cutoff
+guard, not a lower-tail supply guarantee. The contract now reports a p10
+lower-tail indicator, p50 expected supply, and p90 overrun envelope separately;
+unknown first-run p10 contributes zero, and summed card quantiles are explicitly
+not presented as an aggregate confidence guarantee. Five comparable receipts
+may calibrate p50, while p10/p90 require 20. A sixth scenario and fourth measure
+reject false lower-tail coverage.
+
+The same review found a practical admission rule: stopping admission once p50
+fills the window discards cheap insurance against early completions. The frozen
+manifest should include every currently eligible, independently valuable card
+up to its 32-card cap while still reading only the selected packet at runtime.
+A seventh scenario and fifth measure make that maximal-within-cap behavior
+testable. The current normative totals are 26 scenarios and 23 measures.
+Schema and whitespace-normalized contract checks pass. The final required
+route is 13,636 bytes versus 34,341 bytes with lookup rationale, a 20,705-byte
+(60.292%) reduction. These are
+documentation-only follow-up-contract changes; the live nightly remains
+untouched. Terminal board/record/index/receipt bytes and these late
+documentation deltas receive the planned ledger, consumer-diff, and R0 checks
+before publication; the unchanged runtime retains the exact R3 receipt.
 
 ## Slice 8 — 08:00–09:00
 

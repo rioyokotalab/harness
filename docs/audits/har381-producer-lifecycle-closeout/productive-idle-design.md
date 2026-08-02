@@ -47,8 +47,12 @@ commits were intrinsically valueless.
 
 For planning, exclude the finalization reserve from available engineering
 time. Define `coverage_expected` as admitted p50 active minutes divided by the
-remaining pre-cutoff minutes and `coverage_conservative` using admitted p90
-minutes. These are workload-supply indicators, not utilization targets. A
+remaining pre-cutoff minutes and a lower-tail indicator from admitted p10 minutes.
+Use p90 only as an upper-tail overrun and latest-start guard; calling p90
+conservative supply reverses the risk because long-tail cards can also finish
+very early. Summed per-card quantiles are not a probabilistic portfolio
+guarantee, so unknown p10 contributes zero and remains visibly unknown. These
+are workload-supply indicators, not utilization targets. A
 ratio below one prompts reserve admission or an explicit expected wait; it
 never licenses low-value work. The retrospective observed queue-drain envelope
 was roughly 195 minutes into a 420-minute pre-cutoff window, demonstrating why
@@ -114,26 +118,31 @@ independently optional reserve cards. A card is admitted only if it has:
 - benchmark, acceptance, validation, and stop condition;
 - expiry or supersession rule.
 
-Use two estimates rather than a false-precision point value: expected active
-minutes and a conservative p90 bound derived from comparable receipts or a
-declared first-run assumption. Report `coverage_expected` and
-`coverage_conservative` before `go`; do not reject a valid run merely because
-the reserve queue is short. A card starts only when its p90 active time plus
-its validation and publication p90 fits before the material cutoff and buffer.
+Use three estimates rather than a false-precision point value: lower-tail p10,
+expected p50, and upper-tail p90 active minutes derived from comparable
+receipts. A first-run p10 is zero unless matched evidence establishes a floor;
+p90 is at least twice p50 unless matched evidence supports less. Report
+the lower-tail indicator, `coverage_expected`, and the upper-tail overrun envelope
+before `go`; do not reject a valid run merely because the reserve queue is
+short. A card starts only when its p90 active time plus its validation and
+publication p90 fits before the material cutoff and buffer.
 
 Estimated reserve coverage should reach the material cutoff when real
 opportunities exist. A short queue is reported honestly; it is never padded
 with polling, revalidation, generic cleanup, or speculative goal creation.
 
 The owner-facing proposal should show one compact coverage table: requested
-window, finalization reserve, mandatory p50/p90, reserve p50/p90, uncovered
-expected minutes, repositories represented, and authority/conflict classes.
+window, finalization reserve, mandatory and reserve p10/p50/p90, uncovered
+floor and expected minutes, repositories represented, and authority/conflict classes.
 It labels the result `covered`, `shortfall`, or `planned-wait`. Only cards that
 are ready and currently pass authority, privacy, conflict, and time-fit checks
 contribute to either coverage sum; blocked or merely discoverable work counts
 as zero. Recompute the forecast after each terminal receipt because target
 changes can invalidate another admitted card.
-Private card titles remain in their repositories. If coverage is short, the
+Private card titles remain in their repositories. Admission includes every
+currently eligible, independently valuable card up to the 32-card run cap; it
+does not stop merely because summed p50 reaches the window. This keeps extra
+reserve available without loading its packets into context. If coverage is short, the
 producer automatically performs the one allowed pre-run opportunity scan and
 then reports the remaining expected wait. It does not require a second owner
 answer when the original duration is firm, but it does not claim to be fully
@@ -350,11 +359,14 @@ consumer-runtime mutation, destructive remote operations, and any owner gate
 are never reserve work merely because time remains. They may appear only as a
 blocked observation or as a separately frozen primary objective.
 
-Estimate calibration stays deliberately simple. A first-run card declares p50
-and uses at least twice p50 as p90 unless direct matched evidence supports a
-tighter bound. After five comparable terminal receipts, use observed median
-and empirical p90, excluding explicitly recorded deferred intervals. An
-estimate may not shrink before that sample count. Receipt timestamps use UTC
+Estimate calibration stays deliberately simple. A first-run card declares p50,
+has unknown p10 represented as zero in the lower-tail indicator, and uses at
+least twice p50 as p90 unless direct matched evidence supports tighter bounds.
+Five comparable receipts may calibrate the median. Empirical p10 and p90 need
+at least 20 comparable receipts, excluding explicitly recorded deferred
+intervals; p90 may not shrink before that sample count. Summed card quantiles
+remain labeled indicators, not a calibrated aggregate confidence interval.
+Receipt timestamps use UTC
 and requested timezone; active minutes include validation and local tool wait,
 but exclude a successful durable deferral.
 
@@ -447,7 +459,7 @@ controller, or touch a sibling repository. Synthetic fixtures exercise local
 catalog and admission paths without crossing the producer writer boundary.
 
 After the consumer receipt, normal producer reconciliation closes Har-383. If
-and only if all 24 scenarios and 21 acceptance measures pass, that producer
+and only if all 26 scenarios and 23 acceptance measures pass, that producer
 transition may allocate a later Harness rollout task. The rollout task—not
 Har-383—may seed a protected Harness opportunity catalog and update the nightly
 protocol. Sibling rollout remains a further evidence-gated decision. This
@@ -455,7 +467,7 @@ keeps code validation, producer-owned state, and policy activation in their
 proper writer phases and makes rejection of the experiment cheap.
 
 The normative scenario table is `productive-idle-scenarios.tsv`. At minimum,
-a prototype must satisfy all 24 rows, including changed owner input, stale
+a prototype must satisfy all 26 rows, including changed owner input, stale
 target state, p90 overrun, private metadata rejection, dirty or rewritten
 admissions, late catalog cards, honest shortage forecasts, work-conserving
 selection, crash recovery, idempotent receipts, one-way finalization, exact
