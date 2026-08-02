@@ -646,6 +646,14 @@ lookup-only provenance. This preserves every operative decision and test row
 while demonstrating the same progressive-disclosure rule the pilot is meant
 to enforce.
 
+A whitespace-normalized compaction contract then asserted 20 critical facts
+covering synthetic-only scope, producer exclusions, bounded catalogs, private
+isolation, all four commands, first-add immutability, four lanes, LIFO scope,
+the 1,024-byte selector budget, authority exclusions, finalization reserve,
+freshness reuse, one-shot wake, no prompt replay, anti-make-work, 19 scenarios,
+18 measures, and complete validation. All 20 passed against the 9,683-byte
+route, and all three lookup artifacts exist.
+
 ## Slice 7 — 07:00–08:00
 
 Pending.
