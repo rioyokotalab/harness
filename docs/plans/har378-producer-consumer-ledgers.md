@@ -216,9 +216,10 @@ because it could starve older durable work.
 
 ### D-004 — Nightly trigger
 
-Open. Recommended: owner-started duration/end-time runs initially. Do not add a
-recurring daemon until at least two clean runs establish runtime, idle, privacy,
-and publication behavior. A later producer task can propose scheduling.
+Selected: owner-started duration/end-time runs initially. Do not add a
+recurring schedule or idle-triggered daemon until at least two clean runs
+establish runtime, idle, privacy, and publication behavior. A later producer
+task may propose scheduling with evidence from those runs.
 
 ### D-005 — Publication responsibility
 
@@ -228,7 +229,8 @@ retains its native validation and deployment boundaries.
 
 ## Exact next action
 
-Ask D-004 only using numbered choices. Record the answer before asking D-005.
+Ask D-005 only using numbered choices. Record the answer, then audit the full
+decision register for contradictions or missing material choices.
 No target repository,
 runtime, schedule, assignment, or external state may change before all five
 decisions are frozen and the owner gives an explicit `go`.
