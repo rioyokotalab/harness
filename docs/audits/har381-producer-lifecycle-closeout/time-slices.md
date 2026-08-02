@@ -630,6 +630,13 @@ producer reconciliation closes the pilot and may allocate a later Harness
 rollout only if every scenario and all 18 acceptance measures pass; sibling
 rollout remains a further decision.
 
+Both follow-up packet shapes were rendered in memory against the strict packet
+budget and forbidden-coupling rules without creating a file. Har-382 is 1,157
+bytes and 141 words; Har-383 is 1,295 bytes and 159 words. Each is below 4,096
+bytes and contains no absolute cross-repository path, tmux assignment, or
+`harness:` coupling. The eventual immutable packets may therefore remain
+compact pointers to the already-reviewed designs rather than duplicate them.
+
 ## Slice 7 — 07:00–08:00
 
 Pending.
