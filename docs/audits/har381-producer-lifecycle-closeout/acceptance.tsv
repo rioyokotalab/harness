@@ -5,7 +5,7 @@ five-independent-protected-states	portfolio-status.tsv	pass-with-exact-Website-b
 public-Harness-and-Website-audits	public-audit.tsv	pass	final-changed-tree-Harness-check
 eligible-local-residue-guarded-clean	residue.tsv	pass-with-classified-retentions	remove-Har-381-worktree-after-merge
 context-action-wall-and-validation-benchmark	benchmark.tsv;active-context.tsv;context-shape.tsv;routing-footprint.tsv;selector-benchmark.tsv;publication-timing.tsv	pass	none
-exactly-eight-hourly-slices	time-slices.md	executing-four-of-eight	complete-at-hour-boundaries
-durable-and-owner-summary-at-least-400-words	Har-381.md;final-response	executing	finalize-after-readback
+exactly-eight-hourly-slices	time-slices.md	pass	none
+durable-and-owner-summary-at-least-400-words	Har-381.md;final-response	durable-pass-owner-pending	owner-final-response
 excluded-writes-absent	ruleset-readback.tsv;task-record	pass	final-readback
-producer-consumer-writer-separation	producer-ledger-diff-contract	pass-so-far	separate-final-consumer-and-producer-publications
+producer-consumer-writer-separation	producer-ledger-diff-contract	consumer-pass-producer-pending	separate-producer-publication

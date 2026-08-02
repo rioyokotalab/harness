@@ -773,4 +773,20 @@ repository rows are byte-identical to baseline.
 
 ## Slice 8 — 08:00–09:00
 
-Pending.
+The material cutoff fired once at 08:00 JST. No reserve work, target mutation,
+or repeated mutable read was admitted afterward. The terminal consumer patch
+retires Har-381 from `TODO.md`, marks its execution index complete, adds one
+immutable receipt, and records the exact final R3 identity. Har-382 and Har-383
+remain producer-owned drafts until the separate post-merge reconciliation.
+
+Final consumer validation, public-tree audit, protected publication, guarded
+worktree retirement, producer reconciliation, and value-free portfolio
+readback execute in that order during this slice. External transition
+identifiers are reported in the owner handoff because writer separation
+forbids a producer reconciliation branch from rewriting this consumer record.
+
+The staged terminal bytes pass the plain ledger with exactly one expected
+producer reconciliation pending, return an idle consumer selector, pass the
+consumer writer-boundary check across 27 changed paths, pass the 108-row task
+index, and route to R0. The active-context row is now explicitly the final
+preterminal route; completed Har-381 is no longer cold-routed.

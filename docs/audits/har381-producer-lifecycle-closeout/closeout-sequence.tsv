@@ -1,6 +1,6 @@
 order	target_jst	writer_surface	action	validation	external_transition	status
-1	07:40	consumer	freeze-preterminal-runtime-and-evidence	full-R3-phase-one	none	pending
-2	08:00	consumer	add-terminal-receipt-retire-board-finalize-index-record	R0-plus-plain-ledger-plus-consumer-diff	none	pending
+1	07:40	consumer	freeze-preterminal-runtime-and-evidence	full-R3-phase-one	none	complete-07:02
+2	08:00	consumer	add-terminal-receipt-retire-board-finalize-index-record	R0-plus-plain-ledger-plus-consumer-diff	none	complete
 3	08:05	consumer	commit-and-explicit-refspec-push	exact-head-and-fast-forward-preflight	branch-update	pending
 4	08:10	consumer	create-owner-PR-read-checks-and-squash-merge	trusted-owner-skip-plus-conflict-free-readback	protected-main-merge	pending
 5	08:18	canonical	exact-fetch-refspec-fast-forward-main-and-verify	plain-ledger-pending-one-reconciliation	local-main-update	pending
