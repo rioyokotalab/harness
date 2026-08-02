@@ -305,6 +305,32 @@ state, and reports must expose valid/unbound alias counts while refusing any
 cleanup candidate until all recovery paths pass. This bounds Har-382 to a
 testable migration rather than a path substitution.
 
+Private state is an owner-correct `0700` directory and the proposed `aliases/`
+name is absent; source and tests contain no existing alias handler or schema.
+One read-only source search unnecessarily redirected its empty result to
+`/tmp/har381-alias-search.out`, creating a zero-byte owner file. Exact stat
+confirmed its identity, exact non-recursive unlink removed it immediately, and
+absence was verified. No repository or archive state was affected.
+
+The detailed follow-up is 5,011 bytes, exceeding the producer packet's
+4,096-byte ceiling. Har-382 must therefore contain only immutable objective,
+scope, gates, acceptance, and a pointer to this already-merged design; it must
+not duplicate the design to evade the limit. This keeps cold-start selection
+small while preserving the complete test matrix on demand.
+
+The two explicitly preserved Aist handoff refs remain hosted at their recorded
+tips: Har-378 at `bf5236ab492d15382174e0dee633bc101ab1d997` and Har-379 at
+`a2a7226d0b7f366ab6a25e944ed0ac1ab0fa2f12`. They were read by exact API ref;
+no fetch, rename, or deletion was performed.
+
+The 03:45 lightweight sample found all five protected heads unchanged and all
+five open-PR counts still zero. Website's fixed socket remains absent. Remote
+Har-381 checkpoint is exact at `2940f136c7c34331e2e3e8cff9671518ce252b6b`.
+Codex and Claude metadata monitors each report all three slots healthy, with
+Codex phone mirroring healthy and no order or repair action. No pane or
+transcript content was read. With no mutable trigger changed, the slice closed
+without a retry, fetch, extra integrated validation, or new material work.
+
 A task-specific compaction contract independently asserted 21 resume-critical
 literals and the existence of all 17 routed evidence artifacts. It passed with
 1,660 record words and a 17,576-byte board/packet/record route. The first
