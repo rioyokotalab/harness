@@ -18,7 +18,7 @@ executed.
 | Student-facing AI | NIST, [AI RMF](https://airc.nist.gov/airmf-resources/airmf/) and [AI RMF Core](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/); Slack, [least-privilege scopes](https://slack.dev/least-privilege-a-slack-approach-to-scopes/) | Require a use-case-specific pilot profile with explicit human oversight, knowledge limits, risk tolerance, participant feedback, and measured benefits/costs. Every Slack scope must map to a current feature; reject speculative scopes and model action authority. AI RMF 1.0 is currently being revised, so use the final 1.0 baseline and monitor rather than adopting an unfinished revision. |
 | Actions sustainability | GitHub, [billing and usage](https://docs.github.com/en/billing/concepts/product-billing/github-actions), [GitHub-hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners), [self-hosted runners](https://docs.github.com/en/actions/concepts/runners/self-hosted-runners), and [secure use](https://docs.github.com/en/actions/reference/security/secure-use) | Keep owner-authored protected local validation and retain hosted isolation for untrusted or mixed-contributor work plus bounded periodic/manual gates. Do not register these persistent, credentialed project machines as general self-hosted runners: GitHub warns they lack clean-VM guarantees and can be persistently compromised. Do not add scheduled hosted work merely for bookkeeping. |
 | Research software | FAIR4RS, [RDA recommendation](https://doi.org/10.15497/RDA00068) and [primary paper](https://www.nature.com/articles/s41597-022-01710-x) | Adopt versioned, identifiable, documented, reusable artifacts and explicit software/environment provenance. |
-| Artifact evidence | ACM, [Artifact Review and Badging](https://www.acm.org/publications/policies/artifact-review-and-badging-current) | Adapt the functional-artifact criteria—documented, consistent, complete, exercisable, validated—to SW-034 before spending more compute. |
+| Artifact evidence | ACM, canonical [Artifact Review and Badging](https://www.acm.org/publications/policies/artifact-review-and-badging-current) and the current [SIGSIM PADS artifact-evaluation implementation](https://sigsim.acm.org/conf/pads/2026/blog/artifact-evaluation/) | Adapt the functional-artifact criteria—documented, consistent, complete, exercisable, validated—to SW-034 before spending more compute. The canonical policy rejects automated retrieval with HTTP 403, while ACM's current SIGSIM page independently exposes the same criteria. |
 | ML benchmarking | MLCommons, [benchmark principles](https://mlcommons.org/benchmarks/) and [inference rules](https://github.com/mlcommons/inference_policies/blob/master/inference_rules.adoc) | Preserve fixed inputs/seeds, full hardware/software disclosure, matched systems, replicability, and claim limits; reject unmatched score transfer. |
 | Web accessibility | W3C WAI, [evaluation overview](https://www.w3.org/WAI/test-evaluate/), [ongoing monitoring](https://www.w3.org/WAI/eval/considerations), and [sustainability](https://www.w3.org/WAI/planning-and-managing/sustain/) | Keep automated gates but add bounded human, keyboard, and assistive-technology sampling at material changes and quarterly checkpoints. |
 | Sensitive automation | NIST, [Privacy Framework 1.0](https://www.nist.gov/document/nist-privacy-frameworkv10pdf) and [Privacy Framework home](https://www.nist.gov/privacy-framework) | Keep source content in authoritative services, minimize collection/retention, and design the full creation-to-disposition lifecycle. Version 1.0 remains the final baseline; 1.1 is still an initial public draft, so monitor rather than silently adopting draft text. |
@@ -47,8 +47,8 @@ listed completed infrastructure as active and split one future pilot across
 four blocked rows. Those rows become one T-052 decision packet. T-050 is
 canceled because a synthetic credential-rotation agent benchmark is outside
 the advising mission and does not reduce a current student risk. Nine merged
-controller worktrees and branches were safely retired; the divergent live
-Claude branch and open Dependabot PR #560 are preserved.
+controller worktrees and branches were safely retired; at the initial reset,
+the divergent live Claude branch and open Dependabot PR #560 were preserved.
 
 ### Swallow — preserve the valuable result, stop the program
 
@@ -86,6 +86,21 @@ classifier did not yet control the installed-app consent write. P-006 closes
 that gap by atomically replacing old token metadata with the exact granted
 subset and rejecting unrequested scopes before persistence; no live consent or
 credential access was used.
+
+## Final portfolio disposition
+
+| Repository | Judgment | Protected queue after reset | Deliberate stop/gate |
+| --- | --- | --- | --- |
+| Harness | Adapt; keep the control plane, reduce lifecycle and hosted-CI cost | T-371 idle-boundary branch migration; T-196/T-328/T-303 remain explicit external gates | Do not move live roots, retry AL, or turn an unavailable administrator path into inferred absence |
+| Students | Adapt toward one measured pilot decision | T-052 offline pilot-readiness packet | No student activation, speculative Slack scope, or model action authority |
+| Swallow | Preserve the artifact, stop open-ended benchmarking | SW-040 independent SW-034 evidence review; SW-034 remains paused | No new compute or claim until provenance and fresh lane authority exist |
+| Website | Maintain; do not redesign | T-213 change-triggered and quarterly human accessibility/source sampling | No recurring hosted workflow or deployment merely to perform review |
+| Personal | Expand only through explicit capability lifecycle | No active item; next work must earn a new P-ID | No payload inspection, live consent, external write, or assistant access without its exact source/identity gate |
+
+This is the opportunity-cost decision, not a preservation score: work absent
+from the protected queues is complete, canceled, superseded, or intentionally
+outside the current evidence/authority boundary. Git history and indexed task
+records retain chronology without making it active work.
 
 ## Cleanup snapshot
 
@@ -340,13 +355,13 @@ mutable-state verification, and marks every other otherwise eligible tree
 and removed while a second parallel clean tree survives. Broad housekeeping
 discovery remains available when no path is supplied.
 
-Students' sole open PR, Dependabot #560, is behind current `main` and failed
-for one understood safety reason: all 695 other tests and 34 subtests passed,
-but changing the Codex package manifests invalidated the exact digest embedded
-in the staged non-activating installer. The guard worked as designed. T-371
-now records the post-migration repair: update package bytes and installer
-digest together from fresh `main`, pass locally, then replace or supersede the
-stale PR without spending another hosted run on a known mismatch.
+At that checkpoint, Students' sole open PR, Dependabot #560, was behind
+current `main` and failed for one understood safety reason: all 695 other tests
+and 34 subtests passed, but changing the Codex package manifests invalidated
+the exact digest embedded in the staged non-activating installer. The guard
+worked as designed. A later current-main isolated repair updated package bytes
+and both installer digests together, passed locally, merged as PR #563, and
+closed #560 without moving the live legacy checkout.
 
 A metadata-only `/tmp` rescan caught 20 owner-created files that the
 directory-oriented routine did not select: completed Mac formula-policy and
@@ -358,9 +373,10 @@ superseded. Their exact bytes remain in mode-0600
 `79038742efaeb1d664d924a8806e7acf2da6e078d8a1489955492f1cb22a2e78`);
 gzip and 21-entry archive traversal checks passed. One guarded manifest then
 removed only the explicit staging directory (21 entries / 773,385 bytes),
-with protected anchors unchanged. The remaining project-named `/tmp` roots are
-the live connection monitor, this T-369 worktree, Website's clean worker
-handoff, and three `ishida`-owned research directories; all remain untouched.
+with protected anchors unchanged. At that checkpoint, the remaining
+project-named `/tmp` roots were the live connection monitor, this T-369
+worktree, Website's clean worker handoff, and three `ishida`-owned research
+directories; all were left untouched by that transaction.
 `git fsck --full --no-dangling` passed independently in all five repositories,
 all five worktree databases report zero stale administration entries, and all
 17 native archive receipts pass a fresh audit against their owning repository.
@@ -420,4 +436,52 @@ client, and the focused test records that PID and fails if it survives. Two
 consecutive focused suites passed with zero residual fixture processes. The
 first dirty-tree R3 run passed the changed lifecycle suite and every other
 executable gate except two suites whose explicit contract requires a clean
-committed checkout; their clean-tree rerun is required before publication.
+committed checkout; the subsequent clean-tree R3 passed before PR #554 merged.
+
+## 09:03–09:14 JST reconciliation checkpoint
+
+Later protected work resolved the mutable findings above without rewriting
+their chronological evidence. Students PR #563 reconciled the current Codex
+0.146.0 package and installer digests from current `main`, passed 696 tests
+plus 34 subtests, and superseded the stale Dependabot PR #560; no pull request
+is now open. Website PRs #39–#40 retained the required offline gate while
+scoping browser setup/run away from an explicit fail-closed documentation set,
+and PR #41 corrected the protected board. Harness PRs #557–#566 implemented
+report-only archive classification, two independent restore-proven
+generations, exact two-generation source compaction, and generation triggers
+measured from uncovered growth rather than lifetime receipt count.
+
+A handoff-time resolver check reached fourteen of the fifteen sampled primary
+sources directly. ACM's canonical artifact-policy URL returned a bot-protection
+403 rather than a not-found response; the current official SIGSIM PADS 2026
+page resolved and independently states the same functional-artifact criteria.
+No fetched instruction was executed.
+
+The current archive report passes with 33 receipts, 58 items, 51 unique tips,
+eight archive-only tips, 25 applied compactions, two valid generations, and no
+candidate, unknown, or incomplete apply. Compaction retired 484,447,933 exact
+source-bundle bytes while retaining every receipt and tip. Six source receipts
+postdate the newest generation; all six bundles were independently mirrored,
+their recorded tips were resolved, and full object integrity passed. Total
+archive state is 499,855,448 bytes and the delta trigger is off, so creating a
+third generation would add cost without satisfying a measured need.
+
+All five evidence payloads pass gzip integrity and reproduce the exact tracked
+SHA-256 values without listing or inspecting payload contents. Dedicated
+Codex-helper housekeeping guarded-removed 307 completed entries and retained
+19 locked/live entries; a subsequent plan found no candidate or unexpected
+layout. A separate completed pytest tree (9,254 entries / 76,890,655 bytes)
+had no owner process and was guarded-removed after its two current-user-owned
+mode-000 fixture directories were made inventory-readable. Fourteen justified
+runtime/cache/lock/socket entries remain under `/tmp`; current-user boundaries
+under `/var/tmp` and `/dev/shm` are empty.
+
+Fresh protected readback finds all pull-request lists empty, all five rulesets
+active with one owner bypass and zero required approvals, and remote head
+counts of 20/3/98/4/1 for Harness/Students/Swallow/Website/Personal. Remote
+branches remain report-only. The live Students and Swallow primary checkouts
+remain deliberately unmoved until T-371's idle/cold-restart gate; their exact
+tips and Swallow's untracked evidence remain archived. No deployment,
+scheduler write, credential access, Personal payload read, managed-session
+mutation, ruleset write, generation creation, or remote-branch deletion was
+performed in this reconciliation.
