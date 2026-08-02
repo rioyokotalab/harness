@@ -549,7 +549,8 @@ ambiguity. The immutable reserve catalog and per-run manifest belong under a
 repository's producer-owned paths and are frozen before execution; the active
 executor writes only repository-local receipts and audit evidence. Final
 producer reconciliation closes dispositions without packet rewrites. Harness
-holds only opaque sibling card IDs and digests. A separate pilot selector is
+holds only opaque sibling card tokens and never a private packet digest that
+could become a dictionary oracle. A separate pilot selector is
 preferred over enlarging the current 317-line durable task selector and its
 370-line unit suite before equivalence is proven. Catalogs remain bounded,
 cards carry no executable shell predicates, and external/credential/deployment
@@ -572,6 +573,16 @@ that one-shot wait revision and select the new design work as an event, exactly
 as the live run did manually. Wait admission now also requires a clean remote
 checkpoint, no ambiguous external write, UTC plus requested-timezone wake
 identity, and p90 fit before latest safe start.
+
+Privacy review then tightened the portfolio manifest: even a cryptographic
+digest of a small predictable private packet could serve as a dictionary
+oracle. Detailed packet bytes, protected-base binding, and digests therefore
+remain inside the owning private repository. Public Harness carries only an
+opaque token plus value-free class, timing, and disposition. The pilot
+acceptance matrix now fixes 17 measures, including no extra protected
+transition or Actions use, unchanged always-read bytes, at most 1,024 selector
+bytes before the chosen card, 16/16 scenario behavior, zero value exposure,
+and p95 selection at most 100 ms over 60 synthetic cards.
 
 ## Slice 7 — 07:00–08:00
 

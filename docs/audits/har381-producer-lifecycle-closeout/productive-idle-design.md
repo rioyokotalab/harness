@@ -236,9 +236,10 @@ evidence. Final producer reconciliation closes the run disposition without
 rewriting card or manifest bytes. This mirrors the already-proven task packet
 and receipt lifecycle instead of creating a second mutable shared board.
 
-Each repository owns its detailed cards. Harness's portfolio manifest contains
-only opaque repository-local IDs and digests, so a private objective or path
-never crosses into the public repository. Persistent catalogs are capped at
+Each repository owns its detailed cards and byte-binding digests. Harness's
+public portfolio manifest contains only repository, opaque run/card token,
+class, p50/p90 minutes, and disposition; it never stores a private packet
+digest that could become a dictionary oracle. Persistent catalogs are capped at
 12 open cards per repository; a thirteenth requires completing, expiring, or
 superseding an existing card. The ordinary producer cycle replenishes catalogs
 from demonstrated findings. An empty catalog is valid and cannot be treated as
@@ -246,10 +247,11 @@ permission to generate work recursively.
 
 To avoid a producer PR in every repository before every night, cards live in
 protected state before selection. The one Harness preparation transition
-freezes the portfolio run manifest by opaque ID and protected base digest. On
-execution, the producer opens only the selected repository-local card and
-revalidates its named predicate. A card absent from protected state at freeze
-time is not executable that night.
+freezes the public portfolio run manifest by opaque ID only. Each private
+repository's local selector binds its protected packet and base bytes in that
+repository's own evidence. On execution, the producer opens only the selected
+repository-local card and revalidates its named predicate. A card absent from
+protected state at freeze time is not executable that night.
 
 Repository-local cards and receipts remain private to their repositories. A
 Harness portfolio manifest contains only repository, opaque card ID, class,
@@ -278,13 +280,14 @@ have capacity one. Keys are opaque in the public portfolio manifest. The pilot
 starts sequentially; parallel reserve execution is a later optimization only
 if receipts prove enough work and non-overlap to repay dispatch and review.
 
-Selection pseudocode is intentionally small: verify manifest and packet
-digests; exclude terminal receipts; evaluate built-in named predicates against
-freshness receipts; reject expired, unauthorized, stale-base, privacy-unsafe,
-or held-conflict cards; enforce latest safe start; then sort by primary flag,
-priority, repository fairness age, expiry, and opaque ID. If no card survives,
-consume the one bounded discovery allowance or return the exact wait state.
-No card supplies a shell command or executable predicate from Markdown.
+Selection pseudocode is intentionally small: verify the local manifest and
+packet digest inside its owning repository; exclude terminal receipts;
+evaluate built-in named predicates against freshness receipts; reject expired,
+unauthorized, stale-base, privacy-unsafe, or held-conflict cards; enforce
+latest safe start; then sort by primary flag, priority, repository fairness
+age, expiry, and opaque ID. If no card survives, consume the one bounded
+discovery allowance or return the exact wait state. No card supplies a shell
+command or executable predicate from Markdown.
 
 ## Validation experiment
 
