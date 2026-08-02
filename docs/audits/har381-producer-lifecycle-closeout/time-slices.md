@@ -269,6 +269,61 @@ non-owner PR paths retain hosted backstops. The final PR should receive the same
 skipped disposition if author and sender remain exact; no workflow was changed.
 The focused Actions sustainability contract passes, confirming ordinary
 Harness push CI is absent while weekly and manual backstops remain present.
+Read-only hosting identity is `rioyokota`, matching the current trusted-owner
+gate; author, sender, and skipped disposition will still be re-read on the
+actual final PR rather than assumed from this checkpoint.
+
+Fresh protected-head API comparison also caught a reporting typo rather than
+a repository change: three Personal table cells omitted the final `b` from
+exact revision `6abd50ab48f344a7f28e3c5b3dea50c7e180d35b`. The packet
+immutability table already held the full object ID, and hosted main is
+unchanged. The malformed 39-character cells are corrected; no Git object, ref,
+or repository state changed.
+
+Archive-owner mapping inspection likewise refined the follow-up design. A
+naive comparison expected each reconstructed clone to expose the same GitHub
+URL as its durable owner and correctly failed all twelve comparisons. In fact,
+all twelve clones have an absolute local `origin` that resolves exactly to the
+declared canonical repository, and each of those repositories has the terminal
+GitHub origin. The migration must verify that exact one-hop local path first,
+then bind the durable owner's normalized terminal remote; it must not infer by
+basename or follow an arbitrary path chain. The corrected count-only check
+passes 12/12 without changing any remote.
+
+The alias lifetime rule was also tightened: creation must reject a protected
+main change during its transaction, but an immutable alias must not expire on
+ordinary later fast-forwards. Audit should accept the recorded tip as an
+ancestor of current protected main while rejecting a missing tip, rewind,
+divergence, or terminal-remote change. The follow-up tests now distinguish
+creation-time TOCTOU refusal from post-publication repository progress.
+
+The design now also requires one alias-aware owner resolver before archive
+reporting, generation, source-audit, or compaction code calls
+`canonical_repo()`; otherwise the missing legacy path would still fail too
+early. Alias storage is owner-only, atomic, single-link, schema-closed private
+state, and reports must expose valid/unbound alias counts while refusing any
+cleanup candidate until all recovery paths pass. This bounds Har-382 to a
+testable migration rather than a path substitution.
+
+A task-specific compaction contract independently asserted 21 resume-critical
+literals and the existence of all 17 routed evidence artifacts. It passed with
+1,660 record words and a 17,576-byte board/packet/record route. The first
+assertion compared a line-wrapped phrase without whitespace normalization and
+reported one missing literal; no file changed. Rechecking the same contract
+with Markdown whitespace normalized passed, distinguishing presentation from
+lost content.
+
+Final writer separation was rehearsed from existing receipts and validator
+tests without creating a premature terminal file. The consumer closeout will
+remove only Har-381 from `TODO.md`, mark its execution-index row complete,
+finalize this record, and add `docs/consumer/receipts/Har-381.md`. Plain ledger
+validation and the consumer diff must then pass with exactly one producer
+reconciliation pending, while selector behavior excludes the terminal receipt.
+After that protected merge, a fresh producer-only branch will remove Har-381
+from the ready queue/index, allocate Har-382 from the recorded next ID, publish
+its immutable archive-owner migration packet, and advance the next ID to
+Har-383. Strict convergence and the producer diff must pass before the second
+merge. No producer byte is staged on the current consumer branch.
 
 ## Slice 4 — 04:00–05:00
 

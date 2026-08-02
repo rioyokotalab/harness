@@ -4,7 +4,7 @@ Har-379-converged-with-packet-immutable	packet-immutability.tsv	pass	none
 five-independent-protected-states	portfolio-status.tsv	pass-with-exact-Website-blocker	final-readback
 public-Harness-and-Website-audits	public-audit.tsv	pass	final-changed-tree-Harness-check
 eligible-local-residue-guarded-clean	residue.tsv	pass-with-classified-retentions	remove-Har-381-worktree-after-merge
-context-action-wall-and-validation-benchmark	benchmark.tsv;context-shape.tsv;selector-benchmark.tsv;publication-timing.tsv	pass	none
+context-action-wall-and-validation-benchmark	benchmark.tsv;active-context.tsv;context-shape.tsv;routing-footprint.tsv;selector-benchmark.tsv;publication-timing.tsv	pass	none
 exactly-eight-hourly-slices	time-slices.md	executing-three-of-eight	complete-at-hour-boundaries
 durable-and-owner-summary-at-least-400-words	Har-381.md;final-response	executing	finalize-after-readback
 excluded-writes-absent	ruleset-readback.tsv;task-record	pass	final-readback
