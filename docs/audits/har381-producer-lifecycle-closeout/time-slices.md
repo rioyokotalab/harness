@@ -453,7 +453,22 @@ authentication, or hosting state changed.
 
 ## Slice 5 — 05:00–06:00
 
-Pending.
+Initial checkpoint at 05:00 JST: candidate
+`6919fc72e29e1fed88e236b0577b84bbd750984c` is clean, Website's exact fixed
+socket remains absent, and no consumer or hosted state changed during the
+quiet interval. A fresh archive report remains stable at 84 receipts, 113
+items, 106 unique tips, 981,687,599 archive bytes, 25 retired bundles, zero
+incomplete applies, four preserved unbound bundles, five preserved evidence
+payloads, three valid generations, one uncovered 133,401-byte receipt below
+threshold, and zero candidates.
+
+The archive command's first two invocations completed through a deferred tool
+session without returning their captured stdout to the controller. Because
+completion was then unknown, one final read-only invocation explicitly polled
+the session and returned the report. This repeated no mutation and all visible
+facts match the 04:00 report, but the duplicate read is retained here as an
+execution incident rather than misreported as a single sample. No archive,
+plan, manifest, generation, compaction, or repository byte was written.
 
 ## Slice 6 — 06:00–07:00
 
