@@ -165,6 +165,22 @@ Har-379, so no blocked task receipt is warranted.
   review, run integrated validation, and record slice 7 only from the exact
   observer output after 20:47:47 JST.
 
+## Final review request
+
+Request `aist-20260802-final-01` was sent exactly once after the material
+cutoff through the installed content-blind Claude transport. The call returned
+no value-free acknowledgement, so its submission was classified ambiguous and
+permanently not retried; the private input was exact-unlinked. The named
+artifact later appeared as a regular, current-user-owned, single-link file and
+was read completely and independently reconciled. Its
+`ACCEPT-PENDING-CLOSURE` verdict accepts all requirements auditable through
+slice 6 and correctly keeps slice 7, both summaries, integrated validation,
+and protected publication open. The review requires the closing evidence to
+retain narrative provenance, restate the protected-main baseline
+interpretation and disclosed file-tooling deviation, distinguish the healthy
+T-293 system from the task-execution incident, and preserve every stale ref
+through observer completion.
+
 ## Final durable summary
 
 Pending completion. It must contain exactly one evidence-backed entry for each
