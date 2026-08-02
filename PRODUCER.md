@@ -5,7 +5,7 @@ producer may modify this file or `docs/producer/`. Consumers read the first
 ready packet in priority/date order, then their own board and matching execution
 record. If no packet is ready, remain idle.
 
-Next free ID: Har-380.
+Next free ID: Har-381.
 
 ## Queue
 

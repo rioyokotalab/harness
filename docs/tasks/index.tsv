@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-380	complete	Document the producer and consumer repository layout	docs/tasks/Har-380.md
 Har-379	active	Aist-driven T-293 self-healing validation with Claude co-pilot	TODO.md;docs/tasks/Har-379.md;docs/plans/har379-t293-aist-validation.md;docs/audits/har379-t293-aist-validation/time-slices.md
 Har-378	complete	Install repository-local producer and asynchronous consumer ledgers	docs/tasks/Har-378.md;docs/plans/har378-producer-consumer-ledgers.md
 Har-377	complete	Admit the independent Website root in fleet agent sentinels	docs/tasks/Har-377.md
