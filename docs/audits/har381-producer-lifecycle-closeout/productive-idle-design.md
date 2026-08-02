@@ -140,8 +140,9 @@ contribute to either coverage sum; blocked or merely discoverable work counts
 as zero. Recompute the forecast after each terminal receipt because target
 changes can invalidate another admitted card.
 Private card titles remain in their repositories. Admission includes every
-currently eligible, independently valuable card up to the 32-card run cap; it
-does not stop merely because summed p50 reaches the window. This keeps extra
+currently eligible, independently valuable card up to the owning repository's
+12-card catalog cap; it does not stop merely because summed p50 reaches the
+window. There is no portfolio-wide admission count or manifest. This keeps extra
 reserve available without loading its packets into context. If coverage is short, the
 producer automatically performs the one allowed pre-run opportunity scan and
 then reports the remaining expected wait. It does not require a second owner

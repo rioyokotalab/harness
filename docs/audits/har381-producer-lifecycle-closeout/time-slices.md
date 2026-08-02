@@ -724,7 +724,8 @@ reject false lower-tail coverage.
 The same review found a practical admission rule: stopping admission once p50
 fills the window discards cheap insurance against early completions. The frozen
 manifest should include every currently eligible, independently valuable card
-up to its 32-card cap while still reading only the selected packet at runtime.
+up to its repository-local 12-card cap while still reading only the selected
+packet at runtime; there is no private-count-dependent portfolio cap.
 A seventh scenario and fifth measure make that maximal-within-cap behavior
 testable.
 
@@ -752,8 +753,13 @@ truncation, replacement, insertion, duplicate selection, or non-fast-forward
 ancestry fails before action, and receipts are immutable. This closes the case
 where an unresolved selection could be erased to make replay appear eligible.
 A tenth scenario and eighth measure cover rewrite attempts. Current normative
-totals are 29 scenarios and 26 measures. The final required route is 15,506
-bytes versus 36,577 bytes with lookup rationale, a 21,071-byte (57.607%)
+totals are 29 scenarios and 26 measures. A final admission consistency check
+removed the portfolio-wide 32-card cap, which would have required exporting
+private counts. Each repository instead admits all eligible cards up to its
+existing 12-card local cap; the five-repository worst case remains the already
+benchmarked 60 cards, while only one packet enters context. The final required
+route is 15,626
+bytes versus 36,690 bytes with lookup rationale, a 21,064-byte (57.411%)
 reduction. These are
 documentation-only follow-up-contract changes; the live nightly remains
 untouched. Terminal board/record/index/receipt bytes and these late

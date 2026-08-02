@@ -6,7 +6,7 @@ unchanged-runtime-revalidation	none-after-final-R3	0-before-changed-input	valida
 always_read_bytes	current-baseline	exactly-unchanged	context-shape
 selector_routed_bytes	not-available	at-most-1024-before-selected-card	selector-receipt
 card_packet_bytes	4096-task-packet-limit	at-most-4096	strict-metadata-validator
-admitted_cards	not-available	at-most-32-per-run	run-manifest-validator
+admitted_cards	not-available	at-most-12-per-repository-and-60-portfolio	local-manifest-validators
 open_catalog_cards	not-available	at-most-12-per-repository	catalog-validator
 selector_latency_60_cards	not-available	p95-at-most-100ms	matched-20-run-sample
 normative_scenarios	0	29-of-29-pass	productive-idle-scenarios.tsv

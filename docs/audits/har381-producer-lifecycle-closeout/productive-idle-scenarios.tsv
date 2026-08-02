@@ -24,7 +24,7 @@ crash-after-selection	selected-event-durable-receipt-absent	reconcile-exact-card
 duplicate-receipt	exact-retry-then-changed-retry	no-op-then-reject	exactly-one-terminal-disposition
 late-wake	wake-at-or-after-finalization	finalize	finalization-never-reopens-reserve
 lower-tail-shortage	p50-and-p90-cover-window-p10-does-not	report-lower-tail-shortfall	p90-never-counted-as-supply-floor
-admission-headroom	eligible-card-remains-before-32-card-cap	admit-card	p50-coverage-never-stops-reserve-admission
+admission-headroom	eligible-card-remains-before-local-12-card-cap	admit-card	p50-coverage-never-stops-reserve-admission
 cross-repository-privacy	public-controller-requests-private-priority-or-expiry	reject	ready-idle-block-is-only-cross-repository-card-status
 discovery-scope	short-coverage-with-unrelated-history-branches-tmp-and-web	delta-routed-scan-only	no-broad-search-to-fill-time
 event-rewrite	selected-event-truncated-replaced-inserted-or-resequenced	reject	event-journal-is-append-only

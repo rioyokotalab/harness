@@ -74,7 +74,8 @@ repository.
 After exact owner `go`, `nightly-admit --run ...` may write only a subset of
 cards from the reviewed protected catalog revision. To reduce avoidable queue
 exhaustion, it admits every currently eligible, independently valuable card up
-to the 32-card run cap; reaching expected p50 coverage is not a stopping rule.
+to that repository's 12-card catalog cap; reaching expected p50 coverage is not
+a stopping rule. There is no portfolio-wide admission count or manifest.
 It records catalog OID and selected packet blob IDs. Selection refuses an
 uncommitted or dirty manifest.
 After the first commit that adds the manifest, its current blob must equal the
@@ -186,5 +187,5 @@ normative data. All 29 scenarios and all 26 measures must pass, including the
 matched replay from checkpoint `c508483`, zero early duplicate reads, no more
 than one wait checkpoint, unchanged always-read bytes, zero billable Actions
 increase, no extra protected transition, no value exposure or writer violation,
-p95 at most 100 ms over 60 synthetic cards, crash-safe selection recovery,
+p95 at most 100 ms over all 60 possible synthetic cards, crash-safe selection recovery,
 honest shortfall reporting, and complete Harness validation.
