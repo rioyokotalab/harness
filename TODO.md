@@ -6,7 +6,7 @@ indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
 Current and future Harness tasks use the `Har-NNN` namespace. Historical
 `T-NNN` identifiers remain unchanged in the completed-task index and archives.
-Next free ID: Har-377.
+Next free ID: Har-378.
 
 ## Resume contract
 

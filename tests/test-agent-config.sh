@@ -212,10 +212,20 @@ grep -F '/mnt/nfs-03/safe/Users/rioyokota/projects/personal' \
 grep -F '/mnt/nfs-03/safe/Users/rioyokota/projects/personal' \
     "$home/.claude/CLAUDE.md" >/dev/null ||
     fail 'Claude bounded Personal admission'
-grep -F 'non-managed bounded root' "$home/.codex/AGENTS.md" >/dev/null ||
-    fail 'Codex Personal non-managed classification'
-grep -F 'non-managed bounded root' "$home/.claude/CLAUDE.md" >/dev/null ||
-    fail 'Claude Personal non-managed classification'
+for sentinel in "$home/.codex/AGENTS.md" "$home/.claude/CLAUDE.md"; do
+    grep -F '/mnt/nfs-03/safe/Users/rioyokota/projects/website' \
+        "$sentinel" >/dev/null || fail 'Linux Website admission'
+    grep -F '$HOME/projects/website' "$sentinel" >/dev/null ||
+        fail 'macOS Website admission'
+    grep -F 'Personal and Website are non-managed bounded' "$sentinel" \
+        >/dev/null || fail 'Website non-managed classification'
+done
+grep -F 'Personal and Website are non-managed bounded' \
+    "$home/.codex/AGENTS.md" >/dev/null ||
+    fail 'Codex bounded-root classification'
+grep -F 'Personal and Website are non-managed bounded' \
+    "$home/.claude/CLAUDE.md" >/dev/null ||
+    fail 'Claude bounded-root classification'
 [ -L "$home/.local/bin/harness-codex" ] || fail 'launcher retained'
 for removed in "$home/.claude/settings.json" \
     "$home/.codex/rules/default.rules" "$home/.codex/skills/example" \

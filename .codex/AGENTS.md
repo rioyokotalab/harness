@@ -2,7 +2,7 @@
 
 This user-level instruction exists only to catch accidental launches outside
 the three managed repository-native Codex workspaces and the exact bounded
-Personal root.
+Personal and Website roots.
 
 Before doing task work, confirm that the current Git repository root is exactly
 one of:
@@ -11,10 +11,12 @@ one of:
 - `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students`
 - `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`
 - `/mnt/nfs-03/safe/Users/rioyokota/projects/personal`
+- `/mnt/nfs-03/safe/Users/rioyokota/projects/website` (Linux)
+- `$HOME/projects/website` (macOS)
 
 If it is not, refuse the task and tell the owner to start Codex from the
-intended admitted repository. Personal is a non-managed bounded root and must
-never be promoted into the managed target lifecycle.
+intended admitted repository. Personal and Website are non-managed bounded
+roots and must never be promoted into the managed target lifecycle.
 Never apply one repository's policy to another directory. For an admitted
 root, defer
 completely to that repository's root `AGENTS.md` and declared durable ledger.
