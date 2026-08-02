@@ -261,6 +261,20 @@ FAKE_SESSION=harness-codex-resume FAKE_ATTACHED=1 FAKE_TTY=/dev/ttys000 \
     run_helper receive --source riken --target-role mac --allow-attached \
     <"$state/message" >"$state/attached-allowed.out"
 
+FAKE_SESSION=harness FAKE_ATTACHED=0 FAKE_TTY=/dev/ttys000 \
+    FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+    run_helper receive --source riken --target-role mac \
+    <"$state/message" >"$state/modern-mac.out"
+grep -F -x \
+    'AGENT_MESSAGE_RECEIVE source=riken target_role=mac client=codex status=submitted' \
+    "$state/modern-mac.out" >/dev/null || fail "modern Mac receive output"
+if FAKE_SESSION=harness FAKE_ATTACHED=0 FAKE_TTY=/dev/ttys000 \
+    FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
+    run_helper receive --source riken --target-role mac \
+    <"$state/message" >"$state/modern-mac-wrong-pane.out" 2>&1; then
+    fail "wrong modern Mac pane accepted"
+fi
+
 if FAKE_AMBIGUOUS=1 run_helper receive --source riken \
     --target-role controller <"$state/message" \
     >"$state/ambiguous.out" 2>&1; then
