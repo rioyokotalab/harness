@@ -9,7 +9,7 @@ required. Do not split or invent observations to simulate cadence.
 | 2 | 14:47:47–15:47:47 | complete |
 | 3 | 15:47:47–16:47:47 | complete |
 | 4 | 16:47:47–17:47:47 | complete |
-| 5 | 17:47:47–18:47:47 | pending |
+| 5 | 17:47:47–18:47:47 | complete |
 | 6 | 18:47:47–19:47:47 | pending |
 | 7 | 19:47:47–20:47:47 | pending |
 
@@ -128,6 +128,22 @@ Har-379, so no blocked task receipt is warranted.
   is reconciled in the active record; it found no T-293 self-healing defect
   and did not authorize any target or implementation change.
 - Next safe action: remain observation-only through slice 5. Preserve the
+  observer-dependent branch and all stale refs; do not repeat any Claude
+  request or the completed pilot.
+
+## Slice 5 — 17:47:47–18:47:47 JST
+
+- Repository identity: the exact 18:47:47 sample found clean, aligned
+  protected `main` at `69ba0a6` and the clean task checkpoint at `159130e`.
+- Connection state: both Aist aliases remained loaded/running with
+  `managed=1 external=0` and ready unattended auth. The watchdog's 18:47:38
+  JST run classified the pair healthy with no recovery attempt. Fresh
+  Local-vantage probes at 18:48:16 reported both Aist routes and every other
+  declared pair healthy.
+- Unexpected findings and Claude evidence: none. The retained plan and
+  midpoint reviews remain reconciled; no scheduled Claude request is due in
+  this slice and no T-293 self-healing defect is demonstrated.
+- Next safe action: remain observation-only through slice 6. Preserve the
   observer-dependent branch and all stale refs; do not repeat any Claude
   request or the completed pilot.
 
