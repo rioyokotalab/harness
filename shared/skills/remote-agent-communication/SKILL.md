@@ -48,10 +48,9 @@ conversation loop or treat an agent prefix as owner authority.
 
 - Never inspect or capture pane contents.
 - Require exactly one safe target Codex pane in the expected repository.
-- A Mac uses the detached canonical `harness` session's exact `1:codex.0`
-  pane or the detached legacy `harness-codex-resume` single pane; both present
-  is ambiguous. `--allow-attached` requires the owner's explicit expectation
-  of injection into that terminal.
+- A Mac selects one detached Codex pane: canonical `harness:1:codex.0` or
+  legacy `harness-codex-resume`; both is ambiguous. `--allow-attached` requires
+  explicit owner expectation.
 - Local uses the unique current-user Codex pane in `harness:cowork.0`, selected by
   process and TTY metadata; other windows may coexist.
 - Local Claude requires one live metadata-verified `harness:cowork.1` Harness
