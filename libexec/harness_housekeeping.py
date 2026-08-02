@@ -2096,7 +2096,11 @@ def require_durable_worktree_archive_owner(repo: Path) -> None:
     )
     if os.environ.get("HARNESS_TESTING") == "1" and enforce_in_test != "1":
         return
-    for boundary in scratch_boundaries():
+    boundaries = set(scratch_boundaries())
+    for standard in (Path("/tmp"), Path("/var/tmp")):
+        if standard.is_dir() and not standard.is_symlink():
+            boundaries.add(standard.resolve(strict=True))
+    for boundary in sorted(boundaries):
         if repo == boundary or strict_descendant(repo, boundary):
             die(
                 "worktree housekeeping repository is inside a scratch "
