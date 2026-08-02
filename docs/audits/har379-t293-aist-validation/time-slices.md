@@ -102,8 +102,18 @@ required. Do not split or invent observations to simulate cadence.
 
 Request `aist-20260802-midpoint-01` was submitted once at 16:49 JST through
 the installed content-blind Claude transport. Local `status=submitted` proves
-submission only; the private input was exact-unlinked, no retry is permitted,
-and the named artifact remained pending after the first bounded poll.
+submission only; the private input was exact-unlinked and no retry occurred.
+The retained artifact appeared at 16:53 JST and returned
+`CONTINUE-WITH-CONDITIONS`. It accepted the pilot outcome and found no T-293
+self-healing defect. The driver independently reconciled its conditions: the
+protected-main advance and literal file-tooling deviation will be stated in
+the final audit; the durable proof is explicitly narrative rather than raw
+output; the observer and stale refs remain preserved; and the slice-2 push
+lapse is classified as a nested in-scope execution incident. That lapse came
+from one ad hoc command, not repository-native tooling, and is handled LIFO by
+preserving its bounded effect and requiring fail-fast guards on all later Git
+publication. It neither authorizes a speculative product change nor blocks
+Har-379, so no blocked task receipt is warranted.
 
 ## Final durable summary
 
