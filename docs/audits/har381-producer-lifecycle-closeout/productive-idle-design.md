@@ -411,6 +411,23 @@ Run one matched two-night pilot before changing all five protocols:
    narration while preserving or improving accepted outputs and routed
    context. Otherwise retain the current protocol and the design as evidence.
 
+### Har-383 staging boundary
+
+Har-383 is a Harness-only synthetic pilot, not the rollout. Its consumer
+candidate may add the separate selector, fixtures, scenario tests, replay
+benchmark, and ordinary documentation. It must not modify `docs/producer/`,
+change `NIGHTLY.md` behavior, create a live opportunity catalog, start a wait
+controller, or touch a sibling repository. Synthetic fixtures exercise local
+catalog and admission paths without crossing the producer writer boundary.
+
+After the consumer receipt, normal producer reconciliation closes Har-383. If
+and only if all 19 scenarios and 18 acceptance measures pass, that producer
+transition may allocate a later Harness rollout task. The rollout task—not
+Har-383—may seed a protected Harness opportunity catalog and update the nightly
+protocol. Sibling rollout remains a further evidence-gated decision. This
+keeps code validation, producer-owned state, and policy activation in their
+proper writer phases and makes rejection of the experiment cheap.
+
 The normative scenario table is `productive-idle-scenarios.tsv`. At minimum,
 a prototype must satisfy all 19 rows, including changed owner input, stale
 target state, p90 overrun, private metadata rejection, dirty or rewritten

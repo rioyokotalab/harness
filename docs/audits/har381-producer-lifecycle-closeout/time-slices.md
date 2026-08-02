@@ -622,6 +622,14 @@ ineligible. A later protected-head change can continue only with byte-identical
 selected packets and freshly valid predicates. Three added scenarios cover
 dirty admission, manifest rewrite, and a late catalog card.
 
+Har-383 staging is now explicit. Its consumer branch may add only a separate
+selector, synthetic fixtures, the 19 scenario tests, a matched replay, and
+ordinary documentation. It cannot create producer catalog state, change live
+`NIGHTLY.md` behavior, start a wait controller, or touch siblings. Normal
+producer reconciliation closes the pilot and may allocate a later Harness
+rollout only if every scenario and all 18 acceptance measures pass; sibling
+rollout remains a further decision.
+
 ## Slice 7 — 07:00–08:00
 
 Pending.
