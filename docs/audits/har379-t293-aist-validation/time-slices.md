@@ -7,7 +7,7 @@ required. Do not split or invent observations to simulate cadence.
 | --- | --- | --- |
 | 1 | 13:47:47–14:47:47 | complete |
 | 2 | 14:47:47–15:47:47 | complete |
-| 3 | 15:47:47–16:47:47 | pending |
+| 3 | 15:47:47–16:47:47 | complete |
 | 4 | 16:47:47–17:47:47 | pending |
 | 5 | 17:47:47–18:47:47 | pending |
 | 6 | 18:47:47–19:47:47 | pending |
@@ -76,6 +76,27 @@ required. Do not split or invent observations to simulate cadence.
 - Next safe action: remain observation-only through slice 3, then send exactly
   one bounded midpoint-review request after 16:47:47 JST. Do not repeat the
   pilot.
+
+## Slice 3 — 15:47:47–16:47:47 JST
+
+- Repository identity: the exact 16:47:47 sample found clean, aligned
+  protected `main` at `69ba0a6` and the clean task checkpoint at `3a7f9bd`.
+- Connection state: both Aist aliases remained loaded/running with
+  `managed=1 external=0` and ready unattended auth. The watchdog's 16:47:30
+  run classified the pair healthy with no recovery attempt. Fresh
+  Local-vantage probes at 16:47:54 reported both Aist routes and every other
+  declared pair healthy.
+- Unexpected findings and Claude evidence: protected main introduced the
+  producer protocol and independently consumed Har-378. One checkpoint push
+  continued after a missing fail-fast guard detected that advance, but changed
+  only the stale task branch. The Local producer assigned Har-379, the Aist
+  consumer reconciled only its permitted paths, and the correct remote branch
+  now contains current protected transport fixes. No PR, merge, rollout, or
+  target mutation resulted. Claude's plan review remains resolved evidence;
+  the midpoint review is now due.
+- Next safe action: submit exactly one file-scoped Claude midpoint request,
+  never retry an acknowledged or ambiguous submission, and then remain
+  observation-only through slice 4.
 
 ## Final durable summary
 
