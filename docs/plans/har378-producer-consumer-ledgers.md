@@ -210,9 +210,9 @@ a separate producer identity is not warranted.
 
 ### D-003 — Top-level task selection order
 
-Open. Recommended: producer-defined priority, then oldest ready packet. LIFO is
-reserved for nested issues discovered while executing one task; global LIFO
-would starve older durable work.
+Selected: producer-defined priority, then oldest ready packet. LIFO is reserved
+for nested issues discovered while executing one task; global LIFO is rejected
+because it could starve older durable work.
 
 ### D-004 — Nightly trigger
 
@@ -228,7 +228,7 @@ retains its native validation and deployment boundaries.
 
 ## Exact next action
 
-Ask D-003 only using numbered choices. Record the answer before asking D-004.
+Ask D-004 only using numbered choices. Record the answer before asking D-005.
 No target repository,
 runtime, schedule, assignment, or external state may change before all five
 decisions are frozen and the owner gives an explicit `go`.
