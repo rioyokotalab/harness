@@ -109,6 +109,32 @@ producer-owned path.
 The exact clean generic-ledger checkpoint then passed complete R3, including
 all focused suites, integration fixtures, clean-tree guards, and guarded
 cleanup; only the declared native-MPI environment check was skipped.
+The remaining critical-path housekeeping suite measured 35.45 seconds
+standalone with 13.61 user and 20.62 system CPU-seconds at 96% utilization,
+showing that its cost is not a hidden fixture delay. A reversible scheduling
+benchmark ran eight focused workers to completion before integration instead
+of overlapping the gates. It had already exceeded 92 seconds when a
+benchmark-only unused-variable ShellCheck warning stopped it, versus roughly
+60--65 seconds for the protected overlapping schedule. The candidate was
+rejected without publication; no product or protected state changed.
+Two clean overlap runs bracketed the protected automatic worker count. Six
+focused workers passed in 71.14 seconds; eight passed in 64.57 seconds. The
+eight-worker result is only 0.15 seconds below the protected seven-worker
+64.72-second median and has higher contention, so it is not a material win.
+The measured optimum remains seven focused workers with one CPU reserved for
+the simultaneously running integration gates.
+Normal complete-suite output was the next token bottleneck: every success
+printed 98 per-suite lines even though detailed timing is only needed during a
+benchmark or failure investigation. The protected runner now prints one
+aggregate success line, exposes explicit verbose timing mode, and retains
+suite identity plus captured logs on failure. Its focused contract and exact
+clean R3 passed; the integration line reported 98 suites in 64.751 seconds.
+PR #630 merged the change at `c749a87`, with the hosted portable job skipped
+under the established Actions-sustainability contract.
+With detailed chronology already durable here, the active Har-388 recovery
+record was compacted from 817 to 315 words (61.4% reduction) while retaining
+all protected revisions, current acceptance evidence, rejected scheduling
+results, active Personal gate, and exact next action.
 
 ## Slice 3 — 01:00–02:00 JST
 
