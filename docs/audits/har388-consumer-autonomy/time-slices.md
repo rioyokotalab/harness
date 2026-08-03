@@ -564,7 +564,18 @@ Semantic compaction reduces repository-Git policy from 287 to 248 words and
 housekeeping/promotion policy from 274 to 263. Git-selected context falls by 39
 words across four generated benchmark scenarios; tighter route ceilings,
 policy markers, generated context, Claude takeover, task-ledger, and diff
-checks pass. Complete integration and protected publication remain pending.
+checks pass. Complete R3 passed all 98 suites in 58.242 seconds with only the
+declared native-MPI skip. PR #652 merged the exact tree at `c065a87`; hosted
+validation skipped as intended and the worktree was archive-retired.
+
+The external-operation policy repeated the rare installer-cleanup checklist
+already routed by `guarded-bulk-delete`. Replacing that duplicate with an
+explicit conditional link reduces ordinary external-operation context from
+274 to 177 words; installer cleanup still composes the full 184-word exception,
+so both routes save 97 words without losing a gate. Tighter policy/cumulative
+ceilings, generated context, guarded-delete behavior, skill budgets and safety
+markers, Claude takeover, and diff checks pass. Complete integration and
+protected publication remain pending.
 
 ## Slice 10 — 08:00–09:00 JST
 

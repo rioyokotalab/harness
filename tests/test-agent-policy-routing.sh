@@ -44,20 +44,20 @@ duration_words=$(words "$DURATION")
 
 assert_max "$root_words" 760 'always-read policy'
 assert_max "$git_words" 255 'repository Git policy'
-assert_max "$external_words" 300 'external-operation policy'
+assert_max "$external_words" 180 'external-operation policy'
 assert_max "$codex_words" 225 'managed Codex policy'
 assert_max "$fleet_words" 350 'fleet policy'
 assert_max "$housekeeping_words" 265 'housekeeping/promotion policy'
 assert_max "$research_words" 85 'research policy'
 assert_max "$duration_words" 85 'duration policy'
 assert_max "$((root_words + git_words))" 1015 'Git selected route'
-assert_max "$((root_words + external_words))" 1040 \
+assert_max "$((root_words + external_words))" 940 \
     'external-operation selected route'
 assert_max "$((root_words + codex_words))" 985 \
     'managed Codex selected route'
 assert_max "$((root_words + fleet_words))" 1100 'fleet selected route'
 assert_max "$((root_words + git_words + external_words + fleet_words))" \
-    1620 'repository/fleet hardening cumulative route'
+    1520 'repository/fleet hardening cumulative route'
 assert_max "$((root_words + housekeeping_words))" 1025 \
     'housekeeping selected route'
 assert_max "$((root_words + research_words))" 840 'research selected route'
@@ -103,6 +103,8 @@ assert_contains 'Installed skill descriptions are the trigger index' "$AGENTS" \
 # Conditional authority stays reachable through the exact route that selects it.
 assert_contains 'Owner approval alone never' "$EXTERNAL" \
     'installer exception boundary'
+assert_contains 'installer-exception.md' "$EXTERNAL" \
+    'routed installer exception'
 assert_contains 'Task-scoped fetch, branch, commit' "$GIT_POLICY" \
     'standing Git authority'
 assert_contains 'approval count of zero' "$GIT_POLICY" \
