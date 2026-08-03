@@ -137,6 +137,11 @@ mv "$LEGACY" "$LEGACY.pre-reconstruction"
 cp -a "$LEGACY.pre-reconstruction" "$LEGACY"
 [ "$(stat -c %i "$LEGACY")" != "$(stat -c %i "$LEGACY.pre-reconstruction")" ] ||
     fail "reconstruction fixture retained the legacy inode"
+touch -d '40 days ago' "$RECEIPT_ONE"
+OUT=$(house "$COORDINATOR" --create-generation) ||
+    fail "reconstructed-root generation creation failed"
+printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
+    fail "reconstructed-root generation omitted restore proof"
 
 if HARNESS_TEST_OWNER_ALIAS_MAIN_DRIFT=1 create_alias "$RECEIPT_ONE" \
     >/dev/null 2>&1; then
@@ -245,14 +250,8 @@ if house "$OWNER" --audit --receipt "$RECEIPT_ONE" >/dev/null 2>&1; then
 fi
 git -C "$OWNER" update-ref refs/remotes/origin/main "$FAST_FORWARD"
 
-# Generation creation and two-generation compaction continue through the same
-# resolver after the pathname owner disappears.
-touch -d '40 days ago' "$RECEIPT_ONE"
-OUT=$(house "$COORDINATOR" --create-generation) ||
-    fail "alias-backed generation creation failed"
-printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
-    fail "alias-backed generation omitted restore proof"
-
+# A second generation and compaction bridge the reconstructed generation's
+# changed filesystem identity after the pathname owner disappears.
 mv "$LEGACY.hidden" "$LEGACY"
 git -C "$LEGACY" checkout -q main
 RECEIPT_TWO=$(archive_one "$LEGACY" alias-two archived-two)
