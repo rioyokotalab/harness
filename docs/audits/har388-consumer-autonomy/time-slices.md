@@ -551,7 +551,20 @@ reverted and archive-retired. A smaller checksum change removes only the second
 parser process and now propagates checksum-command failure. Its functional,
 failure, profile, and ShellCheck probes pass; two complete focused profiles
 passed in 51.076 and 51.530 seconds versus the 52.239-second protected sample.
-Complete R3 and protected publication remain pending.
+Complete R3 passed all 98 suites in 58.549 seconds with only the declared
+native-MPI skip. PR #651 merged the exact tree at `2341171`; hosted validation
+skipped as intended and the task worktree was archive-retired.
+
+Builtin file-size and token-count parsing retained padded-output, command-
+failure, comma-edge, profile, and ShellCheck behavior, but protected config
+sync measured 14.63 seconds versus candidate runs of 14.64 and 14.58. The
+indistinguishable result was reverted and archive-retired. Attention then
+shifted from runtime micro-optimization to frequently selected policy context.
+Semantic compaction reduces repository-Git policy from 287 to 248 words and
+housekeeping/promotion policy from 274 to 263. Git-selected context falls by 39
+words across four generated benchmark scenarios; tighter route ceilings,
+policy markers, generated context, Claude takeover, task-ledger, and diff
+checks pass. Complete integration and protected publication remain pending.
 
 ## Slice 10 — 08:00–09:00 JST
 
