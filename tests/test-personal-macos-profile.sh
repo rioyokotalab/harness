@@ -60,6 +60,32 @@ if sh -c '. "$1"; macos_manifest_get "$2" key' _ \
     fail "manifest getter accepted an absent file"
 fi
 
+checksum_bin=$TEMP_DIR/checksum-bin
+mkdir "$checksum_bin"
+cat >"$checksum_bin/shasum" <<'EOF'
+#!/bin/sh
+[ "${MACOS_TEST_CHECKSUM_FAIL:-0}" != 1 ] || exit 7
+printf '%s  synthetic path with spaces\n' \
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+EOF
+cat >"$checksum_bin/awk" <<'EOF'
+#!/bin/sh
+exit 99
+EOF
+chmod 755 "$checksum_bin/shasum" "$checksum_bin/awk"
+checksum_value=$(PATH="$checksum_bin:/usr/bin:/bin" \
+    sh -c '. "$1"; macos_checksum_file "$2"' _ \
+    "$ROOT/libexec/harness-macos-common" "$manifest_probe")
+[ "$checksum_value" = \
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ] ||
+    fail "checksum helper changed first-field output"
+if MACOS_TEST_CHECKSUM_FAIL=1 PATH="$checksum_bin:/usr/bin:/bin" \
+    sh -c '. "$1"; macos_checksum_file "$2"' _ \
+    "$ROOT/libexec/harness-macos-common" "$manifest_probe" \
+    >"$TEMP_DIR/checksum-failure.out" 2>&1; then
+    fail "checksum helper suppressed command failure"
+fi
+
 make_profile() {
     name=$1
     home=$TEMP_DIR/$name
