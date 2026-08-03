@@ -586,8 +586,20 @@ Fleet-selected context falls from 1,091 to 1,047 words and the cumulative
 repository/fleet route from 1,516 to 1,472. Generated fleet-hardening context
 falls from 4,377 to 4,333 words; fleet health, inventory, policy, context,
 Claude takeover, and diff checks pass. Complete R3 passed all 98 suites in
-58.599 seconds with only the declared native-MPI skip; protected publication
-remains pending.
+58.599 seconds with only the declared native-MPI skip. PR #654 merged at
+`eb597fa`; hosted validation skipped as intended and its worktree was
+archive-retired.
+
+Because every hardening phase preloads the skill entry before selecting one
+reference, that entry was compacted from 335 to 299 words without changing its
+trigger, seven-reference router, independent ledgers, frozen authority,
+repository-local LIFO handling, or cutoff lifecycle. The largest interrupted
+phase now selects 841 words versus 877, improving the historical 1,431-word
+baseline reduction from 38% to 41%; the generated fleet-hardening scenario
+falls again from 4,333 to 4,297 words. Skill behavior, context budgets, generated
+context, and diff checks pass. Complete R3 passed all 98 suites in 58.613
+seconds with only the declared native-MPI skip; protected publication remains
+pending.
 
 ## Slice 10 — 08:00–09:00 JST
 

@@ -1,47 +1,43 @@
 ---
 name: fleet-repository-hardening
-description: Audit or harden multiple repositories or fleet nodes using independent ledgers, isolated worktrees, frozen decisions, repository-local LIFO issue stacks, protected changes, and deadline handoff.
+description: Audit or harden multiple repositories or nodes with independent ledgers, isolated worktrees, frozen decisions, repository-local LIFO issue stacks, protected changes, and deadline handoff.
 ---
 
 # Fleet and Repository Hardening
 
-Keep each repository operationally independent: preserve its instructions,
-ledger, branch, worktree, validation, publication route, and lifecycle locks.
-Never make a sibling repository depend at runtime on this skill or the
-coordinating harness. Never stash pre-existing owner or agent work.
+Keep repositories independent: preserve instructions, ledger, branch,
+worktree, validation, publication, and lifecycle locks. Never make a sibling
+depend at runtime on this skill or Harness, or stash pre-existing work.
 
 ## Compose only triggered workflows
 
 - Apply `plan-interview-execute` only for an owner-requested plan, interview,
-  separate explicit `go`, or a still-open material choice. Do not add an
-  interview or confirmation to frozen, authorized execution.
-- Apply `long-running-task-ledger` to multi-session, deadline-bound, or
-  duration-specified work.
-- Apply `evidence-first-research` to current advisories, entitlements, vendor
-  guidance, or security claims.
-- Apply `operate-native-hpc` before scheduler or allocation work.
-- Apply `guarded-bulk-delete` before recursive or expanded multi-path cleanup.
+  separate explicit `go`, or open material choice. Do not add an interview or
+  confirmation to frozen authorized execution.
+- Apply `long-running-task-ledger` to multi-session, deadline, or duration work.
+- Apply `evidence-first-research` to current advisory, entitlement, vendor, or
+  security claims.
+- Apply `operate-native-hpc` before scheduler/allocation work.
+- Apply `guarded-bulk-delete` before recursive or multi-path cleanup.
 
 ## Route exact working context
 
-Reconstruct the recorded phase, then read every matching reference completely
-before its action. Do not preload later phases or unrelated host types.
+Reconstruct the recorded phase and read each matching reference completely
+before acting. Do not preload later phases or unrelated host types.
 
 | Current action | Read completely |
 | --- | --- |
-| reconstruct, discover, benchmark, freeze decisions, or establish authority | [planning.md](references/planning.md) |
+| reconstruct, discover, benchmark, freeze choices/authority | [planning.md](references/planning.md) |
 | inspect repository or hosting controls | [repository-audit.md](references/repository-audit.md) |
-| inspect Linux or HPC hosts | [linux-audit.md](references/linux-audit.md) |
+| inspect Linux/HPC hosts | [linux-audit.md](references/linux-audit.md) |
 | inspect macOS hosts | [macos-audit.md](references/macos-audit.md) |
-| implement a frozen repository or host change | [execution.md](references/execution.md) |
-| handle any ambiguity, failed gate, or blocker | [issue-stack.md](references/issue-stack.md), in addition to the current phase |
-| validate, publish, clean task residue, reach a cutoff, or hand off | [closeout.md](references/closeout.md) |
+| implement a frozen repository/host change | [execution.md](references/execution.md) |
+| handle ambiguity, failed gate, or blocker | [issue-stack.md](references/issue-stack.md), plus the current phase |
+| validate, publish, clean residue, reach cutoff, or hand off | [closeout.md](references/closeout.md) |
 
-When the phase or target type changes, read the newly selected reference before
-continuing. If the phase, ownership, or authority cannot be reconstructed,
-stop target mutation and record that unknown state in the owning ledger.
+Read the selected reference when phase or target type changes. If phase,
+ownership, or authority cannot be reconstructed, stop target mutation and record that unknown state in the owning ledger.
 
 Do not mutate target state until `planning.md` has established frozen material
-choices and execution authority. Keep unaffected repositories progressing
-independently; one blocked stack must not acquire another repository's lock,
-alter its ledger, or stop its safe work.
+choices and authority. Keep unaffected repositories progressing: one blocked stack must not acquire another repository's
+lock, alter its ledger, or stop its safe work.
