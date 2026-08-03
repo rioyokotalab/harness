@@ -18,14 +18,8 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-### Har-371 — Migrate legacy managed primary branches
-
-**Phase:** Swallow completed at a verified unallocated idle boundary on
-2026-08-03. The task remains event-gated only for the live Students managed
-session. Do not move a cwd, process, saved thread, phone root, or app-server
-connection in place.
-
-**Record:** `docs/tasks/Har-371.md`.
+No consumer task is active. Resolve the next producer packet before starting
+new work.
 
 ## Deferred gates
 

@@ -5,7 +5,7 @@ Har-379	complete	Aist-driven T-293 self-healing validation with Claude co-pilot	
 Har-378	complete	Install repository-local producer and asynchronous consumer ledgers	docs/tasks/Har-378.md;docs/plans/har378-producer-consumer-ledgers.md
 Har-377	complete	Admit the independent Website root in fleet agent sentinels	docs/tasks/Har-377.md
 Har-376	complete	Adopt repository-specific task namespaces and retire the co alias	docs/tasks/Har-376.md
-Har-371	active	Migrate legacy managed primary branches at a safe session boundary	TODO.md;docs/tasks/Har-371.md
+Har-371	complete	Migrate legacy managed primary branches at safe session boundaries	docs/tasks/Har-371.md;docs/consumer/receipts/Har-371.md
 Har-328	time-gated	Deferred Local reboot during Institute outage	TODO.md;docs/tasks/Har-328.md;docs/history/TODO-full-archive-2026-07-30.md
 Har-303	blocked	NFS latency requires trusted server access	TODO.md;docs/tasks/Har-303.md;docs/audits/t303-nfs-observation-2026-07-24.md
 Har-196	time-gated	Backup lifecycle weekly successors	TODO.md;docs/tasks/Har-196.md;docs/backup-lifecycle-phase2.md

@@ -17,14 +17,14 @@ protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,809 | 97.5% | 2,906 | 1,501 | 48.3% |
-| documentation edit | 73,545 | 2,121 | 97.1% | 2,717 | 1,813 | 33.2% |
-| ordinary code fix | 74,455 | 1,847 | 97.5% | 3,627 | 1,539 | 57.5% |
-| tmux health diagnosis | 73,545 | 1,808 | 97.5% | 2,717 | 1,500 | 44.7% |
-| unsafe-tail recovery | 75,931 | 3,167 | 95.8% | 5,103 | 2,859 | 43.9% |
-| fleet hardening | 76,238 | 4,667 | 93.8% | 5,410 | 4,359 | 19.4% |
-| native HPC experiment | 77,550 | 3,433 | 95.5% | 6,722 | 3,125 | 53.5% |
-| duration ledger | 80,599 | 2,128 | 97.3% | 9,771 | 1,820 | 81.3% |
+| factual lookup | 73,734 | 1,781 | 97.5% | 2,906 | 1,501 | 48.3% |
+| documentation edit | 73,545 | 2,093 | 97.1% | 2,717 | 1,813 | 33.2% |
+| ordinary code fix | 74,455 | 1,819 | 97.5% | 3,627 | 1,539 | 57.5% |
+| tmux health diagnosis | 73,545 | 1,780 | 97.5% | 2,717 | 1,500 | 44.7% |
+| unsafe-tail recovery | 75,931 | 3,139 | 95.8% | 5,103 | 2,859 | 43.9% |
+| fleet hardening | 76,238 | 4,639 | 93.9% | 5,410 | 4,359 | 19.4% |
+| native HPC experiment | 77,550 | 3,405 | 95.6% | 6,722 | 3,125 | 53.5% |
+| duration ledger | 80,599 | 2,100 | 97.3% | 9,771 | 1,820 | 81.3% |
 
 The median total reduction is 97.2%, above the frozen 85% threshold; every
 scenario remains far above the per-scenario 50% floor. Median non-ledger
@@ -35,7 +35,7 @@ and selected conditional policy routes are separately budgeted by
 
 The frozen benchmark deliberately retains the completed T-351 record as its
 representative task payload. That record is 426 words and the active board is
-57 lines / 308 words, so board plus representative payload is 734 words—36.3%
+52 lines / 280 words, so board plus representative payload is 706 words—38.7%
 below the prior 1,153-word board. A current cold start reads the
 board and only a selected active record; it does not load completed T-351 or
 unrelated backup successor IDs, outage contingency details, and the blocked
