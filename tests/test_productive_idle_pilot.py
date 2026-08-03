@@ -541,6 +541,29 @@ class ProductiveIdlePilotTests(unittest.TestCase):
         }
         self.assertEqual(evidence, expected)
 
+    def test_tracked_results_cover_normative_tables(self) -> None:
+        scenarios = pilot.parse_tsv(
+            (ROOT / "docs/audits/har381-producer-lifecycle-closeout/productive-idle-scenarios.tsv").read_bytes(),
+            ("scenario", "input", "decision", "invariant"),
+        )
+        scenario_results = pilot.parse_tsv(
+            (ROOT / "docs/audits/har383-productive-idle-pilot/scenario-results.tsv").read_bytes(),
+            ("scenario", "status", "evidence"),
+        )
+        self.assertEqual([row["scenario"] for row in scenario_results], [row["scenario"] for row in scenarios])
+        self.assertTrue(all(row["status"] == "pass" and row["evidence"] for row in scenario_results))
+
+        measures = pilot.parse_tsv(
+            (ROOT / "docs/audits/har381-producer-lifecycle-closeout/productive-idle-acceptance.tsv").read_bytes(),
+            ("measure", "matched_baseline", "pilot_acceptance", "evidence"),
+        )
+        acceptance_results = pilot.parse_tsv(
+            (ROOT / "docs/audits/har383-productive-idle-pilot/acceptance-results.tsv").read_bytes(),
+            ("measure", "status", "evidence"),
+        )
+        self.assertEqual([row["measure"] for row in acceptance_results], [row["measure"] for row in measures])
+        self.assertTrue(all(row["status"] in {"pass", "pending"} and row["evidence"] for row in acceptance_results))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
