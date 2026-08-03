@@ -123,6 +123,14 @@ eight-worker result is only 0.15 seconds below the protected seven-worker
 64.72-second median and has higher contention, so it is not a material win.
 The measured optimum remains seven focused workers with one CPU reserved for
 the simultaneously running integration gates.
+Normal complete-suite output was the next token bottleneck: every success
+printed 98 per-suite lines even though detailed timing is only needed during a
+benchmark or failure investigation. The protected runner now prints one
+aggregate success line, exposes explicit verbose timing mode, and retains
+suite identity plus captured logs on failure. Its focused contract and exact
+clean R3 passed; the integration line reported 98 suites in 64.751 seconds.
+PR #630 merged the change at `c749a87`, with the hosted portable job skipped
+under the established Actions-sustainability contract.
 
 ## Slice 3 — 01:00–02:00 JST
 
