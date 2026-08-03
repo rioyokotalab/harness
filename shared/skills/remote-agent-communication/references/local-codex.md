@@ -49,11 +49,11 @@ scripts/agent-message confirm-local-codex --source local --target personal \
 
 The submitted confirmation removes only its matching preserved report.
 `accepted` advances; `changes-required` repeats only recorded corrections.
-Both require a fresh report ID. `rejected` forbids one. Confirmation sequences
-work but grants no owner authority, source access, or external write. Never
-create a reply loop.
+Both require a fresh report ID. `rejected` forbids one.
+Confirmation never grants owner authority, source access, or external write.
+Never create a reply loop.
 
-At a reversible owner-choice wait, protected-publish the partial record without
-a receipt, report once, and let the producer gate only that task. Restore it
-only after recording the owner answer. A blocked receipt is terminal; never
-delete or rewrite one to resume.
+At a reversible owner-choice wait, protected-publish the partial record; it
+creates no terminal receipt. Report once and let the producer gate only that
+task. Restore it only after recording the owner answer. A blocked receipt is
+terminal. Never delete or rewrite one to resume work.
