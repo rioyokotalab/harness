@@ -18,12 +18,8 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-### Har-387 — Harden producer disposition semantics
-
-**Phase:** implementing explicit selector authority and immutable-packet diff
-enforcement across the repository-native ledger validator.
-
-**Record:** `docs/tasks/Har-387.md`.
+No consumer task is currently executable. The producer selector is idle; the
+remaining entries are event- or authority-gated below.
 
 ## Deferred gates
 
