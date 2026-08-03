@@ -22,7 +22,8 @@ from urllib.parse import urlsplit
 
 
 ARCHIVE_SCHEMA = "harness-housekeeping-archive-v2"
-OWNER_ALIAS_SCHEMA = "harness-housekeeping-owner-alias-v1"
+OWNER_ALIAS_SCHEMA = "harness-housekeeping-owner-alias-v2"
+OWNER_ALIAS_SCHEMA_V1 = "harness-housekeeping-owner-alias-v1"
 COMPACTION_SCHEMA = "harness-housekeeping-compaction-v1"
 GENERATION_SCHEMA = "harness-housekeeping-generation-v1"
 PLAN_SCHEMA = "harness-housekeeping-plan-v2"
@@ -468,7 +469,13 @@ def parse_owner_alias(path: Path) -> Dict[str, Any]:
         "mapping",
         "restore_drill",
     }
-    if not isinstance(value, dict) or set(value) != required:
+    schema = value.get("schema") if isinstance(value, dict) else None
+    expected = required | ({"recovery"} if schema == OWNER_ALIAS_SCHEMA else set())
+    if (
+        not isinstance(value, dict)
+        or schema not in {OWNER_ALIAS_SCHEMA_V1, OWNER_ALIAS_SCHEMA}
+        or set(value) != expected
+    ):
         die("archive owner alias fields are malformed")
     absolute_fields = (
         "source_receipt",
@@ -478,8 +485,7 @@ def parse_owner_alias(path: Path) -> Dict[str, Any]:
         "owner_repository",
     )
     if (
-        value["schema"] != OWNER_ALIAS_SCHEMA
-        or any(
+        any(
             not isinstance(value[field], str) or not Path(value[field]).is_absolute()
             for field in absolute_fields
         )
@@ -585,6 +591,34 @@ def parse_owner_alias(path: Path) -> Dict[str, Any]:
         datetime.strptime(drill["verified_utc"], "%Y-%m-%dT%H:%M:%SZ")
     except (TypeError, ValueError) as exc:
         raise HousekeepingError("archive owner alias restore time is malformed") from exc
+    if schema == OWNER_ALIAS_SCHEMA:
+        recovery = value["recovery"]
+        if not isinstance(recovery, dict) or set(recovery) != {"method", "generations"}:
+            die("archive owner alias recovery fields are malformed")
+        generations = recovery["generations"]
+        if (
+            recovery["method"]
+            not in {"source-bundle-v1", "generation-recovery-v1"}
+            or not isinstance(generations, list)
+            or (
+                recovery["method"] == "source-bundle-v1"
+                and generations
+            )
+            or (
+                recovery["method"] == "generation-recovery-v1"
+                and len(generations) < 2
+            )
+            or any(
+                not isinstance(row, dict)
+                or set(row) != {"receipt", "sha256"}
+                or not isinstance(row["receipt"], str)
+                or not Path(row["receipt"]).is_absolute()
+                or not re.fullmatch(r"[0-9a-f]{64}", str(row["sha256"]))
+                for row in generations
+            )
+            or len({row["receipt"] for row in generations}) != len(generations)
+        ):
+            die("archive owner alias recovery identity is malformed")
     source = Path(value["source_receipt"])
     if path.name != owner_alias_name(source):
         die("archive owner alias filename changed")
@@ -984,6 +1018,10 @@ def create_owner_alias(
             "verified_utc": created_utc,
             "headset_sha256": restored_digest,
         },
+        "recovery": {
+            "method": "source-bundle-v1",
+            "generations": [],
+        },
     }
     directory = owner_alias_directory(create=True)
     destination = directory / owner_alias_name(source)
@@ -1002,16 +1040,58 @@ def create_owner_alias(
     else:
         candidate_aliases = load_owner_aliases()
         candidate_aliases[str(source)] = (destination, value)
-        compacted = archive_audit(
-            owner,
-            source,
-            aliases=candidate_aliases,
-            owner_cache=candidate_cache,
-        )
-        if not compacted["retired"] or compacted["generations"] < 2:
+        generation_directory = state / "generations"
+        generations = []
+        recovery_sources: Dict[str, Tuple[Path, str]] = {}
+        generation_cache: Dict[Path, Dict[str, Any]] = {}
+        for path in sorted(generation_directory.glob("*.json")):
+            generation_value = parse_generation_receipt(
+                path, state, candidate_aliases, candidate_cache
+            )
+            if not generation_covers_source(
+                state,
+                path,
+                source.name,
+                source_sha256,
+                str(owner),
+                [row["tip"] for row in tips],
+                generation_value,
+                candidate_aliases,
+                candidate_cache,
+            ):
+                continue
+            rows = [
+                row
+                for row in generation_value["repositories"]
+                if generation_repository_matches(
+                    state,
+                    generation_value,
+                    row,
+                    source,
+                    owner,
+                    candidate_aliases,
+                    candidate_cache,
+                )
+            ]
+            if len(rows) != 1:
+                die("archive owner alias generation repository changed")
+            for head in rows[0]["heads"]:
+                if head["tip"] in {item["tip"] for item in tips}:
+                    recovery_sources.setdefault(
+                        head["tip"], (Path(rows[0]["bundle"]), head["ref"])
+                    )
+            generations.append({"receipt": str(path), "sha256": digest(path)})
+            generation_cache[path] = generation_value
+        if len(generations) < 2 or set(recovery_sources) != {
+            row["tip"] for row in tips
+        }:
             die("archive owner alias lacks verified compacted recovery")
+        value["recovery"] = {
+            "method": "generation-recovery-v1",
+            "generations": generations,
+        }
         independent_alias_restore_sources(
-            coordinator_repo, tips, compacted["recovery_sources"]
+            coordinator_repo, tips, recovery_sources
         )
 
     # Re-read every mutable identity immediately before immutable publication.
@@ -1071,6 +1151,73 @@ def create_owner_alias(
     }
 
 
+def alias_generation_recovery(
+    repo: Path,
+    receipt_path: Path,
+    parsed: Dict[str, Any],
+    alias: Dict[str, Any],
+    generation_cache: Dict[Path, Dict[str, Any]],
+    aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]],
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]],
+) -> Optional[Dict[str, Any]]:
+    recovery = alias.get("recovery")
+    if not isinstance(recovery, dict) or recovery.get("method") != "generation-recovery-v1":
+        return None
+    state = state_directory()[1]
+    generation_directory = state / "generations"
+    tips = [row["tip"] for row in parsed["items"]]
+    recovery_sources: Dict[str, Tuple[Path, str]] = {}
+    verified_generations = []
+    for generation in recovery["generations"]:
+        path = Path(generation["receipt"])
+        if path.resolve(strict=True).parent != generation_directory.resolve(strict=True):
+            die("archive owner alias generation is outside durable state")
+        validate_private_file(path)
+        if digest(path) != generation["sha256"]:
+            die("archive owner alias generation receipt changed")
+        value = generation_cache.get(path)
+        if value is None:
+            value = parse_generation_receipt(path, state, aliases, owner_cache)
+            generation_cache[path] = value
+        if not generation_covers_source(
+            state,
+            path,
+            receipt_path.name,
+            digest(receipt_path),
+            str(repo),
+            tips,
+            value,
+            aliases,
+            owner_cache,
+        ):
+            die("archive owner alias generation coverage changed")
+        rows = [
+            row
+            for row in value["repositories"]
+            if generation_repository_matches(
+                state, value, row, receipt_path, repo, aliases, owner_cache
+            )
+        ]
+        if len(rows) != 1:
+            die("archive owner alias generation repository changed")
+        for head in rows[0]["heads"]:
+            if head["tip"] in tips:
+                recovery_sources.setdefault(
+                    head["tip"], (Path(rows[0]["bundle"]), head["ref"])
+                )
+        verified_generations.append(generation)
+    if set(recovery_sources) != set(tips):
+        die("archive owner alias generation recovery is incomplete")
+    return {
+        "value": {
+            "generations": verified_generations,
+            "tips": tips,
+            "bundle_bytes": 0,
+        },
+        "recovery_sources": recovery_sources,
+    }
+
+
 def archive_audit(
     repo: Path,
     receipt_path: Path,
@@ -1120,8 +1267,22 @@ def archive_audit(
             owner_cache=owner_cache,
         )
         if compaction is None:
-            die("archive bundle is absent without verified compaction")
+            alias_rows = aliases if aliases is not None else load_owner_aliases()
+            alias_row = alias_rows.get(str(receipt_path))
+            if alias_row is not None:
+                compaction = alias_generation_recovery(
+                    repo,
+                    receipt_path,
+                    parsed,
+                    alias_row[1],
+                    cache,
+                    alias_rows,
+                    owner_cache,
+                )
+        if compaction is None:
+            die("archive bundle is absent without verified recovery")
         state = state_directory()[1]
+        recovery_sources.update(compaction.get("recovery_sources", {}))
         for generation in compaction["value"]["generations"]:
             generation_path = Path(generation["receipt"])
             generation_value = cache.get(generation_path)
