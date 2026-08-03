@@ -20,8 +20,12 @@ Next free ID: Har-389.
 Consumers never modify producer-owned paths or allocate durable IDs. They keep
 execution state in `TODO.md`, `docs/tasks/`, and implementation files, and write
 completion or blocking evidence under `docs/consumer/receipts/`. Nested in-scope
-findings are handled LIFO inside the active task; out-of-scope or authority-gated
-findings produce a blocked receipt, not a new goal.
+findings are handled LIFO inside the active task. A durable out-of-scope block
+produces a blocked receipt, not a new goal. An expected, reversible owner-choice
+wait instead preserves the partial task record without a terminal receipt; the
+producer gates that task so the selector can advance, then restores it to ready
+after recording the owner answer. Never delete or rewrite a terminal receipt to
+resume work.
 
 Before publication run `python3 tools/producer-ledger.py validate` and the
 role-appropriate diff check against the protected base. A terminal receipt is

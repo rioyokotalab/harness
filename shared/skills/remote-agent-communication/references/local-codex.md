@@ -50,3 +50,10 @@ new bounded request. Both bind its next report to `NEW`. `rejected` stops
 without `--next-request-id`. Confirmation controls sequencing only.
 Confirmation never grants owner authority, source access, or an external
 write. Never create a reply loop.
+
+For an expected, reversible owner-choice wait, the consumer preserves its
+partial record, reports once, and creates no terminal receipt. The producer
+gates only that task, confirms the checkpoint with a fresh ID so the selector
+can advance, and restores the task to ready only after recording the owner's
+answer. A blocked receipt is terminal and reserved for a durable unavailable
+outcome. Never delete or rewrite one to resume work.

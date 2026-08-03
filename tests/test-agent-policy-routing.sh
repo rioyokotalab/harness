@@ -78,6 +78,10 @@ assert_contains 'guarded-bulk-delete' "$AGENTS" 'guarded deletion route'
 assert_contains 'run a fresh native' "$AGENTS" 'fresh timestamp source'
 assert_contains "\`date '+%H:%M:%S'\` read" "$AGENTS" \
     'native timestamp command'
+assert_contains 'current local time in' "$AGENTS" \
+    'progress timestamp display contract'
+assert_contains 'Never infer a timestamp' "$AGENTS" \
+    'progress timestamp drift guard'
 assert_contains 'never blindly replay the prior prompt' "$AGENTS" \
     'provider retry boundary'
 assert_contains 'safety, lifecycle, cleanup,' "$AGENTS" \
@@ -86,6 +90,8 @@ assert_contains 'not merely because a session resumed' "$AGENTS" \
     'unchanged validation reuse'
 assert_contains 'Git, `PRODUCER.md`, and `TODO.md` are durable truth' "$AGENTS" \
     'durable source of truth'
+assert_contains 'chat and client memory' "$AGENTS" \
+    'cross-client durable handoff boundary'
 assert_contains 'tools/producer-ledger.py next-ready' "$AGENTS" \
     'selected active-task route'
 assert_contains 'never expand it with task chronology' "$AGENTS" \

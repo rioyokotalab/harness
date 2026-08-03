@@ -56,6 +56,43 @@ cases = [
         True,
     ),
     (
+        ["PRODUCER.md"],
+        "R1",
+        [
+            "tests/test-producer-role.sh",
+            "tests/test-task-ledger-routing.sh",
+        ],
+        True,
+    ),
+    (
+        [
+            "docs/producer/config.json",
+            "docs/producer/index.tsv",
+            "docs/producer/tasks/Har-389.md",
+        ],
+        "R1",
+        [
+            "tests/test-producer-role.sh",
+            "tests/test-task-ledger-routing.sh",
+        ],
+        True,
+    ),
+    (
+        ["docs/producer/NIGHTLY.md"],
+        "R1",
+        ["tests/test-producer-role.sh"],
+        True,
+    ),
+    (
+        ["docs/consumer/receipts/Har-389.md"],
+        "R1",
+        [
+            "tests/test-producer-role.sh",
+            "tests/test-task-ledger-routing.sh",
+        ],
+        True,
+    ),
+    (
         ["shared/skills/plan-interview-execute/references/execution.md"],
         "R1",
         [

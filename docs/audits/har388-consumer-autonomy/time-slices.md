@@ -150,6 +150,36 @@ The first complete run caught three compacted cross-client phrases not covered
 by the narrower policy tests. Those exact semantics were restored; policy,
 context, catalog, and Claude takeover tests passed, followed by a clean
 changed-input R3 of all 98 suites in 64.443 seconds.
+The compaction merged as PR #632 at `66eadf8`. Exact marker assertions were
+then added to the narrow policy suite so future omission is caught before R3.
+
+Personal Per-016 initially used the old terminal blocked-receipt convention at
+its first owner choice; producer reconciliation gated it without substituting a
+confirmation for the missing preference. Per-017 then proved the reversible
+replacement end to end: its partial synthetic plan merged without a receipt,
+the producer gated only that task, and the selector advanced. Per-024 codified
+the protocol in consumer instructions and a two-task synthetic regression. Its
+first stage-two test left the task gated while claiming receipt-only
+terminality; one changes-required cycle restored the task to ready after adding
+the receipt and proved that the receipt alone excludes it. Full Personal
+validation and the five-path boundary passed; PR #50 merged at `2bfb90a`, and
+producer reconciliation PR #51 merged at `4871ee8`. Per-018 now selects from a
+clean, converged exact root without a new task-specific prompt.
+
+Harness validation routing exposed a separate efficiency defect: ordinary
+producer queue, packet, and receipt edits were unmapped, so they escalated to
+the roughly 64-second complete suite. A precise candidate maps only declarative
+ledger paths to the producer-role and task-routing owners; both pass in 2.07
+seconds, while producer runtime, validators, maps, and tests remain R3. The
+35.45-second housekeeping critical suite also repeated bundle verification and
+Git item classification for identical immutable receipts within one inventory.
+Kernel identity, expected digest, owner repository, and bundle path now key an
+in-process cache; mutation forces rehash and verification. The functional suite
+measured 32.26 seconds, and 33.02 seconds after adding a direct invalidation
+regression. A broader ledger-query batching candidate measured 32.19 seconds,
+not a material improvement over 32.26, so it was removed. A `strace` attempt was
+non-authoritative because observation changed worktree liveness and correctly
+made the suite fail closed; it produced no acceptance claim.
 
 ## Slice 4 — 02:00–03:00 JST
 
