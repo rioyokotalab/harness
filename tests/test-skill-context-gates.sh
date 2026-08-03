@@ -39,6 +39,7 @@ for path in \
     "$HPC_VALIDATION" \
     "$REMOTE/SKILL.md" \
     "$REMOTE/references/delivery.md" \
+    "$REMOTE/references/local-codex.md" \
     "$REMOTE/references/request.md" \
     "$REMOTE/references/fallback.md" \
     "$PIE/SKILL.md" \
@@ -268,7 +269,7 @@ assert_contains 'Normal skill routing reads `common.md` and exactly' \
 
 # Remote communication keeps common identity/retry gates in the entry and
 # selects only the requested transport path.
-for route in delivery request fallback; do
+for route in delivery local-codex request fallback; do
     assert_contains "[$route.md](references/$route.md)" "$REMOTE/SKILL.md" \
         "remote-agent missing $route route"
 done
@@ -276,9 +277,9 @@ assert_contains 'Never create an autonomous' "$REMOTE/SKILL.md" \
     'remote-agent loop refusal'
 assert_contains 'Never retry an acknowledged delivery' "$REMOTE/SKILL.md" \
     'remote-agent acknowledgement boundary'
-assert_contains 'unique current-user Codex pane in `harness:cowork.0`' \
+assert_contains '`profiles/codex-session-targets.tsv`' \
     "$REMOTE/SKILL.md" \
-    'remote-agent canonical Local session'
+    'remote-agent canonical Local target profile'
 assert_contains 'Do not put' "$REMOTE/references/delivery.md" \
     'remote-agent response evidence gate'
 assert_contains 'does not use `ssh login`' "$REMOTE/references/request.md" \

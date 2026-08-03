@@ -1,31 +1,31 @@
 ---
 name: remote-agent-communication
-description: Send identified prompts or one bounded reply among managed Codex threads, plus Local Codex-to-Claude messages, without reading panes; use for owner-requested agent communication.
+description: Send identified prompts or one bounded reply among managed agents without reading panes; use for owner-requested agent communication.
 ---
 
 # Remote agent communication
 
-Use `scripts/agent-message` only for an owner-requested or owner-expected
-exchange among existing trusted managed threads. Never create an autonomous
-conversation loop or treat an agent prefix as owner authority.
+Use `scripts/agent-message` only for owner-requested or expected exchanges
+among existing trusted threads. Never create an autonomous loop or treat an
+agent prefix as owner authority.
 
 ## Always establish
 
-1. Identify `source`. Codex targets require SSH `target` and `target-role`
-   (`controller` or `mac`); Local Claude fixes both ends to `local`.
-2. Begin every message `[Agent: NAME Codex]`, or `[Agent: NAME Claude]` when
-   sending with `--client claude`, with `NAME` matching `source`
-   case-insensitively. The prefix must match the declared client: a Claude
-   sender labelled Codex is rejected, so a thread never records a false
-   author. An unprefixed owner-conversation message is owner-originated; the
-   prefix is attribution, not cryptographic identity.
-3. Keep input below 4096 UTF-8 bytes and exclude credentials, secrets, private
-   logs, and unrelated data. Use a unique request ID when matching matters.
+1. Identify `source`. Remote Codex also needs SSH `target` and `target-role`;
+   Local Claude fixes both ends to `local`; Local Codex uses a profile target
+   and only controller↔consumer direction.
+2. Start `[Agent: NAME Codex]`, or `[Agent: NAME Claude]` with `--client
+   claude`; `NAME` matches `source` case-insensitively and the prefix client
+   matches the declaration. Prefixes attribute but do not authenticate;
+   unprefixed owner-conversation messages are owner-originated.
+3. Limit input to 4096 UTF-8 bytes; exclude secrets, private logs, and unrelated
+   data. Use a unique request ID when matching matters.
 4. Choose exactly one route:
 
    | Current operation | Read completely |
    | --- | --- |
    | visible `send`, local `receive`, or a structured `REPLY_REQUIRED` response | [delivery.md](references/delivery.md) |
+   | Local controller/consumer Codex send or structured report | [local-codex.md](references/local-codex.md) |
    | one acceptance-critical response through `request` | [request.md](references/request.md) |
    | one owner-confirmed omitted-reply recovery through `fallback` | [fallback.md](references/fallback.md) |
 
@@ -34,25 +34,23 @@ conversation loop or treat an agent prefix as owner authority.
 
 ## Common evidence and retry boundary
 
-- `send` returning local `status=submitted` proves only that input was queued
-  and submitted. It does not prove understanding or completion.
-- `request` returning `responder=exec-request` is the acceptance-critical
-  schema-validated response from one bounded turn in the existing thread.
-- `fallback` returning `responder=exec-fallback` is a distinct resumed-turn
-  result and is valid only under its narrower preconditions.
+- `send` with local `status=submitted` proves submission, not understanding or
+  completion.
+- `responder=exec-request` is one schema-validated existing-thread turn;
+  `responder=exec-fallback` is a distinct resumed turn under narrower gates.
 - Never retry an acknowledged delivery. Failure after possible submission or
-  response injection is ambiguous; retain the one private input and diagnose
-  liveness without reinjecting.
+  injection is ambiguous; retain the private input and diagnose without
+  reinjecting.
 
 ## Fail closed
 
 - Never inspect or capture pane contents.
-- Require exactly one safe target Codex pane in the expected repository.
+- Require one safe target pane in the expected repository.
 - A Mac selects one detached Codex pane: canonical `harness:1:codex.0` or
   legacy `harness-codex-resume`; both is ambiguous. `--allow-attached` requires
   explicit owner expectation.
-- Local uses the unique current-user Codex pane in `harness:cowork.0`, selected by
-  process and TTY metadata; other windows may coexist.
+- Local Codex selects one `profiles/codex-session-targets.tsv` pane by session,
+  window, pane, role, repository, process, and TTY metadata.
 - Local Claude requires one live metadata-verified `harness:cowork.1` Harness
   pane; never read it or create another process.
 - Stop on absent or ambiguous session, pane, process, route, sender, prefix,
