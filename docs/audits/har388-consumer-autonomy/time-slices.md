@@ -40,7 +40,13 @@ pass; complete R3 requires one unchanged-input retry after checkpointing.
 
 ## Slice 2 — 00:00–01:00 JST
 
-Pending window.
+The clean `59af046` checkpoint reran the exact complete R3 input after the
+bytecode-isolation fix. Every registered focused suite, integration fixture,
+ShellCheck gate, and guarded cleanup check passed in 83.76 seconds; only the
+declared native-MPI environment skip remains. The changed remote-agent suite
+completed in 4.07 seconds under integrated contention, compared with 25.07
+seconds for the pre-change standalone baseline. Production paste and submit
+delays remain one second each; only explicit test mode may select zero.
 
 ## Slice 3 — 01:00–02:00 JST
 
