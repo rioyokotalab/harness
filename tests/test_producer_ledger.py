@@ -193,6 +193,21 @@ class ProducerLedgerTests(unittest.TestCase):
         result = self.run_tool(root, "validate")
         self.assertEqual(result.returncode, 0, result.stdout)
 
+    def test_index_is_current_disposition_and_packet_state_is_publication_only(self) -> None:
+        root = self.fixture()
+        self.mutate_packet(
+            root, lambda text: text.replace("state: ready", "state: gated")
+        )
+        result = self.run_tool(root, "validate")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        selection = self.run_tool(root, "next-ready")
+        self.assertEqual(selection.returncode, 0, selection.stdout)
+        self.assertIn("status=ready task=Fix-001", selection.stdout)
+        self.assertIn(
+            "disposition_source=docs/producer/index.tsv", selection.stdout
+        )
+        self.assertIn("packet_state=publication-only", selection.stdout)
+
     def test_claimed_disposition_uses_deterministic_record_without_packet_rewrite(self) -> None:
         root = self.fixture()
         packet = root / "docs/producer/tasks/Fix-001.md"
@@ -311,6 +326,42 @@ class ProducerLedgerTests(unittest.TestCase):
             consumer_root, "check-producer-diff", "--base", "HEAD"
         )
         self.assertNotEqual(result.returncode, 0, result.stdout)
+
+    def test_producer_cannot_change_a_published_packet(self) -> None:
+        cases = {
+            "modify": lambda packet: packet.write_text(
+                packet.read_text(encoding="utf-8") + "\nchanged\n",
+                encoding="utf-8",
+            ),
+            "delete": lambda packet: packet.unlink(),
+            "rename": lambda packet: packet.rename(packet.with_name("Fix-002.md")),
+            "type-change": self.replace_packet_with_symlink,
+        }
+        for case, mutate in cases.items():
+            with self.subTest(case=case):
+                root = self.fixture()
+                self.init_git(root)
+                mutate(root / "docs/producer/tasks/Fix-001.md")
+                result = self.run_tool(
+                    root, "check-producer-diff", "--base", "HEAD"
+                )
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertIn("producer-immutable-packet", result.stdout)
+
+    def replace_packet_with_symlink(self, packet: Path) -> None:
+        packet.unlink()
+        packet.symlink_to("Fix-002.md")
+
+    def test_producer_may_add_a_new_packet(self) -> None:
+        root = self.fixture()
+        self.init_git(root)
+        packet = root / "docs/producer/tasks/Fix-002.md"
+        packet.write_text("new packet\n", encoding="utf-8")
+        subprocess.run(  # noqa: S603
+            [GIT, "add", str(packet.relative_to(root))], cwd=root, check=True
+        )
+        result = self.run_tool(root, "check-producer-diff", "--base", "HEAD")
+        self.assertEqual(result.returncode, 0, result.stdout)
 
     def test_consumer_cannot_allocate_task_record(self) -> None:
         root = self.fixture()
