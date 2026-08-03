@@ -101,14 +101,16 @@ def render(root: Path, document: Path, manifest: Path) -> str:
     todo = root / "TODO.md"
     todo_lines = len(todo.read_text(encoding="utf-8").splitlines())
     todo_words = word_count(todo)
-    text = re.sub(
-        r"active board is(\n?)[0-9]+ lines / [0-9]+ words",
+    text, count = re.subn(
+        r"active board is(\s+)[0-9]+ lines / [0-9]+ words",
         lambda match: (
             f"active board is{match.group(1)}{todo_lines} lines / "
             f"{todo_words} words"
         ),
         text,
     )
+    if count != 2:
+        raise SystemExit("context benchmark active-board mentions changed")
     task_words = word_count(root / "docs/tasks/T-351.md")
     text, count = re.subn(
         r"That record is [0-9]+ words",

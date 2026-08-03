@@ -102,3 +102,20 @@ printf 'CONTEXT_ROUTING status=pass scenarios=%s median_total_tenths=%s median_n
     "$rows" "$total_median" "$nonledger_median" "$todo_lines" "$todo_words"
 
 "$ROOT/tools/refresh-context-benchmark.py" --check
+python3 - "$ROOT/docs/audits/t351-autonomy-efficiency/context-benchmark.md" \
+    "$todo_lines" "$todo_words" <<'PY'
+import pathlib
+import re
+import sys
+
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+expected = (int(sys.argv[2]), int(sys.argv[3]))
+mentions = [
+    (int(lines), int(words))
+    for lines, words in re.findall(
+        r"active board is\s+(\d+) lines / (\d+) words", text
+    )
+]
+if mentions != [expected, expected]:
+    raise SystemExit(f"active-board benchmark mentions are stale: {mentions}")
+PY

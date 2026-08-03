@@ -138,7 +138,18 @@ results, active Personal gate, and exact next action.
 
 ## Slice 3 — 01:00–02:00 JST
 
-Pending window.
+The always-read Harness policy was semantically compacted from 824 to 760 words
+(7.8%). Every benchmark scenario now selects 64 fewer words; median non-ledger
+reduction improves from 46.5% to 48.8%, and a 760-word ceiling freezes the gain.
+All authority, deletion, timestamp, retry, validation, producer/consumer,
+handoff, and routing markers remain covered. While regenerating the benchmark,
+the first inline board-size sentence was found to remain stale because its
+generator matched a newline but not a space. The generator now updates exactly
+both mentions and a focused regression requires both to match the live board.
+The first complete run caught three compacted cross-client phrases not covered
+by the narrower policy tests. Those exact semantics were restored; policy,
+context, catalog, and Claude takeover tests passed, followed by a clean
+changed-input R3 of all 98 suites in 64.443 seconds.
 
 ## Slice 4 — 02:00–03:00 JST
 
