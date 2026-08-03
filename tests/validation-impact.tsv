@@ -36,7 +36,11 @@
 ^tests/test-reboot-recovery-skill\.sh$|R3|-|reboot recovery validator
 ^shared/skills/recover-codex-unsafe-tail/|R3|-|managed lifecycle recovery
 ^tests/test-recover-codex-unsafe-tail-skill\.sh$|R3|-|managed lifecycle recovery validator
-^shared/skills/remote-agent-communication/|R3|-|cross-client message transport
+^shared/skills/remote-agent-communication/(SKILL\.md|references/.*\.md)$|R1|tests/test-remote-agent-communication.sh|routed message policy
+^shared/skills/remote-agent-communication/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-budgets.sh|message context budget
+^shared/skills/remote-agent-communication/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-gates.sh|message safety gates
+^shared/skills/remote-agent-communication/(scripts|agents)/|R3|-|cross-client message transport
+^shared/skills/remote-agent-communication/references/reply\.schema\.json$|R3|-|message response schema
 ^tests/test-remote-agent-communication\.sh$|R3|-|message transport validator
 ^shared/skills/guarded-bulk-delete/|R3|-|recursive deletion safety
 ^AGENTS\.md$|R3|-|root authorization and validation policy

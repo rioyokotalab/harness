@@ -69,6 +69,35 @@ proved the correction had not started before the status request superseded it,
 so a fresh changed-input correction was safely submitted under a new ID.
 Complete R3 for the confirmation-envelope checkpoint passed every registered
 suite in 65.22 seconds with only the declared native-MPI skip.
+The first corrected Personal report still implemented the old confirmation
+shape. A narrowly bounded correction aligned its parser with the protected
+two-line envelope: accepted and changes-required checkpoints require a fresh
+validated report ID, rejected forbids one, and confirmation retains unchanged
+scope and authority. Independent reruns passed all 9 protocol and 21 ledger
+tests, both whitespace views, and the exact eight-path consumer writer
+boundary. The protected confirmation route accepted that checkpoint and bound
+stage 3 to a fresh ID without another free-form task prompt.
+Finally, a validation-router audit found that documentation-only edits to the
+remote-agent skill still selected complete R3. The candidate maps only routed
+Markdown policy to its owning transport, context-budget, and safety-gate
+suites; all pass in about 3.4 seconds versus the 65.22-second immediate R3
+reference. The executable, client configuration, and response schema remain
+R3, and changing the impact map itself still requires complete integration.
+Personal then completed stage 3 without another free-form task prompt. Full
+validation passed 24 connector, 7 broker, 9 protocol, and 21 ledger tests; its
+nine-path consumer boundary passed; PR #43 merged at `ca85e2d`; and the
+terminal receipt was present. Producer reconciliation changed only the queue
+and index, passed the two-path producer boundary and converged-ledger check,
+and merged as PR #44 at `8a1b608`. The exact admitted root was fast-forwarded;
+complete validation and converged-ledger checks passed there, and `next-ready`
+selected Per-016. One accepted confirmation bound that task's first report to
+a fresh ID, testing whether the consumer can advance directly from durable
+selector state rather than another task-specific controller prompt.
+The validation-map candidate's first complete run was intentionally
+non-authoritative because clean-checkout tmux and terminfo fixtures rejected
+the uncommitted branch; every other suite passed. After committing the exact
+candidate, the unchanged complete integration passed every registered suite
+and guarded cleanup check, with only the declared native-MPI environment skip.
 
 ## Slice 3 — 01:00–02:00 JST
 

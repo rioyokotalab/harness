@@ -112,6 +112,16 @@ cases = [
         False,
     ),
     (
+        ["shared/skills/remote-agent-communication/references/local-codex.md"],
+        "R1",
+        [
+            "tests/test-remote-agent-communication.sh",
+            "tests/test-skill-context-budgets.sh",
+            "tests/test-skill-context-gates.sh",
+        ],
+        False,
+    ),
+    (
         ["libexec/harness-terminfo"],
         "R2",
         ["tests/test-terminfo.sh"],
@@ -448,6 +458,9 @@ protected_r3 = [
     "shared/skills/onboard-mirrored-node/scripts/onboard-preflight",
     "shared/skills/onboard-external-user/scripts/preflight",
     "shared/skills/reboot-recovery/scripts/recover-mac-after-reboot",
+    "shared/skills/remote-agent-communication/scripts/agent-message",
+    "shared/skills/remote-agent-communication/agents/openai.yaml",
+    "shared/skills/remote-agent-communication/references/reply.schema.json",
     "shared/skills/fleet-repository-hardening/agents/openai.yaml",
     "shared/skills/onboard-personal-mac/agents/openai.yaml",
     "tests/test-fleet-repository-hardening-skill.sh",
