@@ -127,9 +127,6 @@ class ProducerLedgerTests(unittest.TestCase):
         root = self.fixture()
         self.write_receipt(root)
         (root / "TODO.md").write_text("# Board\n", encoding="utf-8")
-        (root / "docs/producer/assignment.tsv").write_text(
-            "client\tslot\tstate\nany\tfixture\tidle\n", encoding="utf-8"
-        )
         result = self.run_tool(root, "validate")
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertIn("reconciliation_pending=1", result.stdout)
@@ -139,6 +136,20 @@ class ProducerLedgerTests(unittest.TestCase):
         selection = self.run_tool(root, "next-ready")
         self.assertEqual(selection.returncode, 0, selection.stdout)
         self.assertIn("status=idle", selection.stdout)
+
+    def test_terminal_handoff_must_match_active_assignment_client(self) -> None:
+        root = self.fixture()
+        self.write_receipt(root)
+        (root / "TODO.md").write_text("# Board\n", encoding="utf-8")
+        self.mutate_packet(
+            root, lambda text: text.replace("consumer: any", "consumer: codex")
+        )
+        (root / "docs/producer/assignment.tsv").write_text(
+            "client\tslot\tstate\nclaude\tfixture\tactive\n", encoding="utf-8"
+        )
+        result = self.run_tool(root, "validate")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("assignment-without-executable-task", result.stdout)
 
     def test_terminal_reconciliation_preserves_published_packet(self) -> None:
         root = self.fixture()
@@ -157,7 +168,7 @@ class ProducerLedgerTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("terminal-receipt", result.stdout)
 
-    def test_active_assignment_requires_executable_task(self) -> None:
+    def test_reconciled_terminal_assignment_must_be_idle(self) -> None:
         root = self.fixture()
         self.reconcile_terminal(root)
         (root / "docs/producer/assignment.tsv").write_text(
@@ -166,6 +177,11 @@ class ProducerLedgerTests(unittest.TestCase):
         result = self.run_tool(root, "validate")
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("assignment-without-executable-task", result.stdout)
+        (root / "docs/producer/assignment.tsv").write_text(
+            "client\tslot\tstate\nany\tfixture\tidle\n", encoding="utf-8"
+        )
+        result = self.run_tool(root, "validate", "--require-converged")
+        self.assertEqual(result.returncode, 0, result.stdout)
 
     def test_next_ready_ignores_terminal_receipts(self) -> None:
         root = self.fixture()

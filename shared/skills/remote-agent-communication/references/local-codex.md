@@ -1,6 +1,6 @@
 # Local controller and consumer Codex
 
-Send one mode-0600 file. The profile allows controller↔consumer only,
+Send one mode-0600 file. The profile permits only controller↔consumer,
 without SSH or pane reads:
 
 ```text
@@ -8,8 +8,8 @@ scripts/agent-message send-local-codex \
   --source local --target personal < MESSAGE_FILE
 ```
 
-Request a report with `LOCAL_REPLY_REQUIRED request_id=ID
-reply_target=harness max_replies=1`. The consumer replies, then stops:
+Request one stopping report with `LOCAL_REPLY_REQUIRED request_id=ID
+reply_target=harness max_replies=1`:
 
 ```text
 scripts/agent-message reply-local-codex \
@@ -26,8 +26,8 @@ evidence: EVIDENCE
 next_action: ACTION
 ```
 
-The helper preserves bytes mode 0600. Duplicates are idempotent;
-changes fail. Recover missing delivery without waking the consumer:
+Bytes remain mode 0600; duplicates are idempotent and changes fail.
+Recover without waking the consumer:
 
 ```text
 scripts/agent-message read-local-codex-report \
@@ -41,10 +41,11 @@ scripts/agent-message confirm-local-codex --source local --target personal \
   --request-id OLD --status accepted --next-request-id NEW
 ```
 
-It removes only the matching report. `accepted` advances and
-`changes-required` repeats corrections; both need a fresh ID. `rejected`
-forbids one. Confirmation never grants owner authority, source access, or
-external write. Never create a reply loop.
+It removes the matching report. `accepted` with a fresh ID advances; without
+one it closes a terminal checkpoint. `changes-required` requires a fresh
+correction ID. `rejected` forbids one.
+Confirmation never grants owner authority, source access, or external write.
+Never create a reply loop.
 
 Elapsed time or an unchanged tree is not failure. Before follow-up run this
 metadata-only status/path check; it reads no pane or transcript:

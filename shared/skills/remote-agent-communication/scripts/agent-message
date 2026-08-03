@@ -813,9 +813,13 @@ def confirm_local_codex(
         if next_requested_id is not None:
             raise MessageError("rejected confirmation cannot name a next request")
         next_field = ""
-    else:
+    elif status == "changes-required":
         if next_requested_id is None:
             raise MessageError("continuing confirmation requires a next request")
+        next_field = f" next_request_id={request_id(next_requested_id)}"
+    elif next_requested_id is None:
+        next_field = ""
+    else:
         next_field = f" next_request_id={request_id(next_requested_id)}"
     message = (
         "[Agent: Local Codex]\n"

@@ -230,11 +230,20 @@ def validate(
         if assignment["state"] != "active":
             continue
         client = assignment["client"]
-        if not any(
+        compatible_executable = any(
             client == "any"
             or packets[row["task"]]["consumer"] in {"any", client}
             for row in executable
-        ):
+        )
+        compatible_handoff = any(
+            row["task"] in reconciliation_pending
+            and (
+                client == "any"
+                or packets[row["task"]]["consumer"] in {"any", client}
+            )
+            for row in rows
+        )
+        if not compatible_executable and not compatible_handoff:
             fail(f"assignment-without-executable-task:{assignment['slot']}")
 
     if require_converged and reconciliation_pending:
