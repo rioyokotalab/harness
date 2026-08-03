@@ -1,22 +1,20 @@
 # Local controller and consumer Codex
 
-Prepare one private mode-0600 identified input in the source repository:
+Create one private mode-0600 message in the source repository:
 
 ```text
 scripts/agent-message send-local-codex \
   --source local --target personal < MESSAGE_FILE
 ```
 
-The declared profile permits only controller↔consumer direction. This route
-uses no SSH or pane content; submitted delivery is final.
-
-For one bounded subtask report include:
+The profile permits only controller↔consumer traffic, without SSH or pane
+content. Request one bounded report with:
 
 ```text
 LOCAL_REPLY_REQUIRED request_id=ID reply_target=harness max_replies=1
 ```
 
-The consumer replies from its repository:
+The consumer sends it from its repository, then stops:
 
 ```text
 scripts/agent-message reply-local-codex \
@@ -33,23 +31,29 @@ evidence: EVIDENCE
 next_action: ACTION
 ```
 
-After submission the consumer stops. The controller reviews the evidence and
-sends one schema-built checkpoint:
+The helper atomically preserves the validated report mode 0600 before terminal
+delivery. An exact duplicate is idempotent; different bytes for one ID fail.
+If delivery is absent or partial, read that copy without waking the consumer:
+
+```text
+scripts/agent-message read-local-codex-report \
+  --source personal --target harness --request-id ID
+```
+
+After review, send one schema-built checkpoint:
 
 ```text
 scripts/agent-message confirm-local-codex --source local --target personal \
   --request-id OLD --status accepted --next-request-id NEW
 ```
 
-`accepted` advances the next declared stage. `changes-required` repeats only
-durably recorded corrections; otherwise send a new bounded request. Both bind
-the next report to `NEW`; `rejected` forbids `--next-request-id`. Confirmation
-controls sequence only and never grants owner authority, source access, or an
-external write. Never create a reply loop.
+The submitted confirmation removes only its matching preserved report.
+`accepted` advances; `changes-required` repeats only recorded corrections.
+Both require a fresh report ID. `rejected` forbids one. Confirmation sequences
+work but grants no owner authority, source access, or external write. Never
+create a reply loop.
 
-For an expected, reversible owner-choice wait, the consumer preserves and
-publishes the partial record as its packet permits, reports once, and
-creates no terminal receipt. The producer gates only that task, confirms with a
-fresh ID, and restores it to ready only after recording the owner answer. A
-blocked receipt is terminal and reserved for a durable unavailable outcome.
-Never delete or rewrite one to resume work.
+At a reversible owner-choice wait, protected-publish the partial record without
+a receipt, report once, and let the producer gate only that task. Restore it
+only after recording the owner answer. A blocked receipt is terminal; never
+delete or rewrite one to resume.
