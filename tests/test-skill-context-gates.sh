@@ -286,6 +286,11 @@ assert_contains 'does not use `ssh login`' "$REMOTE/references/request.md" \
     'remote-agent request route independence'
 assert_contains 'Never invoke it twice' "$REMOTE/references/fallback.md" \
     'remote-agent fallback replay refusal'
+assert_contains 'confirm-local-codex' "$REMOTE/references/local-codex.md" \
+    'remote-agent Local confirmation route'
+assert_contains 'never grants owner authority' \
+    "$REMOTE/references/local-codex.md" \
+    'remote-agent confirmation non-escalation'
 if grep -F 'unique current-user Codex pane in `projects`' \
     "$REMOTE/SKILL.md" >/dev/null; then
     fail 'remote-agent retains stale Local session'

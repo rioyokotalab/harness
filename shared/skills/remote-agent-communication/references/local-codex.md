@@ -37,4 +37,16 @@ next_action: ACTION
 ```
 
 After `status=submitted`, the consumer stops. The controller reviews evidence
-and separately confirms or requests the next subtask. Never create a reply loop.
+and sends one schema-built checkpoint:
+
+```text
+scripts/agent-message confirm-local-codex --source local --target personal \
+  --request-id OLD --status accepted --next-request-id NEW
+```
+
+`accepted` advances the packet's next declared stage. `changes-required`
+repeats only exact corrections already in the durable record; otherwise send a
+new bounded request. Both bind its next report to `NEW`. `rejected` stops
+without `--next-request-id`. Confirmation controls sequencing only.
+Confirmation never grants owner authority, source access, or an external
+write. Never create a reply loop.

@@ -32,6 +32,7 @@ SENDER_CLIENTS = ("codex", "claude")
 TTY_RE = re.compile(r"^/dev/(?:pts/[0-9]+|ttys[0-9A-Za-z]+)$")
 REQUEST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 REPLY_STATUSES = {"complete", "blocked", "rejected", "failed"}
+CONFIRMATION_STATUSES = {"accepted", "changes-required", "rejected"}
 
 
 class MessageError(RuntimeError):
@@ -630,6 +631,47 @@ def send_local_codex(
     )
 
 
+def confirm_local_codex(
+    source: str,
+    target: str,
+    requested_id: str,
+    status: str,
+    next_requested_id: str | None,
+) -> None:
+    if source != "local":
+        raise MessageError("Local Codex confirmation source must be local")
+    validate_local_codex_endpoints(source, target)
+    requested_id = request_id(requested_id)
+    if status not in CONFIRMATION_STATUSES:
+        raise MessageError("Local Codex confirmation status is unsupported")
+    if status == "rejected":
+        if next_requested_id is not None:
+            raise MessageError("rejected confirmation cannot name a next request")
+        next_field = ""
+    else:
+        if next_requested_id is None:
+            raise MessageError("continuing confirmation requires a next request")
+        next_field = f" next_request_id={request_id(next_requested_id)}"
+    message = (
+        "[Agent: Local Codex]\n"
+        f"confirmation request_id={requested_id} status={status}{next_field}"
+    ).encode("utf-8")
+    inject_message(
+        source,
+        "local-codex",
+        False,
+        message,
+        "codex",
+        local_codex_target=target,
+    )
+    print(
+        "AGENT_MESSAGE_LOCAL_CODEX_CONFIRM "
+        f"source={source} target={target} client=codex "
+        f"request_id={requested_id} confirmation={status}{next_field} "
+        "status=submitted"
+    )
+
+
 def request_id(value: str) -> str:
     if not REQUEST_ID_RE.fullmatch(value):
         raise MessageError("request id is malformed")
@@ -970,6 +1012,14 @@ def build_parser() -> argparse.ArgumentParser:
     local_codex_reply.add_argument("--source", required=True)
     local_codex_reply.add_argument("--target", required=True)
     local_codex_reply.add_argument("--request-id", required=True)
+    local_codex_confirmation = commands.add_parser("confirm-local-codex")
+    local_codex_confirmation.add_argument("--source", required=True)
+    local_codex_confirmation.add_argument("--target", required=True)
+    local_codex_confirmation.add_argument("--request-id", required=True)
+    local_codex_confirmation.add_argument(
+        "--status", choices=sorted(CONFIRMATION_STATUSES), required=True
+    )
+    local_codex_confirmation.add_argument("--next-request-id")
     return parser
 
 
@@ -998,6 +1048,14 @@ def main() -> int:
         elif arguments.command == "reply-local-codex":
             send_local_codex(
                 arguments.source, arguments.target, arguments.request_id
+            )
+        elif arguments.command == "confirm-local-codex":
+            confirm_local_codex(
+                arguments.source,
+                arguments.target,
+                arguments.request_id,
+                arguments.status,
+                arguments.next_request_id,
             )
         elif arguments.command == "request":
             request(
