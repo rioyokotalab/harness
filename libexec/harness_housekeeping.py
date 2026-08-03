@@ -97,6 +97,16 @@ def testing_override(name: str) -> Optional[str]:
     return value
 
 
+def generation_receipts_trigger() -> int:
+    # Scale synthetic receipt fixtures only; production keeps the frozen limit.
+    override = testing_override("HARNESS_TEST_GENERATION_RECEIPTS_TRIGGER")
+    if override is None:
+        return GENERATION_RECEIPTS_TRIGGER
+    if not re.fullmatch(r"[1-9]|[12][0-9]", override):
+        die("test generation receipt trigger is invalid")
+    return int(override)
+
+
 def state_directory() -> Tuple[Path, Path]:
     override = testing_override("HARNESS_TEST_RECEIPT_DIR")
     if override:
@@ -2060,7 +2070,7 @@ def generation_trigger_facts(
     reasons = []
     if trigger_bytes > GENERATION_BYTES_TRIGGER:
         reasons.append("bytes")
-    if len(uncovered) > GENERATION_RECEIPTS_TRIGGER:
+    if len(uncovered) > generation_receipts_trigger():
         reasons.append("receipts")
     if oldest_days >= GENERATION_AGE_DAYS_TRIGGER:
         reasons.append("age")
