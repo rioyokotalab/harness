@@ -131,6 +131,13 @@ if create_alias "$RECEIPT_ONE" >/dev/null 2>&1; then
 fi
 git -C "$LEGACY" remote set-url origin "$OWNER"
 
+# A Har-381-style exact reconstruction has a new directory inode while
+# retaining the receipt-bound canonical Git common-directory path and origin.
+mv "$LEGACY" "$LEGACY.pre-reconstruction"
+cp -a "$LEGACY.pre-reconstruction" "$LEGACY"
+[ "$(stat -c %i "$LEGACY")" != "$(stat -c %i "$LEGACY.pre-reconstruction")" ] ||
+    fail "reconstruction fixture retained the legacy inode"
+
 if HARNESS_TEST_OWNER_ALIAS_MAIN_DRIFT=1 create_alias "$RECEIPT_ONE" \
     >/dev/null 2>&1; then
     fail "protected-main creation drift was accepted"
