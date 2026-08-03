@@ -20,11 +20,10 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ### Har-382 — Migrate archive ownership to immutable repository aliases
 
-**Phase:** blocked before implementation on a changed-input identity decision:
-the 28 immutable bundles remain intact, but the prior root relocation removed
-two canonical one-hop owners and four of the twelve recorded scratch roots are
-already absent. The frozen alias contract cannot currently prove ten mappings
-without an explicitly authorized reconstruction/relocation rule.
+**Phase:** active implementation with an owner-authorized, single-generation
+relocation-evidence bridge from the retired Students and Swallow
+canonical paths to their durable `projects` successors. Historical receipts
+and Git origins remain immutable; arbitrary chains remain rejected.
 
 **Record:** `docs/tasks/Har-382.md`.
 

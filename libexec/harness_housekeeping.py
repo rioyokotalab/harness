@@ -18,9 +18,11 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from urllib.parse import urlsplit
 
 
 ARCHIVE_SCHEMA = "harness-housekeeping-archive-v2"
+OWNER_ALIAS_SCHEMA = "harness-housekeeping-owner-alias-v1"
 COMPACTION_SCHEMA = "harness-housekeeping-compaction-v1"
 GENERATION_SCHEMA = "harness-housekeeping-generation-v1"
 PLAN_SCHEMA = "harness-housekeeping-plan-v2"
@@ -351,18 +353,679 @@ def parse_archive_receipt(path: Path) -> Dict[str, Any]:
     return {"values": values, "items": items}
 
 
+def owner_alias_directory(*, create: bool = False) -> Path:
+    state = state_directory()[1]
+    directory = state / "owner-aliases"
+    if create:
+        directory.mkdir(mode=0o700, exist_ok=True)
+    if not directory.exists() and not directory.is_symlink():
+        return directory
+    if directory.is_symlink() or not directory.is_dir():
+        die("archive owner-alias directory identity is unsafe")
+    info = directory.lstat()
+    if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o700:
+        die("archive owner-alias directory identity is unsafe")
+    return directory
+
+
+def normalized_remote_identity(value: str) -> str:
+    if not value or CONTROL_RE.search(value) or any(character.isspace() for character in value):
+        die("archive owner terminal remote is malformed")
+    scp = (
+        None
+        if "://" in value
+        else re.fullmatch(
+            r"(?:(?P<user>[A-Za-z0-9._-]+)@)?(?P<host>[A-Za-z0-9.-]+):(?P<path>[^:]+)",
+            value,
+        )
+    )
+    if scp:
+        host = scp.group("host").lower()
+        path = scp.group("path")
+    else:
+        parsed = urlsplit(value)
+        if parsed.scheme not in {"ssh", "https"} or not parsed.hostname:
+            die("archive owner terminal remote must be credential-free SSH or HTTPS")
+        if parsed.password is not None or (parsed.scheme == "https" and parsed.username):
+            die("archive owner terminal remote contains credential material")
+        if parsed.query or parsed.fragment:
+            die("archive owner terminal remote is malformed")
+        host = parsed.hostname.lower()
+        try:
+            port = parsed.port
+        except ValueError as exc:
+            raise HousekeepingError("archive owner terminal remote port is malformed") from exc
+        if port is not None:
+            host += f":{port}"
+        path = parsed.path.lstrip("/")
+    path = path.rstrip("/")
+    if path.endswith(".git"):
+        path = path[:-4]
+    if (
+        not host
+        or not path
+        or path.startswith("-")
+        or "//" in path
+        or any(part in {"", ".", ".."} for part in path.split("/"))
+    ):
+        die("archive owner terminal remote identity is malformed")
+    return f"{host}/{path}"
+
+
+def single_origin(repo: Path) -> str:
+    result = git(repo, "remote", "get-url", "--all", "origin", check=False)
+    rows = text(result).splitlines() if result.returncode == 0 else []
+    if len(rows) != 1:
+        die("archive owner origin is missing or ambiguous")
+    return rows[0]
+
+
+def terminal_remote_identity(repo: Path) -> str:
+    return normalized_remote_identity(single_origin(repo))
+
+
+def exact_local_origin(repo: Path) -> Path:
+    value = single_origin(repo)
+    lexical = Path(value)
+    if not lexical.is_absolute():
+        die("archive legacy owner origin is not an exact absolute local path")
+    canonical = lexical.resolve(strict=False)
+    if lexical != canonical or lexical.is_symlink():
+        die("archive legacy owner origin traverses a symlink")
+    return canonical
+
+
+def alias_tip_digest(tips: Sequence[Dict[str, str]]) -> str:
+    rows = sorted((row["archive"], row["tip"]) for row in tips)
+    return hashlib.sha256(json.dumps(rows, separators=(",", ":")).encode()).hexdigest()
+
+
+def owner_alias_name(source: Path) -> str:
+    return hashlib.sha256(str(source).encode()).hexdigest() + ".json"
+
+
+def parse_owner_alias(path: Path) -> Dict[str, Any]:
+    validate_private_file(path)
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HousekeepingError("archive owner alias is malformed") from exc
+    required = {
+        "schema",
+        "created_utc",
+        "source_receipt",
+        "source_sha256",
+        "legacy_repository",
+        "legacy_repository_id",
+        "legacy_git_common_dir",
+        "bundle",
+        "bundle_sha256",
+        "tips",
+        "owner_repository",
+        "owner_id",
+        "owner_remote",
+        "protected_main",
+        "mapping",
+        "restore_drill",
+    }
+    if not isinstance(value, dict) or set(value) != required:
+        die("archive owner alias fields are malformed")
+    absolute_fields = (
+        "source_receipt",
+        "legacy_repository",
+        "legacy_git_common_dir",
+        "bundle",
+        "owner_repository",
+    )
+    if (
+        value["schema"] != OWNER_ALIAS_SCHEMA
+        or any(
+            not isinstance(value[field], str) or not Path(value[field]).is_absolute()
+            for field in absolute_fields
+        )
+        or any(
+            not re.fullmatch(r"[0-9a-f]{64}", str(value[field]))
+            for field in ("source_sha256", "bundle_sha256")
+        )
+    ):
+        die("archive owner alias identity is malformed")
+    for field in ("legacy_repository_id", "owner_id"):
+        identity = value[field]
+        if (
+            not isinstance(identity, list)
+            or len(identity) != 2
+            or any(not isinstance(item, int) or item < 0 for item in identity)
+        ):
+            die("archive owner alias filesystem identity is malformed")
+    try:
+        datetime.strptime(value["created_utc"], "%Y-%m-%dT%H:%M:%SZ")
+    except (TypeError, ValueError) as exc:
+        raise HousekeepingError("archive owner alias creation time is malformed") from exc
+    tips = value["tips"]
+    if (
+        not isinstance(tips, list)
+        or not tips
+        or any(
+            not isinstance(row, dict)
+            or set(row) != {"archive", "tip"}
+            or not isinstance(row["archive"], str)
+            or run(["git", "check-ref-format", row["archive"]], check=False).returncode
+            != 0
+            or not OID_RE.fullmatch(str(row["tip"]))
+            for row in tips
+        )
+        or len({row["archive"] for row in tips}) != len(tips)
+        or len({row["tip"] for row in tips}) != len(tips)
+        or tips != sorted(tips, key=lambda row: (row["archive"], row["tip"]))
+    ):
+        die("archive owner alias tips are malformed")
+    remote = value["owner_remote"]
+    if not isinstance(remote, str) or normalized_remote_identity("ssh://" + remote) != remote:
+        die("archive owner alias remote identity is malformed")
+    protected = value["protected_main"]
+    if (
+        not isinstance(protected, dict)
+        or set(protected) != {"ref", "tip"}
+        or protected["ref"] != "refs/remotes/origin/main"
+        or not OID_RE.fullmatch(str(protected["tip"]))
+    ):
+        die("archive owner alias protected-main identity is malformed")
+    mapping = value["mapping"]
+    if not isinstance(mapping, dict) or set(mapping) != {
+        "method",
+        "legacy_origin",
+        "evidence_repository",
+        "evidence_repository_id",
+        "evidence_repository_remote",
+        "evidence_commit",
+        "evidence_path",
+        "evidence_sha256",
+    }:
+        die("archive owner alias mapping fields are malformed")
+    evidence_path = mapping["evidence_path"]
+    if (
+        mapping["method"]
+        not in {"direct-local-origin-v1", "authorized-single-relocation-v1"}
+        or not isinstance(mapping["legacy_origin"], str)
+        or not Path(mapping["legacy_origin"]).is_absolute()
+        or not isinstance(mapping["evidence_repository"], str)
+        or not Path(mapping["evidence_repository"]).is_absolute()
+        or not isinstance(mapping["evidence_repository_id"], list)
+        or len(mapping["evidence_repository_id"]) != 2
+        or any(
+            not isinstance(item, int) or item < 0
+            for item in mapping["evidence_repository_id"]
+        )
+        or not isinstance(mapping["evidence_repository_remote"], str)
+        or normalized_remote_identity("ssh://" + mapping["evidence_repository_remote"])
+        != mapping["evidence_repository_remote"]
+        or not OID_RE.fullmatch(str(mapping["evidence_commit"]))
+        or not isinstance(evidence_path, str)
+        or Path(evidence_path).is_absolute()
+        or not evidence_path
+        or any(part in {"", ".", ".."} for part in Path(evidence_path).parts)
+        or not re.fullmatch(r"[0-9a-f]{64}", str(mapping["evidence_sha256"]))
+    ):
+        die("archive owner alias mapping identity is malformed")
+    if mapping["method"] == "direct-local-origin-v1":
+        if mapping["legacy_origin"] != value["owner_repository"]:
+            die("archive owner direct mapping changed")
+    elif mapping["legacy_origin"] == value["owner_repository"]:
+        die("archive owner relocation did not change the canonical owner")
+    drill = value["restore_drill"]
+    if (
+        not isinstance(drill, dict)
+        or set(drill) != {"method", "verified_utc", "headset_sha256"}
+        or drill["method"] != "independent-bare-fetch-exact-heads-v1"
+        or not re.fullmatch(r"[0-9a-f]{64}", str(drill["headset_sha256"]))
+        or drill["headset_sha256"] != alias_tip_digest(tips)
+    ):
+        die("archive owner alias restore proof is malformed")
+    try:
+        datetime.strptime(drill["verified_utc"], "%Y-%m-%dT%H:%M:%SZ")
+    except (TypeError, ValueError) as exc:
+        raise HousekeepingError("archive owner alias restore time is malformed") from exc
+    source = Path(value["source_receipt"])
+    if path.name != owner_alias_name(source):
+        die("archive owner alias filename changed")
+    return value
+
+
+def load_owner_aliases() -> Dict[str, Tuple[Path, Dict[str, Any]]]:
+    directory = owner_alias_directory()
+    if not directory.exists():
+        return {}
+    aliases: Dict[str, Tuple[Path, Dict[str, Any]]] = {}
+    repository_bindings: Dict[Tuple[str, Tuple[int, ...]], Tuple[Any, ...]] = {}
+    paths = sorted(directory.iterdir())
+    if any(path.suffix != ".json" for path in paths):
+        die("archive owner-alias directory contains an unknown artifact")
+    for path in paths:
+        value = parse_owner_alias(path)
+        source = value["source_receipt"]
+        if source in aliases:
+            die("archive source has duplicate owner aliases")
+        repository_key = (
+            value["legacy_repository"],
+            tuple(value["legacy_repository_id"]),
+        )
+        mapping = value["mapping"]
+        binding = (
+            value["owner_repository"],
+            tuple(value["owner_id"]),
+            value["owner_remote"],
+            mapping["method"],
+            mapping["legacy_origin"],
+            mapping["evidence_repository"],
+            tuple(mapping["evidence_repository_id"]),
+            mapping["evidence_repository_remote"],
+            mapping["evidence_commit"],
+            mapping["evidence_path"],
+            mapping["evidence_sha256"],
+        )
+        if (
+            repository_key in repository_bindings
+            and repository_bindings[repository_key] != binding
+        ):
+            die("archive repository has mixed owner aliases")
+        repository_bindings[repository_key] = binding
+        aliases[source] = (path, value)
+    return aliases
+
+
+def validate_owner_alias(
+    source: Path,
+    parsed: Dict[str, Any],
+    alias: Dict[str, Any],
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
+) -> Path:
+    values = parsed["values"]
+    expected_tips = sorted(
+        ({"archive": row["archive"], "tip": row["tip"]} for row in parsed["items"]),
+        key=lambda row: (row["archive"], row["tip"]),
+    )
+    try:
+        legacy_identity = [
+            int(item) for item in values.get("repository_id", "").split(":")
+        ]
+    except ValueError as exc:
+        raise HousekeepingError("archive owner alias legacy identity is malformed") from exc
+    required_bindings = (
+        alias["source_receipt"] == str(source)
+        and alias["source_sha256"] == digest(source)
+        and alias["legacy_repository"] == values.get("repository_canonical")
+        and alias["legacy_repository_id"]
+        == legacy_identity
+        and alias["legacy_git_common_dir"] == values["git_common_dir"]
+        and alias["bundle"] == values["bundle"]
+        and alias["bundle_sha256"] == values["bundle_sha256"]
+        and alias["tips"] == expected_tips
+    )
+    if not required_bindings:
+        die("archive owner alias no longer matches its source receipt")
+    mapping = alias["mapping"]
+    evidence_value = mapping["evidence_repository"]
+    evidence_cached = owner_cache.get(evidence_value) if owner_cache is not None else None
+    if evidence_cached is None:
+        evidence_repo = canonical_repo(Path(evidence_value))
+        evidence_remote = terminal_remote_identity(evidence_repo)
+        evidence_main = origin_main(evidence_repo)
+        if evidence_main is None:
+            die("archive owner mapping evidence protected main is unknown")
+        evidence_cached = (evidence_repo, evidence_remote, evidence_main)
+        if owner_cache is not None:
+            owner_cache[evidence_value] = evidence_cached
+    evidence_repo, evidence_remote, evidence_main = evidence_cached
+    if (
+        list(path_id(evidence_repo)) != mapping["evidence_repository_id"]
+        or evidence_remote != mapping["evidence_repository_remote"]
+        or is_ancestor(evidence_repo, mapping["evidence_commit"], evidence_main)
+        is not True
+    ):
+        die("archive owner mapping evidence identity changed")
+    evidence = git(
+        evidence_repo,
+        "show",
+        f"{mapping['evidence_commit']}:{mapping['evidence_path']}",
+        check=False,
+    )
+    if (
+        evidence.returncode != 0
+        or hashlib.sha256(evidence.stdout).hexdigest() != mapping["evidence_sha256"]
+    ):
+        die("archive owner mapping evidence changed")
+    selected = None
+    try:
+        evidence_lines = evidence.stdout.decode("utf-8").splitlines()
+    except UnicodeDecodeError as exc:
+        raise HousekeepingError("archive owner mapping evidence is malformed") from exc
+    if (
+        not evidence_lines
+        or evidence_lines[0]
+        != "legacy_repository\tlegacy_origin\towner_repository\tmethod"
+    ):
+        die("archive owner mapping evidence schema changed")
+    for line in evidence_lines[1:]:
+        fields = line.split("\t")
+        if len(fields) == 4 and fields[0] == alias["legacy_repository"]:
+            if selected is not None:
+                die("archive owner mapping evidence is duplicated")
+            selected = fields
+    if selected != [
+        alias["legacy_repository"],
+        mapping["legacy_origin"],
+        alias["owner_repository"],
+        mapping["method"],
+    ]:
+        die("archive owner mapping evidence no longer matches the alias")
+    bundle = Path(alias["bundle"])
+    if bundle.exists() or bundle.is_symlink():
+        validate_private_file(bundle)
+        if digest(bundle) != alias["bundle_sha256"]:
+            die("archive owner alias source bundle changed")
+    owner_value = alias["owner_repository"]
+    cached = owner_cache.get(owner_value) if owner_cache is not None else None
+    if cached is None:
+        owner = canonical_repo(Path(owner_value))
+        if list(path_id(owner)) != alias["owner_id"]:
+            die("archive owner alias durable owner identity changed")
+        remote = terminal_remote_identity(owner)
+        current_main = origin_main(owner)
+        if current_main is None:
+            die("archive owner alias protected main is unknown")
+        cached = (owner, remote, current_main)
+        if owner_cache is not None:
+            owner_cache[owner_value] = cached
+    owner, remote, current_main = cached
+    if list(path_id(owner)) != alias["owner_id"]:
+        die("archive owner alias durable owner identity changed")
+    if remote != alias["owner_remote"]:
+        die("archive owner alias terminal remote changed")
+    recorded_main = alias["protected_main"]["tip"]
+    if (
+        git(owner, "cat-file", "-e", f"{recorded_main}^{{commit}}", check=False).returncode
+        != 0
+        or is_ancestor(owner, recorded_main, current_main) is not True
+    ):
+        die("archive owner alias protected main rewound or diverged")
+    return owner
+
+
+def resolve_archive_owner(
+    source: Path,
+    parsed: Optional[Dict[str, Any]] = None,
+    aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
+) -> Path:
+    parsed = parsed or parse_archive_receipt(source)
+    repository = Path(parsed["values"].get("repository_canonical", ""))
+    if not repository.is_absolute():
+        die("archive receipt repository identity is missing")
+    if repository.exists() or repository.is_symlink():
+        return canonical_repo(repository)
+    alias_rows = aliases if aliases is not None else load_owner_aliases()
+    row = alias_rows.get(str(source))
+    if row is None:
+        die("archive legacy repository is absent without an owner alias")
+    return validate_owner_alias(source, parsed, row[1], owner_cache)
+
+
+def committed_mapping_evidence(
+    coordinator_repo: Path,
+    commit: str,
+    relative_path: str,
+    legacy_repository: str,
+    legacy_origin: str,
+    owner_repository: str,
+) -> Tuple[str, str, str]:
+    if not OID_RE.fullmatch(commit):
+        die("archive owner mapping evidence commit is malformed")
+    path = Path(relative_path)
+    if (
+        path.is_absolute()
+        or not relative_path
+        or any(part in {"", ".", ".."} for part in path.parts)
+    ):
+        die("archive owner mapping evidence path is malformed")
+    if git(coordinator_repo, "cat-file", "-e", f"{commit}^{{commit}}", check=False).returncode:
+        die("archive owner mapping evidence commit is unavailable")
+    protected = origin_main(coordinator_repo)
+    if protected is None or is_ancestor(coordinator_repo, commit, protected) is not True:
+        die("archive owner mapping evidence is outside protected main")
+    result = git(coordinator_repo, "show", f"{commit}:{relative_path}", check=False)
+    if result.returncode != 0:
+        die("archive owner mapping evidence file is unavailable")
+    payload = result.stdout
+    try:
+        lines = payload.decode("utf-8").splitlines()
+    except UnicodeDecodeError as exc:
+        raise HousekeepingError("archive owner mapping evidence is malformed") from exc
+    expected_header = "legacy_repository\tlegacy_origin\towner_repository\tmethod"
+    if not lines or lines[0] != expected_header:
+        die("archive owner mapping evidence schema is unsupported")
+    mappings: Dict[str, Tuple[str, str, str]] = {}
+    for line in lines[1:]:
+        fields = line.split("\t")
+        if (
+            len(fields) != 4
+            or fields[0] in mappings
+            or any(CONTROL_RE.search(field) for field in fields)
+            or any(not Path(field).is_absolute() for field in fields[:3])
+            or fields[3]
+            not in {"direct-local-origin-v1", "authorized-single-relocation-v1"}
+        ):
+            die("archive owner mapping evidence row is malformed")
+        mappings[fields[0]] = (fields[1], fields[2], fields[3])
+    selected = mappings.get(legacy_repository)
+    if selected is None or selected[:2] != (legacy_origin, owner_repository):
+        die("archive owner mapping evidence does not match the requested owner")
+    method = selected[2]
+    if (method == "direct-local-origin-v1") != (legacy_origin == owner_repository):
+        die("archive owner mapping evidence method changed")
+    return method, hashlib.sha256(payload).hexdigest(), terminal_remote_identity(
+        coordinator_repo
+    )
+
+
+def independent_alias_restore(
+    coordinator_repo: Path,
+    bundle: Path,
+    tips: Sequence[Dict[str, str]],
+) -> str:
+    restore = Path(tempfile.mkdtemp(prefix="harness-owner-alias-", dir="/tmp"))
+    try:
+        git(restore, "init", "--bare")
+        git(
+            restore,
+            "fetch",
+            "--quiet",
+            str(bundle),
+            *[f"{row['archive']}:{row['archive']}" for row in tips],
+        )
+        for row in tips:
+            restored = text(git(restore, "rev-parse", "--verify", row["archive"])).strip()
+            if restored != row["tip"]:
+                die("archive owner alias independent restore changed a tip")
+        git(restore, "fsck", "--full", "--no-dangling")
+    finally:
+        remove_restore_tree(coordinator_repo, restore)
+    return alias_tip_digest(tips)
+
+
+def create_owner_alias(
+    coordinator_repo: Path,
+    source: Path,
+    owner_value: str,
+    legacy_origin_value: str,
+    evidence_commit: str,
+    evidence_path: str,
+) -> Dict[str, Any]:
+    state = state_directory()[1]
+    validate_private_file(source)
+    if source.resolve(strict=True).parent != state or source.suffix != ".receipt":
+        die("archive owner alias source receipt is outside durable state")
+    source_sha256 = digest(source)
+    parsed = parse_archive_receipt(source)
+    values = parsed["values"]
+    legacy_value = values.get("repository_canonical")
+    legacy_id = values.get("repository_id")
+    if not legacy_value or not Path(legacy_value).is_absolute() or not legacy_id:
+        die("archive owner alias requires archive-v2 repository identity")
+    try:
+        legacy_identity = [int(item) for item in legacy_id.split(":")]
+    except ValueError as exc:
+        raise HousekeepingError("archive owner alias legacy identity is malformed") from exc
+    if len(legacy_identity) != 2 or any(item < 0 for item in legacy_identity):
+        die("archive owner alias legacy identity is malformed")
+    owner = canonical_repo(Path(owner_value))
+    if str(owner) != owner_value:
+        die("archive owner alias durable owner path is not exact")
+    legacy_origin = Path(legacy_origin_value)
+    if not legacy_origin.is_absolute():
+        die("archive owner alias legacy origin is not absolute")
+    method, evidence_sha256, evidence_remote = committed_mapping_evidence(
+        coordinator_repo,
+        evidence_commit,
+        evidence_path,
+        legacy_value,
+        legacy_origin_value,
+        owner_value,
+    )
+    legacy = Path(legacy_value)
+    if legacy.exists() or legacy.is_symlink():
+        canonical_legacy = canonical_repo(legacy)
+        if list(path_id(canonical_legacy)) != legacy_identity:
+            die("archive owner alias legacy repository identity changed")
+        if exact_local_origin(canonical_legacy) != legacy_origin:
+            die("archive owner alias local-origin mapping changed")
+    elif method != "authorized-single-relocation-v1":
+        die("archive owner alias cannot infer an absent direct owner")
+    if method == "direct-local-origin-v1":
+        if legacy_origin != owner:
+            die("archive owner alias direct owner changed")
+    else:
+        if legacy_origin == owner or legacy_origin.exists() or legacy_origin.is_symlink():
+            die("archive owner alias relocation predecessor is not retired")
+    owner_remote = terminal_remote_identity(owner)
+    protected_main = origin_main(owner)
+    if protected_main is None:
+        die("archive owner alias protected main is unknown")
+    bundle = Path(values["bundle"])
+    validate_private_file(bundle)
+    if digest(bundle) != values["bundle_sha256"]:
+        die("archive owner alias source bundle changed")
+    git(owner, "bundle", "verify", str(bundle))
+    tips = sorted(
+        ({"archive": row["archive"], "tip": row["tip"]} for row in parsed["items"]),
+        key=lambda row: (row["archive"], row["tip"]),
+    )
+    restored_digest = independent_alias_restore(coordinator_repo, bundle, tips)
+
+    # Re-read every mutable identity immediately before immutable publication.
+    validate_private_file(source)
+    if digest(source) != source_sha256:
+        die("archive owner alias source receipt changed")
+    if digest(bundle) != values["bundle_sha256"]:
+        die("archive owner alias source bundle changed")
+    if terminal_remote_identity(owner) != owner_remote:
+        die("archive owner alias terminal remote changed before publication")
+    if testing_override("HARNESS_TEST_OWNER_ALIAS_MAIN_DRIFT") == "1":
+        die("archive owner alias protected main changed before publication")
+    if origin_main(owner) != protected_main:
+        die("archive owner alias protected main changed before publication")
+    if method == "direct-local-origin-v1" and legacy.exists():
+        if exact_local_origin(canonical_repo(legacy)) != owner:
+            die("archive owner alias local origin changed before publication")
+
+    created_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    value: Dict[str, Any] = {
+        "schema": OWNER_ALIAS_SCHEMA,
+        "created_utc": created_utc,
+        "source_receipt": str(source),
+        "source_sha256": source_sha256,
+        "legacy_repository": legacy_value,
+        "legacy_repository_id": legacy_identity,
+        "legacy_git_common_dir": values["git_common_dir"],
+        "bundle": str(bundle),
+        "bundle_sha256": values["bundle_sha256"],
+        "tips": tips,
+        "owner_repository": str(owner),
+        "owner_id": list(path_id(owner)),
+        "owner_remote": owner_remote,
+        "protected_main": {
+            "ref": "refs/remotes/origin/main",
+            "tip": protected_main,
+        },
+        "mapping": {
+            "method": method,
+            "legacy_origin": str(legacy_origin),
+            "evidence_repository": str(coordinator_repo),
+            "evidence_repository_id": list(path_id(coordinator_repo)),
+            "evidence_repository_remote": evidence_remote,
+            "evidence_commit": evidence_commit,
+            "evidence_path": evidence_path,
+            "evidence_sha256": evidence_sha256,
+        },
+        "restore_drill": {
+            "method": "independent-bare-fetch-exact-heads-v1",
+            "verified_utc": created_utc,
+            "headset_sha256": restored_digest,
+        },
+    }
+    directory = owner_alias_directory(create=True)
+    destination = directory / owner_alias_name(source)
+    if destination.exists() or destination.is_symlink():
+        die("archive source already has an owner alias")
+    payload = json_bytes(value)
+    published: Optional[Path] = None
+    try:
+        if testing_override("HARNESS_TEST_OWNER_ALIAS_INTERRUPT") == "before":
+            die("archive owner alias publication interrupted before publication")
+        published = publish_bytes(directory, destination.name, payload)
+        if testing_override("HARNESS_TEST_OWNER_ALIAS_INTERRUPT") == "after":
+            die("archive owner alias publication interrupted after publication")
+        parsed_alias = parse_owner_alias(published)
+        validate_owner_alias(source, parsed, parsed_alias)
+    except BaseException:
+        if (
+            published is not None
+            and published.exists()
+            and digest(published) == hashlib.sha256(payload).hexdigest()
+        ):
+            validate_private_file(published)
+            published.unlink()
+            fsync_directory(directory)
+        raise
+    return {
+        "alias": str(published),
+        "source": source.name,
+        "owner": owner.name,
+        "method": method,
+        "tips": len(tips),
+    }
+
+
 def archive_audit(
     repo: Path,
     receipt_path: Path,
     generation_cache: Optional[Dict[Path, Dict[str, Any]]] = None,
+    aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
 ) -> Dict[str, Any]:
     parsed = parse_archive_receipt(receipt_path)
     values = parsed["values"]
-    common = Path(text(git(repo, "rev-parse", "--git-common-dir")).strip())
-    if not common.is_absolute():
-        common = repo / common
-    if common.resolve(strict=True) != Path(values["git_common_dir"]).resolve(strict=True):
+    resolved_owner = resolve_archive_owner(
+        receipt_path, parsed, aliases=aliases, owner_cache=owner_cache
+    )
+    if str(repo) != str(resolved_owner) or path_id(repo) != path_id(resolved_owner):
         die("archive receipt belongs to a different Git repository")
+    legacy = Path(values.get("repository_canonical", ""))
+    if legacy.exists() or legacy.is_symlink():
+        common = Path(text(git(repo, "rev-parse", "--git-common-dir")).strip())
+        if not common.is_absolute():
+            common = repo / common
+        if common.resolve(strict=True) != Path(values["git_common_dir"]).resolve(strict=True):
+            die("archive receipt belongs to a different Git repository")
     bundle = Path(values["bundle"])
     heads: Dict[str, str] = {}
     recovery_sources: Dict[str, Tuple[Path, str]] = {}
@@ -391,12 +1054,16 @@ def archive_audit(
             generation_path = Path(generation["receipt"])
             generation_value = cache.get(generation_path)
             if generation_value is None:
-                generation_value = parse_generation_receipt(generation_path, state)
+                generation_value = parse_generation_receipt(
+                    generation_path, state, aliases, owner_cache
+                )
                 cache[generation_path] = generation_value
             rows = [
                 row
                 for row in generation_value["repositories"]
-                if row["repository_canonical"] == str(repo)
+                if generation_repository_matches(
+                    state, generation_value, row, receipt_path, repo, aliases, owner_cache
+                )
             ]
             if len(rows) != 1:
                 die("archive compaction recovery repository changed")
@@ -448,7 +1115,12 @@ def generation_headset_digest(heads: Sequence[Dict[str, str]]) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def parse_generation_receipt(path: Path, state: Path) -> Dict[str, Any]:
+def parse_generation_receipt(
+    path: Path,
+    state: Path,
+    aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
+) -> Dict[str, Any]:
     validate_private_file(path)
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -564,9 +1236,9 @@ def parse_generation_receipt(path: Path, state: Path) -> Dict[str, Any]:
             die("archive generation bundle is outside its generation directory")
         if digest(bundle) != repository["bundle_sha256"]:
             die("archive generation bundle digest changed")
-        owner = canonical_repo(Path(canonical))
-        if list(path_id(owner)) != identity:
-            die("archive generation repository identity changed")
+        owner = resolve_recorded_repository(
+            state, canonical, identity, aliases=aliases, owner_cache=owner_cache
+        )
         git(owner, "bundle", "verify", str(bundle))
         bundled_heads: Dict[str, str] = {}
         for line in text(git(owner, "bundle", "list-heads", str(bundle))).splitlines():
@@ -576,6 +1248,67 @@ def parse_generation_receipt(path: Path, state: Path) -> Dict[str, Any]:
         if bundled_heads != {head["ref"]: head["tip"] for head in heads}:
             die("archive generation bundle head set changed")
     return value
+
+
+def resolve_recorded_repository(
+    state: Path,
+    canonical: str,
+    identity: Sequence[int],
+    *,
+    aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
+) -> Path:
+    repository = Path(canonical)
+    if repository.exists() or repository.is_symlink():
+        owner = canonical_repo(repository)
+        if list(path_id(owner)) != list(identity):
+            die("archive recorded repository identity changed")
+        return owner
+    alias_rows = aliases if aliases is not None else load_owner_aliases()
+    candidates = [
+        (Path(source_value), row[1])
+        for source_value, row in alias_rows.items()
+        if row[1]["legacy_repository"] == canonical
+        and row[1]["legacy_repository_id"] == list(identity)
+    ]
+    if not candidates:
+        die("archive recorded repository is absent without an owner alias")
+    owners: Dict[Tuple[str, Tuple[int, int]], Path] = {}
+    for source, alias in candidates:
+        if not source.exists() or source.is_symlink():
+            die("archive recorded repository alias source is unavailable")
+        parsed = parse_archive_receipt(source)
+        owner = validate_owner_alias(source, parsed, alias, owner_cache)
+        owners[(str(owner), path_id(owner))] = owner
+    if len(owners) != 1:
+        die("archive recorded repository has mixed owner aliases")
+    return next(iter(owners.values()))
+
+
+def generation_repository_matches(
+    state: Path,
+    generation: Dict[str, Any],
+    row: Dict[str, Any],
+    source: Path,
+    owner: Path,
+    aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
+) -> bool:
+    del generation
+    parsed = parse_archive_receipt(source)
+    source_owner = resolve_archive_owner(
+        source, parsed, aliases=aliases, owner_cache=owner_cache
+    )
+    if str(source_owner) != str(owner) or path_id(source_owner) != path_id(owner):
+        return False
+    row_owner = resolve_recorded_repository(
+        state,
+        row["repository_canonical"],
+        row["repository_id"],
+        aliases=aliases,
+        owner_cache=owner_cache,
+    )
+    return str(row_owner) == str(owner) and path_id(row_owner) == path_id(owner)
 
 
 def parse_compaction_receipt(path: Path) -> Dict[str, Any]:
@@ -659,20 +1392,26 @@ def generation_covers_source(
     repository: str,
     tips: Sequence[str],
     generation_value: Optional[Dict[str, Any]] = None,
+    aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
 ) -> bool:
     generation = (
         generation_value
         if generation_value is not None
-        else parse_generation_receipt(generation_path, state)
+        else parse_generation_receipt(generation_path, state, aliases, owner_cache)
     )
     if {"name": source_name, "sha256": source_sha256} not in generation[
         "source_receipts"
     ]:
         return False
+    owner = canonical_repo(Path(repository))
+    source = state / source_name
     rows = [
         row
         for row in generation["repositories"]
-        if row["repository_canonical"] == repository
+        if generation_repository_matches(
+            state, generation, row, source, owner, aliases, owner_cache
+        )
     ]
     if len(rows) != 1:
         return False
@@ -681,7 +1420,10 @@ def generation_covers_source(
 
 
 def generation_covers_declared_sources(
-    state: Path, generation: Dict[str, Any]
+    state: Path,
+    generation: Dict[str, Any],
+    aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
 ) -> bool:
     for source in generation["source_receipts"]:
         receipt = state / source["name"]
@@ -689,10 +1431,15 @@ def generation_covers_declared_sources(
             return False
         parsed = parse_archive_receipt(receipt)
         repository = parsed["values"].get("repository_canonical")
+        owner = resolve_archive_owner(
+            receipt, parsed, aliases=aliases, owner_cache=owner_cache
+        )
         rows = [
             row
             for row in generation["repositories"]
-            if row["repository_canonical"] == repository
+            if generation_repository_matches(
+                state, generation, row, receipt, owner, aliases, owner_cache
+            )
         ]
         covered = {head["tip"] for row in rows for head in row["heads"]}
         if (
@@ -712,6 +1459,8 @@ def audit_compaction(
     expected_source: Optional[Path] = None,
     generation_cache: Optional[Dict[Path, Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
+    aliases = load_owner_aliases()
+    owner_cache: Dict[str, Tuple[Path, str, str]] = {}
     value = parse_compaction_receipt(compaction_path)
     source = Path(value["source_receipt"])
     if expected_source is not None and source.resolve(strict=True) != expected_source.resolve(
@@ -721,9 +1470,14 @@ def audit_compaction(
     validate_private_file(source)
     if digest(source) != value["source_sha256"]:
         die("archive compaction source receipt digest changed")
-    if str(repo) != value["repository_canonical"] or list(path_id(repo)) != value[
-        "repository_id"
-    ]:
+    recorded_owner = resolve_recorded_repository(
+        state_directory()[1],
+        value["repository_canonical"],
+        value["repository_id"],
+        aliases=aliases,
+        owner_cache=owner_cache,
+    )
+    if str(repo) != str(recorded_owner) or path_id(repo) != path_id(recorded_owner):
         die("archive compaction repository identity changed")
     parsed_source = parse_archive_receipt(source)
     source_values = parsed_source["values"]
@@ -749,7 +1503,9 @@ def audit_compaction(
             generation_cache.get(path) if generation_cache is not None else None
         )
         if generation_value is None:
-            generation_value = parse_generation_receipt(path, state)
+            generation_value = parse_generation_receipt(
+                path, state, aliases, owner_cache
+            )
             if generation_cache is not None:
                 generation_cache[path] = generation_value
         if not generation_covers_source(
@@ -760,6 +1516,8 @@ def audit_compaction(
             str(repo),
             value["tips"],
             generation_value,
+            aliases,
+            owner_cache,
         ):
             die("archive compaction generation coverage changed")
     bundle = Path(value["bundle"])
@@ -823,9 +1581,14 @@ def plan_archive_compaction(repo: Path, source: Path) -> Dict[str, Any]:
         die("archive compaction source receipt is outside durable state")
     parsed = parse_archive_receipt(source)
     values = parsed["values"]
-    if values.get("repository_canonical") != str(repo):
+    aliases = load_owner_aliases()
+    owner_cache: Dict[str, Tuple[Path, str, str]] = {}
+    source_owner = resolve_archive_owner(
+        source, parsed, aliases=aliases, owner_cache=owner_cache
+    )
+    if str(source_owner) != str(repo) or path_id(source_owner) != path_id(repo):
         die("archive compaction source belongs to a different repository")
-    audit = archive_audit(repo, source)
+    audit = archive_audit(repo, source, aliases=aliases, owner_cache=owner_cache)
     if audit["retired"]:
         die("archive source bundle is already compacted")
     bundle = Path(values["bundle"])
@@ -858,6 +1621,8 @@ def plan_archive_compaction(repo: Path, source: Path) -> Dict[str, Any]:
                 digest(source),
                 str(repo),
                 [item["tip"] for item in parsed["items"]],
+                aliases=aliases,
+                owner_cache=owner_cache,
             ):
                 generation_digest = digest(path)
                 generations.append(
@@ -1032,6 +1797,8 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
     if not receipts:
         die("archive generation requires source receipts")
     directory = state / "generations"
+    aliases = load_owner_aliases()
+    owner_cache: Dict[str, Tuple[Path, str, str]] = {}
     existing_generations = []
     if directory.exists() or directory.is_symlink():
         info = directory.lstat()
@@ -1043,7 +1810,9 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
         ):
             die("archive generation directory identity is unsafe")
         for receipt in sorted(directory.glob("*.json")):
-            value = parse_generation_receipt(receipt, state)
+            value = parse_generation_receipt(
+                receipt, state, aliases, owner_cache
+            )
             created = datetime.strptime(
                 value["created_utc"], "%Y-%m-%dT%H:%M:%SZ"
             ).replace(tzinfo=timezone.utc)
@@ -1051,7 +1820,9 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
     trigger_generations = [
         row
         for row in existing_generations
-        if generation_covers_declared_sources(state, row[1])
+        if generation_covers_declared_sources(
+            state, row[1], aliases, owner_cache
+        )
     ]
     latest = (
         max(trigger_generations, key=lambda row: row[0])[1]
@@ -1076,11 +1847,19 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
         repository_value = values.get("repository_canonical")
         if not repository_value or not Path(repository_value).is_absolute():
             die("archive generation source repository is missing")
-        owner = canonical_repo(Path(repository_value))
-        audit = archive_audit(owner, receipt, generation_cache)
+        owner = resolve_archive_owner(
+            receipt, parsed, aliases=aliases, owner_cache=owner_cache
+        )
+        audit = archive_audit(
+            owner,
+            receipt,
+            generation_cache,
+            aliases=aliases,
+            owner_cache=owner_cache,
+        )
         sources.append({"name": receipt.name, "sha256": digest(receipt)})
         row = grouped.setdefault(
-            repository_value,
+            str(owner),
             {"repository": owner, "tips": {}},
         )
         for item in parsed["items"]:
@@ -1092,10 +1871,18 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
             repository_value: origin_main(grouped[repository_value]["repository"])
             for repository_value in grouped
         }
-        recorded_main = {
-            repository["repository_canonical"]: repository["protected_main"]["tip"]
-            for repository in latest["repositories"]
-        }
+        recorded_main: Dict[str, str] = {}
+        for repository in latest["repositories"]:
+            recorded_owner = resolve_recorded_repository(
+                state,
+                repository["repository_canonical"],
+                repository["repository_id"],
+                aliases=aliases,
+                owner_cache=owner_cache,
+            )
+            if str(recorded_owner) in recorded_main:
+                die("archive generation has duplicate durable owners")
+            recorded_main[str(recorded_owner)] = repository["protected_main"]["tip"]
         age_days = max(0, (datetime.now(timezone.utc) - created).days)
         if (
             latest["source_receipts"] == sources
@@ -1273,7 +2060,9 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
         published_receipt = publish_bytes(
             directory, receipt_path.name, json_bytes(payload)
         )
-        parse_generation_receipt(published_receipt, state)
+        parse_generation_receipt(
+            published_receipt, state, aliases, owner_cache
+        )
         return {
             "generation": generation,
             "receipt": str(published_receipt),
@@ -1390,6 +2179,8 @@ def artifact_age_days(info: os.stat_result) -> int:
 def plan_archives(coordinator_repo: Path) -> None:
     _lexical, state = state_directory()
     receipts = sorted(state.glob("*.receipt"))
+    aliases = load_owner_aliases()
+    owner_cache: Dict[str, Tuple[Path, str, str]] = {}
     generation_directory = state / "generations"
     if generation_directory.exists() or generation_directory.is_symlink():
         generation_info = generation_directory.lstat()
@@ -1406,14 +2197,16 @@ def plan_archives(coordinator_repo: Path) -> None:
         else []
     )
     generation_values = [
-        (path, parse_generation_receipt(path, state))
+        (path, parse_generation_receipt(path, state, aliases, owner_cache))
         for path in generation_receipts
     ]
     generation_cache = {path: value for path, value in generation_values}
     trigger_generations = [
         row
         for row in generation_values
-        if generation_covers_declared_sources(state, row[1])
+        if generation_covers_declared_sources(
+            state, row[1], aliases, owner_cache
+        )
     ]
     latest_generation = (
         max(
@@ -1437,6 +2230,7 @@ def plan_archives(coordinator_repo: Path) -> None:
             f"generation_trigger_basis={trigger_facts['basis']} "
             f"generation_uncovered={trigger_facts['uncovered']} "
             f"generation_trigger_bytes={trigger_facts['bytes']} "
+            f"aliases={len(aliases)} unbound_aliases={len(aliases)} "
             "candidates=0 apply=unavailable"
         )
         for path, value in generation_values:
@@ -1471,8 +2265,11 @@ def plan_archives(coordinator_repo: Path) -> None:
         repository_value = values.get("repository_canonical")
         if not repository_value or not Path(repository_value).is_absolute():
             die("archive receipt repository identity is missing")
-        if repository_value not in repo_cache:
-            owner_repo = canonical_repo(Path(repository_value))
+        owner_repo = resolve_archive_owner(
+            receipt, parsed, aliases=aliases, owner_cache=owner_cache
+        )
+        owner_value = str(owner_repo)
+        if owner_value not in repo_cache:
             refs = {}
             for line in text(
                 git(owner_repo, "for-each-ref", "--format=%(refname) %(objectname)")
@@ -1481,14 +2278,20 @@ def plan_archives(coordinator_repo: Path) -> None:
                 if len(fields) != 2 or not OID_RE.fullmatch(fields[1]):
                     die("archive repository ref inventory is malformed")
                 refs[fields[0]] = fields[1]
-            repo_cache[repository_value] = (
+            repo_cache[owner_value] = (
                 owner_repo,
                 origin_main(owner_repo),
                 pull_requests(owner_repo),
                 refs,
             )
-        owner_repo, main_oid, pull_rows, refs = repo_cache[repository_value]
-        audit = archive_audit(owner_repo, receipt, generation_cache)
+        owner_repo, main_oid, pull_rows, refs = repo_cache[owner_value]
+        audit = archive_audit(
+            owner_repo,
+            receipt,
+            generation_cache,
+            aliases=aliases,
+            owner_cache=owner_cache,
+        )
         bundle = Path(values["bundle"])
         bundle_bytes = audit["bundle_bytes"]
         if audit["retired"]:
@@ -1689,9 +2492,34 @@ def plan_archives(coordinator_repo: Path) -> None:
             f"sources={len(value['source_receipts'])} "
             "restore_drill=pass status=valid candidate=no"
         )
+    unbound_aliases = 0
+    for source_value, (path, alias) in aliases.items():
+        source = Path(source_value)
+        if not source.exists() or source.is_symlink():
+            unbound_aliases += 1
+            status = "unbound"
+        else:
+            validate_owner_alias(
+                source,
+                parse_archive_receipt(source),
+                alias,
+                owner_cache,
+            )
+            status = "valid"
+        output_rows.append(
+            "  AUX "
+            f"type=owner-alias name={path.name} source={source.name} "
+            f"owner={Path(alias['owner_repository']).name} status={status} candidate=no"
+        )
     for path in compaction_paths:
         value = parse_compaction_receipt(path)
-        owner = canonical_repo(Path(value["repository_canonical"]))
+        owner = resolve_recorded_repository(
+            state,
+            value["repository_canonical"],
+            value["repository_id"],
+            aliases=aliases,
+            owner_cache=owner_cache,
+        )
         audited = audit_compaction(owner, path, generation_cache=generation_cache)
         output_rows.append(
             "  AUX "
@@ -1722,6 +2550,7 @@ def plan_archives(coordinator_repo: Path) -> None:
         f"generation_uncovered={trigger_facts['uncovered']} "
         f"generation_trigger_bytes={trigger_facts['bytes']} "
         f"compactions={len(compaction_paths)} "
+        f"aliases={len(aliases)} unbound_aliases={unbound_aliases} "
         "candidates=0 apply=unavailable"
     )
     for row in output_rows:
@@ -2926,6 +3755,7 @@ def parser() -> argparse.ArgumentParser:
     action.add_argument("--plan", action="store_true")
     action.add_argument("--apply", action="store_true")
     action.add_argument("--archive", action="store_true")
+    action.add_argument("--create-owner-alias", action="store_true")
     action.add_argument("--create-generation", action="store_true")
     action.add_argument("--plan-archive-compaction", action="store_true")
     action.add_argument("--apply-archive-compaction", action="store_true")
@@ -2943,6 +3773,10 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--transaction")
     value.add_argument("--source", default="manual")
     value.add_argument("--source-receipt")
+    value.add_argument("--owner-repo")
+    value.add_argument("--legacy-origin")
+    value.add_argument("--mapping-evidence-commit")
+    value.add_argument("--mapping-evidence-path")
     value.add_argument("--launcher")
     value.add_argument("--repo")
     value.add_argument("--branch")
@@ -2977,6 +3811,34 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if not arguments.receipt:
             die("worktree recovery requires --receipt")
         recover_worktree(repo, Path(arguments.receipt).absolute())
+        return 0
+    if arguments.create_owner_alias:
+        required = (
+            arguments.source_receipt,
+            arguments.owner_repo,
+            arguments.legacy_origin,
+            arguments.mapping_evidence_commit,
+            arguments.mapping_evidence_path,
+        )
+        if any(value is None for value in required):
+            die(
+                "owner alias creation requires --source-receipt, --owner-repo, "
+                "--legacy-origin, --mapping-evidence-commit, and --mapping-evidence-path"
+            )
+        result = create_owner_alias(
+            repo,
+            Path(arguments.source_receipt).absolute(),
+            arguments.owner_repo,
+            arguments.legacy_origin,
+            arguments.mapping_evidence_commit,
+            arguments.mapping_evidence_path,
+        )
+        print(
+            "HOUSEKEEPING routine=owner-alias mode=create "
+            f"source={result['source']} owner={result['owner']} "
+            f"method={result['method']} tips={result['tips']} "
+            f"alias={result['alias']} restore=pass status=verified"
+        )
         return 0
     if arguments.create_generation:
         result = create_generation(repo)
