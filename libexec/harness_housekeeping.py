@@ -1478,7 +1478,12 @@ def parse_generation_receipt(
         if digest(bundle) != repository["bundle_sha256"]:
             die("archive generation bundle digest changed")
         owner = resolve_recorded_repository(
-            state, canonical, identity, aliases=aliases, owner_cache=owner_cache
+            state,
+            canonical,
+            identity,
+            aliases=aliases,
+            owner_cache=owner_cache,
+            generation_source_names=source_names,
         )
         git(owner, "bundle", "verify", str(bundle))
         bundled_heads: Dict[str, str] = {}
@@ -1498,6 +1503,7 @@ def resolve_recorded_repository(
     *,
     aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
     owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
+    generation_source_names: Optional[set[str]] = None,
 ) -> Path:
     repository = Path(canonical)
     if repository.exists() or repository.is_symlink():
@@ -1512,6 +1518,13 @@ def resolve_recorded_repository(
         if row[1]["legacy_repository"] == canonical
         and row[1]["legacy_repository_id"] == list(identity)
     ]
+    if not candidates and generation_source_names is not None:
+        candidates = [
+            (Path(source_value), row[1])
+            for source_value, row in alias_rows.items()
+            if row[1]["legacy_repository"] == canonical
+            and Path(row[1]["source_receipt"]).name in generation_source_names
+        ]
     if not candidates:
         die("archive recorded repository is absent without an owner alias")
     owners: Dict[Tuple[str, Tuple[int, int]], Path] = {}
@@ -1535,7 +1548,6 @@ def generation_repository_matches(
     aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
     owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
 ) -> bool:
-    del generation
     parsed = parse_archive_receipt(source)
     source_owner = resolve_archive_owner(
         source, parsed, aliases=aliases, owner_cache=owner_cache
@@ -1548,6 +1560,9 @@ def generation_repository_matches(
         row["repository_id"],
         aliases=aliases,
         owner_cache=owner_cache,
+        generation_source_names={
+            source["name"] for source in generation["source_receipts"]
+        },
     )
     return str(row_owner) == str(owner) and path_id(row_owner) == path_id(owner)
 
@@ -2131,6 +2146,9 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
                 repository["repository_id"],
                 aliases=aliases,
                 owner_cache=owner_cache,
+                generation_source_names={
+                    source["name"] for source in latest["source_receipts"]
+                },
             )
             if str(recorded_owner) in recorded_main:
                 die("archive generation has duplicate durable owners")
