@@ -267,14 +267,20 @@ def changed_paths(base: str) -> list[str]:
     git = shutil.which("git")
     if git is None:
         fail("git-unavailable")
-    result = subprocess.run(  # noqa: S603
+    tracked = subprocess.run(  # noqa: S603
         [
             git, "-C", str(ROOT), "diff", "--name-only",
             "--diff-filter=ACMRTUXB", base,
         ],
         check=True, text=True, stdout=subprocess.PIPE,
     )
-    return [line for line in result.stdout.splitlines() if line]
+    untracked = subprocess.run(  # noqa: S603
+        [git, "-C", str(ROOT), "ls-files", "--others", "--exclude-standard"],
+        check=True, text=True, stdout=subprocess.PIPE,
+    )
+    return sorted(
+        set(tracked.stdout.splitlines()) | set(untracked.stdout.splitlines())
+    )
 
 
 def changed_published_packets(base: str) -> list[str]:
