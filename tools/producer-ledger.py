@@ -86,6 +86,39 @@ def read_rows() -> list[dict[str, str]]:
     return rows
 
 
+def producer_queue_ids(
+    text: str, task_pattern: re.Pattern[str]
+) -> tuple[str, ...]:
+    """Read task IDs only from the exact human queue table."""
+    lines = text.splitlines()
+    headings = [index for index, line in enumerate(lines) if line == "## Queue"]
+    if len(headings) != 1:
+        fail("producer-queue-section")
+    index = headings[0] + 1
+    while index < len(lines) and not lines[index]:
+        index += 1
+    expected = (
+        "| Task | State | Priority | Packet |",
+        "| --- | --- | ---: | --- |",
+    )
+    if lines[index : index + 2] != list(expected):
+        fail("producer-queue-format")
+    tasks: list[str] = []
+    for line in lines[index + 2 :]:
+        if not line or line.startswith("## "):
+            break
+        if not line.startswith("| ") or not line.endswith(" |"):
+            fail("producer-queue-format")
+        cells = [cell.strip() for cell in line[1:-1].split("|")]
+        if len(cells) != 4 or task_pattern.fullmatch(cells[0]) is None:
+            fail("producer-queue-row")
+        tasks.append(cells[0])
+    duplicates = sorted(task for task in set(tasks) if tasks.count(task) > 1)
+    if duplicates:
+        fail(f"producer-queue-duplicate:{duplicates[0]}")
+    return tuple(tasks)
+
+
 def validate(
     *, require_converged: bool = False, emit: bool = True
 ) -> tuple[dict[str, object], list[dict[str, str]], dict[str, dict[str, str]]]:
@@ -126,6 +159,7 @@ def validate(
         fail("oversized-producer-entrypoint")
     if f"Next free ID: {prefix}-{int(config['next_id']):03d}." not in producer_text:
         fail("next-id-entrypoint")
+    queue_tasks = producer_queue_ids(producer_text, task_pattern)
     for row in rows:
         match = task_pattern.fullmatch(row["task"])
         if not match or row["task"] in seen:
@@ -183,6 +217,20 @@ def validate(
         ):
             fail(f"public-privacy-canary:{row['task']}")
         packets[row["task"]] = values
+    queue_set = set(queue_tasks)
+    unknown_queue = sorted(queue_set - seen)
+    if unknown_queue:
+        fail(f"producer-queue-unknown:{unknown_queue[0]}")
+    terminal = {
+        row["task"] for row in rows if row["state"] in {"complete", "cancelled"}
+    }
+    stale_queue = sorted(queue_set & terminal)
+    if stale_queue:
+        fail(f"producer-queue-stale-terminal:{stale_queue[0]}")
+    nonterminal = seen - terminal
+    omitted_queue = sorted(nonterminal - queue_set)
+    if omitted_queue:
+        fail(f"producer-queue-omitted:{omitted_queue[0]}")
     if max(numbers) >= int(config["next_id"]):
         fail("next-id-not-free")
     board_text = (ROOT / "TODO.md").read_text(encoding="utf-8")
