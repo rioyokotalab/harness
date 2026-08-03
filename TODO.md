@@ -20,8 +20,9 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ### Har-384 — Relocate Students and Swallow roots under `projects`
 
-**Phase:** accepted owner-authorized migration; discovery and guarded stale
-destination retirement are in progress.
+**Phase:** both phone gates passed and destination-root clients are promoted
+into the canonical Students panes; old clients remain live in rollback windows
+pending checkpoint validation and exact retirement.
 
 **Record:** `docs/tasks/Har-384.md`.
 
