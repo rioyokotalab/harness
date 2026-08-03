@@ -64,7 +64,11 @@ validated next ID; rejected forbids one. Output records the decision separately
 from `status=submitted`, and the envelope states no new authority. Focused
 transport, route-budget, route-gate, and diff checks pass. The unchanged
 Personal branch did not process the earlier combined envelope, so one
-status-only request was submitted without replaying the prior task.
+status-only request was submitted without replaying the prior task. Its report
+proved the correction had not started before the status request superseded it,
+so a fresh changed-input correction was safely submitted under a new ID.
+Complete R3 for the confirmation-envelope checkpoint passed every registered
+suite in 65.22 seconds with only the declared native-MPI skip.
 
 ## Slice 3 — 01:00–02:00 JST
 
