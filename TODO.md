@@ -1,28 +1,23 @@
 # Personal harness task board
 
-This is the consumer-owned execution board. Read `PRODUCER.md` first, resolve
-the executable packet with `python3 tools/producer-ledger.py next-ready`, then
-read this board and only the matching linked record and routed policy. If the
-selector reports idle, remain idle. Completed chronology is indexed by
-`docs/tasks/index.tsv`; do not preload the historical snapshot.
+After `PRODUCER.md`, run `python3 tools/producer-ledger.py next-ready`, then
+read this board, the matching record, and only routed policy. Idle means idle.
+Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
-Current and future Harness tasks use the `Har-NNN` namespace. Historical
-`T-NNN` identifiers remain unchanged in the completed-task index and archives.
+New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
+
 ## Resume contract
 
-1. Read root `AGENTS.md`, `PRODUCER.md`, and the selected packet.
-2. Read this board, then the matching task record and only its routed evidence.
-3. Confirm branch, worktree, recent commits, ownership, and mutable inputs.
-4. Resume the first unverified recorded action; preserve unrelated work.
-5. A failed mutable-state query is unknown, never evidence of absence.
+Confirm branch, worktree, recent commits, ownership, and mutable inputs. Resume
+the first unverified recorded action while preserving unrelated work. A failed
+mutable-state query is unknown, never absence.
 
 ## Active queue
 
 ### Har-388 — Harden consumer autonomy and task efficiency
 
-**Phase:** implementing a content-blind Local Personal consumer route, then
-measuring and iterating on repository-native consumer execution through the
-2026-08-04 09:00 JST cutoff.
+**Phase:** protected consumer autonomy is complete; optimize generic cold-start
+and validation cost through the 2026-08-04 09:00 JST cutoff.
 
 **Record:** `docs/tasks/Har-388.md`.
 
@@ -30,9 +25,9 @@ measuring and iterating on repository-native consumer execution through the
 
 ### Har-196 — Backup lifecycle phase 2
 
-**Phase:** read-only monitoring; seven 2026-08-02 successors are terminal-success,
-while AL matched its recorded identity but was still running at its one frozen
-checkpoint. All eight chains stay 2/8 pending snapshot/private-state acceptance.
+**Phase:** read-only monitoring; seven successors are terminal-success. AL
+matched its identity but remained at its frozen checkpoint. All eight chains
+remain 2/8 pending snapshot/private-state acceptance.
 
 **Record:** `docs/tasks/Har-196.md`. Do not query or mutate a successor early.
 
@@ -40,7 +35,7 @@ checkpoint. All eight chains stay 2/8 pending snapshot/private-state acceptance.
 
 **Phase:** time-gated to the 2026-08-08–09 Institute outage.
 
-**Record:** `docs/tasks/Har-328.md`. Do not infer that contingency dates apply.
+**Record:** `docs/tasks/Har-328.md`. Do not infer contingency dates apply.
 
 ### Har-303 — Observe intermittent NFS I/O latency
 
@@ -50,8 +45,6 @@ checkpoint. All eight chains stay 2/8 pending snapshot/private-state acceptance.
 
 ## Completed-task lookup
 
-The exact pre-T-351 board is preserved at
-`docs/history/TODO-full-archive-2026-07-30.md`. Use
-`docs/tasks/index.tsv` to locate completed, canceled, or superseded work,
-including T-354 and T-363; chat history and client memory are never
+The pre-T-351 board is at `docs/history/TODO-full-archive-2026-07-30.md`.
+Use `docs/tasks/index.tsv` for terminal work; chat and client memory are not
 authoritative.

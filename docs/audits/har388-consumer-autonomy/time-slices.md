@@ -395,7 +395,57 @@ checkpoint in this slice.
 
 ## Slice 7 — 05:00–06:00 JST
 
-Pending window.
+Personal's self-describing validation checkpoint first exposed a lifecycle
+deadlock: a terminal receipt left the assignment active while no task was
+executable. A corrected generic rule permits only a client-compatible,
+reconciliation-pending terminal receipt to sustain that handoff; strict
+convergence still rejects it after producer disposition. Private PRs #70 and
+#71 completed and reconciled that task without rewriting terminal evidence.
+Harness PR #642 then protected the same lifecycle plus terminal accepted
+confirmations with no continuation ID at `7f1239e`; complete R3 passed all 98
+suites in 66.564 seconds with only the declared native-MPI skip.
+
+The next Personal task proved the terminal route end to end. Its consumer
+implementation merged, producer reconciliation removed the terminal queue row
+and idled the assignment, and one accepted no-next envelope removed the
+preserved report, returned the metadata-only thread to idle, and created no
+follow-on request. Review also found that descriptive queue prose could omit,
+retain, duplicate, or invent task IDs while the index still validated. Harness
+PR #643 at `46fff96` now requires exact Queue-table parity with every
+nonterminal index disposition; 24 focused tests and strict ledger validation
+passed, followed by all 98 R3 suites in 65.739 seconds.
+
+A bounded Personal cold-start compaction then reduced its root policy from 835
+to 676 words and its producer entrypoint from 408 to 329 words. Independent
+review caught one semantic deduplication defect before terminal acceptance:
+the combined always-read context no longer explicitly prohibited deleting a
+terminal receipt to resume work. Producer reconciliation restored that exact
+boundary without changing immutable consumer evidence, removed only the
+completed queue row, and idled the assignment. All 120 repository tests,
+strict convergence, exact three-path producer boundary, protected-root
+validation, and byte-identical PR readback passed. Private PRs #76 and #77 end
+at `bcf4a6f`; terminal acceptance removed the report and left the thread idle.
+
+A five-repository parity audit found one stale protected-equivalent Swallow
+checkout, not an active task. The exact dirty blobs matched protected main, so
+they were preserved in one named stash, the checkout fast-forwarded, blob
+identity was reverified, and only that stash was dropped. Swallow is clean at
+`6c6bfed`, strict ledger convergence passes, and its selector is idle. A broad
+current-user open-file scan was also measured at 6.04 seconds versus 0.11
+seconds for one worktree-local scan, so global scan substitution was rejected.
+
+Harness's active board candidate is 50 lines and 220 words, down from 57 lines
+and 299 words. The generated eight-scenario context benchmark still passes:
+median total reduction is 97.4%, and board plus representative payload falls
+from 725 to 646 words. Routing completed chronology here reduced the active
+recovery record from 904 to 499 words; board plus current record falls from
+1,203 to 719 words, a 40.2% reduction. That documentation-only checkpoint
+selected exactly the context-benchmark and task-ledger suites, and both pass.
+The repeatedly selected Local communication route was then compacted from 525
+to 498 words while retaining every tested identity, retry, confirmation,
+receipt, preflight, and no-pane boundary. Its transport, safety-gate, and
+context-budget suites pass; a new 500-word ceiling freezes the gain and
+correctly escalates the combined validator change to complete integration.
 
 ## Slice 8 — 06:00–07:00 JST
 
