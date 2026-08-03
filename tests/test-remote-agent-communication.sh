@@ -73,6 +73,8 @@ grep -F 'send-local-codex' "$LOCAL_CODEX" >/dev/null ||
     fail "Local Codex consumer route guidance"
 grep -F 'read-local-codex-report' "$LOCAL_CODEX" >/dev/null ||
     fail "Local Codex report recovery guidance"
+grep -F 'codex-thread-recovery --check --target personal' \
+    "$LOCAL_CODEX" >/dev/null || fail "Local Codex active-turn preflight"
 grep -F 'LOCAL_REPLY_REQUIRED request_id=ID reply_target=harness max_replies=1' \
     "$RUNTIME_POLICY" >/dev/null || fail "Local consumer reply policy"
 grep -F 'does not use `ssh login`' \

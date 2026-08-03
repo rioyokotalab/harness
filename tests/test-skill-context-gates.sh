@@ -300,6 +300,9 @@ assert_contains 'creates no terminal receipt' \
 assert_contains 'Never delete or rewrite one to resume work' \
     "$REMOTE/references/local-codex.md" \
     'remote-agent terminal receipt invariant'
+assert_contains 'codex-thread-recovery --check --target personal' \
+    "$REMOTE/references/local-codex.md" \
+    'remote-agent active-turn preflight'
 if grep -F 'unique current-user Codex pane in `projects`' \
     "$REMOTE/SKILL.md" >/dev/null; then
     fail 'remote-agent retains stale Local session'
