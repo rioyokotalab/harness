@@ -13,10 +13,10 @@ normative_scenarios	pass	29-of-29
 private_value_exposure	pass	public-audit-value-exposed-false
 writer_boundary_violations	pass	consumer-diff-pass
 prompt_replays_after_wake	pass	one-shot-wake-and-recover-state
-pilot_extra_protected_transitions	pending	consumer-and-producer-publication
+pilot_extra_protected_transitions	pass	replay-zero-protected-writes
 rollout_preparation_transitions	pass	no-production-route
 billable_hosted_minutes_increase	pass	run-30792138878-skipped
-final_integrated_validation	pending	terminal-tree-R3
+final_integrated_validation	pass	complete-R3-e2c6523
 coverage_false_positives	pass	short-plan-and-stale-target
 wait_with_fit_card	pass	work-conserving-selection
 target_replays_after_unreceipted_selection	pass	recover-without-packet
