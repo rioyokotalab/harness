@@ -75,7 +75,10 @@ remain mandatory project refinements.
   are optional. At cold start read this file and `PRODUCER.md`. Consumers run
   `python3 tools/producer-ledger.py next-ready`; read only its selected packet,
   `TODO.md`, and matching record, or remain idle. Never select a packet with a
-  terminal receipt.
+  terminal receipt. The selector and `docs/producer/index.tsv` are the sole
+  current-disposition authority. A packet's immutable `state` is its
+  publication-time state; it never overrides a ready selector result and is
+  never by itself a reason to write a blocked receipt.
   Inspect Git and only routed evidence; never preload another record or
   `docs/history/`. Fetch before changing collaborative work.
 - Only the portfolio producer edits `PRODUCER.md` or `docs/producer/`.

@@ -254,7 +254,10 @@ def next_ready() -> None:
         if row["state"] == "ready" and row["task"] not in receipts:
             print(
                 "PRODUCER_LEDGER_SELECTION status=ready "
-                f"task={row['task']} packet={row['packet']}"
+                f"task={row['task']} packet={row['packet']} "
+                "disposition=ready "
+                "disposition_source=docs/producer/index.tsv "
+                "packet_state=publication-only"
             )
             return
     print("PRODUCER_LEDGER_SELECTION status=idle")
@@ -274,6 +277,20 @@ def changed_paths(base: str) -> list[str]:
     return [line for line in result.stdout.splitlines() if line]
 
 
+def changed_published_packets(base: str) -> list[str]:
+    git = shutil.which("git")
+    if git is None:
+        fail("git-unavailable")
+    result = subprocess.run(  # noqa: S603
+        [
+            git, "-C", str(ROOT), "diff", "--name-only",
+            "--diff-filter=MDTRUXB", base, "--", "docs/producer/tasks",
+        ],
+        check=True, text=True, stdout=subprocess.PIPE,
+    )
+    return [line for line in result.stdout.splitlines() if line]
+
+
 def check_diff(base: str, role: str) -> None:
     config = read_config()
     prefix = str(config["prefix"])
@@ -284,6 +301,9 @@ def check_diff(base: str, role: str) -> None:
             path for path in paths
             if path != "PRODUCER.md" and not path.startswith("docs/producer/")
         ]
+        immutable = changed_published_packets(base)
+        if immutable:
+            fail(f"producer-immutable-packet:{','.join(sorted(immutable))}")
     else:
         bad = [path for path in paths if path == "PRODUCER.md" or path.startswith("docs/producer/")]
         for path in paths:
