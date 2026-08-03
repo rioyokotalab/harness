@@ -894,8 +894,11 @@ def create_owner_alias(
     legacy = Path(legacy_value)
     if legacy.exists() or legacy.is_symlink():
         canonical_legacy = canonical_repo(legacy)
-        if list(path_id(canonical_legacy)) != legacy_identity:
-            die("archive owner alias legacy repository identity changed")
+        common = Path(
+            text(git(canonical_legacy, "rev-parse", "--absolute-git-dir")).strip()
+        ).resolve(strict=True)
+        if common != Path(values["git_common_dir"]).resolve(strict=True):
+            die("archive owner alias legacy Git common directory changed")
         if exact_local_origin(canonical_legacy) != legacy_origin:
             die("archive owner alias local-origin mapping changed")
     elif method != "authorized-single-relocation-v1":
