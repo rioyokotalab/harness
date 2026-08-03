@@ -104,7 +104,7 @@ for name in delivery local-codex request fallback; do
 done
 remote_local_reference=$(words "$REMOTE/references/local-codex.md")
 remote_local=$((remote_entry + remote_local_reference))
-assert_max "$remote_local" 525 'remote-agent Local Codex selected route'
+assert_max "$remote_local" 500 'remote-agent Local Codex selected route'
 remote_reduction=$(((REMOTE_BEFORE - remote_largest) * 100 / REMOTE_BEFORE))
 [ "$remote_reduction" -ge 45 ] ||
     fail "remote-agent largest-route reduction is not material: $remote_reduction%"
