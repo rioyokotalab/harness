@@ -33,6 +33,7 @@ TTY_RE = re.compile(r"^/dev/(?:pts/[0-9]+|ttys[0-9A-Za-z]+)$")
 REQUEST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 REPLY_STATUSES = {"complete", "blocked", "rejected", "failed"}
 CONFIRMATION_STATUSES = {"accepted", "changes-required", "rejected"}
+LOCAL_REPORT_DIRECTORY = "local-codex-reports"
 
 
 class MessageError(RuntimeError):
@@ -608,6 +609,164 @@ def validate_local_subtask_report(
     return message
 
 
+def local_report_directory() -> Path:
+    directory = state_directory() / LOCAL_REPORT_DIRECTORY
+    try:
+        directory.mkdir(mode=0o700, exist_ok=True)
+        info = directory.lstat()
+    except OSError as exc:
+        raise MessageError("Local Codex report directory is unavailable") from exc
+    if (
+        not stat.S_ISDIR(info.st_mode)
+        or info.st_uid != os.getuid()
+        or stat.S_IMODE(info.st_mode) != 0o700
+    ):
+        raise MessageError("Local Codex report directory is unsafe")
+    return directory
+
+
+def local_report_path(source: str, requested_id: str) -> Path:
+    if not ALIAS_RE.fullmatch(source):
+        raise MessageError("Local Codex report source is malformed")
+    return local_report_directory() / (
+        f"{source}--{request_id(requested_id)}.report"
+    )
+
+
+def read_local_report_file(
+    source: str, requested_id: str, *, required: bool
+) -> tuple[bytes, tuple[int, int]] | None:
+    path = local_report_path(source, requested_id)
+    flags = os.O_RDONLY | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(path, flags)
+    except FileNotFoundError:
+        if required:
+            raise MessageError("Local Codex report is unavailable")
+        return None
+    except OSError as exc:
+        raise MessageError("Local Codex report cannot be opened") from exc
+    try:
+        info = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or info.st_nlink != 1
+            or stat.S_IMODE(info.st_mode) != 0o600
+            or info.st_size > MAX_MESSAGE_BYTES
+        ):
+            raise MessageError("Local Codex report file is unsafe")
+        chunks: list[bytes] = []
+        remaining = MAX_MESSAGE_BYTES + 1
+        while remaining:
+            chunk = os.read(descriptor, remaining)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        message = b"".join(chunks)
+        if len(message) > MAX_MESSAGE_BYTES:
+            raise MessageError("Local Codex report exceeds the byte limit")
+        return message, (info.st_dev, info.st_ino)
+    finally:
+        os.close(descriptor)
+
+
+def preserve_local_report(
+    source: str, requested_id: str, message: bytes
+) -> None:
+    path = local_report_path(source, requested_id)
+    existing = read_local_report_file(source, requested_id, required=False)
+    if existing is not None:
+        if existing[0] != message:
+            raise MessageError("Local Codex report id already has different bytes")
+        return
+    directory = path.parent
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=".report-", dir=directory
+        )
+    except OSError as exc:
+        raise MessageError("Local Codex report cannot be preserved") from exc
+    temporary = Path(temporary_name)
+    try:
+        os.fchmod(descriptor, 0o600)
+        offset = 0
+        while offset < len(message):
+            written = os.write(descriptor, message[offset:])
+            if written <= 0:
+                raise OSError("short Local Codex report write")
+            offset += written
+        os.fsync(descriptor)
+        os.close(descriptor)
+        descriptor = -1
+        try:
+            os.link(temporary, path, follow_symlinks=False)
+        except FileExistsError:
+            existing = read_local_report_file(
+                source, requested_id, required=True
+            )
+            if existing is None or existing[0] != message:
+                raise MessageError(
+                    "Local Codex report id already has different bytes"
+                )
+    except OSError as exc:
+        raise MessageError("Local Codex report cannot be preserved") from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def remove_local_report(
+    source: str, requested_id: str, identity: tuple[int, int]
+) -> bool:
+    path = local_report_path(source, requested_id)
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return True
+    except OSError:
+        return False
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) != 0o600
+        or (info.st_dev, info.st_ino) != identity
+    ):
+        return False
+    try:
+        path.unlink()
+    except OSError:
+        return False
+    return True
+
+
+def read_local_codex_report(
+    source: str, target: str, requested_id: str
+) -> None:
+    targets = local_codex_targets()
+    if (
+        target != "harness"
+        or source == "harness"
+        or source not in targets
+        or str(Path.cwd()) != targets["harness"].repository
+    ):
+        raise MessageError("Local Codex report reader route is unsupported")
+    requested_id = request_id(requested_id)
+    preserved = read_local_report_file(source, requested_id, required=True)
+    if preserved is None:
+        raise MessageError("Local Codex report is unavailable")
+    message = validate_local_subtask_report(
+        source, requested_id, preserved[0]
+    )
+    sys.stdout.buffer.write(message + b"\n")
+
+
 def send_local_codex(
     source: str, target: str, requested_id: str | None = None
 ) -> None:
@@ -615,6 +774,7 @@ def send_local_codex(
     message = read_message(source, "codex")
     if requested_id is not None:
         message = validate_local_subtask_report(source, requested_id, message)
+        preserve_local_report(source, requested_id, message)
     inject_message(
         source,
         "local-codex",
@@ -644,6 +804,11 @@ def confirm_local_codex(
     requested_id = request_id(requested_id)
     if status not in CONFIRMATION_STATUSES:
         raise MessageError("Local Codex confirmation status is unsupported")
+    preserved = read_local_report_file(
+        target, requested_id, required=False
+    )
+    if preserved is not None:
+        validate_local_subtask_report(target, requested_id, preserved[0])
     if status == "rejected":
         if next_requested_id is not None:
             raise MessageError("rejected confirmation cannot name a next request")
@@ -664,6 +829,12 @@ def confirm_local_codex(
         "codex",
         local_codex_target=target,
     )
+    if preserved is not None:
+        if not remove_local_report(target, requested_id, preserved[1]):
+            print(
+                "agent-message: matching Local Codex report state was retained",
+                file=sys.stderr,
+            )
     print(
         "AGENT_MESSAGE_LOCAL_CODEX_CONFIRM "
         f"source={source} target={target} client=codex "
@@ -1012,6 +1183,10 @@ def build_parser() -> argparse.ArgumentParser:
     local_codex_reply.add_argument("--source", required=True)
     local_codex_reply.add_argument("--target", required=True)
     local_codex_reply.add_argument("--request-id", required=True)
+    local_codex_read = commands.add_parser("read-local-codex-report")
+    local_codex_read.add_argument("--source", required=True)
+    local_codex_read.add_argument("--target", required=True)
+    local_codex_read.add_argument("--request-id", required=True)
     local_codex_confirmation = commands.add_parser("confirm-local-codex")
     local_codex_confirmation.add_argument("--source", required=True)
     local_codex_confirmation.add_argument("--target", required=True)
@@ -1047,6 +1222,10 @@ def main() -> int:
             send_local_codex(arguments.source, arguments.target)
         elif arguments.command == "reply-local-codex":
             send_local_codex(
+                arguments.source, arguments.target, arguments.request_id
+            )
+        elif arguments.command == "read-local-codex-report":
+            read_local_codex_report(
                 arguments.source, arguments.target, arguments.request_id
             )
         elif arguments.command == "confirm-local-codex":

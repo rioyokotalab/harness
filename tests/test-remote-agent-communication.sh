@@ -71,6 +71,8 @@ grep -F 'send-local-claude --source local' "$DELIVERY" >/dev/null ||
     fail "Local Codex-to-Claude route guidance"
 grep -F 'send-local-codex' "$LOCAL_CODEX" >/dev/null ||
     fail "Local Codex consumer route guidance"
+grep -F 'read-local-codex-report' "$LOCAL_CODEX" >/dev/null ||
+    fail "Local Codex report recovery guidance"
 grep -F 'LOCAL_REPLY_REQUIRED request_id=ID reply_target=harness max_replies=1' \
     "$RUNTIME_POLICY" >/dev/null || fail "Local consumer reply policy"
 grep -F 'does not use `ssh login`' \
@@ -147,6 +149,7 @@ case "$command" in
         ;;
     paste-buffer)
         printf 'paste-buffer %s\n' "$*" >>"$FAKE_STATE/operations"
+        [ "${FAKE_PASTE_FAIL:-0}" -eq 0 ] || exit 1
         if ! mkdir "$FAKE_STATE/injection-active" 2>/dev/null; then
             : >"$FAKE_STATE/injection-overlap"
         fi
@@ -244,6 +247,7 @@ run_helper() {
         FAKE_PANE_INDEX=${FAKE_PANE_INDEX:-} \
         FAKE_PANE_PATH=${FAKE_PANE_PATH:-} \
         FAKE_TTY=${FAKE_TTY:-/dev/pts/7} \
+        FAKE_PASTE_FAIL=${FAKE_PASTE_FAIL:-0} \
         HARNESS_TESTING=1 \
         HARNESS_TEST_AGENT_MESSAGE_SETTLE_SECONDS=0 \
         HARNESS_TEST_AGENT_MESSAGE_TARGETS_FILE=$state/codex-targets.tsv \
@@ -579,6 +583,53 @@ EOF
 grep -F -x \
     "AGENT_MESSAGE_LOCAL_CODEX_REPLY source=personal target=harness client=codex request_id=$local_reply_id status=submitted" \
     "$state/local-report.out" >/dev/null || fail "Local report output"
+local_report_state=$home/.local/state/harness/local-codex-reports/personal--$local_reply_id.report
+LOCAL_REPORT_STATE=$local_report_state EXPECTED_REPORT=$state/local-report \
+    python3 -B - <<'PY'
+import os
+import stat
+from pathlib import Path
+
+path = Path(os.environ["LOCAL_REPORT_STATE"])
+expected = Path(os.environ["EXPECTED_REPORT"]).read_bytes().rstrip(b"\n")
+info = path.lstat()
+assert stat.S_ISREG(info.st_mode)
+assert stat.S_IMODE(info.st_mode) == 0o600
+assert info.st_nlink == 1
+assert path.read_bytes() == expected
+PY
+(
+    cd "$home/harness"
+    run_helper read-local-codex-report --source personal --target harness \
+        --request-id "$local_reply_id" >"$state/local-report-read.out"
+)
+cmp -s "$state/local-report" "$state/local-report-read.out" ||
+    fail "preserved Local report readback changed"
+
+# Retrying the exact report is idempotent, but changing bytes under the same
+# request ID cannot silently replace the controller's recovery copy.
+(
+    cd "$home/personal"
+    FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
+    FAKE_PANE_ROLE=harness FAKE_PANE_PATH=$home/harness \
+        run_helper reply-local-codex --source personal --target harness \
+        --request-id "$local_reply_id" <"$state/local-report" \
+        >"$state/local-report-duplicate.out"
+)
+if (
+    cd "$home/personal"
+    sed 's/selector is idle/selector changed/' "$state/local-report" |
+        FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
+        FAKE_PANE_ROLE=harness FAKE_PANE_PATH=$home/harness \
+        run_helper reply-local-codex --source personal --target harness \
+        --request-id "$local_reply_id" \
+        >"$state/local-report-changed.out" 2>&1
+); then
+    fail "changed Local report replaced an existing request ID"
+fi
+grep -F 'Local Codex report id already has different bytes' \
+    "$state/local-report-changed.out" >/dev/null ||
+    fail "changed Local report rejection reason"
 
 if (
     cd "$home/personal"
@@ -601,6 +652,71 @@ if (
 ); then
     fail "false Local consumer source repository accepted"
 fi
+
+if (
+    cd "$home/personal"
+    run_helper read-local-codex-report --source personal --target harness \
+        --request-id "$local_reply_id" \
+        >"$state/local-report-read-cwd.out" 2>&1
+); then
+    fail "Local report reader accepted a consumer cwd"
+fi
+
+(
+    cd "$home/harness"
+    FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+    FAKE_PANE_ROLE=personal FAKE_PANE_PATH=$home/personal \
+        run_helper confirm-local-codex --source local --target personal \
+        --request-id "$local_reply_id" --status accepted \
+        --next-request-id har388-local-report-next \
+        >"$state/local-report-confirmation.out"
+)
+[ ! -e "$local_report_state" ] ||
+    fail "matching Local confirmation retained report state"
+if (
+    cd "$home/harness"
+    run_helper read-local-codex-report --source personal --target harness \
+        --request-id "$local_reply_id" \
+        >"$state/local-report-read-missing.out" 2>&1
+); then
+    fail "acknowledged Local report remained readable"
+fi
+grep -F 'Local Codex report is unavailable' \
+    "$state/local-report-read-missing.out" >/dev/null ||
+    fail "missing Local report recovery reason"
+
+# Preserve the validated report before a failed terminal insertion so the
+# controller can recover it without another consumer prompt.
+failed_reply_id=har388-local-report-injection-failure
+sed "s/$local_reply_id/$failed_reply_id/" "$state/local-report" \
+    >"$state/local-report-failed"
+if (
+    cd "$home/personal"
+    FAKE_PASTE_FAIL=1 FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork \
+    FAKE_PANE_INDEX=0 FAKE_PANE_ROLE=harness \
+    FAKE_PANE_PATH=$home/harness \
+        run_helper reply-local-codex --source personal --target harness \
+        --request-id "$failed_reply_id" <"$state/local-report-failed" \
+        >"$state/local-report-injection-failed.out" 2>&1
+); then
+    fail "failed Local report insertion returned success"
+fi
+(
+    cd "$home/harness"
+    run_helper read-local-codex-report --source personal --target harness \
+        --request-id "$failed_reply_id" \
+        >"$state/local-report-failed-read.out"
+)
+cmp -s "$state/local-report-failed" "$state/local-report-failed-read.out" ||
+    fail "failed Local insertion lost the preserved report"
+(
+    cd "$home/harness"
+    FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+    FAKE_PANE_ROLE=personal FAKE_PANE_PATH=$home/personal \
+        run_helper confirm-local-codex --source local --target personal \
+        --request-id "$failed_reply_id" --status rejected \
+        >"$state/local-report-failed-confirmation.out"
+)
 
 reply_id=t307-home-request-test
 request='[Agent: Local Codex] inspect the current revision and worktree'
