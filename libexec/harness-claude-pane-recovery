@@ -186,7 +186,15 @@ def main():
         shlex.quote(arguments.session_id),
     )
     subprocess.run(
-        [tmux, "respawn-pane", "-t", arguments.pane_id, command],
+        [
+            tmux,
+            "respawn-pane",
+            "-c",
+            repository,
+            "-t",
+            arguments.pane_id,
+            command,
+        ],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

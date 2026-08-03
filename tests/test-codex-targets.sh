@@ -30,6 +30,7 @@ fail() {
 
 resolver=$ROOT/libexec/harness_codex_targets.py
 test_harness=$TEST_ROOT/harness
+personal=$TEST_ROOT/personal
 students=$TEST_ROOT/students
 profile=$TEST_ROOT/targets.tsv
 fake_home=$TEST_ROOT/home
@@ -38,7 +39,7 @@ poison_control=$TEST_ROOT/poison-control
 mkdir -p "$fake_home/.local/bin" "$launcher_capture" \
     "$poison_control/libexec"
 
-for repository in "$test_harness" "$students"; do
+for repository in "$test_harness" "$personal" "$students"; do
     mkdir -p "$repository/.codex"
     git -C "$repository" init -q -b main
     printf '%s\n' 'model = "gpt-5.6-sol"' \
@@ -47,7 +48,7 @@ for repository in "$test_harness" "$students"; do
 done
 printf '# target\twindow_index\twindow_name\tpane_index\tcanonical_repository\n' >"$profile"
 printf 'harness\t0\tcowork\t0\t@HARNESS_ROOT@\n' >>"$profile"
-printf 'personal\t1\tcodex\t0\t@HARNESS_ROOT@\n' >>"$profile"
+printf 'personal\t1\tcodex\t0\t%s\n' "$personal" >>"$profile"
 printf 'students\t1\tcodex\t1\t%s\n' "$students" >>"$profile"
 
 run_resolver() {
@@ -65,13 +66,15 @@ grep -F 'CODEX_TARGETS status=ready count=3' "$TEST_ROOT/ready.out" \
 [ "$(run_resolver repository students)" = "$students" ] ||
     fail "Students target lookup"
 [ "$(run_resolver target-for-repository "$test_harness")" = harness ] ||
-    fail "same-root reverse lookup must default to Harness"
-[ "$(run_resolver validate-target personal)" = "$test_harness" ] ||
-    fail "explicit Personal same-root validation"
+    fail "Harness reverse lookup"
+[ "$(run_resolver target-for-repository "$personal")" = personal ] ||
+    fail "Personal reverse lookup"
+[ "$(run_resolver validate-target personal)" = "$personal" ] ||
+    fail "explicit Personal repository validation"
 PYTHONPATH="$ROOT/libexec" PYTHONDONTWRITEBYTECODE=1 HARNESS_TESTING=1 \
     HARNESS_CONTROL_ROOT="$ROOT" HARNESS_TARGET_ROOT="$test_harness" \
     HARNESS_TEST_CODEX_TARGETS_FILE="$profile" \
-    python3 - "$test_harness" "$students" <<'PY' ||
+    python3 - "$test_harness" "$personal" "$students" <<'PY' ||
 import sys
 from harness_codex_targets import (
     INITIAL_LAYOUT,
@@ -81,13 +84,14 @@ from harness_codex_targets import (
     location_for,
 )
 
-harness, students = sys.argv[1:]
+harness, personal, students = sys.argv[1:]
 assert SESSION_NAME == "harness"
 assert INITIAL_LAYOUT == "even-horizontal"
 assert PANE_ROLE_OPTION == "@harness_target"
 assert cwd_allowed("students", students)
 assert not cwd_allowed("students", harness)
-assert cwd_allowed("personal", harness)
+assert cwd_allowed("personal", personal)
+assert not cwd_allowed("personal", harness)
 assert location_for("harness") == (0, "cowork", 0)
 assert location_for("personal") == (1, "codex", 0)
 assert location_for("students") == (1, "codex", 1)
@@ -231,6 +235,7 @@ run_direct_launcher() {
 }
 
 run_direct_launcher harness "$ROOT"
+run_direct_launcher personal "$personal"
 run_direct_launcher students "$students"
 
 printf '%s\n' 'PASS: repository-native Codex target map'

@@ -18,7 +18,12 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-No consumer task is currently active.
+### Har-386 — Make Personal managed clients repository-native
+
+**Phase:** implementation; repair both target maps, validate, protected-publish,
+then cold-restart only the Personal clients and verify exact native roots.
+
+**Record:** `docs/tasks/Har-386.md`.
 
 ## Deferred gates
 
