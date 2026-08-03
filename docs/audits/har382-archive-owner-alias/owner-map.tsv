@@ -1,5 +1,7 @@
 legacy_repository	legacy_origin	owner_repository	method
 /tmp/personal-producer-reference	/mnt/nfs-03/safe/Users/rioyokota/projects/personal	/mnt/nfs-03/safe/Users/rioyokota/projects/personal	direct-local-origin-v1
+/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students	/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students	/mnt/nfs-03/safe/Users/rioyokota/projects/students	authorized-single-relocation-v1
+/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow	/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow	/mnt/nfs-03/safe/Users/rioyokota/projects/swallow	authorized-single-relocation-v1
 /tmp/stu-prefix-reference.uG8YMx/repo	/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students	/mnt/nfs-03/safe/Users/rioyokota/projects/students	authorized-single-relocation-v1
 /tmp/students-har378-reference	/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students	/mnt/nfs-03/safe/Users/rioyokota/projects/students	authorized-single-relocation-v1
 /tmp/students-producer-reference	/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students	/mnt/nfs-03/safe/Users/rioyokota/projects/students	authorized-single-relocation-v1
