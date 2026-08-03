@@ -103,7 +103,7 @@ assert_contains 'Installed skill descriptions are the trigger index' "$AGENTS" \
 # Conditional authority stays reachable through the exact route that selects it.
 assert_contains 'Owner approval alone never' "$EXTERNAL" \
     'installer exception boundary'
-assert_contains 'Ordinary Git operations inside the active task' "$GIT_POLICY" \
+assert_contains 'Task-scoped fetch, branch, commit' "$GIT_POLICY" \
     'standing Git authority'
 assert_contains 'approval count of zero' "$GIT_POLICY" \
     'owner-selected zero approvals'
@@ -112,6 +112,8 @@ assert_contains 'same-trust-root self-attestation' "$GIT_POLICY" \
     'local receipt trust boundary'
 assert_contains 'hosted CI remains authoritative' "$GIT_POLICY" \
     'protected CI authority'
+assert_contains 'run server-side merge with' "$GIT_POLICY" \
+    'linked-worktree merge ambiguity guard'
 assert_contains 'bridge-first cutover' "$CODEX" \
     'bridge-first lifecycle boundary'
 assert_contains 'docs/fleet-inventory.md' "$FLEET" \
