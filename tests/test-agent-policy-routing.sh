@@ -46,7 +46,7 @@ assert_max "$root_words" 760 'always-read policy'
 assert_max "$git_words" 255 'repository Git policy'
 assert_max "$external_words" 180 'external-operation policy'
 assert_max "$codex_words" 225 'managed Codex policy'
-assert_max "$fleet_words" 350 'fleet policy'
+assert_max "$fleet_words" 300 'fleet policy'
 assert_max "$housekeeping_words" 265 'housekeeping/promotion policy'
 assert_max "$research_words" 85 'research policy'
 assert_max "$duration_words" 85 'duration policy'
@@ -55,9 +55,9 @@ assert_max "$((root_words + external_words))" 940 \
     'external-operation selected route'
 assert_max "$((root_words + codex_words))" 985 \
     'managed Codex selected route'
-assert_max "$((root_words + fleet_words))" 1100 'fleet selected route'
+assert_max "$((root_words + fleet_words))" 1060 'fleet selected route'
 assert_max "$((root_words + git_words + external_words + fleet_words))" \
-    1520 'repository/fleet hardening cumulative route'
+    1475 'repository/fleet hardening cumulative route'
 assert_max "$((root_words + housekeeping_words))" 1025 \
     'housekeeping selected route'
 assert_max "$((root_words + research_words))" 840 'research selected route'

@@ -574,8 +574,20 @@ explicit conditional link reduces ordinary external-operation context from
 274 to 177 words; installer cleanup still composes the full 184-word exception,
 so both routes save 97 words without losing a gate. Tighter policy/cumulative
 ceilings, generated context, guarded-delete behavior, skill budgets and safety
-markers, Claude takeover, and diff checks pass. Complete integration and
-protected publication remain pending.
+markers, Claude takeover, and diff checks pass. Complete R3 passed all 98
+suites in 58.571 seconds with only the declared native-MPI skip. PR #653 merged
+at `87cc483`; hosted validation skipped as intended and the exact worktree was
+archive-retired.
+
+The remaining 331-word fleet policy was then semantically compacted to 287
+words while preserving inventory, official-maintenance, health cadence, `abq`,
+`al`, guarded rollout, no-pane refresh, and personal-Mac drift boundaries.
+Fleet-selected context falls from 1,091 to 1,047 words and the cumulative
+repository/fleet route from 1,516 to 1,472. Generated fleet-hardening context
+falls from 4,377 to 4,333 words; fleet health, inventory, policy, context,
+Claude takeover, and diff checks pass. Complete R3 passed all 98 suites in
+58.599 seconds with only the declared native-MPI skip; protected publication
+remains pending.
 
 ## Slice 10 — 08:00–09:00 JST
 
