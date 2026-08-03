@@ -18,12 +18,7 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-### Har-385 — Retire all non-main portfolio branches
-
-**Phase:** implementing the guarded archive-first retirement path before
-five-repository cleanup.
-
-**Record:** `docs/tasks/Har-385.md`.
+No consumer task is currently active.
 
 ## Deferred gates
 
