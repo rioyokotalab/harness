@@ -12,15 +12,6 @@ Confirm branch, worktree, recent commits, ownership, and mutable inputs. Resume
 the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
-## Active queue
-
-### Har-388 — Harden consumer autonomy and task efficiency
-
-**Phase:** protected consumer autonomy is complete; optimize generic cold-start
-and validation cost through the 2026-08-04 09:00 JST cutoff.
-
-**Record:** `docs/tasks/Har-388.md`.
-
 ## Deferred gates
 
 ### Har-196 — Backup lifecycle phase 2

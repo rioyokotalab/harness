@@ -297,7 +297,7 @@ must reconcile protected `main` before computing the consumer diff.
 
 ## Slice 5 — 03:00–04:00 JST
 
-Personal's Day One implementation initially returned a temporal-boundary
+Personal's interval-aggregation implementation initially returned a temporal-boundary
 correction, then replaced a period-by-interval rescan with a monotonic linear
 sweep. Thirteen focused tests covered equivalence, gaps, spanning intervals,
 bounded input, and structural complexity. Its exact 10,000-record synthetic
@@ -603,4 +603,39 @@ pending.
 
 ## Slice 10 — 08:00–09:00 JST
 
-Pending window.
+PR #655 merged the final pre-cutoff optimization at `f298552` after an exact
+58.613-second R3. The common hardening-skill entry fell from 335 to 299 words,
+its largest interrupted route from 877 to 841, and the generated fleet scenario
+from 4,333 to 4,297; hosted validation skipped as intended. Its exact worktree
+was archive-retired.
+
+Integration preparation found all five canonical repositories clean on
+`main`, with one worktree, one local branch, one hosted branch, and no unrelated
+dirty state. Personal, Students, and Swallow strictly converge; Website passes
+its repository-version ledger validator; Harness has only Har-388 executable.
+No consumer was woken and no pane, transcript, Personal source, or owner value
+was read. Five 400-KiB profile directories were deleted through one guarded
+manifest with unchanged anchors, eight exact owner-controlled files were
+unlinked after type/identity checks, and two host-absent tracking refs were
+pruned. Exact readback found no remaining Har-388 path in `/tmp`.
+
+The final public-payload scan found one unnecessary Personal application name
+in an otherwise value-free performance paragraph. It was replaced with the
+generic implementation role before the material cutoff. No source value,
+message, event, file name, credential, or private task purpose was present.
+Harness's 1,846-commit audit reports `value_exposed=false`; all ten findings
+introduced within the Har-388 range are credential/private-key scanner
+fixtures in tests. Website's unchanged 474-commit audit also reports
+`value_exposed=false`; all ten differences from its July baseline are scanner
+fixtures or declared benchmark-result large blobs. Its complete offline
+security, workflow, supply-chain, accessibility, deploy-allowlist, and
+1,711-URL/fragment suite passes with a clean worktree.
+
+At the 08:15 material cutoff the frozen clean tree passed all 98 final phase-one
+suites in 58.550 seconds; only the declared native-MPI environment check
+skipped. No material change began after the cutoff. The six-path terminal
+consumer set removes Har-388 from the active board, indexes it complete, adds
+its immutable receipt, and preserves the ten slices plus compact recovery
+record. Nonstrict ledger validation and the consumer writer boundary must pass
+before its sole protected publication; producer reconciliation and final
+readback then complete the lifecycle.
