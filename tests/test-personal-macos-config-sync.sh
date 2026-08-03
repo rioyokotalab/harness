@@ -28,11 +28,17 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 MACOS_TEST_REAL_TMUX=$(command -v tmux) ||
     fail "tmux is unavailable for config-sync tests"
 export MACOS_TEST_REAL_TMUX
+case $(/usr/bin/uname -s) in
+    Darwin) MACOS_TEST_HOST_STAT_STYLE=darwin ;;
+    *) MACOS_TEST_HOST_STAT_STYLE=gnu ;;
+esac
+export MACOS_TEST_HOST_STAT_STYLE
 
 fake_bin=$TEMP_DIR/fake-bin
 mkdir "$fake_bin"
 cat >"$fake_bin/uname" <<'EOF'
 #!/bin/sh
+[ -z "${MACOS_TEST_UNAME_LOG:-}" ] || printf 'probe\n' >>"$MACOS_TEST_UNAME_LOG"
 echo Darwin
 EOF
 cat >"$fake_bin/stat" <<'EOF'
@@ -41,8 +47,8 @@ if [ "$1" = -f ]; then
     case "$2" in %u) format=%u ;; %Lp) format=%a ;; %l) format=%h ;; *) exit 2 ;; esac
     shift 2
     [ "${1:-}" != -- ] || shift
-    case $(/usr/bin/uname -s) in
-        Darwin)
+    case "$MACOS_TEST_HOST_STAT_STYLE" in
+        darwin)
             case "$format" in %a) format=%Lp ;; %h) format=%l ;; esac
             exec /usr/bin/stat -f "$format" "$1"
             ;;
@@ -84,6 +90,14 @@ exec "$MACOS_TEST_REAL_TMUX" "$@"
 EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/mv" \
     "$fake_bin/vim" "$fake_bin/tmux"
+
+stat_probe_log=$TEMP_DIR/stat-kernel-probes
+: >"$stat_probe_log"
+MACOS_TEST_UNAME_LOG="$stat_probe_log" PATH="$fake_bin:/usr/bin:/bin" \
+    sh -c '. "$1"; macos_stat_owner "$2" >/dev/null; macos_stat_mode "$2" >/dev/null; macos_stat_links "$2" >/dev/null' \
+    _ "$ROOT/libexec/harness-macos-common" "$ROOT/AGENTS.md"
+[ "$(wc -l <"$stat_probe_log" | tr -d ' ')" = 1 ] ||
+    fail "Mac stat helpers repeated the immutable kernel probe"
 
 configure_identity() {
     git -C "$1" config user.name mac-test

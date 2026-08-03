@@ -1,5 +1,10 @@
 #!/bin/sh
 
+case $(uname -s) in
+    Darwin) macos_stat_style=darwin ;;
+    *) macos_stat_style=gnu ;;
+esac
+
 macos_private_id_is_safe() {
     case "$1" in
         ''|*[!A-Za-z0-9._-]*|.|..|.*) return 1 ;;
@@ -8,22 +13,22 @@ macos_private_id_is_safe() {
 }
 
 macos_stat_owner() {
-    case $(uname -s) in
-        Darwin) stat -f '%u' -- "$1" ;;
+    case "$macos_stat_style" in
+        darwin) stat -f '%u' -- "$1" ;;
         *) stat -c '%u' -- "$1" ;;
     esac
 }
 
 macos_stat_mode() {
-    case $(uname -s) in
-        Darwin) stat -f '%Lp' -- "$1" ;;
+    case "$macos_stat_style" in
+        darwin) stat -f '%Lp' -- "$1" ;;
         *) stat -c '%a' -- "$1" ;;
     esac
 }
 
 macos_stat_links() {
-    case $(uname -s) in
-        Darwin) stat -f '%l' -- "$1" ;;
+    case "$macos_stat_style" in
+        darwin) stat -f '%l' -- "$1" ;;
         *) stat -c '%h' -- "$1" ;;
     esac
 }
