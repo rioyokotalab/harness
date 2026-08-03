@@ -131,6 +131,10 @@ suite identity plus captured logs on failure. Its focused contract and exact
 clean R3 passed; the integration line reported 98 suites in 64.751 seconds.
 PR #630 merged the change at `c749a87`, with the hosted portable job skipped
 under the established Actions-sustainability contract.
+With detailed chronology already durable here, the active Har-388 recovery
+record was compacted from 817 to 315 words (61.4% reduction) while retaining
+all protected revisions, current acceptance evidence, rejected scheduling
+results, active Personal gate, and exact next action.
 
 ## Slice 3 — 01:00–02:00 JST
 
