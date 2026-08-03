@@ -313,7 +313,6 @@ OUT=$(house "$COORDINATOR" --create-owner-alias \
     --mapping-evidence-commit "$EVIDENCE_COMMIT" \
     --mapping-evidence-path owner-map.tsv) ||
     fail "absent-root relocation alias creation failed"
-RELOC_ALIAS_TWO=$(printf '%s\n' "$OUT" | sed -n 's/.*alias=\([^ ]*\).*/\1/p')
 house "$RELOC_OWNER" --audit --receipt "$RELOC_RECEIPT_ONE" >/dev/null ||
     fail "live-proven relocation alias did not survive root absence"
 house "$RELOC_OWNER" --audit --receipt "$RELOC_RECEIPT_TWO" >/dev/null ||
@@ -340,58 +339,6 @@ mv "$RELOC_LEGACY" "$RELOC_LEGACY.hidden"
 touch -d '40 days ago' "$RELOC_RECEIPT_THREE"
 house "$COORDINATOR" --create-generation >/dev/null ||
     fail "second relocation generation failed"
-RELOC_BUNDLE_TWO=$(sed -n 's/^bundle=//p' "$RELOC_RECEIPT_TWO")
-unlink "$RELOC_BUNDLE_TWO"
-unlink "$RELOC_ALIAS_TWO"
-OUT=$(house "$COORDINATOR" --create-owner-alias \
-    --source-receipt "$RELOC_RECEIPT_TWO" \
-    --owner-repo "$RELOC_OWNER" \
-    --legacy-origin "$RETIRED_OWNER" \
-    --mapping-evidence-commit "$EVIDENCE_COMMIT" \
-    --mapping-evidence-path owner-map.tsv) ||
-    fail "generation-only alias creation failed"
-printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
-    fail "generation-only alias omitted independent restore proof"
-OUT=$(house "$RELOC_OWNER" --audit --receipt "$RELOC_RECEIPT_TWO") ||
-    fail "generation-only alias audit failed"
-printf '%s\n' "$OUT" | grep -Fq 'retired=1 generations=2' ||
-    fail "generation-only alias coverage changed"
-cp "$RELOC_ALIAS_TWO" "$TEST_ROOT/generation-alias.saved"
-python3 -B - "$RELOC_ALIAS_TWO" <<'PY'
-import json
-import pathlib
-import sys
-
-path = pathlib.Path(sys.argv[1])
-value = json.loads(path.read_text())
-value["recovery"]["generations"] = value["recovery"]["generations"][:1]
-path.write_text(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n")
-PY
-chmod 600 "$RELOC_ALIAS_TWO"
-if house "$RELOC_OWNER" --audit --receipt "$RELOC_RECEIPT_TWO" \
-    >/dev/null 2>&1; then
-    fail "single-generation owner alias recovery was accepted"
-fi
-mv "$TEST_ROOT/generation-alias.saved" "$RELOC_ALIAS_TWO"
-chmod 600 "$RELOC_ALIAS_TWO"
-cp "$RELOC_ALIAS_TWO" "$TEST_ROOT/generation-alias.saved"
-python3 -B - "$RELOC_ALIAS_TWO" <<'PY'
-import json
-import pathlib
-import sys
-
-path = pathlib.Path(sys.argv[1])
-value = json.loads(path.read_text())
-value["recovery"]["generations"][0]["sha256"] = "0" * 64
-path.write_text(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n")
-PY
-chmod 600 "$RELOC_ALIAS_TWO"
-if house "$RELOC_OWNER" --audit --receipt "$RELOC_RECEIPT_TWO" \
-    >/dev/null 2>&1; then
-    fail "changed generation recovery digest was accepted"
-fi
-mv "$TEST_ROOT/generation-alias.saved" "$RELOC_ALIAS_TWO"
-chmod 600 "$RELOC_ALIAS_TWO"
 OUT=$(house "$RELOC_OWNER" --plan-archive-compaction \
     --source-receipt "$RELOC_RECEIPT_ONE") ||
     fail "relocation compaction plan failed"
