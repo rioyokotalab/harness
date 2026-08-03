@@ -20,8 +20,9 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ### Har-384 — Relocate Students and Swallow roots under `projects`
 
-**Phase:** accepted owner-authorized migration; discovery and guarded stale
-destination retirement are in progress.
+**Phase:** destination trees and transitional control plane are published;
+Claude passed physical-phone acceptance, while the Codex provisional thread is
+live but its TUI input-delivery path has not produced a user event.
 
 **Record:** `docs/tasks/Har-384.md`.
 
