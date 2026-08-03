@@ -630,5 +630,12 @@ fixtures in tests. Website's unchanged 474-commit audit also reports
 fixtures or declared benchmark-result large blobs. Its complete offline
 security, workflow, supply-chain, accessibility, deploy-allowlist, and
 1,711-URL/fragment suite passes with a clean worktree.
-Final integration, terminal ledger publication, convergence, and post-closeout
-cleanup remain pending.
+
+At the 08:15 material cutoff the frozen clean tree passed all 98 final phase-one
+suites in 58.550 seconds; only the declared native-MPI environment check
+skipped. No material change began after the cutoff. The six-path terminal
+consumer set removes Har-388 from the active board, indexes it complete, adds
+its immutable receipt, and preserves the ten slices plus compact recovery
+record. Nonstrict ledger validation and the consumer writer boundary must pass
+before its sole protected publication; producer reconciliation and final
+readback then complete the lifecycle.
