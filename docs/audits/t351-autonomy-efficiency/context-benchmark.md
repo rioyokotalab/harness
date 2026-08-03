@@ -18,13 +18,13 @@ protected publication.
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | factual lookup | 73,734 | 1,657 | 97.7% | 2,906 | 1,437 | 50.5% |
-| documentation edit | 73,545 | 1,967 | 97.3% | 2,717 | 1,747 | 35.7% |
-| ordinary code fix | 74,455 | 1,693 | 97.7% | 3,627 | 1,473 | 59.3% |
+| documentation edit | 73,545 | 1,928 | 97.3% | 2,717 | 1,708 | 37.1% |
+| ordinary code fix | 74,455 | 1,654 | 97.7% | 3,627 | 1,434 | 60.4% |
 | tmux health diagnosis | 73,545 | 1,628 | 97.7% | 2,717 | 1,408 | 48.1% |
 | unsafe-tail recovery | 75,931 | 2,987 | 96.0% | 5,103 | 2,767 | 45.7% |
-| fleet hardening | 76,238 | 4,513 | 94.0% | 5,410 | 4,293 | 20.6% |
-| native HPC experiment | 77,550 | 3,279 | 95.7% | 6,722 | 3,059 | 54.4% |
-| duration ledger | 80,599 | 1,974 | 97.5% | 9,771 | 1,754 | 82.0% |
+| fleet hardening | 76,238 | 4,474 | 94.1% | 5,410 | 4,254 | 21.3% |
+| native HPC experiment | 77,550 | 3,240 | 95.8% | 6,722 | 3,020 | 55.0% |
+| duration ledger | 80,599 | 1,935 | 97.5% | 9,771 | 1,715 | 82.4% |
 
 The median total reduction is 97.4%, above the frozen 85% threshold; every
 scenario remains far above the per-scenario 50% floor. Median non-ledger
