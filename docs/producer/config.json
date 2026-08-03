@@ -2,7 +2,7 @@
   "schema": 1,
   "repository": "harness",
   "prefix": "Har",
-  "next_id": 387,
+  "next_id": 388,
   "public": true,
   "max_packet_bytes": 4096
 }
