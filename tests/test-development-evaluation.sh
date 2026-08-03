@@ -24,7 +24,31 @@ if [ "${HARNESS_PORTABLE_CI:-0}" = 1 ]; then
 else
     python3 "$RUNNER" selftest |
         grep -F 'development benchmark selftests passed' >/dev/null
-    PYTHONDONTWRITEBYTECODE=1 python3 "$MUTATION_AUDIT" |
+    # A heavily contended bubblewrap launch can fail immediately before the
+    # frozen accepted reference runs. The audit is synthetic, network-isolated,
+    # and cleans its private workspace, so retry exactly that infrastructure
+    # signature once. Every timeout, mutation failure, and second failure stays
+    # terminal.
+    if mutation_output=$(PYTHONDONTWRITEBYTECODE=1 \
+        python3 "$MUTATION_AUDIT" 2>&1); then
+        :
+    else
+        first_failure=$mutation_output
+        case $first_failure in
+            *'accepted mutation rejected: '*'/accepted-reference:grader_exception:RuntimeError'*)
+                if ! mutation_output=$(PYTHONDONTWRITEBYTECODE=1 \
+                    python3 "$MUTATION_AUDIT" 2>&1); then
+                    printf '%s\n%s\n' "$first_failure" "$mutation_output" >&2
+                    exit 1
+                fi
+                ;;
+            *)
+                printf '%s\n' "$first_failure" >&2
+                exit 1
+                ;;
+        esac
+    fi
+    printf '%s\n' "$mutation_output" |
         grep -F 'MUTATION_AUDIT scenarios=16 accepted=32 rejected=48 unexpected_passes=0 reward_hacks=4 status=pass' \
             >/dev/null
 fi
