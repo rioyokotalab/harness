@@ -449,7 +449,53 @@ correctly escalates the combined validator change to complete integration.
 
 ## Slice 8 — 06:00–07:00 JST
 
-Pending window.
+Harness PR #644 merged at `985cc0f` after an exact 98-suite R3 in 66.375
+seconds. It reduced the active board from 299 to 220 words, the Har-388 recovery
+index from 904 to 500 words, and board plus active record from 1,203 to 720
+words. The generated eight-scenario context benchmark still passes at a 97.4%
+median total reduction. The repeatedly selected Local consumer-message route
+fell from 525 to 498 words with a new 500-word ceiling; all identity, retry,
+confirmation, receipt, preflight, and no-pane markers remain covered.
+
+The largest message-delivery route was then reduced from 644 to 589 words, and
+the conditional managed-Codex policy from 250 to 222. Independent review
+restored unique request-ID, single-process, private-buffer, and blocked-status
+details that an earlier draft compressed too far. Five owning checks passed;
+PR #645 merged at `eb7db61` after all 98 R3 suites passed in 67.098 seconds.
+Selected managed-policy plus delivery context is 83 words smaller, while new
+entry, delivery, and policy ceilings freeze the gains.
+
+A protected seven-worker verbose baseline completed 98 focused suites in
+58.360 seconds and identified housekeeping at 44.320 seconds as the clear
+critical outlier. Command-boundary tracing found that receipt-threshold tests
+created 62 duplicate immutable receipts and repeatedly re-audited them. A
+bounded test-only override remains unavailable unless `HARNESS_TESTING=1`,
+accepts only 1–29, and leaves the production threshold frozen at 30. Two groups
+of four preserve the strict greater-than-threshold behavior. Four exact owning
+runs passed at 27.49, 27.66, 27.63, and 27.49 seconds versus the 33.02-second
+protected standalone reference; the owner-alias suite also passed. PR #646
+merged at `9ef3351` after complete R3 passed in 64.230 seconds.
+
+Post-merge profiling completed in 57.119 seconds; housekeeping under contention
+fell to 36.713 seconds. Scenario-local worktree state improved only 0.12
+seconds and was reverted. SSH-sync tracing found no idle delay: its distinct
+Git/identity cases each consumed 0.3–1.0 seconds, so collapsing them would have
+removed behavioral coverage. Eight workers completed in 57.041 seconds, only
+0.078 faster while slowing every long suite; seven workers remain protected.
+Cold-start Git status, selector, and recent-history checks measured 0.13, 0.05,
+and 0.01 seconds, so removing recovery checks was also rejected. Plan/doctor
+profiling found that each synthetic fact case still performs the required
+post-observation private-profile check; SSH-supervisor profiling found many
+distinct lifecycle cases and only one 1.98-second signal-drain wait. Neither
+offered a material reduction without weakening behavioral coverage.
+
+Finally, ordinary guarded deletion no longer preloads the rare vendor-installer
+exception. Its selected route fell from 572 to 431 words; installer
+classification explicitly composes a 184-word reference containing all
+official-source, exact-byte, target-derivation, owner-approval, and post-cleanup
+gates. Guarded-delete, catalog, and upgrade tests passed; PR #647 merged at
+`03cd399` after a clean 98-suite R3 in 63.894 seconds with only the declared
+native-MPI skip. No Personal source, owner value, pane, or transcript was read.
 
 ## Slice 9 — 07:00–08:00 JST
 
