@@ -18,7 +18,14 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-No consumer task is currently active.
+### Har-382 — Migrate archive ownership to immutable repository aliases
+
+**Phase:** active implementation with an owner-authorized, single-generation
+relocation-evidence bridge from the retired Students and Swallow
+canonical paths to their durable `projects` successors. Historical receipts
+and Git origins remain immutable; arbitrary chains remain rejected.
+
+**Record:** `docs/tasks/Har-382.md`.
 
 ## Deferred gates
 

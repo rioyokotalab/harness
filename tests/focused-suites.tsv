@@ -20,6 +20,7 @@ tests/test-tmux-codex-monitor.sh|Local tmux Codex monitor focused suite
 tests/test-tmux-claude-monitor.sh|Local tmux Claude monitor focused suite
 tests/test-macos-agent-session.sh|unified managed-Mac agent session suite
 tests/test-housekeeping.sh|routine repository housekeeping suite
+tests/test-housekeeping-owner-alias.sh|immutable archive owner alias suite
 tests/test-projects-pane-layout.sh|isolated final Harness six-pane topology
 tests/test-codex-recovery-helper.sh|dedicated Local Codex recovery helper
 tests/test-al-session.sh|personal AL session focused suite|7
