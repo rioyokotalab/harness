@@ -511,15 +511,32 @@ if grep -F 'confirmation request_id=' "$state/operations" >/dev/null; then
     fail "Local confirmation leaked into tmux arguments"
 fi
 
-if (
+(
     cd "$home/harness"
     FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
         FAKE_PANE_ROLE=personal FAKE_PANE_PATH=$home/personal \
         run_helper confirm-local-codex --source local --target personal \
         --request-id har388-stage-one --status accepted \
+        >"$state/local-confirmation-terminal.out"
+)
+grep -F -x \
+    'AGENT_MESSAGE_LOCAL_CODEX_CONFIRM source=local target=personal client=codex request_id=har388-stage-one confirmation=accepted status=submitted' \
+    "$state/local-confirmation-terminal.out" >/dev/null ||
+    fail "terminal accepted confirmation output"
+printf '%s\n%s' '[Agent: Local Codex]' \
+    'confirmation request_id=har388-stage-one status=accepted' \
+    >"$state/expected-terminal-confirmation"
+cmp -s "$state/expected-terminal-confirmation" "$state/last-message" ||
+    fail "terminal accepted confirmation envelope changed"
+if (
+    cd "$home/harness"
+    FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+        FAKE_PANE_ROLE=personal FAKE_PANE_PATH=$home/personal \
+        run_helper confirm-local-codex --source local --target personal \
+        --request-id har388-stage-one --status changes-required \
         >"$state/local-confirmation-missing-next.out" 2>&1
 ); then
-    fail "continuing confirmation omitted its next request"
+    fail "changes-required confirmation omitted its next request"
 fi
 if (
     cd "$home/harness"

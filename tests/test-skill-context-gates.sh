@@ -291,6 +291,9 @@ assert_contains 'confirm-local-codex' "$REMOTE/references/local-codex.md" \
 assert_contains 'never grants owner authority' \
     "$REMOTE/references/local-codex.md" \
     'remote-agent confirmation non-escalation'
+assert_contains 'closes a terminal checkpoint' \
+    "$REMOTE/references/local-codex.md" \
+    'remote-agent terminal confirmation boundary'
 assert_contains 'reversible owner-choice wait' \
     "$REMOTE/references/local-codex.md" \
     'remote-agent queue-local owner gate'
