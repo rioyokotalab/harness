@@ -515,12 +515,29 @@ shim. A candidate now fixes Darwin-versus-GNU stat syntax once when the common
 library is sourced and computes the real test-host style once, while retaining
 live owner, mode, link-count, and content reads. Three exact owning runs passed
 in 17.04, 16.49, and 16.87 seconds, a 16.87-second median and 13.4% reduction;
-ShellCheck, syntax, diff, and an exact one-probe regression pass. Complete
-integration and protected publication remain pending.
+ShellCheck, syntax, diff, and an exact one-probe regression pass. Complete R3
+then passed all 98 suites in 62.500 seconds with only the declared native-MPI
+skip. PR #649 merged the exact tree at `3b9d8e0`; hosted portable validation
+skipped as intended, and its scratch worktree was archive-retired.
 
 ## Slice 9 — 07:00–08:00 JST
 
-Pending window.
+The first post-merge seven-worker profile passed all 98 focused suites in
+54.955 seconds versus 56.941 immediately before the stat-style change. Config
+sync fell from 23.636 to 19.651 seconds under contention; SSH sync and the SSH
+supervisor also benefited because all use the same immutable platform syntax.
+
+A Homebrew fixture-only host-style cache reduced one standalone run from 21.74
+to 21.28 seconds. The 0.46-second gain was rejected as immaterial, reverted
+byte-for-byte, and its clean worktree was archive-retired. Profiling instead
+identified repeated `awk` launches in the shared getter for already-validated
+small `key=value` manifests. A shell-builtin line parser preserves duplicate
+output, embedded equals signs, empty values, delimiter-free lines, missing
+keys, absent-file failure, and unterminated final lines. Config sync passed
+three exact candidate runs in 14.91, 15.25, and 15.05 seconds versus the
+16.87-second protected median; Homebrew passed in 19.96 versus 21.74 seconds.
+The private-profile suite, ShellCheck, and parser-parity probes pass. Complete
+integration and protected publication remain pending.
 
 ## Slice 10 — 08:00–09:00 JST
 

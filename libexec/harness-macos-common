@@ -124,8 +124,20 @@ macos_validate_manifest() {
 macos_manifest_get() {
     macos_manifest=$1
     macos_manifest_key=$2
-    awk -F= -v key="$macos_manifest_key" \
-        '$1 == key { print substr($0, length(key) + 2) }' "$macos_manifest"
+    while IFS= read -r macos_manifest_line || [ -n "$macos_manifest_line" ]; do
+        case "$macos_manifest_line" in
+            *=*)
+                macos_manifest_name=${macos_manifest_line%%=*}
+                macos_manifest_value=${macos_manifest_line#*=}
+                ;;
+            *)
+                macos_manifest_name=$macos_manifest_line
+                macos_manifest_value=
+                ;;
+        esac
+        [ "$macos_manifest_name" = "$macos_manifest_key" ] || continue
+        printf '%s\n' "$macos_manifest_value"
+    done <"$macos_manifest"
 }
 
 macos_validate_token_csv() {

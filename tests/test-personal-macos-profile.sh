@@ -32,6 +32,34 @@ fail() {
     exit 1
 }
 
+manifest_probe=$TEMP_DIR/manifest-probe.conf
+printf '%s\n' 'duplicate=one' 'duplicate=two' 'equals=a=b' 'empty=' \
+    >"$manifest_probe"
+printf '%s' bare >>"$manifest_probe"
+manifest_read() {
+    sh -c '. "$1"; macos_manifest_get "$2" "$3"' _ \
+        "$ROOT/libexec/harness-macos-common" "$manifest_probe" "$1"
+}
+[ "$(manifest_read duplicate)" = "one
+two" ] || fail "manifest getter changed duplicate-key output"
+[ "$(manifest_read equals)" = 'a=b' ] ||
+    fail "manifest getter changed embedded-equals output"
+manifest_read empty >"$TEMP_DIR/manifest-empty.out"
+[ "$(wc -c <"$TEMP_DIR/manifest-empty.out" | tr -d ' ')" = 1 ] ||
+    fail "manifest getter changed empty-value output"
+manifest_read bare >"$TEMP_DIR/manifest-bare.out"
+[ "$(wc -c <"$TEMP_DIR/manifest-bare.out" | tr -d ' ')" = 1 ] ||
+    fail "manifest getter changed delimiter-free output"
+manifest_read missing >"$TEMP_DIR/manifest-missing.out" ||
+    fail "manifest getter changed missing-key status"
+[ ! -s "$TEMP_DIR/manifest-missing.out" ] ||
+    fail "manifest getter changed missing-key output"
+if sh -c '. "$1"; macos_manifest_get "$2" key' _ \
+    "$ROOT/libexec/harness-macos-common" "$TEMP_DIR/absent-manifest" \
+    >"$TEMP_DIR/manifest-absent.out" 2>&1; then
+    fail "manifest getter accepted an absent file"
+fi
+
 make_profile() {
     name=$1
     home=$TEMP_DIR/$name
