@@ -18,7 +18,7 @@
   verified `origin/main`, never by name or diff. Apply consumes the emitted
   receipt/token, revalidates the full set, archives exact tips in local refs
   and a verified durable bundle, then uses expected-old ref transactions.
-- Remote branches are report-only; no delete path exists.
+- Remote deletion requires explicit archive-first expected-OID housekeeping.
 - A linked worktree also requires zero tracked, untracked, ignored, nested,
   submodule, lock, and process/open-file findings. Its directory and Git-admin
   record use separate fresh guarded manifests and a durable checkpoint.

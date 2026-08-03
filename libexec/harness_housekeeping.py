@@ -422,6 +422,9 @@ def single_origin(repo: Path) -> str:
 
 
 def terminal_remote_identity(repo: Path) -> str:
+    override = testing_override("HARNESS_TEST_REMOTE_IDENTITY")
+    if override:
+        return normalized_remote_identity(override)
     return normalized_remote_identity(single_origin(repo))
 
 
@@ -3058,7 +3061,9 @@ def checked_out_branches(repo: Path) -> List[str]:
     ]
 
 
-def local_branch_records(repo: Path) -> Tuple[List[Dict[str, Any]], Optional[str], bool]:
+def local_branch_records(
+    repo: Path, retire_all_nonmain: bool = False
+) -> Tuple[List[Dict[str, Any]], Optional[str], bool]:
     prs = pull_requests(repo)
     main_oid = origin_main(repo)
     current_result = git(repo, "symbolic-ref", "--quiet", "--short", "HEAD", check=False)
@@ -3077,13 +3082,21 @@ def local_branch_records(repo: Path) -> Tuple[List[Dict[str, Any]], Optional[str
         elif name in held:
             records.append({"name": name, "tip": tip, "candidate": False, "reason": "worktree-held", "pr": None})
         else:
-            records.append(classify_tip(repo, name, tip, prs, main_oid))
+            record = classify_tip(repo, name, tip, prs, main_oid)
+            if retire_all_nonmain and main_oid is not None and prs is not None:
+                record.update(candidate=True, reason="owner-retire-all")
+            records.append(record)
     return records, main_oid, prs is not None
 
 
-def plan_branches(repo: Path) -> Dict[str, Any]:
-    records, main_oid, api_ok = local_branch_records(repo)
-    payload = {"origin_main": main_oid, "api_ok": api_ok, "records": records}
+def plan_branches(repo: Path, retire_all_nonmain: bool = False) -> Dict[str, Any]:
+    records, main_oid, api_ok = local_branch_records(repo, retire_all_nonmain)
+    payload = {
+        "origin_main": main_oid,
+        "api_ok": api_ok,
+        "retire_all_nonmain": retire_all_nonmain,
+        "records": records,
+    }
     receipt, token = publish_plan("branches", repo, payload)
     candidates = [row for row in records if row["candidate"]]
     print(f"HOUSEKEEPING routine=branches mode=plan candidates={len(candidates)} reports={len(records)-len(candidates)} api={'ok' if api_ok else 'unknown'}")
@@ -3099,9 +3112,16 @@ def same_candidate_records(left: List[Dict[str, Any]], right: List[Dict[str, Any
     return left == right
 
 
-def apply_branches(repo: Path, receipt_path: Path, token: str) -> None:
+def apply_branches(
+    repo: Path,
+    receipt_path: Path,
+    token: str,
+    retire_all_nonmain: bool = False,
+) -> None:
     plan = load_plan(receipt_path, token, "branches", repo)
-    current, main_oid, api_ok = local_branch_records(repo)
+    if plan.get("retire_all_nonmain") is not retire_all_nonmain:
+        die("branch retirement authority changed")
+    current, main_oid, api_ok = local_branch_records(repo, retire_all_nonmain)
     if not api_ok or main_oid != plan.get("origin_main"):
         die("branch mutable state changed or is unknown")
     if not same_candidate_records(current, plan.get("records", [])):
@@ -3138,10 +3158,15 @@ def apply_branches(repo: Path, receipt_path: Path, token: str) -> None:
     )
 
 
-def remote_records(repo: Path) -> Tuple[List[Dict[str, Any]], Optional[str], bool]:
-    prs = pull_requests(repo)
-    main_oid = origin_main(repo)
-    rows: List[Dict[str, Any]] = []
+def validate_branch_name(repo: Path, name: str) -> None:
+    validate_item(name, "0" * 40)
+    if name == "main":
+        die("protected main cannot be a retirement candidate")
+    run(["git", "check-ref-format", f"refs/heads/{name}"])
+
+
+def remote_tracking_tips(repo: Path) -> Dict[str, str]:
+    rows: Dict[str, str] = {}
     output = text(
         git(
             repo,
@@ -3155,22 +3180,184 @@ def remote_records(repo: Path) -> Tuple[List[Dict[str, Any]], Optional[str], boo
         if short in {"origin", "origin/HEAD", "origin/main"}:
             continue
         name = short[len("origin/") :] if short.startswith("origin/") else short
-        classified = classify_tip(repo, name, tip, prs, main_oid)
-        classified["candidate"] = False
-        rows.append(classified)
-    return rows, main_oid, prs is not None
+        validate_branch_name(repo, name)
+        if not OID_RE.fullmatch(tip) or name in rows:
+            die("remote-tracking branch metadata is malformed")
+        rows[name] = tip
+    return rows
 
 
-def plan_remotes(repo: Path) -> None:
-    records, main_oid, api_ok = remote_records(repo)
+def hosted_head_tips(repo: Path) -> Dict[str, str]:
+    if os.environ.get("HARNESS_TESTING") == "1" and not testing_override(
+        "HARNESS_TEST_REMOTE_LIVE"
+    ):
+        rows = remote_tracking_tips(repo)
+        main = origin_main(repo)
+        if main is None:
+            die("hosted main is unknown")
+        return {"main": main, **rows}
+    result = git(repo, "ls-remote", "--heads", "origin", check=False)
+    if result.returncode != 0:
+        die("hosted branch inventory is unavailable")
+    rows: Dict[str, str] = {}
+    for line in text(result).splitlines():
+        fields = line.split("\t")
+        if len(fields) != 2 or not fields[1].startswith("refs/heads/"):
+            die("hosted branch metadata is malformed")
+        tip = fields[0]
+        name = fields[1][len("refs/heads/") :]
+        if not OID_RE.fullmatch(tip) or name in rows:
+            die("hosted branch metadata is malformed")
+        if name != "main":
+            validate_branch_name(repo, name)
+        rows[name] = tip
+    if "main" not in rows:
+        die("hosted main is missing")
+    return rows
+
+
+def remote_records(repo: Path, retire_all_nonmain: bool = False) -> Tuple[List[Dict[str, Any]], str]:
+    hosted = hosted_head_tips(repo)
+    tracking = remote_tracking_tips(repo)
+    records: List[Dict[str, Any]] = []
+    for name in sorted(key for key in hosted if key != "main"):
+        records.append(
+            {
+                "name": name,
+                "tip": hosted[name],
+                "tracking_tip": tracking.get(name),
+                "source": "hosted",
+                "candidate": retire_all_nonmain,
+                "reason": "owner-retire-all" if retire_all_nonmain else "report-only",
+            }
+        )
+    for name in sorted(set(tracking) - set(hosted)):
+        records.append(
+            {
+                "name": name,
+                "tip": tracking[name],
+                "tracking_tip": tracking[name],
+                "source": "tracking-only",
+                "candidate": retire_all_nonmain,
+                "reason": "owner-retire-all" if retire_all_nonmain else "stale-tracking-ref",
+            }
+        )
+    return records, hosted["main"]
+
+
+def plan_remotes(repo: Path, retire_all_nonmain: bool = False) -> None:
+    records, main_oid = remote_records(repo, retire_all_nonmain)
     receipt, token = publish_plan(
-        "remotes", repo, {"origin_main": main_oid, "api_ok": api_ok, "records": records}
+        "remotes",
+        repo,
+        {
+            "origin": terminal_remote_identity(repo) if retire_all_nonmain else "report-only",
+            "origin_main": main_oid,
+            "retire_all_nonmain": retire_all_nonmain,
+            "records": records,
+        },
     )
-    print(f"HOUSEKEEPING routine=remotes mode=report branches={len(records)} api={'ok' if api_ok else 'unknown'} apply=unavailable")
+    candidates = [row for row in records if row["candidate"]]
+    print(
+        "HOUSEKEEPING routine=remotes "
+        f"mode={'plan' if retire_all_nonmain else 'report'} "
+        f"branches={len(records)} candidates={len(candidates)} "
+        f"apply={'guarded' if retire_all_nonmain else 'unavailable'}"
+    )
     for row in records:
-        pr = row["pr"]["number"] if row.get("pr") else "none"
-        print(f"  REPORT remote_branch={row['name']} tip={row['tip']} reason={row['reason']} pr={pr}")
+        label = "CANDIDATE" if row["candidate"] else "REPORT"
+        print(
+            f"  {label} remote_branch={row['name']} tip={row['tip']} "
+            f"source={row['source']} reason={row['reason']}"
+        )
     print(f"  RECEIPT path={receipt} token={token}")
+
+
+def apply_remotes(
+    repo: Path, receipt_path: Path, token: str, retire_all_nonmain: bool
+) -> None:
+    plan = load_plan(receipt_path, token, "remotes", repo)
+    if not retire_all_nonmain or plan.get("retire_all_nonmain") is not True:
+        die("remote retirement requires explicit owner-retire-all authority")
+    current, main_oid = remote_records(repo, True)
+    if (
+        plan.get("origin") != terminal_remote_identity(repo)
+        or plan.get("origin_main") != main_oid
+        or plan.get("records") != current
+    ):
+        die("remote branch mutable state changed; re-plan")
+    candidates = [row for row in current if row["candidate"]]
+    if not candidates:
+        print("HOUSEKEEPING routine=remotes mode=apply removed=0 reason=no-candidates")
+        return
+
+    transaction = transaction_id("remotes")
+    hosted = [row for row in candidates if row["source"] == "hosted"]
+    staging: List[Tuple[str, str]] = []
+    if hosted:
+        refspecs = []
+        for row in hosted:
+            staging_ref = f"refs/harness-housekeeping/staging/{transaction}/{row['name']}"
+            run(["git", "check-ref-format", staging_ref])
+            refspecs.append(f"+refs/heads/{row['name']}:{staging_ref}")
+            staging.append((staging_ref, row["tip"]))
+        git(repo, "fetch", "--no-tags", "origin", *refspecs)
+        for ref, tip in staging:
+            if text(git(repo, "rev-parse", "--verify", ref)).strip() != tip:
+                die("hosted branch fetch changed before archive")
+
+    items: List[Tuple[str, str]] = []
+    details: Dict[str, Dict[str, str]] = {}
+    for row in candidates:
+        archive_name = f"{row['source']}/{row['name']}"
+        items.append((archive_name, row["tip"]))
+        details[archive_name] = {"classification": "owner-retire-all", "pr": "none"}
+        tracking_tip = row.get("tracking_tip")
+        if row["source"] == "hosted" and tracking_tip and tracking_tip != row["tip"]:
+            tracking_name = f"tracking/{row['name']}"
+            items.append((tracking_name, tracking_tip))
+            details[tracking_name] = {"classification": "tracking-diverged", "pr": "none"}
+    archived = archive_create(repo, items, transaction, str(receipt_path), details)
+    archive_audit(repo, Path(archived["receipt"]))
+
+    if hosted:
+        push = ["git", "-C", str(repo), "push", "--porcelain", "--atomic", "origin"]
+        push.extend(
+            f"--force-with-lease=refs/heads/{row['name']}:{row['tip']}"
+            for row in hosted
+        )
+        push.extend(f":refs/heads/{row['name']}" for row in hosted)
+        run(push, timeout=120)
+    remaining = hosted_head_tips(repo)
+    if remaining != {"main": main_oid}:
+        die("hosted branch retirement did not converge to protected main")
+
+    deletes = ["start"]
+    for row in candidates:
+        tracking_tip = row.get("tracking_tip")
+        if tracking_tip:
+            ref = f"refs/remotes/origin/{row['name']}"
+            existing = git(repo, "rev-parse", "--verify", ref, check=False)
+            if existing.returncode == 0:
+                if text(existing).strip() != tracking_tip:
+                    die("remote-tracking ref changed after hosted retirement")
+                deletes.append(f"delete {ref} {tracking_tip}")
+    for ref, tip in staging:
+        existing = git(repo, "rev-parse", "--verify", ref, check=False)
+        if existing.returncode == 0:
+            if text(existing).strip() != tip:
+                die("staging ref changed after hosted retirement")
+            deletes.append(f"delete {ref} {tip}")
+    deletes.extend(("prepare", "commit"))
+    run(
+        ["git", "-C", str(repo), "update-ref", "--stdin"],
+        input_bytes=("\n".join(deletes) + "\n").encode(),
+    )
+    print(
+        "HOUSEKEEPING routine=remotes mode=apply "
+        f"removed_hosted={len(hosted)} removed_tracking={sum(bool(row.get('tracking_tip')) for row in candidates)} "
+        f"archive_receipt={archived['receipt']} status=verified"
+    )
 
 
 def strict_descendant(path: Path, boundary: Path) -> bool:
@@ -4058,6 +4245,7 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--branch")
     value.add_argument("--path", dest="worktree_path")
     value.add_argument("--expected-main")
+    value.add_argument("--retire-all-nonmain", action="store_true")
     return value
 
 
@@ -4070,6 +4258,11 @@ def require_receipt(arguments: argparse.Namespace) -> Tuple[Path, str]:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     arguments = parser().parse_args(argv)
     repo = repository_from_environment(arguments.repo)
+    if arguments.retire_all_nonmain and (
+        arguments.routine not in {"branches", "remotes"}
+        or not (arguments.plan or arguments.apply)
+    ):
+        die("--retire-all-nonmain requires a branches or remotes plan/apply")
     if arguments.worktree_path and not (
         arguments.open_worktree
         or (arguments.plan and arguments.routine == "worktrees")
@@ -4165,8 +4358,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if arguments.plan:
         selected = (
             ("scratch", plan_scratch),
-            ("branches", plan_branches),
-            ("remotes", plan_remotes),
+            (
+                "branches",
+                lambda selected_repo: plan_branches(
+                    selected_repo, arguments.retire_all_nonmain
+                ),
+            ),
+            (
+                "remotes",
+                lambda selected_repo: plan_remotes(
+                    selected_repo, arguments.retire_all_nonmain
+                ),
+            ),
             (
                 "worktrees",
                 lambda selected_repo: plan_worktrees(
@@ -4184,7 +4387,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 0
     if arguments.routine == "branches":
         receipt, token = require_receipt(arguments)
-        apply_branches(repo, receipt, token)
+        apply_branches(
+            repo, receipt, token, arguments.retire_all_nonmain
+        )
+        return 0
+    if arguments.routine == "remotes":
+        receipt, token = require_receipt(arguments)
+        apply_remotes(
+            repo, receipt, token, arguments.retire_all_nonmain
+        )
         return 0
     if arguments.routine == "worktrees":
         receipt, token = require_receipt(arguments)
