@@ -291,6 +291,15 @@ assert_contains 'confirm-local-codex' "$REMOTE/references/local-codex.md" \
 assert_contains 'never grants owner authority' \
     "$REMOTE/references/local-codex.md" \
     'remote-agent confirmation non-escalation'
+assert_contains 'reversible owner-choice wait' \
+    "$REMOTE/references/local-codex.md" \
+    'remote-agent queue-local owner gate'
+assert_contains 'creates no terminal receipt' \
+    "$REMOTE/references/local-codex.md" \
+    'remote-agent reversible receipt boundary'
+assert_contains 'Never delete or rewrite one to resume work' \
+    "$REMOTE/references/local-codex.md" \
+    'remote-agent terminal receipt invariant'
 if grep -F 'unique current-user Codex pane in `projects`' \
     "$REMOTE/SKILL.md" >/dev/null; then
     fail 'remote-agent retains stale Local session'

@@ -64,6 +64,65 @@ printf '#!/bin/sh\n' >"$HOME_DIR/t000_stale_launcher.sh"
 printf '#!/bin/sh\n' >"$HOME_DIR/t001_other_launcher.sh"
 printf '#!/bin/sh\n' >"$HOME_DIR/run_this.sh"
 
+# Identical receipts may share one in-process bundle verification only while
+# the private file's kernel identity and expected digest remain unchanged.
+python3 -B - "$TOOL" "$TEST_ROOT" <<'PY'
+import hashlib
+import importlib.util
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+spec = importlib.util.spec_from_file_location("housekeeping_cache_fixture", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(module)
+root = Path(sys.argv[2])
+bundle = root / "cache-fixture.bundle"
+bundle.write_bytes(b"first-bundle")
+bundle.chmod(0o600)
+oid = "1" * 40
+archive = "refs/harness-housekeeping/archive/cache/item"
+parsed = {
+    "values": {
+        "repository_canonical": "/nonexistent/cache-fixture",
+        "bundle": str(bundle),
+        "bundle_sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(),
+        "archive_prefix": "refs/harness-housekeeping/archive/cache",
+    },
+    "items": [{"branch": "item", "tip": oid, "archive": archive}],
+}
+module.parse_archive_receipt = lambda _path: parsed
+module.resolve_archive_owner = lambda *_args, **_kwargs: root
+verify_calls = 0
+
+def fake_git(_repo, *arguments, check=True):
+    global verify_calls
+    if arguments[:2] == ("bundle", "verify"):
+        verify_calls += 1
+        return subprocess.CompletedProcess(arguments, 0, b"", b"")
+    if arguments[:2] == ("bundle", "list-heads"):
+        return subprocess.CompletedProcess(
+            arguments, 0, f"{oid} {archive}\n".encode(), b""
+        )
+    if arguments[:2] == ("rev-parse", "--verify"):
+        return subprocess.CompletedProcess(arguments, 1, b"", b"")
+    raise AssertionError(arguments)
+
+module.git = fake_git
+cache = {}
+first = module.archive_audit(root, root / "one.receipt", bundle_cache=cache)
+second = module.archive_audit(root, root / "two.receipt", bundle_cache=cache)
+assert first == second and verify_calls == 1
+bundle.write_bytes(b"other-bundle")
+os.utime(bundle, ns=(bundle.stat().st_atime_ns, bundle.stat().st_mtime_ns + 1_000_000))
+parsed["values"]["bundle_sha256"] = hashlib.sha256(bundle.read_bytes()).hexdigest()
+module.archive_audit(root, root / "three.receipt", bundle_cache=cache)
+assert verify_calls == 2
+bundle.unlink()
+PY
+
 PR_DATA=$TEST_ROOT/pr-data.json
 GH=$TEST_ROOT/gh
 cat >"$GH" <<'SH'

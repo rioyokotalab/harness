@@ -1235,6 +1235,12 @@ def archive_audit(
     generation_cache: Optional[Dict[Path, Dict[str, Any]]] = None,
     aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
     owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
+    bundle_cache: Optional[
+        Dict[
+            Tuple[str, Tuple[int, int], Path],
+            Tuple[Tuple[int, int, int, int, int], str, Dict[str, str]],
+        ]
+    ] = None,
 ) -> Dict[str, Any]:
     parsed = parse_archive_receipt(receipt_path)
     values = parsed["values"]
@@ -1255,14 +1261,41 @@ def archive_audit(
     recovery_sources: Dict[str, Tuple[Path, str]] = {}
     compaction = None
     if bundle.exists() or bundle.is_symlink():
-        validate_private_file(bundle)
-        if digest(bundle) != values["bundle_sha256"]:
-            die("archive bundle digest changed")
-        git(repo, "bundle", "verify", str(bundle))
-        for line in text(git(repo, "bundle", "list-heads", str(bundle))).splitlines():
-            fields = line.split(" ", 1)
-            if len(fields) == 2:
-                heads[fields[1]] = fields[0]
+        bundle_info = validate_private_file(bundle)
+        bundle_identity = (
+            bundle_info.st_dev,
+            bundle_info.st_ino,
+            bundle_info.st_size,
+            bundle_info.st_mtime_ns,
+            bundle_info.st_ctime_ns,
+        )
+        bundle_key = (str(repo), path_id(repo), bundle.resolve(strict=True))
+        cached_bundle = bundle_cache.get(bundle_key) if bundle_cache is not None else None
+        # Reuse verification only inside this inventory process and only while
+        # the private file's kernel identity and recorded digest are unchanged.
+        # A replaced or modified bundle is hashed and verified again.
+        if (
+            cached_bundle is not None
+            and cached_bundle[0] == bundle_identity
+            and cached_bundle[1] == values["bundle_sha256"]
+        ):
+            heads = dict(cached_bundle[2])
+        else:
+            if digest(bundle) != values["bundle_sha256"]:
+                die("archive bundle digest changed")
+            git(repo, "bundle", "verify", str(bundle))
+            for line in text(
+                git(repo, "bundle", "list-heads", str(bundle))
+            ).splitlines():
+                fields = line.split(" ", 1)
+                if len(fields) == 2:
+                    heads[fields[1]] = fields[0]
+            if bundle_cache is not None:
+                bundle_cache[bundle_key] = (
+                    bundle_identity,
+                    values["bundle_sha256"],
+                    dict(heads),
+                )
         if len(heads) != len(parsed["items"]):
             die("archive bundle head set changed")
         recovery_sources = {
@@ -2537,6 +2570,14 @@ def plan_archives(coordinator_repo: Path) -> None:
         str,
         Tuple[Path, Optional[str], Optional[List[Dict[str, Any]]], Dict[str, str]],
     ] = {}
+    bundle_cache: Dict[
+        Tuple[str, Tuple[int, int], Path],
+        Tuple[Tuple[int, int, int, int, int], str, Dict[str, str]],
+    ] = {}
+    item_facts_cache: Dict[
+        Tuple[str, str, str, str, str],
+        Tuple[bool, bool, List[str], Optional[bool], str],
+    ] = {}
     output_rows: List[str] = []
     for receipt in receipts:
         parsed = parse_archive_receipt(receipt)
@@ -2570,6 +2611,7 @@ def plan_archives(coordinator_repo: Path) -> None:
             generation_cache,
             aliases=aliases,
             owner_cache=owner_cache,
+            bundle_cache=bundle_cache,
         )
         bundle = Path(values["bundle"])
         bundle_bytes = audit["bundle_bytes"]
@@ -2600,48 +2642,68 @@ def plan_archives(coordinator_repo: Path) -> None:
             tip = row["tip"]
             unique_tips.add(tip)
             total_items += 1
-            archive_ref_live = refs.get(row["archive"]) == tip
-            object_present = archive_ref_live or (
-                git(
-                    owner_repo,
-                    "cat-file",
-                    "-e",
-                    f"{tip}^{{commit}}",
-                    check=False,
-                ).returncode
-                == 0
+            item_key = (
+                owner_value,
+                tip,
+                row["archive"],
+                row.get("pr", "none"),
+                main_oid or "",
             )
-            containing = (
-                text(
+            item_facts = item_facts_cache.get(item_key)
+            if item_facts is None:
+                archive_ref_live = refs.get(row["archive"]) == tip
+                object_present = archive_ref_live or (
                     git(
                         owner_repo,
-                        "for-each-ref",
-                        "--contains",
-                        tip,
-                        "--format=%(refname)",
-                    )
-                ).splitlines()
-                if object_present
-                else []
+                        "cat-file",
+                        "-e",
+                        f"{tip}^{{commit}}",
+                        check=False,
+                    ).returncode
+                    == 0
+                )
+                containing = (
+                    text(
+                        git(
+                            owner_repo,
+                            "for-each-ref",
+                            "--contains",
+                            tip,
+                            "--format=%(refname)",
+                        )
+                    ).splitlines()
+                    if object_present
+                    else []
+                )
+                normal_refs = [
+                    ref
+                    for ref in containing
+                    if not ref.startswith("refs/harness-housekeeping/archive/")
+                    and not ref.startswith("refs/harness-housekeeping/generation/")
+                ]
+                ancestry = (
+                    None
+                    if main_oid is None or not object_present
+                    else is_ancestor(owner_repo, tip, main_oid)
+                )
+                tree_status = pr_tree_status(owner_repo, row, pull_rows)
+                item_facts = (
+                    archive_ref_live,
+                    object_present,
+                    normal_refs,
+                    ancestry,
+                    tree_status,
+                )
+                item_facts_cache[item_key] = item_facts
+            archive_ref_live, object_present, normal_refs, ancestry, tree_status = (
+                item_facts
             )
-            normal_refs = [
-                ref
-                for ref in containing
-                if not ref.startswith("refs/harness-housekeeping/archive/")
-                and not ref.startswith("refs/harness-housekeeping/generation/")
-            ]
             only = not normal_refs
             archive_only += int(only)
             receipt_archive_only += int(only)
-            ancestry = (
-                None
-                if main_oid is None or not object_present
-                else is_ancestor(owner_repo, tip, main_oid)
-            )
             main_status = (
                 "unknown" if ancestry is None else ("yes" if ancestry else "no")
             )
-            tree_status = pr_tree_status(owner_repo, row, pull_rows)
             pr_equal += int(tree_status == "equal")
             pr_unknown += int(tree_status == "unknown")
             receipt_equal += int(tree_status == "equal")

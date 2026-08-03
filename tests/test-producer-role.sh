@@ -15,6 +15,16 @@ export PATH="$TMP:$PATH"
 export PRODUCER_ROLE_FIXTURE='harness|cowork|0|harness|codex'
 "$ROOT/libexec/harness-producer-ledger" role-check --pane %0 >/dev/null
 
+grep -F 'reversible owner-choice' "$ROOT/PRODUCER.md" >/dev/null || {
+    echo 'producer queue omits reversible owner-choice parking' >&2
+    exit 1
+}
+grep -F 'Never delete or rewrite a terminal receipt' \
+    "$ROOT/PRODUCER.md" >/dev/null || {
+    echo 'producer queue permits terminal receipt reuse' >&2
+    exit 1
+}
+
 for fixture in \
     'projects|cowork|0|harness|codex' \
     'harness|codex|0|harness|codex' \
