@@ -326,6 +326,10 @@ printf '%s\n' "$OUT" | grep -Fq 'aliases=2 unbound_aliases=0' ||
 touch -d '40 days ago' "$RELOC_RECEIPT_ONE" "$RELOC_RECEIPT_TWO"
 house "$COORDINATOR" --create-generation >/dev/null ||
     fail "first relocation generation failed"
+printf 'advance evidence snapshot\n' >>"$COORDINATOR/tracked"
+git -C "$COORDINATOR" commit -qam 'advance evidence snapshot'
+EVIDENCE_COMMIT=$(git -C "$COORDINATOR" rev-parse HEAD)
+git -C "$COORDINATOR" update-ref refs/remotes/origin/main "$EVIDENCE_COMMIT"
 mv "$RELOC_LEGACY.hidden" "$RELOC_LEGACY"
 git -C "$RELOC_LEGACY" checkout -q main
 RELOC_RECEIPT_THREE=$(archive_one "$RELOC_LEGACY" relocate-three relocated-three)

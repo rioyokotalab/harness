@@ -653,7 +653,6 @@ def load_owner_aliases() -> Dict[str, Tuple[Path, Dict[str, Any]]]:
             mapping["evidence_repository"],
             tuple(mapping["evidence_repository_id"]),
             mapping["evidence_repository_remote"],
-            mapping["evidence_commit"],
             mapping["evidence_path"],
             mapping["evidence_sha256"],
         )
