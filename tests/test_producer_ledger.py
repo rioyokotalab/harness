@@ -17,6 +17,29 @@ if GIT is None:
 
 
 class ProducerLedgerTests(unittest.TestCase):
+    @staticmethod
+    def queue_text(*tasks: str, next_id: int = 2) -> str:
+        rows = "".join(
+            f"| {task} | ready | 10 | `docs/producer/tasks/{task}.md` |\n"
+            for task in tasks
+        )
+        return (
+            "# Fixture producer queue\n\n"
+            f"Next free ID: Fix-{next_id:03d}.\n\n"
+            "## Queue\n\n"
+            "| Task | State | Priority | Packet |\n"
+            "| --- | --- | ---: | --- |\n"
+            f"{rows}\n"
+            "## Writer contract\n\nSynthetic fixture policy.\n"
+        )
+
+    def write_queue(
+        self, root: Path, *tasks: str, next_id: int = 2
+    ) -> None:
+        (root / "PRODUCER.md").write_text(
+            self.queue_text(*tasks, next_id=next_id), encoding="utf-8"
+        )
+
     def fixture(self, *, public: bool = False) -> Path:
         root = Path(tempfile.mkdtemp(prefix="producer-ledger-test-"))
         self.addCleanup(shutil.rmtree, root)
@@ -36,10 +59,7 @@ class ProducerLedgerTests(unittest.TestCase):
         (root / "docs/producer/config.json").write_text(
             json.dumps(config), encoding="utf-8"
         )
-        (root / "PRODUCER.md").write_text(
-            "# Fixture producer queue\n\nNext free ID: Fix-002.\n",
-            encoding="utf-8",
-        )
+        self.write_queue(root, "Fix-001")
         (root / "docs/producer/index.tsv").write_text(
             "task\tstate\tpriority\tcreated\tpacket\n"
             "Fix-001\tready\t10\t2026-08-02\tdocs/producer/tasks/Fix-001.md\n",
@@ -101,6 +121,7 @@ class ProducerLedgerTests(unittest.TestCase):
         (root / "docs/producer/assignment.tsv").write_text(
             "client\tslot\tstate\nany\tfixture\tidle\n", encoding="utf-8"
         )
+        self.write_queue(root)
         self.write_receipt(root, status=receipt)
 
     def mutate_packet(self, root: Path, transform) -> None:
@@ -122,6 +143,54 @@ class ProducerLedgerTests(unittest.TestCase):
         result = self.run_tool(self.fixture(), "validate")
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertIn("reconciliation_pending=0", result.stdout)
+
+    def test_queue_parity_rejects_omitted_duplicate_unknown_and_stale(self) -> None:
+        cases = [
+            ("producer-queue-omitted:Fix-001", lambda root: self.write_queue(root)),
+            (
+                "producer-queue-duplicate:Fix-001",
+                lambda root: self.write_queue(root, "Fix-001", "Fix-001"),
+            ),
+            (
+                "producer-queue-unknown:Fix-999",
+                lambda root: self.write_queue(root, "Fix-001", "Fix-999"),
+            ),
+            (
+                "producer-queue-stale-terminal:Fix-001",
+                lambda root: (
+                    self.reconcile_terminal(root),
+                    self.write_queue(root, "Fix-001"),
+                ),
+            ),
+        ]
+        for reason, mutate in cases:
+            with self.subTest(reason=reason):
+                root = self.fixture()
+                mutate(root)
+                result = self.run_tool(root, "validate")
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertIn(reason, result.stdout)
+
+    def test_queue_table_is_exact_and_descriptive_prose_is_not_authority(self) -> None:
+        root = self.fixture()
+        producer = root / "PRODUCER.md"
+        producer.write_text(
+            producer.read_text(encoding="utf-8")
+            + "\nDescriptive history mentions Fix-999 without queue authority.\n",
+            encoding="utf-8",
+        )
+        self.assertEqual(self.run_tool(root, "validate").returncode, 0)
+
+        producer.write_text(
+            producer.read_text(encoding="utf-8").replace(
+                "| Task | State | Priority | Packet |",
+                "| Task | State | Packet |",
+            ),
+            encoding="utf-8",
+        )
+        result = self.run_tool(root, "validate")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("producer-queue-format", result.stdout)
 
     def test_terminal_receipt_is_not_selected_while_reconciliation_pends(self) -> None:
         root = self.fixture()
