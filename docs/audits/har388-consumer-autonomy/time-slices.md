@@ -222,6 +222,52 @@ request ID; its only authority is full local validation, protected
 publication, terminal receipt, and readback. Live Gmail, web, Calendar, and
 connector access remain forbidden.
 
+The clean Harness checkpoint passed complete R3 with all 98 suites in 66.993
+seconds and only the declared native-MPI skip. Harness PR #634 then merged at
+`4090cfb`; its hosted portable job was skipped under the Actions-sustainability
+contract. Running the merge from outside both linked checkouts with explicit
+repository identity returned success without the former local-checkout error,
+and canonical `main` fast-forwarded cleanly. Focused policy and context
+readbacks pass on the protected revision.
+
+Personal stage 3 independently reran complete validation and its exact
+nine-path consumer boundary, then protected-published the synthetic
+conference-travel skill as PR #54 at `490144c`. It correctly left no terminal
+receipt because the first live decision is a reversible gate. Producer PR #55
+changed only Per-018's queue and index dispositions to gated, passed the
+two-path writer boundary, and merged at `47ffda4`. The exact Personal root is
+clean on that protected revision; `next-ready` selects Per-025, and one matching
+confirmation bound its first report without a task-specific free-form prompt.
+
+Per-025 then protected-published the safe-work-first checkpoint contract and
+its terminal receipt as PR #56 at `3218326`; producer reconciliation PR #57
+merged at `56f0a5b`. Per-026 compacted two active recovery records from 970 and
+1,105 words to 441 and 460 words, added a repository-native 900-word ceiling,
+and preserved the records' distinct terminal-receipt and reversible-wait
+lifecycles. Its complete Personal validation and seven-path boundary passed;
+PR #58 merged at `9a71731`, and reconciliation PR #59 merged at `8d5f28c`.
+
+A guarded-delete scan-fusion benchmark reduced its owning suite only from
+24.52 to 24.04 seconds. That 0.48-second change was rejected as immaterial for
+a safety-critical workflow, and no product change remained. The managed-agent
+context was instead compacted: the Local controller route fell from 637 to 516
+words and the largest selected remote-agent route from 751 to 664 words while
+all required routing and safety markers remained covered. The first complete
+R3 exposed an accepted transient mutation-audit failure in the development
+evaluation. An attempted evaluator-local retry was correctly rejected by the
+frozen T-343 hash gate and reverted byte-for-byte. A narrowly bounded wrapper
+retry now applies only to that exact accepted reference and remains terminal on
+the second failure; every other failure still returns immediately. The owning
+suite and frozen Fable retest passed, followed by a clean 98-suite R3 in 67.812
+seconds with only the declared native-MPI skip. Harness PR #635 merged that
+checkpoint at `81b892c`.
+
+The next Personal synthetic-first plan passed complete validation and its exact
+one-path consumer boundary, but review found that it proposed a terminal
+receipt before its owner-decision phase. One bounded changes-required request
+now asks only for the established partial-publication, no-receipt, reversible
+gate lifecycle; no Personal source or payload was accessed or retained here.
+
 ## Slice 5 — 03:00–04:00 JST
 
 Pending window.
