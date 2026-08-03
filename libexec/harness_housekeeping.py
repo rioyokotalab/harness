@@ -852,6 +852,37 @@ def independent_alias_restore(
     return alias_tip_digest(tips)
 
 
+def independent_alias_restore_sources(
+    coordinator_repo: Path,
+    tips: Sequence[Dict[str, str]],
+    recovery_sources: Dict[str, Tuple[Path, str]],
+) -> str:
+    restore = Path(tempfile.mkdtemp(prefix="harness-owner-alias-", dir="/tmp"))
+    try:
+        git(restore, "init", "--bare")
+        for row in tips:
+            source = recovery_sources.get(row["tip"])
+            if source is None:
+                die("archive owner alias recovery source is incomplete")
+            bundle, source_ref = source
+            git(
+                restore,
+                "fetch",
+                "--quiet",
+                str(bundle),
+                f"{source_ref}:{row['archive']}",
+            )
+            restored = text(
+                git(restore, "rev-parse", "--verify", row["archive"])
+            ).strip()
+            if restored != row["tip"]:
+                die("archive owner alias independent restore changed a tip")
+        git(restore, "fsck", "--full", "--no-dangling")
+    finally:
+        remove_restore_tree(coordinator_repo, restore)
+    return alias_tip_digest(tips)
+
+
 def create_owner_alias(
     coordinator_repo: Path,
     source: Path,
@@ -914,33 +945,12 @@ def create_owner_alias(
     if protected_main is None:
         die("archive owner alias protected main is unknown")
     bundle = Path(values["bundle"])
-    validate_private_file(bundle)
-    if digest(bundle) != values["bundle_sha256"]:
-        die("archive owner alias source bundle changed")
-    git(owner, "bundle", "verify", str(bundle))
     tips = sorted(
         ({"archive": row["archive"], "tip": row["tip"]} for row in parsed["items"]),
         key=lambda row: (row["archive"], row["tip"]),
     )
-    restored_digest = independent_alias_restore(coordinator_repo, bundle, tips)
-
-    # Re-read every mutable identity immediately before immutable publication.
-    validate_private_file(source)
-    if digest(source) != source_sha256:
-        die("archive owner alias source receipt changed")
-    if digest(bundle) != values["bundle_sha256"]:
-        die("archive owner alias source bundle changed")
-    if terminal_remote_identity(owner) != owner_remote:
-        die("archive owner alias terminal remote changed before publication")
-    if testing_override("HARNESS_TEST_OWNER_ALIAS_MAIN_DRIFT") == "1":
-        die("archive owner alias protected main changed before publication")
-    if origin_main(owner) != protected_main:
-        die("archive owner alias protected main changed before publication")
-    if method == "direct-local-origin-v1" and legacy.exists():
-        if exact_local_origin(canonical_repo(legacy)) != owner:
-            die("archive owner alias local origin changed before publication")
-
     created_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    restored_digest = alias_tip_digest(tips)
     value: Dict[str, Any] = {
         "schema": OWNER_ALIAS_SCHEMA,
         "created_utc": created_utc,
@@ -979,6 +989,59 @@ def create_owner_alias(
     destination = directory / owner_alias_name(source)
     if destination.exists() or destination.is_symlink():
         die("archive source already has an owner alias")
+
+    bundle_present = bundle.exists() or bundle.is_symlink()
+    candidate_aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None
+    candidate_cache: Dict[str, Tuple[Path, str, str]] = {}
+    if bundle_present:
+        validate_private_file(bundle)
+        if digest(bundle) != values["bundle_sha256"]:
+            die("archive owner alias source bundle changed")
+        git(owner, "bundle", "verify", str(bundle))
+        independent_alias_restore(coordinator_repo, bundle, tips)
+    else:
+        candidate_aliases = load_owner_aliases()
+        candidate_aliases[str(source)] = (destination, value)
+        compacted = archive_audit(
+            owner,
+            source,
+            aliases=candidate_aliases,
+            owner_cache=candidate_cache,
+        )
+        if not compacted["retired"] or compacted["generations"] < 2:
+            die("archive owner alias lacks verified compacted recovery")
+        independent_alias_restore_sources(
+            coordinator_repo, tips, compacted["recovery_sources"]
+        )
+
+    # Re-read every mutable identity immediately before immutable publication.
+    validate_private_file(source)
+    if digest(source) != source_sha256:
+        die("archive owner alias source receipt changed")
+    if bundle_present:
+        if not bundle.exists() or digest(bundle) != values["bundle_sha256"]:
+            die("archive owner alias source bundle changed")
+    else:
+        if bundle.exists() or bundle.is_symlink():
+            die("archive owner alias compacted bundle identity changed")
+        compacted = archive_audit(
+            owner,
+            source,
+            aliases=candidate_aliases,
+            owner_cache=candidate_cache,
+        )
+        if not compacted["retired"] or compacted["generations"] < 2:
+            die("archive owner alias compacted recovery changed")
+    if terminal_remote_identity(owner) != owner_remote:
+        die("archive owner alias terminal remote changed before publication")
+    if testing_override("HARNESS_TEST_OWNER_ALIAS_MAIN_DRIFT") == "1":
+        die("archive owner alias protected main changed before publication")
+    if origin_main(owner) != protected_main:
+        die("archive owner alias protected main changed before publication")
+    if method == "direct-local-origin-v1" and legacy.exists():
+        if exact_local_origin(canonical_repo(legacy)) != owner:
+            die("archive owner alias local origin changed before publication")
+
     payload = json_bytes(value)
     published: Optional[Path] = None
     try:
@@ -1049,7 +1112,13 @@ def archive_audit(
         }
     else:
         cache = generation_cache if generation_cache is not None else {}
-        compaction = applied_compaction(repo, receipt_path, cache)
+        compaction = applied_compaction(
+            repo,
+            receipt_path,
+            cache,
+            aliases=aliases,
+            owner_cache=owner_cache,
+        )
         if compaction is None:
             die("archive bundle is absent without verified compaction")
         state = state_directory()[1]
@@ -1461,9 +1530,11 @@ def audit_compaction(
     compaction_path: Path,
     expected_source: Optional[Path] = None,
     generation_cache: Optional[Dict[Path, Dict[str, Any]]] = None,
+    aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
 ) -> Dict[str, Any]:
-    aliases = load_owner_aliases()
-    owner_cache: Dict[str, Tuple[Path, str, str]] = {}
+    alias_rows = aliases if aliases is not None else load_owner_aliases()
+    owner_rows = owner_cache if owner_cache is not None else {}
     value = parse_compaction_receipt(compaction_path)
     source = Path(value["source_receipt"])
     if expected_source is not None and source.resolve(strict=True) != expected_source.resolve(
@@ -1477,8 +1548,8 @@ def audit_compaction(
         state_directory()[1],
         value["repository_canonical"],
         value["repository_id"],
-        aliases=aliases,
-        owner_cache=owner_cache,
+        aliases=alias_rows,
+        owner_cache=owner_rows,
     )
     if str(repo) != str(recorded_owner) or path_id(repo) != path_id(recorded_owner):
         die("archive compaction repository identity changed")
@@ -1507,7 +1578,7 @@ def audit_compaction(
         )
         if generation_value is None:
             generation_value = parse_generation_receipt(
-                path, state, aliases, owner_cache
+                path, state, alias_rows, owner_rows
             )
             if generation_cache is not None:
                 generation_cache[path] = generation_value
@@ -1519,8 +1590,8 @@ def audit_compaction(
             str(repo),
             value["tips"],
             generation_value,
-            aliases,
-            owner_cache,
+            alias_rows,
+            owner_rows,
         ):
             die("archive compaction generation coverage changed")
     bundle = Path(value["bundle"])
@@ -1543,6 +1614,8 @@ def applied_compaction(
     repo: Path,
     source: Path,
     generation_cache: Optional[Dict[Path, Dict[str, Any]]] = None,
+    aliases: Optional[Dict[str, Tuple[Path, Dict[str, Any]]]] = None,
+    owner_cache: Optional[Dict[str, Tuple[Path, str, str]]] = None,
 ) -> Optional[Dict[str, Any]]:
     _lexical, state = state_directory()
     directory = state / "compactions"
@@ -1557,7 +1630,14 @@ def applied_compaction(
     for path in sorted(directory.glob("*.json")):
         value = parse_compaction_receipt(path)
         if value["source_receipt"] == str(source):
-            result = audit_compaction(repo, path, source, generation_cache)
+            result = audit_compaction(
+                repo,
+                path,
+                source,
+                generation_cache,
+                aliases,
+                owner_cache,
+            )
             if result["status"] == "applied":
                 matches.append(result)
     if len(matches) > 1:

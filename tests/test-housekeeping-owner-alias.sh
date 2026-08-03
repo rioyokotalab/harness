@@ -301,6 +301,7 @@ OUT=$(house "$COORDINATOR" --create-owner-alias \
     fail "live-root relocation alias creation failed"
 printf '%s\n' "$OUT" | grep -Fq 'method=authorized-single-relocation-v1' ||
     fail "relocation method changed"
+RELOC_ALIAS_ONE=$(printf '%s\n' "$OUT" | sed -n 's/.*alias=\([^ ]*\).*/\1/p')
 
 git -C "$RELOC_LEGACY" checkout -q main
 RELOC_RECEIPT_TWO=$(archive_one "$RELOC_LEGACY" relocate-two relocated-two)
@@ -320,5 +321,45 @@ OUT=$(house "$COORDINATOR" --plan --routine archives) ||
     fail "relocation alias report failed"
 printf '%s\n' "$OUT" | grep -Fq 'aliases=2 unbound_aliases=0' ||
     fail "relocation alias report counts changed"
+
+touch -d '40 days ago' "$RELOC_RECEIPT_ONE" "$RELOC_RECEIPT_TWO"
+house "$COORDINATOR" --create-generation >/dev/null ||
+    fail "first relocation generation failed"
+mv "$RELOC_LEGACY.hidden" "$RELOC_LEGACY"
+git -C "$RELOC_LEGACY" checkout -q main
+RELOC_RECEIPT_THREE=$(archive_one "$RELOC_LEGACY" relocate-three relocated-three)
+OUT=$(house "$COORDINATOR" --create-owner-alias \
+    --source-receipt "$RELOC_RECEIPT_THREE" \
+    --owner-repo "$RELOC_OWNER" \
+    --legacy-origin "$RETIRED_OWNER" \
+    --mapping-evidence-commit "$EVIDENCE_COMMIT" \
+    --mapping-evidence-path owner-map.tsv) ||
+    fail "third relocation alias creation failed"
+mv "$RELOC_LEGACY" "$RELOC_LEGACY.hidden"
+touch -d '40 days ago' "$RELOC_RECEIPT_THREE"
+house "$COORDINATOR" --create-generation >/dev/null ||
+    fail "second relocation generation failed"
+OUT=$(house "$RELOC_OWNER" --plan-archive-compaction \
+    --source-receipt "$RELOC_RECEIPT_ONE") ||
+    fail "relocation compaction plan failed"
+RELOC_COMPACTION=$(printf '%s\n' "$OUT" | \
+    sed -n 's/^  RECEIPT path=\([^ ]*\) token=.*/\1/p')
+RELOC_TOKEN=$(printf '%s\n' "$OUT" | \
+    sed -n 's/^  RECEIPT path=[^ ]* token=\([0-9a-f]*\).*/\1/p')
+house "$RELOC_OWNER" --apply-archive-compaction \
+    --receipt "$RELOC_COMPACTION" --token "$RELOC_TOKEN" >/dev/null ||
+    fail "relocation compaction apply failed"
+unlink "$RELOC_ALIAS_ONE"
+OUT=$(house "$COORDINATOR" --create-owner-alias \
+    --source-receipt "$RELOC_RECEIPT_ONE" \
+    --owner-repo "$RELOC_OWNER" \
+    --legacy-origin "$RETIRED_OWNER" \
+    --mapping-evidence-commit "$EVIDENCE_COMMIT" \
+    --mapping-evidence-path owner-map.tsv) ||
+    fail "compacted-source alias creation failed"
+printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
+    fail "compacted-source alias omitted independent restore proof"
+house "$RELOC_OWNER" --audit --receipt "$RELOC_RECEIPT_ONE" >/dev/null ||
+    fail "new compacted-source alias did not audit"
 
 printf 'PASS: housekeeping owner aliases\n'
