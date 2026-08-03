@@ -106,6 +106,9 @@ untracked non-ignored files. A minimal candidate now unions tracked and
 untracked paths, and all 21 focused ledger tests pass, including a regression
 that permits an ordinary untracked consumer path but rejects an untracked
 producer-owned path.
+The exact clean generic-ledger checkpoint then passed complete R3, including
+all focused suites, integration fixtures, clean-tree guards, and guarded
+cleanup; only the declared native-MPI environment check was skipped.
 
 ## Slice 3 — 01:00–02:00 JST
 
