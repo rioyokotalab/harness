@@ -138,7 +138,7 @@ for task, state in {
     "Har-196": "time-gated",
     "Har-328": "time-gated",
     "Har-303": "blocked",
-    "Har-371": "active",
+    "Har-371": "complete",
     "Har-376": "complete",
     "T-350": "complete",
 }.items():

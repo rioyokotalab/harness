@@ -18,16 +18,8 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-### Har-371 — Migrate legacy managed primary branches
-
-**Phase:** Swallow and all Students repository work are complete. Students'
-unpublished tip is archive-backed in a locked detached worktree, but its live
-Codex root reports `notLoaded` and both legacy-root panes still require an
-owner-visible idle confirmation before the controller-only cutover. Do not
-move a cwd, process, saved thread, phone root, or app-server connection in
-place.
-
-**Record:** `docs/tasks/Har-371.md`.
+No consumer task is active. Resolve the next producer packet before starting
+new work.
 
 ## Deferred gates
 
