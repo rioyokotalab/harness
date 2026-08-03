@@ -10,29 +10,12 @@ Do not issue raw recursive deletion commands or hide deletion in a shell script.
 This workflow does not request approval; plan and apply may proceed autonomously
 when every check passes.
 
-## Reviewed installer exception
+## Route
 
-Do not use the manifest workflow for cleanup internal to a vendor installer or
-trusted package manager only when every gate below passes:
-
-1. Obtain the artifact from the vendor's official HTTPS endpoint, or use an
-   already trusted system package manager. Download remote scripts to a private
-   temporary file; never pipe them directly to a shell.
-2. Syntax-check and review the exact executable bytes. Identify every recursive
-   or multi-path deletion primitive and prove how each target is derived.
-3. Run non-interactively with explicit install and state destinations. Confine
-   deletion to declared package-owned release, cache, staging, or temporary
-   roots.
-4. Reject any target that is an account-home root, repository, workspace,
-   credential or authentication store, backup, or unrelated user-data path.
-5. Execute the exact reviewed artifact without a second download or mutation.
-   Verify the installed state, expected obsolete-package cleanup, and absence
-   of unexpected residue afterward.
-
-Owner approval alone is insufficient. If provenance, bytes, target derivation,
-ownership, or scope is ambiguous, use guarded deletion or stop. Agent-authored
-installers, repository cleanup scripts, wrappers that hide deletion, and any
-deletion outside package-owned roots never qualify.
+For ordinary bulk deletion, continue here and do not preload the installer
+exception. Only when classifying cleanup internal to a vendor installer or
+trusted package manager, read [installer-exception.md](references/installer-exception.md)
+completely before deciding whether the manifest workflow may be omitted.
 
 ## Plan
 
@@ -75,8 +58,8 @@ a new plan only when retrying remains in scope. Do not bypass the tool with raw
 
 ## Scope boundary
 
-Single, exact, non-recursive file removal and qualifying reviewed-installer
-internal cleanup are outside the manifest workflow. Prefer patch-based deletion
+Single, exact, non-recursive file removal and installer cleanup that passes the
+routed exception are outside the manifest workflow. Prefer patch-based deletion
 for tracked repository files. Treat uncertain globs, generated file lists,
 loops, and non-qualifying installer cleanup as bulk deletion.
 
