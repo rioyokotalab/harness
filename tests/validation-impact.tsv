@@ -5,6 +5,9 @@
 ^docs/history/TODO-full-archive-[0-9]{4}-[0-9]{2}-[0-9]{2}\.md$|R0|tests/test-task-ledger-routing.sh|archived ledger identity
 ^docs/tasks/index\.tsv$|R0|tests/test-task-ledger-routing.sh|task index contract
 ^tests/test-task-ledger-routing\.sh$|R3|-|task ledger validator
+^tools/productive_idle_pilot\.py$|R3|-|synthetic selector and recovery state machine
+^tests/test-productive-idle-pilot\.sh$|R3|-|synthetic selector acceptance wrapper
+^tests/test_productive_idle_pilot\.py$|R3|-|synthetic selector normative scenarios
 ^docs/github-rulesets/|R1|tests/test-github-rulesets.sh|ruleset fixture
 ^tests/test-github-rulesets\.sh$|R3|-|ruleset fixture validator
 ^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|abciq|riken|alps|rccs|tsubame|planning|execute-monitor|validation)\.md)$|R1|tests/test-skill-context-budgets.sh|HPC routed context budget
