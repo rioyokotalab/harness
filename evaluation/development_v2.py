@@ -671,7 +671,8 @@ print(json.dumps(envelope, sort_keys=True))
 """
     scratch = Path(tempfile.mkdtemp(prefix="t336-grader-call.", dir="/tmp"))
     os.chmod(scratch, 0o700)
-    artifacts: list[Path] = []
+    stdout = scratch / "stdout"
+    stderr = scratch / "stderr"
     account_home = str(Path.home())
     command = [
         "/usr/bin/bwrap",
@@ -707,27 +708,17 @@ print(json.dumps(envelope, sort_keys=True))
         "PYTHONDONTWRITEBYTECODE": "1",
     }
     try:
-        process: dict[str, Any] | None = None
-        stdout: Path | None = None
-        for attempt in range(2):
-            stdout = scratch / f"stdout-{attempt + 1}"
-            stderr = scratch / f"stderr-{attempt + 1}"
-            artifacts.extend((stdout, stderr))
-            process = core.bounded_process(
-                command,
-                workspace,
-                env,
-                stdout,
-                stderr,
-                {"max_stdout_bytes": 65536, "max_stderr_bytes": 65536},
-                10,
-            )
-            if process["returncode"] == 0 and not process["termination"]:
-                break
-            if not sandbox_retry_allowed(process, attempt):
-                raise RuntimeError("sandboxed module call failed")
-        if process is None or stdout is None:
-            raise RuntimeError("sandboxed module call did not run")
+        process = core.bounded_process(
+            command,
+            workspace,
+            env,
+            stdout,
+            stderr,
+            {"max_stdout_bytes": 65536, "max_stderr_bytes": 65536},
+            10,
+        )
+        if process["returncode"] != 0 or process["termination"]:
+            raise RuntimeError("sandboxed module call failed")
         try:
             envelope = json.loads(stdout.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
@@ -740,19 +731,10 @@ print(json.dumps(envelope, sort_keys=True))
             raise TypeError("sandboxed subject raised TypeError")
         raise RuntimeError(f"sandboxed subject raised {envelope.get('error_type', 'unknown')}")
     finally:
-        for artifact in artifacts:
+        for artifact in (stdout, stderr):
             if artifact.is_file() and not artifact.is_symlink():
                 os.unlink(artifact)
         os.rmdir(scratch)
-
-
-def sandbox_retry_allowed(process: dict[str, Any], attempt: int) -> bool:
-    """Retry one immediate infrastructure failure in the read-only sandbox."""
-    return (
-        attempt == 0
-        and process.get("termination") is None
-        and process.get("returncode") not in (None, 0)
-    )
 
 
 def grade_task(task_id: str, workspace: Path) -> list[str]:
@@ -1284,19 +1266,6 @@ def build_report(root: Path, corpus: dict[str, Any], stage: str) -> dict[str, An
     return report
 
 
-def sandbox_retry_selftest() -> None:
-    immediate = {"returncode": 1, "termination": None}
-    if not sandbox_retry_allowed(immediate, 0):
-        fail("immediate sandbox infrastructure retry selftest failed")
-    for process, attempt in (
-        ({"returncode": 0, "termination": None}, 0),
-        ({"returncode": 1, "termination": "timeout"}, 0),
-        (immediate, 1),
-    ):
-        if sandbox_retry_allowed(process, attempt):
-            fail("sandbox retry boundary selftest failed")
-
-
 def sandbox_selftest() -> None:
     root = Path(tempfile.mkdtemp(prefix="t336-sandbox.", dir="/tmp"))
     os.chmod(root, 0o700)
@@ -1622,7 +1591,6 @@ def grader_selftest(corpus: dict[str, Any]) -> None:
 
 def selftest() -> None:
     corpus = validate_corpus(check_clients=False)
-    sandbox_retry_selftest()
     first_counts = {"codex": 0, "claude": 0}
     for row in run_rows(corpus, "confirmation", cumulative=True):
         first_counts[row["order"][0]] += 1
