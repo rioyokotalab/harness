@@ -117,6 +117,12 @@ of overlapping the gates. It had already exceeded 92 seconds when a
 benchmark-only unused-variable ShellCheck warning stopped it, versus roughly
 60--65 seconds for the protected overlapping schedule. The candidate was
 rejected without publication; no product or protected state changed.
+Two clean overlap runs bracketed the protected automatic worker count. Six
+focused workers passed in 71.14 seconds; eight passed in 64.57 seconds. The
+eight-worker result is only 0.15 seconds below the protected seven-worker
+64.72-second median and has higher contention, so it is not a material win.
+The measured optimum remains seven focused workers with one CPU reserved for
+the simultaneously running integration gates.
 
 ## Slice 3 — 01:00–02:00 JST
 
