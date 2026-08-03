@@ -55,6 +55,16 @@ order, or product bytes. Three complete candidates passed at 64.43, 64.99, and
 64.72 seconds, a 64.72-second median and 22.7% reduction from the immediate
 83.76-second baseline. User and system CPU totals stayed effectively
 unchanged; no CPU-work reduction is claimed.
+The live stage handshake then exposed an ambiguity not covered by the first
+transport schema: a producer confirmation refers to the completed report ID,
+while the next stage must report under a fresh ID. A new content-blind
+`confirm-local-codex` command constructs that exact transition instead of
+accepting free-form input. Accepted and changes-required decisions require one
+validated next ID; rejected forbids one. Output records the decision separately
+from `status=submitted`, and the envelope states no new authority. Focused
+transport, route-budget, route-gate, and diff checks pass. The unchanged
+Personal branch did not process the earlier combined envelope, so one
+status-only request was submitted without replaying the prior task.
 
 ## Slice 3 — 01:00–02:00 JST
 

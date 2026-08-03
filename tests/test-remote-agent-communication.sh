@@ -143,7 +143,7 @@ case "$command" in
         ;;
     load-buffer)
         printf 'load-buffer %s\n' "$*" >>"$FAKE_STATE/operations"
-        wc -c >"$FAKE_STATE/message-bytes"
+        tee "$FAKE_STATE/last-message" | wc -c >"$FAKE_STATE/message-bytes"
         ;;
     paste-buffer)
         printf 'paste-buffer %s\n' "$*" >>"$FAKE_STATE/operations"
@@ -477,6 +477,65 @@ ssh_calls_after=$(wc -l <"$state/ssh-calls")
     fail "Local Personal delivery used SSH"
 if grep -F "$local_codex_message" "$state/operations" >/dev/null; then
     fail "Local Personal message leaked into tmux arguments"
+fi
+
+ssh_calls_before=$(wc -l <"$state/ssh-calls")
+(
+    cd "$home/harness"
+    FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+        FAKE_PANE_ROLE=personal FAKE_PANE_PATH=$home/personal \
+        run_helper confirm-local-codex --source local --target personal \
+        --request-id har388-stage-one --status accepted \
+        --next-request-id har388-stage-two \
+        >"$state/local-confirmation.out"
+)
+grep -F -x \
+    'AGENT_MESSAGE_LOCAL_CODEX_CONFIRM source=local target=personal client=codex request_id=har388-stage-one confirmation=accepted next_request_id=har388-stage-two status=submitted' \
+    "$state/local-confirmation.out" >/dev/null ||
+    fail "Local confirmation output"
+printf '%s\n%s' '[Agent: Local Codex]' \
+    'confirmation request_id=har388-stage-one status=accepted next_request_id=har388-stage-two' \
+    >"$state/expected-confirmation"
+cmp -s "$state/expected-confirmation" "$state/last-message" ||
+    fail "Local confirmation envelope changed"
+ssh_calls_after=$(wc -l <"$state/ssh-calls")
+[ "$ssh_calls_before" -eq "$ssh_calls_after" ] ||
+    fail "Local confirmation used SSH"
+if grep -F 'confirmation request_id=' "$state/operations" >/dev/null; then
+    fail "Local confirmation leaked into tmux arguments"
+fi
+
+if (
+    cd "$home/harness"
+    FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+        FAKE_PANE_ROLE=personal FAKE_PANE_PATH=$home/personal \
+        run_helper confirm-local-codex --source local --target personal \
+        --request-id har388-stage-one --status accepted \
+        >"$state/local-confirmation-missing-next.out" 2>&1
+); then
+    fail "continuing confirmation omitted its next request"
+fi
+if (
+    cd "$home/harness"
+    FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+        FAKE_PANE_ROLE=personal FAKE_PANE_PATH=$home/personal \
+        run_helper confirm-local-codex --source local --target personal \
+        --request-id har388-stage-one --status rejected \
+        --next-request-id har388-stage-two \
+        >"$state/local-confirmation-rejected-next.out" 2>&1
+); then
+    fail "rejected confirmation named a next request"
+fi
+if (
+    cd "$home/harness"
+    FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+        FAKE_PANE_ROLE=personal FAKE_PANE_PATH=$home/personal \
+        run_helper confirm-local-codex --source personal --target personal \
+        --request-id har388-stage-one --status accepted \
+        --next-request-id har388-stage-two \
+        >"$state/local-confirmation-source.out" 2>&1
+); then
+    fail "consumer sent a producer confirmation"
 fi
 
 if (
