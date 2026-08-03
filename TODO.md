@@ -18,13 +18,7 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-### Har-384 — Relocate Students and Swallow roots under `projects`
-
-**Phase:** both phone gates passed and destination-root clients are promoted
-into the canonical Students panes; old clients remain live in rollback windows
-pending checkpoint validation and exact retirement.
-
-**Record:** `docs/tasks/Har-384.md`.
+No consumer task is currently active.
 
 ## Deferred gates
 

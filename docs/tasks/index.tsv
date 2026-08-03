@@ -1,5 +1,5 @@
 task	state	summary	source
-Har-384	active	Relocate Students and Swallow roots under projects	docs/tasks/Har-384.md
+Har-384	complete	Relocate Students and Swallow roots under projects	docs/tasks/Har-384.md;docs/consumer/receipts/Har-384.md
 Har-381	complete	Converge producer lifecycle and close portfolio residue	docs/tasks/Har-381.md;docs/plans/har381-producer-lifecycle-closeout.md;docs/audits/har381-producer-lifecycle-closeout/time-slices.md;docs/consumer/receipts/Har-381.md
 Har-380	complete	Document the producer and consumer repository layout	docs/tasks/Har-380.md
 Har-379	complete	Aist-driven T-293 self-healing validation with Claude co-pilot	docs/tasks/Har-379.md;docs/plans/har379-t293-aist-validation.md;docs/audits/har379-t293-aist-validation/time-slices.md;docs/consumer/receipts/Har-379.md
