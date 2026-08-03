@@ -181,9 +181,46 @@ not a material improvement over 32.26, so it was removed. A `strace` attempt was
 non-authoritative because observation changed worktree liveness and correctly
 made the suite fail closed; it produced no acceptance claim.
 
+The precise ledger routing, immutable-snapshot cache, root-policy marker
+coverage, reversible owner-choice contract, and current durable evidence then
+passed a clean complete R3: all 98 registered suites completed in 72.115
+seconds, with only the declared native-MPI environment skip. Harness PR #633
+merged that integrated tree at `c4c00de`. Ordinary declarative producer queue,
+packet, and receipt changes now select two owning suites measured at 2.07
+seconds instead of complete R3; runtime, validator, routing-map, and test
+changes still escalate.
+
+The first Personal Per-018 plan attempted to ask an owner question before its
+packet-authorized synthetic implementation. One changes-required cycle moved
+all safe parameterized work ahead of the seven live decisions. Its first
+implementation then exposed three review findings before publication: a
+Codex-only validator path, permissive cross-role managed events, and a
+1,659-word active record. A bounded correction required repository-native
+validation, fail-closed public/private event roles, exact regressions, and a
+record below the new 900-word recovery ceiling; no source or connector access
+was authorized. Two follow-up producer packets were independently protected:
+Per-025 freezes safe-work-first and single-checkpoint parking at `3e930d2`, and
+Per-026 freezes compact active consumer records at `2eee0b2`.
+
+Repeated linked-worktree publication had also returned a local-checkout error
+after the remote merge had already succeeded. A tested policy candidate now
+uses an explicit repository selector from outside both checkouts for the
+server-side merge, then fetches and fast-forwards the canonical base. The
+procedure completed Personal PR #53 without the false local failure; focused
+policy and context checks pass on local Harness commit `75a5a27`. It remains
+unpublished pending one integrated R3 with the hourly evidence.
+
 ## Slice 4 — 02:00–03:00 JST
 
-Pending window.
+Window in progress. Personal returned the exact Per-018 correction with a
+checked-in validator, fail-closed managed event roles, two new role
+regressions, and a 683-word active record. Independent review of all nine
+staged paths passed the repository validator, 13 planner tests, 24 owning
+Google tests, both whitespace views, and the exact path count. The protected
+confirmation route accepted that checkpoint and bound stage 3 to a fresh
+request ID; its only authority is full local validation, protected
+publication, terminal receipt, and readback. Live Gmail, web, Calendar, and
+connector access remain forbidden.
 
 ## Slice 5 — 03:00–04:00 JST
 
