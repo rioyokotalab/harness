@@ -1,7 +1,7 @@
 # Harness agent working agreements
 
-These instructions govern Codex and Claude here; root `CLAUDE.md` imports them.
-Read only the policy rows selected below, each completely before its first
+These govern Codex and Claude here; root `CLAUDE.md` imports them.
+Read only policy rows selected below, each completely before its first
 matching action.
 
 ## Always enforce
@@ -17,8 +17,9 @@ matching action.
   `find -delete`, deletion loops/globs, `rsync --delete`, or equivalents). Apply
   `guarded-bulk-delete`; its passing plan/apply gate needs no owner prompt.
   Exact unlink and patch-based tracked deletion remain allowed.
-- Prefix commentary updates with `[HH:MM:SS]`. Immediately beforehand, run a fresh native
-  `date '+%H:%M:%S'` read and copy it exactly. Never infer it.
+- Prefix commentary updates with the current local time in `[HH:MM:SS]`.
+  Immediately beforehand, run a fresh native `date '+%H:%M:%S'` read and copy
+  it exactly. Never infer a timestamp.
 - Lead with outcomes and evidence. Make low-risk assumptions; stop only at a
   choice or authority boundary that materially changes scope or external state.
   Work in small evidence-backed steps and label hypotheses.
@@ -63,8 +64,8 @@ deletion and duration refinements remain mandatory.
 
 ## Harness repository
 
-- Git, `PRODUCER.md`, and `TODO.md` are durable truth; chat/client memory is
-  optional. At cold start read this file and `PRODUCER.md`. Consumers run
+- Git, `PRODUCER.md`, and `TODO.md` are durable truth; chat and client memory
+  are optional. At cold start read this file and `PRODUCER.md`. Consumers run
   `python3 tools/producer-ledger.py next-ready`, then read only `TODO.md`, its
   selected packet and matching record, or remain idle. Never select a packet
   with a terminal receipt. Inspect Git and routed evidence; never preload another record or
