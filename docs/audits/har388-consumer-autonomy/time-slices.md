@@ -47,6 +47,14 @@ declared native-MPI environment skip remains. The changed remote-agent suite
 completed in 4.07 seconds under integrated contention, compared with 25.07
 seconds for the pre-change standalone baseline. Production paste and submit
 delays remain one second each; only explicit test mode may select zero.
+The integrated timing also showed that long-suite admission weights were stale:
+several 30–43 second suites were underweighted or unweighted, while the newly
+shortened remote-agent suite retained a weight of 14. A manifest-only refresh
+used the observed ranking without changing workers, tests, assertions, output
+order, or product bytes. Three complete candidates passed at 64.43, 64.99, and
+64.72 seconds, a 64.72-second median and 22.7% reduction from the immediate
+83.76-second baseline. User and system CPU totals stayed effectively
+unchanged; no CPU-work reduction is claimed.
 
 ## Slice 3 — 01:00–02:00 JST
 
