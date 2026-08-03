@@ -1,25 +1,22 @@
 # Local controller and consumer Codex
 
-Prepare one private mode-0600 identified input in the exact source repository:
+Prepare one private mode-0600 identified input in the source repository:
 
 ```text
 scripts/agent-message send-local-codex \
   --source local --target personal < MESSAGE_FILE
 ```
 
-The target must be declared in `profiles/codex-session-targets.tsv`. Selection
-matches session, window, pane, role, repository, process, and TTY metadata.
-Only controller-to-consumer or consumer-to-controller direction is allowed;
-the route uses neither SSH nor pane content. Submitted delivery is final—do not
-retry it.
+The declared profile permits only controller↔consumer direction. This route
+uses no SSH or pane content; submitted delivery is final.
 
-For one bounded subtask report, include:
+For one bounded subtask report include:
 
 ```text
 LOCAL_REPLY_REQUIRED request_id=ID reply_target=harness max_replies=1
 ```
 
-The consumer responds from its repository:
+The consumer replies from its repository:
 
 ```text
 scripts/agent-message reply-local-codex \
@@ -36,24 +33,23 @@ evidence: EVIDENCE
 next_action: ACTION
 ```
 
-After `status=submitted`, the consumer stops. The controller reviews evidence
-and sends one schema-built checkpoint:
+After submission the consumer stops. The controller reviews the evidence and
+sends one schema-built checkpoint:
 
 ```text
 scripts/agent-message confirm-local-codex --source local --target personal \
   --request-id OLD --status accepted --next-request-id NEW
 ```
 
-`accepted` advances the packet's next declared stage. `changes-required`
-repeats only exact corrections already in the durable record; otherwise send a
-new bounded request. Both bind its next report to `NEW`. `rejected` stops
-without `--next-request-id`. Confirmation controls sequencing only.
-Confirmation never grants owner authority, source access, or an external
-write. Never create a reply loop.
+`accepted` advances the next declared stage. `changes-required` repeats only
+durably recorded corrections; otherwise send a new bounded request. Both bind
+the next report to `NEW`; `rejected` forbids `--next-request-id`. Confirmation
+controls sequence only and never grants owner authority, source access, or an
+external write. Never create a reply loop.
 
-For an expected, reversible owner-choice wait, the consumer preserves its
-partial record, reports once, and creates no terminal receipt. The producer
-gates only that task, confirms the checkpoint with a fresh ID so the selector
-can advance, and restores the task to ready only after recording the owner's
-answer. A blocked receipt is terminal and reserved for a durable unavailable
-outcome. Never delete or rewrite one to resume work.
+For an expected, reversible owner-choice wait, the consumer preserves and
+publishes the partial record as its packet permits, reports once, and
+creates no terminal receipt. The producer gates only that task, confirms with a
+fresh ID, and restores it to ready only after recording the owner answer. A
+blocked receipt is terminal and reserved for a durable unavailable outcome.
+Never delete or rewrite one to resume work.

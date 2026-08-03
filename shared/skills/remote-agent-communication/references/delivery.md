@@ -24,6 +24,10 @@ message only on stdin. It selects the Codex pane without capture, locks
 delivery, loads/pastes/deletes a private tmux buffer, settles, then submits a
 separate `C-m`. Exact-unlink the input after confirmed success.
 
+A Mac selects one detached Codex pane: canonical `harness:1:codex.0` or legacy
+`harness-codex-resume`; both is ambiguous. `--allow-attached` requires explicit
+owner expectation.
+
 ## Send from Local Codex to Local Claude
 
 Use one private mode-0600 `[Agent: Local Codex]` input:
@@ -34,11 +38,8 @@ scripts/agent-message send-local-claude --source local < MESSAGE_FILE
 
 The exact metadata-selected route is local, content-blind, single-process,
 submission-only, no-retry, and never auto-replies. Claude replies separately
-through `receive --client claude`.
-
-Do not retry after `status=submitted`. A failure after submission but before
-acknowledgement is ambiguous; retain the input and diagnose without
-reinjection. Retry only when evidence proves insertion did not occur.
+through `receive --client claude`. It requires one live metadata-verified
+`harness:cowork.1` Harness pane and never reads or creates a process.
 
 ## Ask for one best-effort reply
 
