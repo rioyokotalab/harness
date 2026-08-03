@@ -45,7 +45,7 @@ duration_words=$(words "$DURATION")
 assert_max "$root_words" 760 'always-read policy'
 assert_max "$git_words" 300 'repository Git policy'
 assert_max "$external_words" 300 'external-operation policy'
-assert_max "$codex_words" 250 'managed Codex policy'
+assert_max "$codex_words" 225 'managed Codex policy'
 assert_max "$fleet_words" 350 'fleet policy'
 assert_max "$housekeeping_words" 275 'housekeeping/promotion policy'
 assert_max "$research_words" 85 'research policy'
@@ -53,7 +53,7 @@ assert_max "$duration_words" 85 'duration policy'
 assert_max "$((root_words + git_words))" 1060 'Git selected route'
 assert_max "$((root_words + external_words))" 1040 \
     'external-operation selected route'
-assert_max "$((root_words + codex_words))" 1020 \
+assert_max "$((root_words + codex_words))" 985 \
     'managed Codex selected route'
 assert_max "$((root_words + fleet_words))" 1100 'fleet selected route'
 assert_max "$((root_words + git_words + external_words + fleet_words))" \

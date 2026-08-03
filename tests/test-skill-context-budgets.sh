@@ -92,7 +92,7 @@ pie_reduction=$(((PIE_BEFORE - pie_largest) * 100 / PIE_BEFORE))
 [ "$pie_reduction" -ge 25 ] ||
     fail "PIE largest-route reduction is not material: $pie_reduction%"
 remote_entry=$(words "$REMOTE/SKILL.md")
-assert_max "$remote_entry" 280 'remote-agent entry'
+assert_max "$remote_entry" 245 'remote-agent entry'
 remote_largest=0
 for name in delivery local-codex request fallback; do
     route_words=$(words "$REMOTE/references/$name.md")
@@ -105,6 +105,9 @@ done
 remote_local_reference=$(words "$REMOTE/references/local-codex.md")
 remote_local=$((remote_entry + remote_local_reference))
 assert_max "$remote_local" 500 'remote-agent Local Codex selected route'
+remote_delivery_reference=$(words "$REMOTE/references/delivery.md")
+remote_delivery=$((remote_entry + remote_delivery_reference))
+assert_max "$remote_delivery" 600 'remote-agent delivery selected route'
 remote_reduction=$(((REMOTE_BEFORE - remote_largest) * 100 / REMOTE_BEFORE))
 [ "$remote_reduction" -ge 45 ] ||
     fail "remote-agent largest-route reduction is not material: $remote_reduction%"
