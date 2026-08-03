@@ -339,7 +339,59 @@ bounded discovery directories, and focused regressions before publication.
 
 ## Slice 6 — 04:00–05:00 JST
 
-Pending window.
+Per-027's corrected discovery implementation bounded each client directory
+before processing and required its entry names to equal the declared shared
+plus discovered local skill set regardless of link target. Fourteen focused
+tests, live discovery, complete Personal validation, both whitespace views,
+and the exact seven-path final boundary passed. Private PR #63 merged at
+`75482f7`; producer PR #64 reconciled its terminal receipt at `093f3cb`, and
+strict readback selected the next task. Review confirmed that terminal task and
+receipt bytes intentionally describe the pre-merge candidate; after protected
+readback, the consumer report and producer disposition are the recovery
+authority, so no historical rewrite was justified.
+
+A cold-start usability audit found that the proportional planner is 790 words
+but has no discoverable request contract: `--help` returns the empty-input
+failure, and only root policy names the command. A lower-priority producer
+packet therefore freezes a deterministic descriptor of at most 1,500 bytes,
+parser parity, and prospective terminal-boundary clarity. Its four producer
+paths passed strict convergence and the writer boundary; private PR #65 merged
+at `5acc3ab` while the consumer was independently active, without changing the
+selected task.
+
+The next two source-free PIE plans each used the new record-only route, kept
+twelve owner decisions open, and accessed no private source or connector. The
+first partial record reconciled the asynchronous producer advance, ran the
+required complete publication validation, and merged as private PR #66 at
+`0136d14`; queue-local producer PR #67 gated only that task at `b888a94` without
+a receipt. The second partial record merged as private PR #68 at `25d1a44`;
+producer PR #69 gated only it at `505ee22`, again without a receipt. Both strict
+readbacks passed and advanced unrelated work. This proves the disjoint
+producer/consumer writer model under a real overlapping protected-base change,
+not only the synthetic merge regression. The selector now starts the bounded
+self-describing-validation task; all private choices remain unresolved rather
+than inferred.
+
+An accepted next-task confirmation then showed no repository progress for five
+minutes. The first response treated elapsed time as delivery failure and sent
+an unnecessary bounded start request; a later metadata-only app-server check
+proved the original thread was active. Harness now exposes that check by target
+alone: it resolves exactly one live watcher, ignores dead watcher states,
+rejects live ambiguity, and reads only thread status and repository identity.
+Communication guidance requires waiting on `active` before any follow-up. The
+selected route was compacted back to its exact 525-word ceiling; focused
+recovery, communication, context-gate, and budget tests passed, followed by a
+clean 98-suite R3 in 78.070 seconds with only the native-MPI skip. PR #640
+merged this at `b4ea821`, and its hosted portable job was skipped as designed.
+
+The corrected preflight then proved an idle thread before the next justified
+start. Personal stage 1 measured 1,470 words across the old planner and test.
+Stage 2 produced a deterministic 1,257-byte descriptor, fail-closed argument
+handling, immutable terminal-boundary guidance, and an instruction that an
+accepted confirmation itself executes the recorded next action. Independent
+review passed 17 planner and 15 protocol tests, the exact six-path boundary,
+and both whitespace views. Stage 3 is the only remaining eligible consumer
+checkpoint in this slice.
 
 ## Slice 7 — 05:00–06:00 JST
 
