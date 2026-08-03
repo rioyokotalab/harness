@@ -18,7 +18,15 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-No consumer task is currently active.
+### Har-382 — Migrate archive ownership to immutable repository aliases
+
+**Phase:** blocked before implementation on a changed-input identity decision:
+the 28 immutable bundles remain intact, but the prior root relocation removed
+two canonical one-hop owners and four of the twelve recorded scratch roots are
+already absent. The frozen alias contract cannot currently prove ten mappings
+without an explicitly authorized reconstruction/relocation rule.
+
+**Record:** `docs/tasks/Har-382.md`.
 
 ## Deferred gates
 
