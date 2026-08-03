@@ -109,6 +109,14 @@ producer-owned path.
 The exact clean generic-ledger checkpoint then passed complete R3, including
 all focused suites, integration fixtures, clean-tree guards, and guarded
 cleanup; only the declared native-MPI environment check was skipped.
+The remaining critical-path housekeeping suite measured 35.45 seconds
+standalone with 13.61 user and 20.62 system CPU-seconds at 96% utilization,
+showing that its cost is not a hidden fixture delay. A reversible scheduling
+benchmark ran eight focused workers to completion before integration instead
+of overlapping the gates. It had already exceeded 92 seconds when a
+benchmark-only unused-variable ShellCheck warning stopped it, versus roughly
+60--65 seconds for the protected overlapping schedule. The candidate was
+rejected without publication; no product or protected state changed.
 
 ## Slice 3 — 01:00–02:00 JST
 
