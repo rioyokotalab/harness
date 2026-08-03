@@ -112,14 +112,14 @@ remote_reduction=$(((REMOTE_BEFORE - remote_largest) * 100 / REMOTE_BEFORE))
 [ "$remote_reduction" -ge 45 ] ||
     fail "remote-agent largest-route reduction is not material: $remote_reduction%"
 hardening_entry=$(words "$HARDENING/SKILL.md")
-assert_max "$hardening_entry" 450 'fleet-hardening entry'
+assert_max "$hardening_entry" 300 'fleet-hardening entry'
 hardening_largest=0
 for name in planning repository-audit linux-audit macos-audit execution \
     closeout; do
     phase_words=$(words "$HARDENING/references/$name.md")
     assert_max "$phase_words" 350 "fleet-hardening $name reference"
     selected_words=$((hardening_entry + phase_words))
-    assert_max "$selected_words" 750 \
+    assert_max "$selected_words" 650 \
         "fleet-hardening $name selected route"
     [ "$selected_words" -le "$hardening_largest" ] ||
         hardening_largest=$selected_words
@@ -129,8 +129,8 @@ assert_max "$issue_words" 220 'fleet-hardening issue-stack reference'
 # The router explicitly adds issue handling to the interrupted phase. Measure
 # that cumulative route rather than pretending issue handling replaces it.
 hardening_issue_route=$((hardening_largest + issue_words))
-[ "$hardening_issue_route" -le 950 ] ||
-    fail "fleet-hardening interrupted-phase route exceeds 950 words: $hardening_issue_route"
+[ "$hardening_issue_route" -le 850 ] ||
+    fail "fleet-hardening interrupted-phase route exceeds 850 words: $hardening_issue_route"
 hardening_largest=$hardening_issue_route
 hardening_reduction=$(((HARDENING_BEFORE - hardening_largest) * 100 / HARDENING_BEFORE))
 [ "$hardening_reduction" -ge 35 ] ||
