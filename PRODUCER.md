@@ -11,7 +11,6 @@ Next free ID: Har-385.
 
 | Task | State | Priority | Packet |
 | --- | --- | ---: | --- |
-| Har-384 | ready | 0 | `docs/producer/tasks/Har-384.md` |
 | Har-382 | ready | 1 | `docs/producer/tasks/Har-382.md` |
 | Har-383 | ready | 2 | `docs/producer/tasks/Har-383.md` |
 | Har-196 | gated | 20 | `docs/producer/tasks/Har-196.md` |

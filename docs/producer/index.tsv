@@ -1,5 +1,4 @@
 task	state	priority	created	packet
-Har-384	ready	0	2026-08-03	docs/producer/tasks/Har-384.md
 Har-382	ready	1	2026-08-03	docs/producer/tasks/Har-382.md
 Har-383	ready	2	2026-08-03	docs/producer/tasks/Har-383.md
 Har-371	complete	10	2026-08-02	docs/producer/tasks/Har-371.md
@@ -10,3 +9,4 @@ Har-378	complete	999	2026-08-02	docs/producer/tasks/Har-378.md
 Har-379	complete	999	2026-08-02	docs/producer/tasks/Har-379.md
 Har-380	complete	999	2026-08-02	docs/producer/tasks/Har-380.md
 Har-381	complete	999	2026-08-03	docs/producer/tasks/Har-381.md
+Har-384	complete	999	2026-08-03	docs/producer/tasks/Har-384.md
