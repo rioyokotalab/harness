@@ -38,6 +38,17 @@ class MessageError(RuntimeError):
     pass
 
 
+def injection_settle_seconds(default: int) -> float:
+    override = os.environ.get("HARNESS_TEST_AGENT_MESSAGE_SETTLE_SECONDS")
+    if override is None:
+        return default
+    if os.environ.get("HARNESS_TESTING") != "1":
+        raise MessageError("agent-message settle override is test-only")
+    if override != "0":
+        raise MessageError("agent-message test settle override must be zero")
+    return 0
+
+
 @dataclass(frozen=True)
 class Pane:
     identifier: str
@@ -415,6 +426,8 @@ def inject_message(
     local_codex_target: str | None = None,
 ) -> None:
     message = validate_message(source, message, client)
+    paste_settle_seconds = injection_settle_seconds(PASTE_SETTLE_SECONDS)
+    submit_settle_seconds = injection_settle_seconds(SUBMIT_SETTLE_SECONDS)
     with injection_lock():
         if target_role == "controller":
             if allow_attached:
@@ -455,11 +468,11 @@ def inject_message(
         if inserted.returncode != 0:
             run([tmux, "delete-buffer", "-b", buffer_name])
             raise MessageError("literal tmux insertion failed")
-        time.sleep(PASTE_SETTLE_SECONDS)
+        time.sleep(paste_settle_seconds)
         submitted = run([tmux, "send-keys", "-t", pane.identifier, "C-m"])
         if submitted.returncode != 0:
             raise MessageError("tmux submission failed")
-        time.sleep(SUBMIT_SETTLE_SECONDS)
+        time.sleep(submit_settle_seconds)
 
 
 def receive(
