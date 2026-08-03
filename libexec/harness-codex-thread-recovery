@@ -289,6 +289,35 @@ def read_state(path):
     return values
 
 
+def discover_watching_thread(root, target):
+    prefix = "{}:".format(target)
+    suffix = ".recovery.state"
+    candidates = []
+    for entry in sorted(os.listdir(root)):
+        if not entry.startswith(prefix) or not entry.endswith(suffix):
+            continue
+        path = os.path.join(root, entry)
+        values = read_state(path)
+        state_name = entry[: -len(suffix)]
+        if values["name"] != state_name:
+            fail("Codex thread recovery state identity differs")
+        if values["phase"] != "watching":
+            continue
+        owner_pid = int(values["owner_pid"])
+        if owner_pid <= 1:
+            continue
+        try:
+            os.kill(owner_pid, 0)
+        except OSError:
+            continue
+        candidates.append(values["thread"])
+    if not candidates:
+        fail("Codex thread recovery watcher is unavailable")
+    if len(candidates) != 1:
+        fail("Codex thread recovery watcher is ambiguous")
+    return candidates[0]
+
+
 class WebSocket:
     def __init__(self, socket_path):
         self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -963,9 +992,10 @@ def parse_arguments():
         except RecoveryError as error:
             parser.error(str(error))
     if not arguments.status:
-        if arguments.thread is None:
+        if arguments.thread is None and not arguments.check:
             parser.error("this mode requires --thread")
-        validate_safe_id(arguments.thread, "thread ID")
+        if arguments.thread is not None:
+            validate_safe_id(arguments.thread, "thread ID")
     if arguments.interval < 1 or arguments.interval > 300:
         parser.error("--interval must be between 1 and 300 seconds")
     return arguments
@@ -977,12 +1007,16 @@ def main():
     if not arguments.status:
         expected_repository = repository_for_target(arguments.target)
     if arguments.check:
-        status_value = check_once(arguments.thread, expected_repository)
+        thread_id = arguments.thread
+        if thread_id is None:
+            thread_id = discover_watching_thread(
+                state_root(), arguments.target
+            )
+        status_value = check_once(thread_id, expected_repository)
         print(
             "CODEX_THREAD_RECOVERY mode=check target={} thread={} "
             "status=ready thread_status={}".format(
-                arguments.target,
-                arguments.thread,
+                arguments.target, thread_id,
                 status_value,
             )
         )

@@ -199,6 +199,49 @@ grep -E 'blocked one|blocked two|baseline|policy' \
     "$runtime/harness:safe.recovery.state" >/dev/null &&
     fail "recovery state retained transcript content"
 
+write_watching_state() {
+    state_name=$1
+    state_thread=$2
+    state_pid=$3
+    cat >"$runtime/$state_name.recovery.state" <<EOF
+schema=1
+name=$state_name
+thread=$state_thread
+owner_pid=$state_pid
+phase=watching
+reason=thread-active
+recoveries=0
+rolled_back=0
+EOF
+    chmod 600 "$runtime/$state_name.recovery.state"
+}
+
+write_read_response thread-safe active "$safe_rollout"
+write_watching_state harness:preflight thread-safe "$$"
+run_recovery --check >"$TEST_ROOT/target-check.out"
+grep -F 'thread=thread-safe status=ready thread_status=active' \
+    "$TEST_ROOT/target-check.out" >/dev/null ||
+    fail "target-only check did not resolve the live watcher"
+write_watching_state harness:stale thread-stale 999999
+run_recovery --check >"$TEST_ROOT/stale-target-check.out"
+grep -F 'thread=thread-safe status=ready thread_status=active' \
+    "$TEST_ROOT/stale-target-check.out" >/dev/null ||
+    fail "target-only check selected a stale watcher"
+write_watching_state harness:second thread-second "$$"
+if run_recovery --check >"$TEST_ROOT/ambiguous-target-check.out" 2>&1; then
+    fail "target-only check accepted multiple live watchers"
+fi
+grep -F 'watcher is ambiguous' "$TEST_ROOT/ambiguous-target-check.out" \
+    >/dev/null || fail "target-only ambiguity reason"
+unlink "$runtime/harness:second.recovery.state"
+unlink "$runtime/harness:stale.recovery.state"
+unlink "$runtime/harness:preflight.recovery.state"
+if run_recovery --check >"$TEST_ROOT/absent-target-check.out" 2>&1; then
+    fail "target-only check accepted no live watcher"
+fi
+grep -F 'watcher is unavailable' "$TEST_ROOT/absent-target-check.out" \
+    >/dev/null || fail "target-only absence reason"
+
 student_parallel_rollout=$sessions/student-parallel.jsonl
 cat >"$student_parallel_rollout" <<'EOF'
 {"timestamp":"1","type":"session_meta","payload":{"id":"thread-student-parallel"}}
