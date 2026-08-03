@@ -1,5 +1,5 @@
 task	state	summary	source
-Har-387	active	Harden immutable packet and current disposition semantics	TODO.md;docs/tasks/Har-387.md
+Har-387	complete	Harden immutable packet and current disposition semantics	docs/tasks/Har-387.md;docs/consumer/receipts/Har-387.md
 Har-386	complete	Make Personal managed clients repository-native	docs/tasks/Har-386.md;docs/consumer/receipts/Har-386.md
 Har-385	complete	Retire all non-main portfolio branches	docs/tasks/Har-385.md;docs/consumer/receipts/Har-385.md
 Har-384	complete	Relocate Students and Swallow roots under projects	docs/tasks/Har-384.md;docs/consumer/receipts/Har-384.md

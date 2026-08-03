@@ -18,13 +18,8 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-### Har-387 — Harden producer disposition semantics
-
-**Phase:** Harness, Personal, Students, and Swallow are protected-published and
-converged; Website alone awaits its required fixed SSH agent socket before the
-same repository-local hardening can be dispatched.
-
-**Record:** `docs/tasks/Har-387.md`.
+No consumer task is currently executable. The producer selector is idle; the
+remaining entries are event- or authority-gated below.
 
 ## Deferred gates
 
