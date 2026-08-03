@@ -181,7 +181,7 @@ harness_root = str(base / "harness")
 target_paths = {
     "harness": harness_root,
     "students": str(base / "students"),
-    "personal": harness_root,
+    "personal": str(base / "personal"),
 }
 mapping = {}
 connection = sqlite3.connect(str(database))
@@ -235,7 +235,7 @@ assert legacy_cwd["active_top_level_count"] == 3
 assert "native_cwd:students" in legacy_cwd["mismatch_classes"]
 assert legacy_cwd["roles"]["harness"]["native_cwd"] is True
 assert legacy_cwd["roles"]["students"]["native_cwd"] is False
-assert legacy_cwd["roles"]["personal"]["native_cwd"] is True
+assert legacy_cwd["roles"]["personal"]["native_cwd"] is False
 assert drift["kind"] == "phone-mirror-drift"
 
 connection.execute(
@@ -248,11 +248,11 @@ mapping["students"]["native_cwd"] = True
 partially_native, _drift = module.phone_mirror_snapshot(
     mapping, str(database), processes, target_paths, str(codex_home)
 )
-assert partially_native["status"] == "healthy"
+assert partially_native["status"] == "degraded"
 assert partially_native["active_top_level_count"] == 3
 assert partially_native["roles"]["students"]["exact_cwd"] is True
 assert partially_native["roles"]["students"]["native_cwd"] is True
-assert partially_native["roles"]["personal"]["native_cwd"] is True
+assert partially_native["roles"]["personal"]["native_cwd"] is False
 
 connection.execute(
     "UPDATE threads SET cwd = ? WHERE id = 'thread-personal'",
@@ -440,7 +440,7 @@ do
             ordinal=1
             index=0
             window_index=1
-            repository=$ROOT
+            repository=/mnt/nfs-03/safe/Users/rioyokota/projects/personal
             ;;
         students)
             ordinal=2

@@ -64,7 +64,7 @@ done
 {
     printf '# target\twindow_index\twindow_name\tpane_index\tcanonical_repository\n'
     printf 'harness\t0\tcowork\t1\t%s\n' "$REPO_A"
-    printf 'personal\t2\tclaude\t0\t%s\n' "$REPO_A"
+    printf 'personal\t2\tclaude\t0\t%s\n' "$REPO_B"
     printf 'students\t2\tclaude\t1\t%s\n' "$REPO_C"
 } > "$PROFILE"
 
@@ -391,7 +391,7 @@ printf '%s\n' "$OUTPUT" | grep -Fq "RECOVERY_RESULT status=accepted" ||
     fail "recovery worker did not accept"
 grep -q -- "--resume 00000000-0000-4000-8000-000000000001" \
     "$CAPTURE/tmux-respawn" || fail "respawn command missing exact resume"
-grep -q "respawn-pane -t %10" "$CAPTURE/tmux-respawn" ||
+grep -q "respawn-pane -c $REPO_A -t %10" "$CAPTURE/tmux-respawn" ||
     fail "respawn target missing"
 
 # alive pane is rejected without respawn
