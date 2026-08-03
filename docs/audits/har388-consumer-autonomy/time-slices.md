@@ -98,6 +98,14 @@ non-authoritative because clean-checkout tmux and terminfo fixtures rejected
 the uncommitted branch; every other suite passed. After committing the exact
 candidate, the unchanged complete integration passed every registered suite
 and guarded cleanup check, with only the declared native-MPI environment skip.
+Harness PR #628 then merged the narrow message-policy routing at `2a15011`;
+its hosted portable job was intentionally skipped under the established
+Actions-sustainability contract. The Personal handshake immediately exposed
+one reusable follow-up: Harness's generic producer-ledger diff still omitted
+untracked non-ignored files. A minimal candidate now unions tracked and
+untracked paths, and all 21 focused ledger tests pass, including a regression
+that permits an ordinary untracked consumer path but rejects an untracked
+producer-owned path.
 
 ## Slice 3 — 01:00–02:00 JST
 

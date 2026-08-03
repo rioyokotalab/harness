@@ -379,6 +379,22 @@ class ProducerLedgerTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("consumer-writer-boundary", result.stdout)
 
+    def test_consumer_diff_includes_untracked_nonignored_path(self) -> None:
+        root = self.fixture()
+        self.init_git(root)
+        (root / "consumer-note.md").write_text("synthetic\n", encoding="utf-8")
+        result = self.run_tool(root, "check-consumer-diff", "--base", "HEAD")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("role=consumer paths=1", result.stdout)
+
+        (root / "consumer-note.md").unlink()
+        producer_path = root / "docs/producer/untracked.tsv"
+        producer_path.write_text("synthetic\n", encoding="utf-8")
+        result = self.run_tool(root, "check-consumer-diff", "--base", "HEAD")
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("consumer-writer-boundary", result.stdout)
+        self.assertIn("docs/producer/untracked.tsv", result.stdout)
+
     def test_disjoint_producer_and_consumer_changes_merge(self) -> None:
         root = self.fixture()
         self.init_git(root)
