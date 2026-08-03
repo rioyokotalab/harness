@@ -3,7 +3,7 @@ accepted_primary_outputs	pass	complete-R3-aa8528c
 wait_interval_commits	pass	one-durable-wait-replay
 duplicate_archive_reads	pass	zero-target-read-empty-replay
 unchanged-runtime-revalidation	pass	freshness-event-cache
-always_read_bytes	pending	terminal-board-closeout
+always_read_bytes	pass	terminal-context-benchmark-exact-base
 selector_routed_bytes	pass	start-output-cap-1024
 card_packet_bytes	pass	strict-4096-byte-parser
 admitted_cards	pass	12-local-60-portfolio-cap
@@ -15,7 +15,7 @@ writer_boundary_violations	pass	consumer-diff-pass
 prompt_replays_after_wake	pass	one-shot-wake-and-recover-state
 pilot_extra_protected_transitions	pending	consumer-and-producer-publication
 rollout_preparation_transitions	pass	no-production-route
-billable_hosted_minutes_increase	pending	hosted-check-readback
+billable_hosted_minutes_increase	pass	run-30792138878-skipped
 final_integrated_validation	pending	terminal-tree-R3
 coverage_false_positives	pass	short-plan-and-stale-target
 wait_with_fit_card	pass	work-conserving-selection

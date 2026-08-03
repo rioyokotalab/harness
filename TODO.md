@@ -18,13 +18,7 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-### Har-383 — Build the synthetic productive-idle selector
-
-**Phase:** implementation; compact contract and all normative tables are read,
-and the protected base is clean at `615f4b0`.
-
-**Record:** `docs/tasks/Har-383.md`. Implement only the Harness-local synthetic
-pilot; do not activate live nightly behavior or touch producer-owned paths.
+No consumer task is currently active.
 
 ## Deferred gates
 
