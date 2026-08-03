@@ -497,6 +497,27 @@ gates. Guarded-delete, catalog, and upgrade tests passed; PR #647 merged at
 `03cd399` after a clean 98-suite R3 in 63.894 seconds with only the declared
 native-MPI skip. No Personal source, owner value, pane, or transcript was read.
 
+Repository-native archive-first housekeeping then retired 24 clean Harness
+scratch worktrees, all 31 task and holder branches associated with them or
+left unheld, and 11 hosted task refs. The one rejected overlap benchmark had
+no PR, so its tip was archived explicitly before retirement. Personal cleanup
+retired 18 clean scratch worktrees, their holder branches, 19 remaining local
+task refs, and two already-host-absent tracking refs. Each canonical repository
+now has exactly one clean `main` worktree, one local branch, and only
+`origin/main`; every removed tip has a durable archive receipt.
+
+A fresh protected seven-worker profile passed all 98 focused suites in 56.941
+seconds. The remaining longest suites confirmed prior negative evidence except
+for config sync, which had not been traced. Its protected standalone baseline
+was 19.47 seconds. Execution tracing found about 1,560 repeated kernel probes
+inside shared stat helpers plus the same number in the synthetic host-style
+shim. A candidate now fixes Darwin-versus-GNU stat syntax once when the common
+library is sourced and computes the real test-host style once, while retaining
+live owner, mode, link-count, and content reads. Three exact owning runs passed
+in 17.04, 16.49, and 16.87 seconds, a 16.87-second median and 13.4% reduction;
+ShellCheck, syntax, diff, and an exact one-probe regression pass. Complete
+integration and protected publication remain pending.
+
 ## Slice 9 — 07:00–08:00 JST
 
 Pending window.
