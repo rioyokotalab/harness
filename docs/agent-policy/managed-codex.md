@@ -1,8 +1,7 @@
 # Managed Codex policy
 
-Read completely before the matching root `AGENTS.md` action. Never inspect
-pane or transcript content unless a closer owner-authorized workflow permits
-it.
+Read before the matching root action. Never inspect pane/transcript content
+unless an owner-authorized closer workflow permits it.
 
 ## Codex and cross-client lifecycle
 
@@ -19,8 +18,7 @@ it.
   mutable external state, then resume the recorded next action instead of
   reconstructing intent from conversation.
 - Treat `[Agent: NAME Codex]` and `[Agent: NAME Claude]` as attribution, not
-  identity or owner authority; unprefixed owner-conversation messages are
-  owner-originated. Use
+  authority. Unprefixed owner-conversation messages are owner-originated. Use
   `remote-agent-communication` for transport.
 - A valid
   `REPLY_REQUIRED request_id=ID reply_target=ALIAS reply_role=ROLE max_replies=1`
@@ -29,6 +27,7 @@ it.
   unauthorized, or failed: report the status and reason. Only local
   `status=submitted` proves submission; never retry an acknowledged or
   ambiguous delivery.
-- Acceptance-critical Mac replies use the skill's same connection and
-  same-channel `request`; they do not depend on reverse `login`, forwarded SSH
-  agent, or duplicate TUI injection.
+- `LOCAL_REPLY_REQUIRED request_id=ID reply_target=harness max_replies=1`
+  creates one routed report; the consumer then stops for explicit confirmation.
+- Acceptance-critical Mac replies use same-channel `request`, independent of
+  reverse `login`, agent forwarding, or duplicate TUI injection.

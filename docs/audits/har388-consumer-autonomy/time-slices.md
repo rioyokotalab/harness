@@ -1,0 +1,55 @@
+# Har-388 hourly evidence
+
+Exactly ten slices cover the owner-requested interval. Replace each pending
+entry with evidence from its window; do not add or remove slices.
+
+## Slice 1 — 23:10–00:00 JST
+
+Confirmed Harness `main` clean at `90b4e1a`, Personal `main` clean at
+`a4f144e`, and Personal's repository read initially took about one minute on
+the NFS path before succeeding. Personal's selector-facing board says idle and
+its six pending producer packets are gated. The installed communication helper
+supports remote Codex and Local Claude but has no Local Personal Codex target;
+Har-388 was protected-published at `ac6b3cf` before implementation began.
+The new profile-bound controller↔consumer route and structured report schema
+then passed focused tests. Initial policy text failed two context budgets;
+route-specific extraction and compaction brought managed policy to 250 words,
+the Local reference to 143, and the largest selected communication route from
+1,241 to 750 words. Context, policy, skill, shell, ledger, and writer-boundary
+checks pass without reading a pane.
+
+## Slice 2 — 00:00–01:00 JST
+
+Pending window.
+
+## Slice 3 — 01:00–02:00 JST
+
+Pending window.
+
+## Slice 4 — 02:00–03:00 JST
+
+Pending window.
+
+## Slice 5 — 03:00–04:00 JST
+
+Pending window.
+
+## Slice 6 — 04:00–05:00 JST
+
+Pending window.
+
+## Slice 7 — 05:00–06:00 JST
+
+Pending window.
+
+## Slice 8 — 06:00–07:00 JST
+
+Pending window.
+
+## Slice 9 — 07:00–08:00 JST
+
+Pending window.
+
+## Slice 10 — 08:00–09:00 JST
+
+Pending window.

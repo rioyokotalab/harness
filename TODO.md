@@ -18,8 +18,13 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-No consumer task is currently executable. The producer selector is idle; the
-remaining entries are event- or authority-gated below.
+### Har-388 — Harden consumer autonomy and task efficiency
+
+**Phase:** implementing a content-blind Local Personal consumer route, then
+measuring and iterating on repository-native consumer execution through the
+2026-08-04 09:00 JST cutoff.
+
+**Record:** `docs/tasks/Har-388.md`.
 
 ## Deferred gates
 

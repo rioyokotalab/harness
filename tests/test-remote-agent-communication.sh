@@ -5,6 +5,7 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HELPER=$ROOT/shared/skills/remote-agent-communication/scripts/agent-message
 SKILL=$ROOT/shared/skills/remote-agent-communication/SKILL.md
 DELIVERY=$ROOT/shared/skills/remote-agent-communication/references/delivery.md
+LOCAL_CODEX=$ROOT/shared/skills/remote-agent-communication/references/local-codex.md
 REQUEST=$ROOT/shared/skills/remote-agent-communication/references/request.md
 FALLBACK=$ROOT/shared/skills/remote-agent-communication/references/fallback.md
 RUNTIME_POLICY=$ROOT/docs/agent-policy/managed-codex.md
@@ -28,7 +29,8 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for path in "$SKILL" "$DELIVERY" "$REQUEST" "$FALLBACK" "$RUNTIME_POLICY"; do
+for path in "$SKILL" "$DELIVERY" "$LOCAL_CODEX" "$REQUEST" "$FALLBACK" \
+    "$RUNTIME_POLICY"; do
     [ -f "$path" ] && [ ! -L "$path" ] ||
         fail "missing routed communication resource: $path"
 done
@@ -49,6 +51,10 @@ grep -F '`[Agent: NAME Claude]`' "$RUNTIME_POLICY" >/dev/null ||
     fail "Claude-originated attribution policy"
 grep -F 'send-local-claude --source local' "$DELIVERY" >/dev/null ||
     fail "Local Codex-to-Claude route guidance"
+grep -F 'send-local-codex' "$LOCAL_CODEX" >/dev/null ||
+    fail "Local Codex consumer route guidance"
+grep -F 'LOCAL_REPLY_REQUIRED request_id=ID reply_target=harness max_replies=1' \
+    "$RUNTIME_POLICY" >/dev/null || fail "Local consumer reply policy"
 grep -F 'does not use `ssh login`' \
     "$REQUEST" >/dev/null ||
     fail "request reverse-route independence"
@@ -58,7 +64,14 @@ grep -F 'Never invoke it twice' "$FALLBACK" >/dev/null ||
 home=$TEST_ROOT/home
 fake_bin=$TEST_ROOT/bin
 state=$TEST_ROOT/state
-mkdir -p "$home/harness" "$home/.local/bin" "$fake_bin" "$state"
+mkdir -p "$home/harness" "$home/personal" "$home/students" \
+    "$home/.local/bin" "$fake_bin" "$state"
+{
+    printf '# target\twindow_index\twindow_name\tpane_index\tcanonical_repository\n'
+    printf 'harness\t0\tcowork\t0\t@HARNESS_ROOT@\n'
+    printf 'personal\t1\tcodex\t0\t%s/personal\n' "$home"
+    printf 'students\t1\tcodex\t1\t%s/students\n' "$home"
+} >"$state/codex-targets.tsv"
 
 cat >"$fake_bin/tmux" <<'EOF'
 #!/bin/sh
@@ -213,6 +226,8 @@ run_helper() {
         FAKE_PANE_INDEX=${FAKE_PANE_INDEX:-} \
         FAKE_PANE_PATH=${FAKE_PANE_PATH:-} \
         FAKE_TTY=${FAKE_TTY:-/dev/pts/7} \
+        HARNESS_TESTING=1 \
+        HARNESS_TEST_AGENT_MESSAGE_TARGETS_FILE=$state/codex-targets.tsv \
         PATH="$fake_bin:/usr/bin:/bin" \
         python3 -B "$HELPER" "$@"
 }
@@ -412,6 +427,90 @@ if printf '%s\n' "$local_claude_message" |
     run_helper send-local-claude --source local \
     >"$state/local-claude-ambiguous.out" 2>&1; then
     fail "ambiguous Local Claude pane accepted"
+fi
+
+local_codex_message='[Agent: Local Codex] diagnose the selected Personal queue'
+ssh_calls_before=$(wc -l <"$state/ssh-calls")
+(
+    cd "$home/harness"
+    printf '%s\n' "$local_codex_message" |
+        FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+        FAKE_PANE_ROLE=personal FAKE_PANE_PATH=$home/personal \
+        run_helper send-local-codex --source local --target personal \
+        >"$state/local-codex.out"
+)
+grep -F -x \
+    'AGENT_MESSAGE_LOCAL_CODEX_SEND source=local target=personal client=codex status=submitted' \
+    "$state/local-codex.out" >/dev/null || fail "Local Personal output"
+ssh_calls_after=$(wc -l <"$state/ssh-calls")
+[ "$ssh_calls_before" -eq "$ssh_calls_after" ] ||
+    fail "Local Personal delivery used SSH"
+if grep -F "$local_codex_message" "$state/operations" >/dev/null; then
+    fail "Local Personal message leaked into tmux arguments"
+fi
+
+if (
+    cd "$home/harness"
+    printf '%s\n' "$local_codex_message" |
+        FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=0 \
+        FAKE_PANE_ROLE=students FAKE_PANE_PATH=$home/personal \
+        run_helper send-local-codex --source local --target personal \
+        >"$state/local-codex-role.out" 2>&1
+); then
+    fail "wrong Local Personal pane role accepted"
+fi
+
+if (
+    cd "$home/personal"
+    printf '%s\n' '[Agent: Personal Codex] peer request' |
+        FAKE_WINDOW_INDEX=1 FAKE_WINDOW_NAME=codex FAKE_PANE_INDEX=1 \
+        FAKE_PANE_ROLE=students FAKE_PANE_PATH=$home/students \
+        run_helper send-local-codex --source personal --target students \
+        >"$state/local-codex-peer.out" 2>&1
+); then
+    fail "Local consumer-to-consumer route accepted"
+fi
+
+local_reply_id=har388-local-report-test
+cat >"$state/local-report" <<EOF
+[Agent: Personal Codex] request_id=$local_reply_id status=complete confirmation_required=yes
+subtask: queue-diagnosis
+result: selector is idle
+evidence: six packets are gated
+next_action: reconcile the first gate
+EOF
+(
+    cd "$home/personal"
+    FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
+    FAKE_PANE_ROLE=harness FAKE_PANE_PATH=$home/harness \
+        run_helper reply-local-codex --source personal --target harness \
+        --request-id "$local_reply_id" <"$state/local-report" \
+        >"$state/local-report.out"
+)
+grep -F -x \
+    "AGENT_MESSAGE_LOCAL_CODEX_REPLY source=personal target=harness client=codex request_id=$local_reply_id status=submitted" \
+    "$state/local-report.out" >/dev/null || fail "Local report output"
+
+if (
+    cd "$home/personal"
+    sed '/^evidence:/d' "$state/local-report" |
+        FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
+        FAKE_PANE_ROLE=harness FAKE_PANE_PATH=$home/harness \
+        run_helper reply-local-codex --source personal --target harness \
+        --request-id "$local_reply_id" >"$state/local-report-shape.out" 2>&1
+); then
+    fail "malformed Local subtask report accepted"
+fi
+
+if (
+    cd "$home/harness"
+    FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
+    FAKE_PANE_ROLE=harness FAKE_PANE_PATH=$home/harness \
+        run_helper reply-local-codex --source personal --target harness \
+        --request-id "$local_reply_id" <"$state/local-report" \
+        >"$state/local-report-cwd.out" 2>&1
+); then
+    fail "false Local consumer source repository accepted"
 fi
 
 reply_id=t307-home-request-test

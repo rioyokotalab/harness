@@ -51,6 +51,15 @@ class Pane:
     claude_role: str
 
 
+@dataclass(frozen=True)
+class CodexTarget:
+    name: str
+    window_index: str
+    window_name: str
+    pane_index: str
+    repository: str
+
+
 def executable(name: str) -> str:
     result = shutil.which(name)
     if result is None:
@@ -155,6 +164,66 @@ def list_panes(target: str, *, all_session: bool = False) -> list[Pane]:
     return panes
 
 
+def local_codex_target_profile() -> Path:
+    override = os.environ.get("HARNESS_TEST_AGENT_MESSAGE_TARGETS_FILE")
+    if override is not None:
+        path = Path(override)
+        if os.environ.get("HARNESS_TESTING") != "1" or not path.is_absolute():
+            raise MessageError("test Local Codex target profile is forbidden")
+        return path
+    return Path(__file__).resolve().parents[4] / "profiles/codex-session-targets.tsv"
+
+
+def local_codex_targets() -> dict[str, CodexTarget]:
+    path = local_codex_target_profile()
+    try:
+        info = path.lstat()
+    except OSError as exc:
+        raise MessageError("Local Codex target profile is unavailable") from exc
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or path.is_symlink()
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) & 0o002
+    ):
+        raise MessageError("Local Codex target profile is unsafe")
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise MessageError("Local Codex target profile cannot be read") from exc
+    targets: dict[str, CodexTarget] = {}
+    locations: set[tuple[str, str, str]] = set()
+    for line in lines:
+        if not line or line.startswith("#"):
+            continue
+        fields = line.split("\t")
+        if len(fields) != 5:
+            raise MessageError("Local Codex target profile is malformed")
+        name, window_index, window_name, pane_index, repository = fields
+        if repository == "@HARNESS_ROOT@":
+            repository = str(Path.home() / "harness")
+        location = (window_index, window_name, pane_index)
+        if (
+            not ALIAS_RE.fullmatch(name)
+            or name in targets
+            or not window_index.isdigit()
+            or not pane_index.isdigit()
+            or not re.fullmatch(r"[A-Za-z0-9-]+", window_name)
+            or not Path(repository).is_absolute()
+            or os.path.normpath(repository) != repository
+            or location in locations
+        ):
+            raise MessageError("Local Codex target profile is not a closed map")
+        locations.add(location)
+        targets[name] = CodexTarget(
+            name, window_index, window_name, pane_index, repository
+        )
+    if "harness" not in targets:
+        raise MessageError("Local Codex controller target is unavailable")
+    return targets
+
+
 def codex_processes(tty: str) -> int:
     if not TTY_RE.fullmatch(tty):
         return 0
@@ -210,6 +279,29 @@ def select_controller_pane() -> Pane:
     ]
     if len(candidates) != 1:
         raise MessageError("controller Codex pane is absent or ambiguous")
+    return candidates[0]
+
+
+def select_local_codex_pane(target_name: str) -> Pane:
+    session = "harness"
+    exact_session(session)
+    targets = local_codex_targets()
+    target = targets.get(target_name)
+    if target is None:
+        raise MessageError("Local Codex target is unsupported")
+    candidates = [
+        pane
+        for pane in list_panes(session, all_session=True)
+        if pane.dead == "0"
+        and pane.window_index == target.window_index
+        and pane.window_name == target.window_name
+        and pane.pane_index == target.pane_index
+        and pane.pane_role == target.name
+        and pane.path == target.repository
+        and codex_processes(pane.tty) == 1
+    ]
+    if len(candidates) != 1:
+        raise MessageError("Local Codex pane is absent or ambiguous")
     return candidates[0]
 
 
@@ -320,6 +412,7 @@ def inject_message(
     allow_attached: bool,
     message: bytes,
     client: str = "codex",
+    local_codex_target: str | None = None,
 ) -> None:
     message = validate_message(source, message, client)
     with injection_lock():
@@ -335,6 +428,10 @@ def inject_message(
             if allow_attached or source != "local" or client != "codex":
                 raise MessageError("local Claude route identity is invalid")
             pane = select_local_claude_pane()
+        elif target_role == "local-codex":
+            if allow_attached or client != "codex" or local_codex_target is None:
+                raise MessageError("Local Codex route identity is invalid")
+            pane = select_local_codex_pane(local_codex_target)
         else:
             raise MessageError("target role is unsupported")
         tmux = executable("tmux")
@@ -446,6 +543,77 @@ def send_local_claude(source: str) -> None:
     print(
         "AGENT_MESSAGE_LOCAL_CLAUDE source=local target=local "
         "client=codex status=submitted"
+    )
+
+
+def validate_local_codex_endpoints(source: str, target: str) -> None:
+    targets = local_codex_targets()
+    if target not in targets:
+        raise MessageError("Local Codex target is unsupported")
+    if source == "local":
+        source_target = targets["harness"]
+        if target == "harness":
+            raise MessageError("Local controller cannot message itself")
+    else:
+        source_target = targets.get(source)
+        if source_target is None or source == "harness" or target != "harness":
+            raise MessageError("Local Codex peer route is unsupported")
+    if str(Path.cwd()) != source_target.repository:
+        raise MessageError("Local Codex source repository does not match cwd")
+
+
+def validate_local_subtask_report(
+    source: str, requested_id: str, message: bytes
+) -> bytes:
+    message = validate_message(source, message)
+    requested_id = request_id(requested_id)
+    lines = message.decode("utf-8").splitlines()
+    if len(lines) != 5:
+        raise MessageError("Local Codex subtask report shape is malformed")
+    prefix = PREFIX_RE.match(lines[0])
+    if prefix is None:
+        raise MessageError("Local Codex subtask report prefix is malformed")
+    fields = lines[0][prefix.end():].strip().split()
+    expected = {
+        f"request_id={requested_id}",
+        "confirmation_required=yes",
+    }
+    statuses = [field for field in fields if field.startswith("status=")]
+    if (
+        len(statuses) != 1
+        or statuses[0].removeprefix("status=") not in REPLY_STATUSES
+        or set(fields) != expected | {statuses[0]}
+    ):
+        raise MessageError("Local Codex subtask report header is malformed")
+    required = ("subtask: ", "result: ", "evidence: ", "next_action: ")
+    if any(
+        not line.startswith(marker) or not line.removeprefix(marker).strip()
+        for line, marker in zip(lines[1:], required, strict=True)
+    ):
+        raise MessageError("Local Codex subtask report fields are malformed")
+    return message
+
+
+def send_local_codex(
+    source: str, target: str, requested_id: str | None = None
+) -> None:
+    validate_local_codex_endpoints(source, target)
+    message = read_message(source, "codex")
+    if requested_id is not None:
+        message = validate_local_subtask_report(source, requested_id, message)
+    inject_message(
+        source,
+        "local-codex",
+        False,
+        message,
+        "codex",
+        local_codex_target=target,
+    )
+    operation = "REPLY" if requested_id is not None else "SEND"
+    request_field = f" request_id={request_id(requested_id)}" if requested_id else ""
+    print(
+        f"AGENT_MESSAGE_LOCAL_CODEX_{operation} source={source} target={target} "
+        f"client=codex{request_field} status=submitted"
     )
 
 
@@ -782,6 +950,13 @@ def build_parser() -> argparse.ArgumentParser:
     fallback_reply_command.add_argument("--request-id", required=True)
     local_claude_command = commands.add_parser("send-local-claude")
     local_claude_command.add_argument("--source", required=True)
+    local_codex_command = commands.add_parser("send-local-codex")
+    local_codex_command.add_argument("--source", required=True)
+    local_codex_command.add_argument("--target", required=True)
+    local_codex_reply = commands.add_parser("reply-local-codex")
+    local_codex_reply.add_argument("--source", required=True)
+    local_codex_reply.add_argument("--target", required=True)
+    local_codex_reply.add_argument("--request-id", required=True)
     return parser
 
 
@@ -805,6 +980,12 @@ def main() -> int:
             )
         elif arguments.command == "send-local-claude":
             send_local_claude(arguments.source)
+        elif arguments.command == "send-local-codex":
+            send_local_codex(arguments.source, arguments.target)
+        elif arguments.command == "reply-local-codex":
+            send_local_codex(
+                arguments.source, arguments.target, arguments.request_id
+            )
         elif arguments.command == "request":
             request(
                 arguments.source,
