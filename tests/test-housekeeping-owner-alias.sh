@@ -285,7 +285,9 @@ printf '%s\n' "$OUT" | grep -Fq 'aliases=2 unbound_aliases=0' ||
 # The owner-authorized bridge accepts exactly one retired predecessor and can
 # publish from immutable mapping evidence after the legacy root is already
 # absent. It never reconstructs or rewrites that root.
-STATE=$TEST_ROOT/relocation-state
+mkdir -p "$TEST_ROOT/real-state-parent"
+ln -s "$TEST_ROOT/real-state-parent" "$TEST_ROOT/lexical-state-parent"
+STATE=$TEST_ROOT/lexical-state-parent/relocation-state
 mkdir -m 700 "$STATE"
 git clone -q "$RELOC_OWNER" "$RELOC_LEGACY"
 git -C "$RELOC_LEGACY" config user.email owner-alias@example.invalid

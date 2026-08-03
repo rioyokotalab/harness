@@ -445,6 +445,13 @@ def owner_alias_name(source: Path) -> str:
     return hashlib.sha256(str(source).encode()).hexdigest() + ".json"
 
 
+def owner_alias_source_key(source: Path) -> str:
+    try:
+        return str(source.resolve(strict=True))
+    except FileNotFoundError:
+        return str(source)
+
+
 def parse_owner_alias(path: Path) -> Dict[str, Any]:
     validate_private_file(path)
     try:
@@ -637,7 +644,8 @@ def load_owner_aliases() -> Dict[str, Tuple[Path, Dict[str, Any]]]:
     for path in paths:
         value = parse_owner_alias(path)
         source = value["source_receipt"]
-        if source in aliases:
+        source_key = owner_alias_source_key(Path(source))
+        if source_key in aliases:
             die("archive source has duplicate owner aliases")
         repository_key = (
             value["legacy_repository"],
@@ -662,7 +670,7 @@ def load_owner_aliases() -> Dict[str, Tuple[Path, Dict[str, Any]]]:
         ):
             die("archive repository has mixed owner aliases")
         repository_bindings[repository_key] = binding
-        aliases[source] = (path, value)
+        aliases[source_key] = (path, value)
     return aliases
 
 
@@ -684,7 +692,8 @@ def validate_owner_alias(
     except ValueError as exc:
         raise HousekeepingError("archive owner alias legacy identity is malformed") from exc
     required_bindings = (
-        alias["source_receipt"] == str(source)
+        owner_alias_source_key(Path(alias["source_receipt"]))
+        == owner_alias_source_key(source)
         and alias["source_sha256"] == digest(source)
         and alias["legacy_repository"] == values.get("repository_canonical")
         and alias["legacy_repository_id"]
@@ -797,7 +806,7 @@ def resolve_archive_owner(
     if repository.exists() or repository.is_symlink():
         return canonical_repo(repository)
     alias_rows = aliases if aliases is not None else load_owner_aliases()
-    row = alias_rows.get(str(source))
+    row = alias_rows.get(owner_alias_source_key(source))
     if row is None:
         die("archive legacy repository is absent without an owner alias")
     return validate_owner_alias(source, parsed, row[1], owner_cache)
@@ -1038,7 +1047,7 @@ def create_owner_alias(
         independent_alias_restore(coordinator_repo, bundle, tips)
     else:
         candidate_aliases = load_owner_aliases()
-        candidate_aliases[str(source)] = (destination, value)
+        candidate_aliases[owner_alias_source_key(source)] = (destination, value)
         generation_directory = state / "generations"
         generations = []
         recovery_sources: Dict[str, Tuple[Path, str]] = {}
@@ -1267,7 +1276,7 @@ def archive_audit(
         )
         if compaction is None:
             alias_rows = aliases if aliases is not None else load_owner_aliases()
-            alias_row = alias_rows.get(str(receipt_path))
+            alias_row = alias_rows.get(owner_alias_source_key(receipt_path))
             if alias_row is not None:
                 compaction = alias_generation_recovery(
                     repo,
