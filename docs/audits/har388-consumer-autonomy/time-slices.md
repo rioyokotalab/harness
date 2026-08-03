@@ -537,7 +537,21 @@ keys, absent-file failure, and unterminated final lines. Config sync passed
 three exact candidate runs in 14.91, 15.25, and 15.05 seconds versus the
 16.87-second protected median; Homebrew passed in 19.96 versus 21.74 seconds.
 The private-profile suite, ShellCheck, and parser-parity probes pass. Complete
-integration and protected publication remain pending.
+R3 then passed all 98 suites in 58.984 seconds with only the declared native-
+MPI skip. PR #650 merged the exact tree at `9103479`; hosted validation skipped
+as intended and the clean task worktree was archive-retired. The next protected
+focused profile completed in 52.239 seconds, down from 54.955.
+
+A broader shell rewrite of the compact manifest validator preserved all valid,
+duplicate, unknown, malformed-key, extra-equals, control-character, missing-
+required, blank-line, and unterminated-line behavior, but config sync improved
+only from a 15.05 to 14.60-second median and Homebrew from 19.96 to 19.92. Its
+larger review surface outweighed the 0.45-second gain, so the candidate was
+reverted and archive-retired. A smaller checksum change removes only the second
+parser process and now propagates checksum-command failure. Its functional,
+failure, profile, and ShellCheck probes pass; two complete focused profiles
+passed in 51.076 and 51.530 seconds versus the 52.239-second protected sample.
+Complete R3 and protected publication remain pending.
 
 ## Slice 10 — 08:00–09:00 JST
 
