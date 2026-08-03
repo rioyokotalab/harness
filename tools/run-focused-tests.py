@@ -19,6 +19,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log-dir", required=True)
     parser.add_argument("--jobs", required=True)
     parser.add_argument("--reserve-cpus", type=int, default=0)
+    parser.add_argument("--verbose", action="store_true")
     return parser.parse_args()
 
 
@@ -87,6 +88,7 @@ def run_one(index: int, path: Path, label: str, root: Path, log_dir: Path) -> tu
 
 
 def main() -> int:
+    run_started = time.monotonic()
     args = parse_args()
     jobs, visible_cpus = resolve_jobs(args.jobs, args.reserve_cpus)
     if args.reserve_cpus < 0 or args.reserve_cpus > 15 or jobs < 1 or jobs > 16:
@@ -129,11 +131,17 @@ def main() -> int:
     failed = False
     for _, path, label, status, elapsed, log in sorted(results):
         state = "PASS" if status == 0 else "FAIL"
-        print(f"{state} suite={path.name} seconds={elapsed:.3f}")
+        if args.verbose or status != 0:
+            print(f"{state} suite={path.name} seconds={elapsed:.3f}")
         if status != 0:
             failed = True
             print(f"FAIL: {label}; log={log}", file=sys.stderr)
             sys.stderr.buffer.write(log.read_bytes())
+    state = "fail" if failed else "pass"
+    print(
+        f"focused-tests: status={state} suites={len(results)} "
+        f"seconds={time.monotonic() - run_started:.3f}"
+    )
     return 1 if failed else 0
 
 
