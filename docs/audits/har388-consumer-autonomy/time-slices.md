@@ -212,15 +212,15 @@ unpublished pending one integrated R3 with the hourly evidence.
 
 ## Slice 4 — 02:00–03:00 JST
 
-Window in progress. Personal returned the exact Per-018 correction with a
+Personal returned the exact Per-018 correction with a
 checked-in validator, fail-closed managed event roles, two new role
 regressions, and a 683-word active record. Independent review of all nine
 staged paths passed the repository validator, 13 planner tests, 24 owning
 Google tests, both whitespace views, and the exact path count. The protected
 confirmation route accepted that checkpoint and bound stage 3 to a fresh
 request ID; its only authority is full local validation, protected
-publication, terminal receipt, and readback. Live Gmail, web, Calendar, and
-connector access remain forbidden.
+publication, terminal receipt, and readback. Live private-source, web,
+connector, and external-system access remain forbidden.
 
 The clean Harness checkpoint passed complete R3 with all 98 suites in 66.993
 seconds and only the declared native-MPI skip. Harness PR #634 then merged at
@@ -231,8 +231,8 @@ and canonical `main` fast-forwarded cleanly. Focused policy and context
 readbacks pass on the protected revision.
 
 Personal stage 3 independently reran complete validation and its exact
-nine-path consumer boundary, then protected-published the synthetic
-conference-travel skill as PR #54 at `490144c`. It correctly left no terminal
+nine-path consumer boundary, then protected-published the synthetic private
+skill as PR #54 at `490144c`. It correctly left no terminal
 receipt because the first live decision is a reversible gate. Producer PR #55
 changed only Per-018's queue and index dispositions to gated, passed the
 two-path writer boundary, and merged at `47ffda4`. The exact Personal root is
@@ -267,6 +267,33 @@ one-path consumer boundary, but review found that it proposed a terminal
 receipt before its owner-decision phase. One bounded changes-required request
 now asks only for the established partial-publication, no-receipt, reversible
 gate lifecycle; no Personal source or payload was accessed or retained here.
+
+The corrected plan reduced to a 724-word active record and passed direct ledger,
+whitespace, and one-path boundary checks, so the protected confirmation route
+authorized only its synthetic implementation. Independent stage-two review then
+reproduced two generic acceptance defects before publication: an open matching
+preference had been hardcoded, and an extreme but syntactically valid temporal
+range escaped the declared domain-error boundary. A bounded correction requires
+an explicit matching policy, bounded strings and period arithmetic, strict
+normalized-reference validation, and focused regressions. No live or private
+source was accessed.
+
+One clean verbose timing sample ran all 98 focused Harness suites in 59.734
+seconds. The critical jobs remained housekeeping at 44.843 seconds and four
+synthetic personal-Mac suites at 24--34 seconds under contention. Moving only
+test temporaries to node-local tmpfs was rejected: the non-housekeeping timings
+did not improve, and two archive-generation fixtures correctly refused a path
+outside their declared scratch boundary. Their exact benchmark roots were
+removed through guarded manifests; no product tree changed.
+
+The repeated Personal checkpoints also exposed a durable validation inefficiency:
+record-only changes can select complete validation, and unchanged focused checks
+can be rerun immediately inside the complete suite. Private producer PR #60
+therefore scheduled a generic proportional-validation and exact-evidence-reuse
+task immediately after the active task at protected revision `2d3d552`. Its four
+producer paths passed strict ledger convergence and the writer boundary. This
+base advance deliberately leaves the consumer work independent; publication
+must reconcile protected `main` before computing the consumer diff.
 
 ## Slice 5 — 03:00–04:00 JST
 
