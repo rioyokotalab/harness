@@ -79,6 +79,28 @@ module = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(module)
 root = Path(sys.argv[2])
+os.environ.pop("HARNESS_TESTING", None)
+os.environ.pop("HARNESS_TEST_GENERATION_RECEIPTS_TRIGGER", None)
+assert module.generation_receipts_trigger() == 30
+os.environ["HARNESS_TEST_GENERATION_RECEIPTS_TRIGGER"] = "3"
+try:
+    module.generation_receipts_trigger()
+except module.HousekeepingError:
+    pass
+else:
+    raise AssertionError("test threshold escaped HARNESS_TESTING")
+os.environ["HARNESS_TESTING"] = "1"
+assert module.generation_receipts_trigger() == 3
+for invalid in ("0", "03", "30", "x"):
+    os.environ["HARNESS_TEST_GENERATION_RECEIPTS_TRIGGER"] = invalid
+    try:
+        module.generation_receipts_trigger()
+    except module.HousekeepingError:
+        pass
+    else:
+        raise AssertionError(invalid)
+os.environ.pop("HARNESS_TEST_GENERATION_RECEIPTS_TRIGGER")
+os.environ.pop("HARNESS_TESTING")
 bundle = root / "cache-fixture.bundle"
 bundle.write_bytes(b"first-bundle")
 bundle.chmod(0o600)
@@ -151,6 +173,7 @@ init_repo() {
 
 house() {
     HARNESS_TESTING=1 \
+    HARNESS_TEST_GENERATION_RECEIPTS_TRIGGER=3 \
     HARNESS_TEST_HOUSEKEEPING_REPO="$REPO" \
     HARNESS_TEST_GH="$GH" \
     HARNESS_TEST_PR_DATA="$PR_DATA" \
@@ -523,7 +546,7 @@ fi
 # compaction. The immutable source receipt remains auditable, and later
 # generations recover its tips from the retained generation bundles.
 index=1
-while [ "$index" -le 31 ]; do
+while [ "$index" -le 4 ]; do
     cp "$ARCHIVE" "$STATE/delta-before-compaction-$index.receipt"
     chmod 600 "$STATE/delta-before-compaction-$index.receipt"
     index=$((index + 1))
@@ -536,7 +559,7 @@ OUT=$(house --create-generation) || fail "second covering generation failed"
 printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
     fail "second generation restore proof changed"
 printf '%s\n' "$OUT" | grep -Fq \
-    'trigger=receipts trigger_basis=delta uncovered=31' ||
+    'trigger=receipts trigger_basis=delta uncovered=4' ||
     fail "second generation did not use uncovered-receipt growth"
 GC_BUNDLE=$(sed -n 's/^bundle=//p' "$GC_RECEIPT")
 [ -f "$GC_BUNDLE" ] || fail "compaction source bundle is missing"
@@ -568,7 +591,7 @@ git -C "$REPO" add TODO.md
 git -C "$REPO" commit -qm 'prove compacted generation source'
 git -C "$REPO" update-ref refs/remotes/origin/main "$(git -C "$REPO" rev-parse HEAD)"
 index=1
-while [ "$index" -le 31 ]; do
+while [ "$index" -le 4 ]; do
     cp "$ARCHIVE" "$STATE/delta-after-compaction-$index.receipt"
     chmod 600 "$STATE/delta-after-compaction-$index.receipt"
     index=$((index + 1))
