@@ -297,7 +297,45 @@ must reconcile protected `main` before computing the consumer diff.
 
 ## Slice 5 — 03:00–04:00 JST
 
-Pending window.
+Personal's Day One implementation initially returned a temporal-boundary
+correction, then replaced a period-by-interval rescan with a monotonic linear
+sweep. Thirteen focused tests covered equivalence, gaps, spanning intervals,
+bounded input, and structural complexity. Its exact 10,000-record synthetic
+benchmark improved from 5.352 seconds to a 0.061747-second median, about 87×,
+without source or connector access. A delayed checkpoint produced stable bytes
+but no usable controller report for twenty minutes. One delivery-only request
+under the same ID changed no task state and recovered a valid five-line report;
+an earlier partial line then surfaced alongside it, proving that terminal-only
+delivery was not a sufficient durable boundary.
+
+The corrected implementation passed independent focused, whitespace, and
+eight-path boundary review. Complete Personal validation then passed once, PR
+#61 merged the no-receipt partial tree at `a15166f`, and protected readback
+retained all ten open decisions. Producer PR #62 gated only Per-019 at its first
+owner choice and merged at `96cddb8`; the clean selector advanced to Per-027.
+
+Harness now atomically preserves each validated Local report in private
+mode-0600 state before terminal insertion. The controller can read an absent or
+partial report without another consumer prompt; exact duplicate bytes are
+idempotent, changed bytes under one ID fail, failed insertion retains recovery
+state, and only the matching submitted confirmation removes it. The selected
+route remains 517 words, below its 525-word ceiling. The first complete R3
+correctly caught three compacted safety-marker phrases; the owning gate restored
+their exact semantics. The changed-input clean R3 then passed all 98 suites in
+63.932 seconds with only the declared native-MPI skip. Harness PR #638 merged at
+`f55a3d9`, and its hosted workflow registered the expected skipped result.
+
+Per-027 measured record-only, focused, and complete Personal routes at 0.119,
+2.138, and 3.544 seconds. Its first plan omitted two recurring autonomy costs.
+One bounded correction added deterministic fail-closed discovery for every
+repository-local skill and conflict-free protected-base reconciliation before
+the final consumer diff. The corrected 647-word plan preserved the packet and
+one-path boundary. Stage 2 returned six consumer paths through the new report
+store; direct and private readback matched byte-for-byte, and confirmation
+removed only that exact copy. Independent synthetic review then proved that an
+undeclared extra discovery symlink with a noncanonical target still passed.
+One bounded changes-required cycle now requires exact entry-set equality,
+bounded discovery directories, and focused regressions before publication.
 
 ## Slice 6 — 04:00–05:00 JST
 
