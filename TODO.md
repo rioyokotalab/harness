@@ -20,10 +20,12 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ### Har-371 — Migrate legacy managed primary branches
 
-**Phase:** Swallow completed at a verified unallocated idle boundary on
-2026-08-03. The task remains event-gated only for the live Students managed
-session. Do not move a cwd, process, saved thread, phone root, or app-server
-connection in place.
+**Phase:** Swallow and all Students repository work are complete. Students'
+unpublished tip is archive-backed in a locked detached worktree, but its live
+Codex root reports `notLoaded` and both legacy-root panes still require an
+owner-visible idle confirmation before the controller-only cutover. Do not
+move a cwd, process, saved thread, phone root, or app-server connection in
+place.
 
 **Record:** `docs/tasks/Har-371.md`.
 
