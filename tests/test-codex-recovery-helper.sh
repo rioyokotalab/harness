@@ -446,7 +446,7 @@ do
             ordinal=2
             index=1
             window_index=1
-            repository=/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students
+            repository=/mnt/nfs-03/safe/Users/rioyokota/projects/students
             ;;
     esac
     helper --enqueue-blocked \
