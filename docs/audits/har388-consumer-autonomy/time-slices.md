@@ -93,6 +93,11 @@ complete validation and converged-ledger checks passed there, and `next-ready`
 selected Per-016. One accepted confirmation bound that task's first report to
 a fresh ID, testing whether the consumer can advance directly from durable
 selector state rather than another task-specific controller prompt.
+The validation-map candidate's first complete run was intentionally
+non-authoritative because clean-checkout tmux and terminfo fixtures rejected
+the uncommitted branch; every other suite passed. After committing the exact
+candidate, the unchanged complete integration passed every registered suite
+and guarded cleanup check, with only the declared native-MPI environment skip.
 
 ## Slice 3 — 01:00–02:00 JST
 
