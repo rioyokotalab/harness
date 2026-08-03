@@ -50,6 +50,7 @@ assert '"--open-worktree"' in source and '"--expected-main"' in source
 assert '"--recover-worktree"' in source
 assert '"--repo"' in source
 assert 'choices=("all", "scratch", "branches", "remotes", "worktrees"' in source
+assert '"--retire-all-nonmain"' in source
 assert '"--create-generation"' in source
 assert "archive generation has duplicate durable owners" not in source
 assert source.count("require_durable_worktree_archive_owner(repo)") == 2
@@ -204,6 +205,108 @@ printf '%s\n' "$OUT" | grep -Fq 'apply=unavailable' || fail "remote inventory ex
 if house --apply --routine remotes >/dev/null 2>&1; then
     fail "remote apply was accepted"
 fi
+
+# Explicit owner retirement archives and removes an otherwise unmerged local
+# branch while preserving current main.
+REPO=$TEST_ROOT/branch-retire-all
+init_repo "$REPO"
+LOCAL_RETIRE_STATE=$TEST_ROOT/local-retire-state
+mkdir -m 700 "$LOCAL_RETIRE_STATE"
+house_local_retire() {
+    HARNESS_TESTING=1 \
+    HARNESS_TEST_HOUSEKEEPING_REPO="$REPO" \
+    HARNESS_TEST_GH="$GH" \
+    HARNESS_TEST_PR_DATA="$PR_DATA" \
+    HARNESS_TEST_OWNER_HOME="$HOME_DIR" \
+    HARNESS_TEST_RECEIPT_DIR="$LOCAL_RETIRE_STATE" \
+    HARNESS_TEST_WORKTREE_BOUNDARIES="$TEMP_BASE" \
+        "$HARNESS" housekeeping "$@"
+}
+git -C "$REPO" checkout -qb obsolete
+printf 'obsolete\n' >>"$REPO/tracked"
+git -C "$REPO" commit -qam obsolete
+OBSOLETE=$(git -C "$REPO" rev-parse HEAD)
+git -C "$REPO" checkout -q main
+printf '[]\n' >"$PR_DATA"
+OUT=$(house_local_retire --plan --routine branches --retire-all-nonmain)
+PLAN=$(receipt_from "$OUT")
+TOKEN=$(token_from "$OUT")
+OUT=$(house_local_retire --apply --routine branches --retire-all-nonmain \
+    --receipt "$PLAN" --token "$TOKEN")
+LOCAL_RECEIPT=$(printf '%s\n' "$OUT" | sed -n 's/.*archive_receipt=\([^ ]*\).*/\1/p')
+[ -n "$LOCAL_RECEIPT" ] || fail "local retire-all omitted archive receipt"
+git -C "$REPO" show-ref --verify --quiet refs/heads/obsolete &&
+    fail "local retire-all left obsolete branch"
+git -C "$REPO" cat-file -e "$OBSOLETE^{commit}" ||
+    fail "local retire-all lost archived tip"
+OUT=$(house_local_retire --audit --receipt "$LOCAL_RECEIPT")
+printf '%s\n' "$OUT" | grep -Fq 'status=pass' || fail "local retire-all archive audit"
+REPO=$TEST_ROOT/branches
+
+# Exact owner retirement archives every hosted/tracking tip, rejects drift,
+# deletes with OID leases, and preserves protected main.
+REMOTE_BARE=$TEST_ROOT/remote-origin.git
+git init -q --bare "$REMOTE_BARE"
+REMOTE_STATE=$TEST_ROOT/remote-state
+mkdir -m 700 "$REMOTE_STATE"
+REPO=$TEST_ROOT/remote-retire
+init_repo "$REPO"
+git -C "$REPO" remote add origin "$REMOTE_BARE"
+git -C "$REPO" push -q -u origin main
+git -C "$REPO" checkout -qb hosted-one
+printf 'hosted-one\n' >>"$REPO/tracked"
+git -C "$REPO" commit -qam hosted-one
+git -C "$REPO" push -q origin HEAD:refs/heads/hosted-one
+git -C "$REPO" checkout -qb hosted-two main
+printf 'hosted-two\n' >>"$REPO/tracked"
+git -C "$REPO" commit -qam hosted-two
+git -C "$REPO" push -q origin HEAD:refs/heads/hosted-two
+git -C "$REPO" checkout -q main
+TRACKING_ONLY=$(printf 'tracking-only\n' | git -C "$REPO" commit-tree "main^{tree}" -p main)
+git -C "$REPO" update-ref refs/remotes/origin/tracking-only "$TRACKING_ONLY"
+
+house_remote() {
+    HARNESS_TESTING=1 \
+    HARNESS_TEST_HOUSEKEEPING_REPO="$REPO" \
+    HARNESS_TEST_GH="$GH" \
+    HARNESS_TEST_PR_DATA="$PR_DATA" \
+    HARNESS_TEST_OWNER_HOME="$HOME_DIR" \
+    HARNESS_TEST_RECEIPT_DIR="$REMOTE_STATE" \
+    HARNESS_TEST_WORKTREE_BOUNDARIES="$TEMP_BASE" \
+    HARNESS_TEST_REMOTE_LIVE=1 \
+    HARNESS_TEST_REMOTE_IDENTITY=ssh://git@example.invalid/repository.git \
+        "$HARNESS" housekeeping "$@"
+}
+
+OUT=$(house_remote --plan --routine remotes --retire-all-nonmain)
+PLAN=$(receipt_from "$OUT")
+TOKEN=$(token_from "$OUT")
+git -C "$REPO" checkout -qb hosted-drift main
+printf 'drift-one\n' >>"$REPO/tracked"
+git -C "$REPO" commit -qam drift-one
+git -C "$REPO" push -q origin HEAD:refs/heads/hosted-drift
+git -C "$REPO" checkout -q main
+if house_remote --apply --routine remotes --retire-all-nonmain \
+    --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1; then
+    fail "remote branch drift was accepted"
+fi
+git -C "$REPO" ls-remote --exit-code origin refs/heads/hosted-one >/dev/null ||
+    fail "remote drift failure partially deleted a peer"
+
+OUT=$(house_remote --plan --routine remotes --retire-all-nonmain)
+PLAN=$(receipt_from "$OUT")
+TOKEN=$(token_from "$OUT")
+OUT=$(house_remote --apply --routine remotes --retire-all-nonmain \
+    --receipt "$PLAN" --token "$TOKEN")
+REMOTE_RECEIPT=$(printf '%s\n' "$OUT" | sed -n 's/.*archive_receipt=\([^ ]*\).*/\1/p')
+[ -n "$REMOTE_RECEIPT" ] || fail "remote retirement omitted archive receipt"
+OUT=$(house_remote --audit --receipt "$REMOTE_RECEIPT")
+printf '%s\n' "$OUT" | grep -Fq 'status=pass' || fail "remote retirement archive audit"
+[ "$(git -C "$REPO" ls-remote --heads origin | wc -l)" -eq 1 ] ||
+    fail "remote retirement left non-main hosted branches"
+git -C "$REPO" show-ref --verify --quiet refs/remotes/origin/tracking-only &&
+    fail "remote retirement left tracking-only ref"
+REPO=$TEST_ROOT/branches
 
 # A bundle remains sufficient after archive refs and unreachable objects are pruned.
 ORPHAN=$(printf 'orphan\n' | git -C "$REPO" commit-tree "$TREE")
