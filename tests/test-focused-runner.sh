@@ -82,8 +82,11 @@ python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/pass-logs" --jobs 2 \
     >"$TEMP_DIR/pass.out" 2>"$TEMP_DIR/pass.err" || fail 'parallel pass'
 [ ! -s "$TEMP_DIR/pass.err" ] || fail 'parallel pass emitted stderr'
-[ "$(grep -c '^PASS suite=' "$TEMP_DIR/pass.out")" -eq 2 ] ||
-    fail 'parallel result count'
+if grep -q '^PASS suite=' "$TEMP_DIR/pass.out"; then
+    fail 'compact pass emitted per-suite output'
+fi
+grep -E '^focused-tests: status=pass suites=2 seconds=[0-9]+\.[0-9]{3}$' \
+    "$TEMP_DIR/pass.out" >/dev/null || fail 'compact pass summary'
 
 for name in early priority late; do
     cat >"$fake/tests/$name.sh" <<'EOF'
@@ -100,6 +103,7 @@ printf '%s\n' \
 ORDER_FILE="$TEMP_DIR/priority.order" \
     python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/priority.tsv" --log-dir "$fake/priority-logs" --jobs 1 \
+    --verbose \
     >"$TEMP_DIR/priority.out" 2>"$TEMP_DIR/priority.err" ||
     fail 'priority admission'
 [ "$(cat "$TEMP_DIR/priority.order")" = "priority.sh
@@ -133,6 +137,7 @@ assert module.auto_jobs(64, 1) == 8
 PY
 python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/auto-logs" --jobs auto \
+    --verbose \
     >"$TEMP_DIR/auto.out" 2>"$TEMP_DIR/auto.err" || fail 'auto jobs pass'
 [ ! -s "$TEMP_DIR/auto.err" ] || fail 'auto jobs emitted stderr'
 grep -E '^focused-tests: jobs=([1-8]) visible_cpus=[0-9]+ mode=auto reserve_cpus=0$' \
