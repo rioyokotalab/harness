@@ -69,8 +69,8 @@ grep -F 'Never infer a timestamp' \
     "$ROOT/AGENTS.md" >/dev/null || fail "project progress clock drift guard"
 for managed_root in \
     '$HOME/harness' \
-    '/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students' \
-    '/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow' \
+    '/mnt/nfs-03/safe/Users/rioyokota/projects/students' \
+    '/mnt/nfs-03/safe/Users/rioyokota/projects/swallow' \
     '/mnt/nfs-03/safe/Users/rioyokota/projects/personal'
 do
     grep -F -- "$managed_root" "$ROOT/.codex/AGENTS.md" >/dev/null ||

@@ -8,8 +8,10 @@ Before doing task work, confirm that the current Git repository root is exactly
 one of:
 
 - `$HOME/harness`
-- `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students`
-- `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`
+- `/mnt/nfs-03/safe/Users/rioyokota/projects/students`
+- `/mnt/nfs-03/safe/Users/rioyokota/projects/swallow`
+- `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students` (Har-384 bridge only)
+- `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow` (Har-384 bridge only)
 - `/mnt/nfs-03/safe/Users/rioyokota/projects/personal`
 - `/mnt/nfs-03/safe/Users/rioyokota/projects/website` (Linux)
 - `$HOME/projects/website` (macOS)
