@@ -18,8 +18,12 @@ Current and future Harness tasks use the `Har-NNN` namespace. Historical
 
 ## Active queue
 
-No consumer task is active. Resolve the next producer packet before starting
-new work.
+### Har-384 — Relocate Students and Swallow roots under `projects`
+
+**Phase:** accepted owner-authorized migration; discovery and guarded stale
+destination retirement are in progress.
+
+**Record:** `docs/tasks/Har-384.md`.
 
 ## Deferred gates
 
