@@ -51,6 +51,7 @@ assert '"--recover-worktree"' in source
 assert '"--repo"' in source
 assert 'choices=("all", "scratch", "branches", "remotes", "worktrees"' in source
 assert '"--create-generation"' in source
+assert "archive generation has duplicate durable owners" not in source
 assert source.count("require_durable_worktree_archive_owner(repo)") == 2
 PY
 

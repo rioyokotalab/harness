@@ -2138,7 +2138,7 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
             repository_value: origin_main(grouped[repository_value]["repository"])
             for repository_value in grouped
         }
-        recorded_main: Dict[str, str] = {}
+        recorded_main_sets: Dict[str, set[str]] = {}
         for repository in latest["repositories"]:
             recorded_owner = resolve_recorded_repository(
                 state,
@@ -2150,12 +2150,18 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
                     source["name"] for source in latest["source_receipts"]
                 },
             )
-            if str(recorded_owner) in recorded_main:
-                die("archive generation has duplicate durable owners")
-            recorded_main[str(recorded_owner)] = repository["protected_main"]["tip"]
+            recorded_main_sets.setdefault(str(recorded_owner), set()).add(
+                repository["protected_main"]["tip"]
+            )
+        recorded_main = {
+            owner: next(iter(tips))
+            for owner, tips in recorded_main_sets.items()
+            if len(tips) == 1
+        }
         age_days = max(0, (datetime.now(timezone.utc) - created).days)
         if (
             latest["source_receipts"] == sources
+            and len(recorded_main) == len(recorded_main_sets)
             and recorded_main == current_main
             and age_days < GENERATION_AGE_DAYS_TRIGGER
         ):
