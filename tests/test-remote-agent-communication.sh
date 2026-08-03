@@ -37,6 +37,24 @@ done
 if grep -E 'capture-pane|pipe-pane|show-buffer' "$HELPER" >/dev/null; then
     fail "message transport may inspect pane content"
 fi
+HELPER_PATH=$HELPER python3 -B - <<'PY'
+import os
+import runpy
+
+namespace = runpy.run_path(os.environ["HELPER_PATH"])
+settle = namespace["injection_settle_seconds"]
+error = namespace["MessageError"]
+assert settle(namespace["PASTE_SETTLE_SECONDS"]) == 1
+os.environ["HARNESS_TEST_AGENT_MESSAGE_SETTLE_SECONDS"] = "0"
+try:
+    settle(namespace["SUBMIT_SETTLE_SECONDS"])
+except error:
+    pass
+else:
+    raise AssertionError("test settle override escaped production boundary")
+os.environ["HARNESS_TESTING"] = "1"
+assert settle(namespace["SUBMIT_SETTLE_SECONDS"]) == 0
+PY
 
 grep -F 'REPLY_REQUIRED request_id=ID reply_target=ALIAS reply_role=ROLE' \
     "$RUNTIME_POLICY" >/dev/null || fail "shared required-reply policy"
@@ -227,6 +245,7 @@ run_helper() {
         FAKE_PANE_PATH=${FAKE_PANE_PATH:-} \
         FAKE_TTY=${FAKE_TTY:-/dev/pts/7} \
         HARNESS_TESTING=1 \
+        HARNESS_TEST_AGENT_MESSAGE_SETTLE_SECONDS=0 \
         HARNESS_TEST_AGENT_MESSAGE_TARGETS_FILE=$state/codex-targets.tsv \
         PATH="$fake_bin:/usr/bin:/bin" \
         python3 -B "$HELPER" "$@"
@@ -234,6 +253,17 @@ run_helper() {
 
 message='[Agent: Riken Codex] controller experiment'
 printf %s "$message" >"$state/message"
+if HOME=$home FAKE_STATE=$state FAKE_SESSION=harness \
+    FAKE_PANE_ROLE=harness FAKE_TTY=/dev/pts/7 \
+    HARNESS_TEST_AGENT_MESSAGE_SETTLE_SECONDS=0 \
+    PATH="$fake_bin:/usr/bin:/bin" \
+    python3 -B "$HELPER" receive --source riken --target-role controller \
+    <"$state/message" >"$state/test-settle-production.out" 2>&1; then
+    fail "test settle override was accepted outside test mode"
+fi
+grep -F 'agent-message settle override is test-only' \
+    "$state/test-settle-production.out" >/dev/null ||
+    fail "test settle override boundary"
 printf '%s\n' "$message" |
     run_helper receive --source riken --target-role controller \
     >"$state/controller.out"
