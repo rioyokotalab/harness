@@ -16,12 +16,13 @@ mutable-state query is unknown, never absence.
 
 ### Har-394 — Recover the Personal Codex pane
 
-**Phase:** fresh root accepted; provisional launch pending. The app-server and
-name writes are consumed and must not be retried. The current TUI addresses an
-archived wrong-root thread, so no in-place rollback is eligible.
+**Phase:** provisional cold start rejected at the terminal-tool evidence gate;
+no promotion occurred. All root/name/launch/submission writes are consumed and
+must not be retried. A changed-input recovery decision is required.
 
-**Record:** `docs/tasks/Har-394.md`. Create and accept exactly one fresh
-Personal root and provisional pane before promoting or retiring anything.
+**Record:** `docs/tasks/Har-394.md`. Preserve both old and rejected provisional
+chains; do not promote, retire, archive, or send another turn without a newly
+frozen changed-input route.
 
 ## Deferred gates
 
