@@ -313,12 +313,13 @@ awk 'BEGIN {
     printf "%s", prefix
     for (i = length(prefix); i < 4096; i++) printf "x"
 }' >"$maximum"
+: >"$state/operations"
 run_helper receive --source riken --target-role controller \
     <"$maximum" >"$state/maximum.out"
 [ "$(tr -d ' ' <"$state/message-bytes")" -eq 4096 ] ||
     fail "maximum message byte delivery"
-tail -n 1 "$state/operations" | grep -F -x 'send-keys -t %0 Enter' \
-    >/dev/null || fail "maximum message named submit"
+[ "$(grep -F -c -x 'send-keys -t %0 Enter' "$state/operations")" -eq 2 ] ||
+    fail "maximum Codex message two-step named submit"
 
 if printf '%s\n' 'message without identity' |
     run_helper receive --source riken --target-role controller \
