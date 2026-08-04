@@ -19,8 +19,9 @@ controller`; Local→Riken uses `--source local --target riken --target-role
 mac`.
 
 The helper uses native non-interactive SSH with forwarding disabled and stdin
-only. It locks, loads/pastes/deletes one tmux buffer, then submits separate
-`C-m`, without pane capture. Exact-unlink input after confirmed success.
+only. It locks, loads/pastes/deletes one tmux buffer, then submits the named
+`Enter` key separately, without pane capture. Exact-unlink input after
+confirmed success.
 
 A Mac requires one detached declared pane; legacy single-pane sessions support
 Codex only. `--allow-attached` requires owner expectation. Remote Claude uses

@@ -35,6 +35,7 @@ REQUEST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 REPLY_STATUSES = {"complete", "blocked", "rejected", "failed"}
 CONFIRMATION_STATUSES = {"accepted", "changes-required", "rejected"}
 LOCAL_REPORT_DIRECTORY = "local-agent-reports"
+LOCAL_AGENT_PROTOCOL_VERSION = "1"
 
 
 class MessageError(RuntimeError):
@@ -238,6 +239,54 @@ def local_agent_targets() -> dict[tuple[str, str], AgentTarget]:
     if ("harness", "codex") not in targets:
         raise MessageError("Local agent controller target is unavailable")
     return targets
+
+
+def local_agent_protocol_version(target_name: str, target_client: str) -> str:
+    targets = local_agent_targets()
+    controller = targets[("harness", "codex")]
+    if str(Path.cwd()) != controller.repository:
+        raise MessageError("Local compatibility check must run from Harness")
+    target = targets.get((target_name, target_client))
+    if target is None or target_name == "harness":
+        raise MessageError("Local compatibility target is unsupported")
+    client_root = ".agents" if target_client == "codex" else ".claude"
+    discovery = (
+        Path(target.repository)
+        / client_root
+        / "skills"
+        / "remote-agent-communication"
+    )
+    try:
+        skill_root = discovery.resolve(strict=True)
+        marker = skill_root / "references" / "local-agent.protocol"
+        info = marker.lstat()
+    except OSError as exc:
+        raise MessageError("Local agent target communication skill is stale") from exc
+    if (
+        marker.is_symlink()
+        or not stat.S_ISREG(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) & 0o002
+        or info.st_size > 16
+    ):
+        raise MessageError("Local agent target protocol marker is unsafe")
+    try:
+        version = marker.read_text(encoding="ascii").strip()
+    except (OSError, UnicodeError) as exc:
+        raise MessageError("Local agent target protocol marker is unreadable") from exc
+    if version != LOCAL_AGENT_PROTOCOL_VERSION:
+        raise MessageError("Local agent target communication skill is stale")
+    return version
+
+
+def check_local_agent_compatibility(target: str, target_client: str) -> None:
+    version = local_agent_protocol_version(target, target_client)
+    print(
+        "AGENT_MESSAGE_LOCAL_COMPATIBILITY "
+        f"target={target} client={target_client} version={version} "
+        "status=compatible"
+    )
 
 
 def codex_processes(tty: str) -> int:
@@ -489,7 +538,7 @@ def inject_message(
             run([tmux, "delete-buffer", "-b", buffer_name])
             raise MessageError("literal tmux insertion failed")
         time.sleep(paste_settle_seconds)
-        submitted = run([tmux, "send-keys", "-t", pane.identifier, "C-m"])
+        submitted = run([tmux, "send-keys", "-t", pane.identifier, "Enter"])
         if submitted.returncode != 0:
             raise MessageError("tmux submission failed")
         time.sleep(submit_settle_seconds)
@@ -1312,6 +1361,11 @@ def build_parser() -> argparse.ArgumentParser:
     fallback_reply_command.add_argument("--request-id", required=True)
     local_claude_command = commands.add_parser("send-local-claude")
     local_claude_command.add_argument("--source", required=True)
+    local_compatibility = commands.add_parser("check-local-agent-compatibility")
+    local_compatibility.add_argument("--target", required=True)
+    local_compatibility.add_argument(
+        "--target-client", choices=SENDER_CLIENTS, required=True
+    )
     local_agent_command = commands.add_parser("send-local-agent")
     local_agent_command.add_argument("--source", required=True)
     local_agent_command.add_argument(
@@ -1399,6 +1453,10 @@ def main() -> int:
             )
         elif arguments.command == "send-local-claude":
             send_local_claude(arguments.source)
+        elif arguments.command == "check-local-agent-compatibility":
+            check_local_agent_compatibility(
+                arguments.target, arguments.target_client
+            )
         elif arguments.command == "send-local-agent":
             send_local_agent(
                 arguments.source,

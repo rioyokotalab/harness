@@ -14,6 +14,15 @@ mutable-state query is unknown, never absence.
 
 ## Deferred gates
 
+## Active
+
+### Har-393 — Harden local agent communication reliability
+
+**Phase:** implementation. Repair long-prompt submission and detect stale
+repository-frozen communication copies before the overnight Students run.
+
+**Record:** `docs/tasks/Har-393.md`.
+
 ### Har-196 — Backup lifecycle phase 2
 
 **Phase:** read-only monitoring; seven successors are terminal-success. AL
