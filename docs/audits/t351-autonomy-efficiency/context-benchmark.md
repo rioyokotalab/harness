@@ -21,7 +21,7 @@ protected publication.
 | documentation edit | 73,545 | 1,787 | 97.5% | 2,717 | 1,599 | 41.1% |
 | ordinary code fix | 74,455 | 1,610 | 97.8% | 3,627 | 1,422 | 60.7% |
 | tmux health diagnosis | 73,545 | 1,587 | 97.8% | 2,717 | 1,399 | 48.5% |
-| unsafe-tail recovery | 75,931 | 2,946 | 96.1% | 5,103 | 2,758 | 45.9% |
+| unsafe-tail recovery | 75,931 | 2,948 | 96.1% | 5,103 | 2,760 | 45.9% |
 | fleet hardening | 76,238 | 4,253 | 94.4% | 5,410 | 4,065 | 24.8% |
 | native HPC experiment | 77,550 | 3,196 | 95.8% | 6,722 | 3,008 | 55.2% |
 | duration ledger | 80,599 | 1,891 | 97.6% | 9,771 | 1,703 | 82.5% |

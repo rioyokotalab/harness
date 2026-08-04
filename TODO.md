@@ -12,17 +12,6 @@ Confirm branch, worktree, recent commits, ownership, and mutable inputs. Resume
 the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
-## Active
-
-### Har-394 — Recover the Personal Codex pane
-
-**Phase:** accepted R3 is promoted as canonical Personal root/pane; R1 and R2
-remain preserved. Reversible cutover validation passes. Old frozen TUI leaf
-retirement and final recovery/doctor acceptance remain.
-
-**Record:** `docs/tasks/Har-394.md`. Publish this cutover checkpoint before the
-single exact old-leaf SIGTERM, then run final lifecycle acceptance.
-
 ## Deferred gates
 
 ### Har-196 — Backup lifecycle phase 2

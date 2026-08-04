@@ -124,6 +124,12 @@ assert_contains "TARGET\`'s exact closed-map repository" "$BRIDGE" \
     'bridge target/CWD identity'
 assert_contains '--target TARGET --remote-session NEW_ID' "$BRIDGE" \
     'target-scoped bridge runtime'
+assert_contains '`thread/read` projection may omit TUI tool items' "$BRIDGE" \
+    'bridge tool-projection boundary'
+assert_contains 'paired completed tool-call/output IDs' "$BRIDGE" \
+    'bridge structural terminal-tool evidence'
+assert_contains 'through a no-follow descriptor' "$BRIDGE" \
+    'bridge rollout no-follow identity'
 assert_contains 'old TUI/launcher chain absent' "$BRIDGE" \
     'old chain acceptance'
 
