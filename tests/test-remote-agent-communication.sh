@@ -175,6 +175,11 @@ cat >"$fake_bin/ps" <<'EOF'
 #!/bin/sh
 set -eu
 if [ "${FAKE_TARGET_CLIENT:-codex}" = claude ]; then
+    if [ "${4:-}" = args= ]; then
+        printf 'claude --permission-mode %s --model fable\ncodex\n' \
+            "${FAKE_CLAUDE_PERMISSION_MODE:-bypassPermissions}"
+        exit 0
+    fi
     if [ "${FAKE_CLAUDE_COUNT:-1}" -eq 2 ]; then
         printf 'claude\nclaude\n'
     elif [ "${FAKE_CLAUDE_COUNT:-1}" -eq 0 ]; then
@@ -241,6 +246,7 @@ run_helper() {
         FAKE_AMBIGUOUS=${FAKE_AMBIGUOUS:-0} \
         FAKE_CODEX_COUNT=${FAKE_CODEX_COUNT:-1} \
         FAKE_CLAUDE_COUNT=${FAKE_CLAUDE_COUNT:-1} \
+        FAKE_CLAUDE_PERMISSION_MODE=${FAKE_CLAUDE_PERMISSION_MODE:-bypassPermissions} \
         FAKE_TARGET_CLIENT=${FAKE_TARGET_CLIENT:-codex} \
         FAKE_CLIENT=${FAKE_CLIENT:-codex} \
         FAKE_REQUIRE_ALL=${FAKE_REQUIRE_ALL:-0} \
@@ -472,6 +478,12 @@ if printf '%s\n' "$local_claude_message" |
     run_helper send-local-claude --source local \
     >"$state/local-claude-process.out" 2>&1; then
     fail "ambiguous Local Claude process accepted"
+fi
+if printf '%s\n' "$local_claude_message" |
+    FAKE_TARGET_CLIENT=claude FAKE_CLAUDE_PERMISSION_MODE=dontAsk \
+    run_helper send-local-claude --source local \
+    >"$state/local-claude-permission.out" 2>&1; then
+    fail "dontAsk Local Claude process accepted"
 fi
 if printf '%s\n' "$local_claude_message" |
     FAKE_TARGET_CLIENT=claude FAKE_AMBIGUOUS=1 \

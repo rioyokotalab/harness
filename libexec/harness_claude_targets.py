@@ -16,6 +16,8 @@ PANE_SESSION_OPTION = "@harness_claude_session_id"
 TARGET_NAMES = ("harness", "personal", "students")
 HARNESS_TOKEN = "@HARNESS_ROOT@"
 LAUNCH_FLAGS = (
+    "--permission-mode",
+    "bypassPermissions",
     "--model",
     "fable",
     "--effort",

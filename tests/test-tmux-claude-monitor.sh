@@ -121,7 +121,7 @@ module.process_identity = lambda pid: {
     "pid": pid,
     "uid": os.getuid(),
     "start": "1",
-    "argv": ["claude", "--resume", PID_SESSIONS[pid]],
+    "argv": ["claude", *module.LAUNCH_FLAGS, "--resume", PID_SESSIONS[pid]],
 }
 health = module.collect_health(HEALTHY)
 assert all(value["state"] == "healthy" for value in health.values()), health
@@ -161,7 +161,29 @@ module.process_identity = lambda pid: {
     "pid": pid,
     "uid": os.getuid(),
     "start": "1",
-    "argv": ["claude", "--resume", PID_SESSIONS[pid]],
+    "argv": ["claude", *module.LAUNCH_FLAGS, "--resume", PID_SESSIONS[pid]],
+}
+
+# A live Claude process without the explicit autonomous permission mode is not
+# eligible for task delivery.
+module.process_identity = lambda pid: {
+    "pid": pid,
+    "uid": os.getuid(),
+    "start": "1",
+    "argv": [
+        "claude",
+        *module.LAUNCH_FLAGS[2:],
+        "--resume",
+        PID_SESSIONS[pid],
+    ],
+}
+health = module.collect_health(HEALTHY)
+assert health["harness"]["reason"] == "process-identity"
+module.process_identity = lambda pid: {
+    "pid": pid,
+    "uid": os.getuid(),
+    "start": "1",
+    "argv": ["claude", *module.LAUNCH_FLAGS, "--resume", PID_SESSIONS[pid]],
 }
 
 ROOT_DIR = module.runtime_root()
@@ -391,6 +413,8 @@ printf '%s\n' "$OUTPUT" | grep -Fq "RECOVERY_RESULT status=accepted" ||
     fail "recovery worker did not accept"
 grep -q -- "--resume 00000000-0000-4000-8000-000000000001" \
     "$CAPTURE/tmux-respawn" || fail "respawn command missing exact resume"
+grep -q -- "--permission-mode bypassPermissions" \
+    "$CAPTURE/tmux-respawn" || fail "respawn command missing permission mode"
 grep -q "respawn-pane -c $REPO_A -t %10" "$CAPTURE/tmux-respawn" ||
     fail "respawn target missing"
 
