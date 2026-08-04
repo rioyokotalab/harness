@@ -1,5 +1,4 @@
 task	state	priority	created	packet
-Har-394	ready	0	2026-08-05	docs/producer/tasks/Har-394.md
 Har-371	complete	10	2026-08-02	docs/producer/tasks/Har-371.md
 Har-391	complete	10	2026-08-04	docs/producer/tasks/Har-391.md
 Har-196	gated	20	2026-08-02	docs/producer/tasks/Har-196.md
@@ -20,3 +19,4 @@ Har-389	complete	999	2026-08-04	docs/producer/tasks/Har-389.md
 Har-390	complete	999	2026-08-04	docs/producer/tasks/Har-390.md
 Har-392	complete	999	2026-08-04	docs/producer/tasks/Har-392.md
 Har-393	complete	999	2026-08-04	docs/producer/tasks/Har-393.md
+Har-394	complete	999	2026-08-05	docs/producer/tasks/Har-394.md
