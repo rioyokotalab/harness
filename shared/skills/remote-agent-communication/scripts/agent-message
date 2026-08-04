@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exchange bounded, identified prompts between managed Codex tmux sessions."""
+"""Exchange bounded, identified prompts between managed Codex/Claude sessions."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ TTY_RE = re.compile(r"^/dev/(?:pts/[0-9]+|ttys[0-9A-Za-z]+)$")
 REQUEST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 REPLY_STATUSES = {"complete", "blocked", "rejected", "failed"}
 CONFIRMATION_STATUSES = {"accepted", "changes-required", "rejected"}
-LOCAL_REPORT_DIRECTORY = "local-codex-reports"
+LOCAL_REPORT_DIRECTORY = "local-agent-reports"
 
 
 class MessageError(RuntimeError):
@@ -65,8 +65,9 @@ class Pane:
 
 
 @dataclass(frozen=True)
-class CodexTarget:
+class AgentTarget:
     name: str
+    client: str
     window_index: str
     window_name: str
     pane_index: str
@@ -177,22 +178,22 @@ def list_panes(target: str, *, all_session: bool = False) -> list[Pane]:
     return panes
 
 
-def local_codex_target_profile() -> Path:
+def local_agent_target_profile() -> Path:
     override = os.environ.get("HARNESS_TEST_AGENT_MESSAGE_TARGETS_FILE")
     if override is not None:
         path = Path(override)
         if os.environ.get("HARNESS_TESTING") != "1" or not path.is_absolute():
-            raise MessageError("test Local Codex target profile is forbidden")
+            raise MessageError("test Local agent target profile is forbidden")
         return path
-    return Path(__file__).resolve().parents[4] / "profiles/codex-session-targets.tsv"
+    return Path(__file__).resolve().parents[4] / "profiles/agent-session-targets.tsv"
 
 
-def local_codex_targets() -> dict[str, CodexTarget]:
-    path = local_codex_target_profile()
+def local_agent_targets() -> dict[tuple[str, str], AgentTarget]:
+    path = local_agent_target_profile()
     try:
         info = path.lstat()
     except OSError as exc:
-        raise MessageError("Local Codex target profile is unavailable") from exc
+        raise MessageError("Local agent target profile is unavailable") from exc
     if (
         not stat.S_ISREG(info.st_mode)
         or path.is_symlink()
@@ -200,26 +201,27 @@ def local_codex_targets() -> dict[str, CodexTarget]:
         or info.st_nlink != 1
         or stat.S_IMODE(info.st_mode) & 0o002
     ):
-        raise MessageError("Local Codex target profile is unsafe")
+        raise MessageError("Local agent target profile is unsafe")
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
     except (OSError, UnicodeError) as exc:
-        raise MessageError("Local Codex target profile cannot be read") from exc
-    targets: dict[str, CodexTarget] = {}
+        raise MessageError("Local agent target profile cannot be read") from exc
+    targets: dict[tuple[str, str], AgentTarget] = {}
     locations: set[tuple[str, str, str]] = set()
     for line in lines:
         if not line or line.startswith("#"):
             continue
         fields = line.split("\t")
-        if len(fields) != 5:
-            raise MessageError("Local Codex target profile is malformed")
-        name, window_index, window_name, pane_index, repository = fields
+        if len(fields) != 6:
+            raise MessageError("Local agent target profile is malformed")
+        name, client, window_index, window_name, pane_index, repository = fields
         if repository == "@HARNESS_ROOT@":
             repository = str(Path.home() / "harness")
         location = (window_index, window_name, pane_index)
         if (
             not ALIAS_RE.fullmatch(name)
-            or name in targets
+            or client not in SENDER_CLIENTS
+            or (name, client) in targets
             or not window_index.isdigit()
             or not pane_index.isdigit()
             or not re.fullmatch(r"[A-Za-z0-9-]+", window_name)
@@ -227,13 +229,13 @@ def local_codex_targets() -> dict[str, CodexTarget]:
             or os.path.normpath(repository) != repository
             or location in locations
         ):
-            raise MessageError("Local Codex target profile is not a closed map")
+            raise MessageError("Local agent target profile is not a closed map")
         locations.add(location)
-        targets[name] = CodexTarget(
-            name, window_index, window_name, pane_index, repository
+        targets[(name, client)] = AgentTarget(
+            name, client, window_index, window_name, pane_index, repository
         )
-    if "harness" not in targets:
-        raise MessageError("Local Codex controller target is unavailable")
+    if ("harness", "codex") not in targets:
+        raise MessageError("Local agent controller target is unavailable")
     return targets
 
 
@@ -275,33 +277,13 @@ def claude_processes(tty: str) -> int:
     return 1 if names.count("claude") == 1 else 0
 
 
-def select_controller_pane() -> Pane:
+def select_local_agent_pane(target_name: str, target_client: str) -> Pane:
     session = "harness"
     exact_session(session)
-    harness = str(Path.home() / "harness")
-    candidates = [
-        pane
-        for pane in list_panes(session, all_session=True)
-        if pane.dead == "0"
-        and pane.window_index == "0"
-        and pane.window_name == "cowork"
-        and pane.pane_index == "0"
-        and pane.pane_role == "harness"
-        and pane.path == harness
-        and codex_processes(pane.tty) == 1
-    ]
-    if len(candidates) != 1:
-        raise MessageError("controller Codex pane is absent or ambiguous")
-    return candidates[0]
-
-
-def select_local_codex_pane(target_name: str) -> Pane:
-    session = "harness"
-    exact_session(session)
-    targets = local_codex_targets()
-    target = targets.get(target_name)
+    targets = local_agent_targets()
+    target = targets.get((target_name, target_client))
     if target is None:
-        raise MessageError("Local Codex target is unsupported")
+        raise MessageError("Local agent target is unsupported")
     candidates = [
         pane
         for pane in list_panes(session, all_session=True)
@@ -309,41 +291,40 @@ def select_local_codex_pane(target_name: str) -> Pane:
         and pane.window_index == target.window_index
         and pane.window_name == target.window_name
         and pane.pane_index == target.pane_index
-        and pane.pane_role == target.name
+        and (
+            pane.pane_role == target.name
+            if target_client == "codex"
+            else pane.claude_role == target.name
+        )
         and pane.path == target.repository
-        and codex_processes(pane.tty) == 1
+        and (
+            codex_processes(pane.tty) == 1
+            if target_client == "codex"
+            else claude_processes(pane.tty) == 1
+        )
     ]
     if len(candidates) != 1:
-        raise MessageError("Local Codex pane is absent or ambiguous")
+        raise MessageError("Local agent pane is absent or ambiguous")
     return candidates[0]
 
 
-def select_local_claude_pane() -> Pane:
-    session = "harness"
-    exact_session(session)
-    harness = str(Path.home() / "harness")
-    candidates = [
-        pane
-        for pane in list_panes(session, all_session=True)
-        if pane.dead == "0"
-        and pane.window_index == "0"
-        and pane.window_name == "cowork"
-        and pane.pane_index == "1"
-        and pane.claude_role == "harness"
-        and pane.path == harness
-        and claude_processes(pane.tty) == 1
-    ]
-    if len(candidates) != 1:
-        raise MessageError("local Claude pane is absent or ambiguous")
-    return candidates[0]
+def select_controller_pane(target_client: str = "codex") -> Pane:
+    try:
+        return select_local_agent_pane("harness", target_client)
+    except MessageError as exc:
+        raise MessageError(
+            f"controller {target_client.title()} pane is absent or ambiguous"
+        ) from exc
 
 
-def select_mac_pane(allow_attached: bool) -> Pane:
+def select_mac_pane(allow_attached: bool, target_client: str = "codex") -> Pane:
     sessions = tmux_output(["list-sessions", "-F", "#{session_name}"]).splitlines()
     modern = sessions.count("harness") == 1
     legacy = sessions.count("harness-codex-resume") == 1
     if modern == legacy:
         raise MessageError("target Mac session is absent or ambiguous")
+    if legacy and target_client != "codex":
+        raise MessageError("legacy target supports Codex only")
     session = "harness" if modern else "harness-codex-resume"
     if not allow_attached:
         attached = tmux_output(
@@ -358,18 +339,31 @@ def select_mac_pane(allow_attached: bool) -> Pane:
         for pane in panes
         if pane.dead == "0"
         and pane.path == harness
-        and codex_processes(pane.tty) == 1
+        and (
+            codex_processes(pane.tty) == 1
+            if target_client == "codex"
+            else claude_processes(pane.tty) == 1
+        )
         and (
             not modern
             or (
-                pane.window_index == "1"
-                and pane.window_name == "codex"
-                and pane.pane_index == "0"
+                (
+                    target_client == "codex"
+                    and pane.window_index == "1"
+                    and pane.window_name == "codex"
+                    and pane.pane_index == "0"
+                )
+                or (
+                    target_client == "claude"
+                    and pane.window_name == "claude"
+                )
             )
         )
     ]
     if (not modern and len(panes) != 1) or len(candidates) != 1:
-        raise MessageError("target Mac Codex pane is absent or ambiguous")
+        raise MessageError(
+            f"target Mac {target_client.title()} pane is absent or ambiguous"
+        )
     return candidates[0]
 
 
@@ -425,7 +419,8 @@ def inject_message(
     allow_attached: bool,
     message: bytes,
     client: str = "codex",
-    local_codex_target: str | None = None,
+    target_client: str = "codex",
+    local_agent_target: str | None = None,
 ) -> None:
     message = validate_message(source, message, client)
     paste_settle_seconds = injection_settle_seconds(PASTE_SETTLE_SECONDS)
@@ -436,17 +431,13 @@ def inject_message(
                 raise MessageError(
                     "--allow-attached is unnecessary for the controller"
                 )
-            pane = select_controller_pane()
+            pane = select_controller_pane(target_client)
         elif target_role == "mac":
-            pane = select_mac_pane(allow_attached)
-        elif target_role == "local-claude":
-            if allow_attached or source != "local" or client != "codex":
-                raise MessageError("local Claude route identity is invalid")
-            pane = select_local_claude_pane()
-        elif target_role == "local-codex":
-            if allow_attached or client != "codex" or local_codex_target is None:
-                raise MessageError("Local Codex route identity is invalid")
-            pane = select_local_codex_pane(local_codex_target)
+            pane = select_mac_pane(allow_attached, target_client)
+        elif target_role == "local-agent":
+            if allow_attached or local_agent_target is None:
+                raise MessageError("Local agent route identity is invalid")
+            pane = select_local_agent_pane(local_agent_target, target_client)
         else:
             raise MessageError("target role is unsupported")
         tmux = executable("tmux")
@@ -482,13 +473,20 @@ def receive(
     target_role: str,
     allow_attached: bool,
     client: str = "codex",
+    target_client: str = "codex",
 ) -> None:
     inject_message(
-        source, target_role, allow_attached, read_message(source, client), client
+        source,
+        target_role,
+        allow_attached,
+        read_message(source, client),
+        client,
+        target_client,
     )
     print(
         f"AGENT_MESSAGE_RECEIVE source={source} "
-        f"target_role={target_role} client={client} status=submitted"
+        f"target_role={target_role} client={client} "
+        f"target_client={target_client} status=submitted"
     )
 
 
@@ -499,13 +497,15 @@ def deliver_message(
     allow_attached: bool,
     message: bytes,
     client: str = "codex",
+    target_client: str = "codex",
 ) -> None:
     if not ALIAS_RE.fullmatch(target):
         raise MessageError("target SSH alias is malformed")
     remote = (
         'exec "$HOME/harness/shared/skills/remote-agent-communication/'
         f'scripts/agent-message" receive --source {source} '
-        f"--target-role {target_role} --client {client}"
+        f"--target-role {target_role} --client {client} "
+        f"--target-client {target_client}"
     )
     if allow_attached:
         remote += " --allow-attached"
@@ -527,7 +527,8 @@ def deliver_message(
     )
     expected = (
         f"AGENT_MESSAGE_RECEIVE source={source} "
-        f"target_role={target_role} client={client} status=submitted\n"
+        f"target_role={target_role} client={client} "
+        f"target_client={target_client} status=submitted\n"
     ).encode()
     if result.returncode != 0 or result.stdout != expected:
         raise MessageError("remote agent-message delivery failed")
@@ -539,14 +540,16 @@ def send(
     target_role: str,
     allow_attached: bool,
     client: str = "codex",
+    target_client: str = "codex",
 ) -> None:
     message = read_message(source, client)
     deliver_message(
-        source, target, target_role, allow_attached, message, client
+        source, target, target_role, allow_attached, message, client, target_client
     )
     print(
         f"AGENT_MESSAGE_SEND source={source} target={target} "
-        f"target_role={target_role} client={client} status=submitted"
+        f"target_role={target_role} client={client} "
+        f"target_client={target_client} status=submitted"
     )
 
 
@@ -554,40 +557,59 @@ def send_local_claude(source: str) -> None:
     if source != "local":
         raise MessageError("local Claude source must be local")
     message = read_message(source, "codex")
-    inject_message(source, "local-claude", False, message, "codex")
+    inject_message(
+        source,
+        "local-agent",
+        False,
+        message,
+        "codex",
+        "claude",
+        local_agent_target="harness",
+    )
     print(
         "AGENT_MESSAGE_LOCAL_CLAUDE source=local target=local "
         "client=codex status=submitted"
     )
 
 
-def validate_local_codex_endpoints(source: str, target: str) -> None:
-    targets = local_codex_targets()
-    if target not in targets:
-        raise MessageError("Local Codex target is unsupported")
+def validate_local_agent_endpoints(
+    source: str, source_client: str, target: str, target_client: str
+) -> None:
+    targets = local_agent_targets()
+    if source_client not in SENDER_CLIENTS or target_client not in SENDER_CLIENTS:
+        raise MessageError("Local agent client is unsupported")
+    if (target, target_client) not in targets:
+        raise MessageError("Local agent target is unsupported")
     if source == "local":
-        source_target = targets["harness"]
-        if target == "harness":
+        source_target = targets.get(("harness", source_client))
+        if source_target is None:
+            raise MessageError("Local controller client is unsupported")
+        if target == "harness" and target_client == source_client:
             raise MessageError("Local controller cannot message itself")
     else:
-        source_target = targets.get(source)
-        if source_target is None or source == "harness" or target != "harness":
-            raise MessageError("Local Codex peer route is unsupported")
+        source_target = targets.get((source, source_client))
+        if (
+            source_target is None
+            or source == "harness"
+            or target != "harness"
+            or target_client != "codex"
+        ):
+            raise MessageError("Local consumer route is unsupported")
     if str(Path.cwd()) != source_target.repository:
-        raise MessageError("Local Codex source repository does not match cwd")
+        raise MessageError("Local agent source repository does not match cwd")
 
 
 def validate_local_subtask_report(
-    source: str, requested_id: str, message: bytes
+    source: str, client: str, requested_id: str, message: bytes
 ) -> bytes:
-    message = validate_message(source, message)
+    message = validate_message(source, message, client)
     requested_id = request_id(requested_id)
     lines = message.decode("utf-8").splitlines()
     if len(lines) != 5:
-        raise MessageError("Local Codex subtask report shape is malformed")
+        raise MessageError("Local agent subtask report shape is malformed")
     prefix = PREFIX_RE.match(lines[0])
     if prefix is None:
-        raise MessageError("Local Codex subtask report prefix is malformed")
+        raise MessageError("Local agent subtask report prefix is malformed")
     fields = lines[0][prefix.end():].strip().split()
     expected = {
         f"request_id={requested_id}",
@@ -599,13 +621,13 @@ def validate_local_subtask_report(
         or statuses[0].removeprefix("status=") not in REPLY_STATUSES
         or set(fields) != expected | {statuses[0]}
     ):
-        raise MessageError("Local Codex subtask report header is malformed")
+        raise MessageError("Local agent subtask report header is malformed")
     required = ("subtask: ", "result: ", "evidence: ", "next_action: ")
     if any(
         not line.startswith(marker) or not line.removeprefix(marker).strip()
         for line, marker in zip(lines[1:], required, strict=True)
     ):
-        raise MessageError("Local Codex subtask report fields are malformed")
+        raise MessageError("Local agent subtask report fields are malformed")
     return message
 
 
@@ -615,37 +637,39 @@ def local_report_directory() -> Path:
         directory.mkdir(mode=0o700, exist_ok=True)
         info = directory.lstat()
     except OSError as exc:
-        raise MessageError("Local Codex report directory is unavailable") from exc
+        raise MessageError("Local agent report directory is unavailable") from exc
     if (
         not stat.S_ISDIR(info.st_mode)
         or info.st_uid != os.getuid()
         or stat.S_IMODE(info.st_mode) != 0o700
     ):
-        raise MessageError("Local Codex report directory is unsafe")
+        raise MessageError("Local agent report directory is unsafe")
     return directory
 
 
-def local_report_path(source: str, requested_id: str) -> Path:
+def local_report_path(source: str, client: str, requested_id: str) -> Path:
     if not ALIAS_RE.fullmatch(source):
-        raise MessageError("Local Codex report source is malformed")
+        raise MessageError("Local agent report source is malformed")
+    if client not in SENDER_CLIENTS:
+        raise MessageError("Local agent report client is unsupported")
     return local_report_directory() / (
-        f"{source}--{request_id(requested_id)}.report"
+        f"{source}--{client}--{request_id(requested_id)}.report"
     )
 
 
 def read_local_report_file(
-    source: str, requested_id: str, *, required: bool
+    source: str, client: str, requested_id: str, *, required: bool
 ) -> tuple[bytes, tuple[int, int]] | None:
-    path = local_report_path(source, requested_id)
+    path = local_report_path(source, client, requested_id)
     flags = os.O_RDONLY | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0)
     try:
         descriptor = os.open(path, flags)
     except FileNotFoundError:
         if required:
-            raise MessageError("Local Codex report is unavailable")
+            raise MessageError("Local agent report is unavailable")
         return None
     except OSError as exc:
-        raise MessageError("Local Codex report cannot be opened") from exc
+        raise MessageError("Local agent report cannot be opened") from exc
     try:
         info = os.fstat(descriptor)
         if (
@@ -655,7 +679,7 @@ def read_local_report_file(
             or stat.S_IMODE(info.st_mode) != 0o600
             or info.st_size > MAX_MESSAGE_BYTES
         ):
-            raise MessageError("Local Codex report file is unsafe")
+            raise MessageError("Local agent report file is unsafe")
         chunks: list[bytes] = []
         remaining = MAX_MESSAGE_BYTES + 1
         while remaining:
@@ -666,20 +690,20 @@ def read_local_report_file(
             remaining -= len(chunk)
         message = b"".join(chunks)
         if len(message) > MAX_MESSAGE_BYTES:
-            raise MessageError("Local Codex report exceeds the byte limit")
+            raise MessageError("Local agent report exceeds the byte limit")
         return message, (info.st_dev, info.st_ino)
     finally:
         os.close(descriptor)
 
 
 def preserve_local_report(
-    source: str, requested_id: str, message: bytes
+    source: str, client: str, requested_id: str, message: bytes
 ) -> None:
-    path = local_report_path(source, requested_id)
-    existing = read_local_report_file(source, requested_id, required=False)
+    path = local_report_path(source, client, requested_id)
+    existing = read_local_report_file(source, client, requested_id, required=False)
     if existing is not None:
         if existing[0] != message:
-            raise MessageError("Local Codex report id already has different bytes")
+            raise MessageError("Local agent report id already has different bytes")
         return
     directory = path.parent
     try:
@@ -687,7 +711,7 @@ def preserve_local_report(
             prefix=".report-", dir=directory
         )
     except OSError as exc:
-        raise MessageError("Local Codex report cannot be preserved") from exc
+        raise MessageError("Local agent report cannot be preserved") from exc
     temporary = Path(temporary_name)
     try:
         os.fchmod(descriptor, 0o600)
@@ -695,7 +719,7 @@ def preserve_local_report(
         while offset < len(message):
             written = os.write(descriptor, message[offset:])
             if written <= 0:
-                raise OSError("short Local Codex report write")
+                raise OSError("short Local agent report write")
             offset += written
         os.fsync(descriptor)
         os.close(descriptor)
@@ -704,14 +728,14 @@ def preserve_local_report(
             os.link(temporary, path, follow_symlinks=False)
         except FileExistsError:
             existing = read_local_report_file(
-                source, requested_id, required=True
+                source, client, requested_id, required=True
             )
             if existing is None or existing[0] != message:
                 raise MessageError(
-                    "Local Codex report id already has different bytes"
+                    "Local agent report id already has different bytes"
                 )
     except OSError as exc:
-        raise MessageError("Local Codex report cannot be preserved") from exc
+        raise MessageError("Local agent report cannot be preserved") from exc
     finally:
         if descriptor >= 0:
             os.close(descriptor)
@@ -722,9 +746,9 @@ def preserve_local_report(
 
 
 def remove_local_report(
-    source: str, requested_id: str, identity: tuple[int, int]
+    source: str, client: str, requested_id: str, identity: tuple[int, int]
 ) -> bool:
-    path = local_report_path(source, requested_id)
+    path = local_report_path(source, client, requested_id)
     try:
         info = path.lstat()
     except FileNotFoundError:
@@ -746,69 +770,103 @@ def remove_local_report(
     return True
 
 
-def read_local_codex_report(
-    source: str, target: str, requested_id: str
+def read_local_agent_report(
+    source: str,
+    source_client: str,
+    target: str,
+    target_client: str,
+    requested_id: str,
 ) -> None:
-    targets = local_codex_targets()
+    targets = local_agent_targets()
     if (
         target != "harness"
+        or target_client != "codex"
         or source == "harness"
-        or source not in targets
-        or str(Path.cwd()) != targets["harness"].repository
+        or (source, source_client) not in targets
+        or str(Path.cwd()) != targets[("harness", "codex")].repository
     ):
-        raise MessageError("Local Codex report reader route is unsupported")
+        raise MessageError("Local agent report reader route is unsupported")
     requested_id = request_id(requested_id)
-    preserved = read_local_report_file(source, requested_id, required=True)
+    preserved = read_local_report_file(
+        source, source_client, requested_id, required=True
+    )
     if preserved is None:
-        raise MessageError("Local Codex report is unavailable")
+        raise MessageError("Local agent report is unavailable")
     message = validate_local_subtask_report(
-        source, requested_id, preserved[0]
+        source, source_client, requested_id, preserved[0]
     )
     sys.stdout.buffer.write(message + b"\n")
 
 
-def send_local_codex(
-    source: str, target: str, requested_id: str | None = None
+def send_local_agent(
+    source: str,
+    source_client: str,
+    target: str,
+    target_client: str,
+    requested_id: str | None = None,
+    *,
+    legacy_label: str | None = None,
 ) -> None:
-    validate_local_codex_endpoints(source, target)
-    message = read_message(source, "codex")
+    validate_local_agent_endpoints(source, source_client, target, target_client)
+    message = read_message(source, source_client)
     if requested_id is not None:
-        message = validate_local_subtask_report(source, requested_id, message)
-        preserve_local_report(source, requested_id, message)
+        message = validate_local_subtask_report(
+            source, source_client, requested_id, message
+        )
+        preserve_local_report(source, source_client, requested_id, message)
     inject_message(
         source,
-        "local-codex",
+        "local-agent",
         False,
         message,
-        "codex",
-        local_codex_target=target,
+        source_client,
+        target_client,
+        local_agent_target=target,
     )
     operation = "REPLY" if requested_id is not None else "SEND"
     request_field = f" request_id={request_id(requested_id)}" if requested_id else ""
-    print(
-        f"AGENT_MESSAGE_LOCAL_CODEX_{operation} source={source} target={target} "
-        f"client=codex{request_field} status=submitted"
-    )
+    if legacy_label == "AGENT_MESSAGE_LOCAL_CLAUDE":
+        print(
+            "AGENT_MESSAGE_LOCAL_CLAUDE source=local target=local "
+            "client=codex status=submitted"
+        )
+    elif legacy_label is not None:
+        print(
+            f"{legacy_label}_{operation} source={source} target={target} "
+            f"client={source_client}{request_field} status=submitted"
+        )
+    else:
+        print(
+            f"AGENT_MESSAGE_LOCAL_AGENT_{operation} source={source} "
+            f"target={target} client={source_client} "
+            f"target_client={target_client}{request_field} status=submitted"
+        )
 
 
-def confirm_local_codex(
+def confirm_local_agent(
     source: str,
+    source_client: str,
     target: str,
+    target_client: str,
     requested_id: str,
     status: str,
     next_requested_id: str | None,
+    *,
+    legacy_label: str | None = None,
 ) -> None:
-    if source != "local":
-        raise MessageError("Local Codex confirmation source must be local")
-    validate_local_codex_endpoints(source, target)
+    if source != "local" or source_client != "codex":
+        raise MessageError("Local confirmation source must be producer Codex")
+    validate_local_agent_endpoints(source, source_client, target, target_client)
     requested_id = request_id(requested_id)
     if status not in CONFIRMATION_STATUSES:
-        raise MessageError("Local Codex confirmation status is unsupported")
+        raise MessageError("Local agent confirmation status is unsupported")
     preserved = read_local_report_file(
-        target, requested_id, required=False
+        target, target_client, requested_id, required=False
     )
     if preserved is not None:
-        validate_local_subtask_report(target, requested_id, preserved[0])
+        validate_local_subtask_report(
+            target, target_client, requested_id, preserved[0]
+        )
     if status == "rejected":
         if next_requested_id is not None:
             raise MessageError("rejected confirmation cannot name a next request")
@@ -827,23 +885,67 @@ def confirm_local_codex(
     ).encode("utf-8")
     inject_message(
         source,
-        "local-codex",
+        "local-agent",
         False,
         message,
         "codex",
-        local_codex_target=target,
+        target_client,
+        local_agent_target=target,
     )
     if preserved is not None:
-        if not remove_local_report(target, requested_id, preserved[1]):
+        if not remove_local_report(
+            target, target_client, requested_id, preserved[1]
+        ):
             print(
-                "agent-message: matching Local Codex report state was retained",
+                "agent-message: matching Local agent report state was retained",
                 file=sys.stderr,
             )
+    target_client_field = (
+        "" if legacy_label is not None else f" target_client={target_client}"
+    )
+    label = legacy_label or "AGENT_MESSAGE_LOCAL_AGENT_CONFIRM"
     print(
-        "AGENT_MESSAGE_LOCAL_CODEX_CONFIRM "
-        f"source={source} target={target} client=codex "
-        f"request_id={requested_id} confirmation={status}{next_field} "
-        "status=submitted"
+        f"{label} source={source} target={target} client=codex"
+        f"{target_client_field} request_id={requested_id} "
+        f"confirmation={status}{next_field} status=submitted"
+    )
+
+
+def send_local_codex(
+    source: str, target: str, requested_id: str | None = None
+) -> None:
+    send_local_agent(
+        source,
+        "codex",
+        target,
+        "codex",
+        requested_id,
+        legacy_label="AGENT_MESSAGE_LOCAL_CODEX",
+    )
+
+
+def read_local_codex_report(
+    source: str, target: str, requested_id: str
+) -> None:
+    read_local_agent_report(source, "codex", target, "codex", requested_id)
+
+
+def confirm_local_codex(
+    source: str,
+    target: str,
+    requested_id: str,
+    status: str,
+    next_requested_id: str | None,
+) -> None:
+    confirm_local_agent(
+        source,
+        "codex",
+        target,
+        "codex",
+        requested_id,
+        status,
+        next_requested_id,
+        legacy_label="AGENT_MESSAGE_LOCAL_CODEX_CONFIRM",
     )
 
 
@@ -1161,6 +1263,9 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument(
             "--client", choices=SENDER_CLIENTS, default="codex"
         )
+        command.add_argument(
+            "--target-client", choices=SENDER_CLIENTS, default="codex"
+        )
         if name == "send":
             command.add_argument("--target", required=True)
     request_command = commands.add_parser("request")
@@ -1180,6 +1285,49 @@ def build_parser() -> argparse.ArgumentParser:
     fallback_reply_command.add_argument("--request-id", required=True)
     local_claude_command = commands.add_parser("send-local-claude")
     local_claude_command.add_argument("--source", required=True)
+    local_agent_command = commands.add_parser("send-local-agent")
+    local_agent_command.add_argument("--source", required=True)
+    local_agent_command.add_argument(
+        "--source-client", choices=SENDER_CLIENTS, required=True
+    )
+    local_agent_command.add_argument("--target", required=True)
+    local_agent_command.add_argument(
+        "--target-client", choices=SENDER_CLIENTS, required=True
+    )
+    local_agent_reply = commands.add_parser("reply-local-agent")
+    local_agent_reply.add_argument("--source", required=True)
+    local_agent_reply.add_argument(
+        "--source-client", choices=SENDER_CLIENTS, required=True
+    )
+    local_agent_reply.add_argument("--target", required=True)
+    local_agent_reply.add_argument(
+        "--target-client", choices=SENDER_CLIENTS, required=True
+    )
+    local_agent_reply.add_argument("--request-id", required=True)
+    local_agent_read = commands.add_parser("read-local-agent-report")
+    local_agent_read.add_argument("--source", required=True)
+    local_agent_read.add_argument(
+        "--source-client", choices=SENDER_CLIENTS, required=True
+    )
+    local_agent_read.add_argument("--target", required=True)
+    local_agent_read.add_argument(
+        "--target-client", choices=SENDER_CLIENTS, required=True
+    )
+    local_agent_read.add_argument("--request-id", required=True)
+    local_agent_confirmation = commands.add_parser("confirm-local-agent")
+    local_agent_confirmation.add_argument("--source", required=True)
+    local_agent_confirmation.add_argument(
+        "--source-client", choices=SENDER_CLIENTS, required=True
+    )
+    local_agent_confirmation.add_argument("--target", required=True)
+    local_agent_confirmation.add_argument(
+        "--target-client", choices=SENDER_CLIENTS, required=True
+    )
+    local_agent_confirmation.add_argument("--request-id", required=True)
+    local_agent_confirmation.add_argument(
+        "--status", choices=sorted(CONFIRMATION_STATUSES), required=True
+    )
+    local_agent_confirmation.add_argument("--next-request-id")
     local_codex_command = commands.add_parser("send-local-codex")
     local_codex_command.add_argument("--source", required=True)
     local_codex_command.add_argument("--target", required=True)
@@ -1212,6 +1360,7 @@ def main() -> int:
                 arguments.target_role,
                 arguments.allow_attached,
                 arguments.client,
+                arguments.target_client,
             )
         elif arguments.command == "receive":
             receive(
@@ -1219,9 +1368,43 @@ def main() -> int:
                 arguments.target_role,
                 arguments.allow_attached,
                 arguments.client,
+                arguments.target_client,
             )
         elif arguments.command == "send-local-claude":
             send_local_claude(arguments.source)
+        elif arguments.command == "send-local-agent":
+            send_local_agent(
+                arguments.source,
+                arguments.source_client,
+                arguments.target,
+                arguments.target_client,
+            )
+        elif arguments.command == "reply-local-agent":
+            send_local_agent(
+                arguments.source,
+                arguments.source_client,
+                arguments.target,
+                arguments.target_client,
+                arguments.request_id,
+            )
+        elif arguments.command == "read-local-agent-report":
+            read_local_agent_report(
+                arguments.source,
+                arguments.source_client,
+                arguments.target,
+                arguments.target_client,
+                arguments.request_id,
+            )
+        elif arguments.command == "confirm-local-agent":
+            confirm_local_agent(
+                arguments.source,
+                arguments.source_client,
+                arguments.target,
+                arguments.target_client,
+                arguments.request_id,
+                arguments.status,
+                arguments.next_request_id,
+            )
         elif arguments.command == "send-local-codex":
             send_local_codex(arguments.source, arguments.target)
         elif arguments.command == "reply-local-codex":

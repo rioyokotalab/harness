@@ -5,7 +5,7 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HELPER=$ROOT/shared/skills/remote-agent-communication/scripts/agent-message
 SKILL=$ROOT/shared/skills/remote-agent-communication/SKILL.md
 DELIVERY=$ROOT/shared/skills/remote-agent-communication/references/delivery.md
-LOCAL_CODEX=$ROOT/shared/skills/remote-agent-communication/references/local-codex.md
+LOCAL_AGENT=$ROOT/shared/skills/remote-agent-communication/references/local-agent.md
 REQUEST=$ROOT/shared/skills/remote-agent-communication/references/request.md
 FALLBACK=$ROOT/shared/skills/remote-agent-communication/references/fallback.md
 RUNTIME_POLICY=$ROOT/docs/agent-policy/managed-codex.md
@@ -29,7 +29,7 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for path in "$SKILL" "$DELIVERY" "$LOCAL_CODEX" "$REQUEST" "$FALLBACK" \
+for path in "$SKILL" "$DELIVERY" "$LOCAL_AGENT" "$REQUEST" "$FALLBACK" \
     "$RUNTIME_POLICY"; do
     [ -f "$path" ] && [ ! -L "$path" ] ||
         fail "missing routed communication resource: $path"
@@ -67,14 +67,12 @@ grep -F 'same-channel `request`' "$RUNTIME_POLICY" >/dev/null ||
     fail "required-response same-channel policy"
 grep -F '`[Agent: NAME Claude]`' "$RUNTIME_POLICY" >/dev/null ||
     fail "Claude-originated attribution policy"
-grep -F 'send-local-claude --source local' "$DELIVERY" >/dev/null ||
-    fail "Local Codex-to-Claude route guidance"
-grep -F 'send-local-codex' "$LOCAL_CODEX" >/dev/null ||
-    fail "Local Codex consumer route guidance"
-grep -F 'read-local-codex-report' "$LOCAL_CODEX" >/dev/null ||
-    fail "Local Codex report recovery guidance"
-grep -F 'codex-thread-recovery --check --target personal' \
-    "$LOCAL_CODEX" >/dev/null || fail "Local Codex active-turn preflight"
+grep -F 'send-local-agent --source local --source-client codex' \
+    "$DELIVERY" >/dev/null || fail "Local cross-client route guidance"
+grep -F 'reply-local-agent' "$LOCAL_AGENT" >/dev/null ||
+    fail "Local agent consumer route guidance"
+grep -F 'read-local-agent-report' "$LOCAL_AGENT" >/dev/null ||
+    fail "Local agent report recovery guidance"
 grep -F 'LOCAL_REPLY_REQUIRED request_id=ID reply_target=harness max_replies=1' \
     "$RUNTIME_POLICY" >/dev/null || fail "Local consumer reply policy"
 grep -F 'does not use `ssh login`' \
@@ -89,11 +87,14 @@ state=$TEST_ROOT/state
 mkdir -p "$home/harness" "$home/personal" "$home/students" \
     "$home/.local/bin" "$fake_bin" "$state"
 {
-    printf '# target\twindow_index\twindow_name\tpane_index\tcanonical_repository\n'
-    printf 'harness\t0\tcowork\t0\t@HARNESS_ROOT@\n'
-    printf 'personal\t1\tcodex\t0\t%s/personal\n' "$home"
-    printf 'students\t1\tcodex\t1\t%s/students\n' "$home"
-} >"$state/codex-targets.tsv"
+    printf '# target\tclient\twindow_index\twindow_name\tpane_index\tcanonical_repository\n'
+    printf 'harness\tcodex\t0\tcowork\t0\t@HARNESS_ROOT@\n'
+    printf 'harness\tclaude\t0\tcowork\t1\t@HARNESS_ROOT@\n'
+    printf 'personal\tcodex\t1\tcodex\t0\t%s/personal\n' "$home"
+    printf 'personal\tclaude\t2\tclaude\t0\t%s/personal\n' "$home"
+    printf 'students\tcodex\t1\tcodex\t1\t%s/students\n' "$home"
+    printf 'students\tclaude\t2\tclaude\t1\t%s/students\n' "$home"
+} >"$state/agent-targets.tsv"
 
 cat >"$fake_bin/tmux" <<'EOF'
 #!/bin/sh
@@ -208,8 +209,9 @@ if [ "${FAKE_SSH_MODE:-send}" = response ]; then
         "${FAKE_RESPONDER:?}"
     printf 'verified clean\n'
 else
-    printf 'AGENT_MESSAGE_RECEIVE source=%s target_role=%s client=%s status=submitted\n' \
-        "${FAKE_SOURCE:?}" "${FAKE_TARGET_ROLE:?}" "${FAKE_CLIENT:-codex}"
+    printf 'AGENT_MESSAGE_RECEIVE source=%s target_role=%s client=%s target_client=%s status=submitted\n' \
+        "${FAKE_SOURCE:?}" "${FAKE_TARGET_ROLE:?}" "${FAKE_CLIENT:-codex}" \
+        "${FAKE_TARGET_CLIENT:-codex}"
 fi
 EOF
 chmod 755 "$fake_bin/ssh"
@@ -252,7 +254,7 @@ run_helper() {
         FAKE_PASTE_FAIL=${FAKE_PASTE_FAIL:-0} \
         HARNESS_TESTING=1 \
         HARNESS_TEST_AGENT_MESSAGE_SETTLE_SECONDS=0 \
-        HARNESS_TEST_AGENT_MESSAGE_TARGETS_FILE=$state/codex-targets.tsv \
+        HARNESS_TEST_AGENT_MESSAGE_TARGETS_FILE=$state/agent-targets.tsv \
         PATH="$fake_bin:/usr/bin:/bin" \
         python3 -B "$HELPER" "$@"
 }
@@ -274,7 +276,7 @@ printf '%s\n' "$message" |
     run_helper receive --source riken --target-role controller \
     >"$state/controller.out"
 grep -F -x \
-    'AGENT_MESSAGE_RECEIVE source=riken target_role=controller client=codex status=submitted' \
+    'AGENT_MESSAGE_RECEIVE source=riken target_role=controller client=codex target_client=codex status=submitted' \
     "$state/controller.out" >/dev/null || fail "controller receive output"
 grep -F 'load-buffer ' "$state/operations" >/dev/null ||
     fail "private buffer load"
@@ -327,7 +329,7 @@ FAKE_SESSION=harness FAKE_ATTACHED=0 FAKE_TTY=/dev/ttys000 \
     run_helper receive --source riken --target-role mac \
     <"$state/message" >"$state/modern-mac.out"
 grep -F -x \
-    'AGENT_MESSAGE_RECEIVE source=riken target_role=mac client=codex status=submitted' \
+    'AGENT_MESSAGE_RECEIVE source=riken target_role=mac client=codex target_client=codex status=submitted' \
     "$state/modern-mac.out" >/dev/null || fail "modern Mac receive output"
 if FAKE_SESSION=harness FAKE_ATTACHED=0 FAKE_TTY=/dev/ttys000 \
     FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
@@ -373,7 +375,7 @@ FAKE_SOURCE=riken FAKE_TARGET_ROLE=controller \
     run_helper send --source riken --target login --target-role controller \
     <"$state/message" >"$state/send.out"
 grep -F -x \
-    'AGENT_MESSAGE_SEND source=riken target=login target_role=controller client=codex status=submitted' \
+    'AGENT_MESSAGE_SEND source=riken target=login target_role=controller client=codex target_client=codex status=submitted' \
     "$state/send.out" >/dev/null || fail "send output"
 cmp -s "$state/message" "$state/ssh-message" ||
     fail "send message changed"
@@ -397,10 +399,23 @@ FAKE_SOURCE=riken FAKE_TARGET_ROLE=controller FAKE_CLIENT=claude \
 $claude_sender
 EOF
 grep -F -x \
-    'AGENT_MESSAGE_SEND source=riken target=login target_role=controller client=claude status=submitted' \
+    'AGENT_MESSAGE_SEND source=riken target=login target_role=controller client=claude target_client=codex status=submitted' \
     "$state/claude-send.out" >/dev/null || fail "Claude send output"
 grep -F -- '--client claude' "$state/ssh-arguments" >/dev/null ||
     fail "Claude client was not carried over SSH"
+
+remote_claude='[Agent: Local Claude] remote Claude destination'
+FAKE_SOURCE=local FAKE_TARGET_ROLE=mac FAKE_CLIENT=claude \
+    FAKE_TARGET_CLIENT=claude \
+    run_helper send --source local --target riken --target-role mac \
+    --client claude --target-client claude <<EOF >"$state/remote-claude.out"
+$remote_claude
+EOF
+grep -F -x \
+    'AGENT_MESSAGE_SEND source=local target=riken target_role=mac client=claude target_client=claude status=submitted' \
+    "$state/remote-claude.out" >/dev/null || fail "remote Claude output"
+grep -F -- '--target-client claude' "$state/ssh-arguments" >/dev/null ||
+    fail "remote Claude destination was not carried over SSH"
 
 local_claude_message='[Agent: Local Codex] review T-365 and reply once'
 ssh_calls_before=$(wc -l <"$state/ssh-calls")
@@ -464,6 +479,22 @@ if printf '%s\n' "$local_claude_message" |
     >"$state/local-claude-ambiguous.out" 2>&1; then
     fail "ambiguous Local Claude pane accepted"
 fi
+
+local_personal_claude='[Agent: Local Codex] run the bounded Personal checkpoint'
+(
+    cd "$home/harness"
+    printf '%s\n' "$local_personal_claude" |
+        FAKE_TARGET_CLIENT=claude FAKE_WINDOW_INDEX=2 \
+        FAKE_WINDOW_NAME=claude FAKE_PANE_INDEX=0 \
+        FAKE_CLAUDE_ROLE=personal FAKE_PANE_PATH=$home/personal \
+        run_helper send-local-agent --source local --source-client codex \
+        --target personal --target-client claude \
+        >"$state/local-personal-claude.out"
+)
+grep -F -x \
+    'AGENT_MESSAGE_LOCAL_AGENT_SEND source=local target=personal client=codex target_client=claude status=submitted' \
+    "$state/local-personal-claude.out" >/dev/null ||
+    fail "Local Personal Claude output"
 
 local_codex_message='[Agent: Local Codex] diagnose the selected Personal queue'
 ssh_calls_before=$(wc -l <"$state/ssh-calls")
@@ -602,7 +633,7 @@ EOF
 grep -F -x \
     "AGENT_MESSAGE_LOCAL_CODEX_REPLY source=personal target=harness client=codex request_id=$local_reply_id status=submitted" \
     "$state/local-report.out" >/dev/null || fail "Local report output"
-local_report_state=$home/.local/state/harness/local-codex-reports/personal--$local_reply_id.report
+local_report_state=$home/.local/state/harness/local-agent-reports/personal--codex--$local_reply_id.report
 LOCAL_REPORT_STATE=$local_report_state EXPECTED_REPORT=$state/local-report \
     python3 -B - <<'PY'
 import os
@@ -646,7 +677,7 @@ if (
 ); then
     fail "changed Local report replaced an existing request ID"
 fi
-grep -F 'Local Codex report id already has different bytes' \
+grep -F 'Local agent report id already has different bytes' \
     "$state/local-report-changed.out" >/dev/null ||
     fail "changed Local report rejection reason"
 
@@ -700,7 +731,7 @@ if (
 ); then
     fail "acknowledged Local report remained readable"
 fi
-grep -F 'Local Codex report is unavailable' \
+grep -F 'Local agent report is unavailable' \
     "$state/local-report-read-missing.out" >/dev/null ||
     fail "missing Local report recovery reason"
 
@@ -736,6 +767,54 @@ cmp -s "$state/local-report-failed" "$state/local-report-failed-read.out" ||
         --request-id "$failed_reply_id" --status rejected \
         >"$state/local-report-failed-confirmation.out"
 )
+
+claude_reply_id=har390-personal-claude-report
+cat >"$state/local-claude-report" <<EOF
+[Agent: Personal Claude] request_id=$claude_reply_id status=complete confirmation_required=yes
+subtask: client-neutral-checkpoint
+result: bounded checkpoint complete
+evidence: synthetic checks passed
+next_action: wait for producer confirmation
+EOF
+(
+    cd "$home/personal"
+    FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
+    FAKE_PANE_ROLE=harness FAKE_PANE_PATH=$home/harness \
+        run_helper reply-local-agent --source personal \
+        --source-client claude --target harness --target-client codex \
+        --request-id "$claude_reply_id" <"$state/local-claude-report" \
+        >"$state/local-claude-report.out"
+)
+grep -F -x \
+    "AGENT_MESSAGE_LOCAL_AGENT_REPLY source=personal target=harness client=claude target_client=codex request_id=$claude_reply_id status=submitted" \
+    "$state/local-claude-report.out" >/dev/null ||
+    fail "Local Claude report output"
+claude_report_state=$home/.local/state/harness/local-agent-reports/personal--claude--$claude_reply_id.report
+[ -f "$claude_report_state" ] || fail "Local Claude report was not preserved"
+(
+    cd "$home/harness"
+    run_helper read-local-agent-report --source personal \
+        --source-client claude --target harness --target-client codex \
+        --request-id "$claude_reply_id" >"$state/local-claude-report-read.out"
+)
+cmp -s "$state/local-claude-report" "$state/local-claude-report-read.out" ||
+    fail "Local Claude report readback changed"
+(
+    cd "$home/harness"
+    FAKE_TARGET_CLIENT=claude FAKE_WINDOW_INDEX=2 \
+    FAKE_WINDOW_NAME=claude FAKE_PANE_INDEX=0 \
+    FAKE_CLAUDE_ROLE=personal FAKE_PANE_PATH=$home/personal \
+        run_helper confirm-local-agent --source local --source-client codex \
+        --target personal --target-client claude \
+        --request-id "$claude_reply_id" --status accepted \
+        >"$state/local-claude-confirmation.out"
+)
+grep -F -x \
+    "AGENT_MESSAGE_LOCAL_AGENT_CONFIRM source=local target=personal client=codex target_client=claude request_id=$claude_reply_id confirmation=accepted status=submitted" \
+    "$state/local-claude-confirmation.out" >/dev/null ||
+    fail "Local Claude confirmation output"
+[ ! -e "$claude_report_state" ] ||
+    fail "matching Local Claude confirmation retained report state"
 
 reply_id=t307-home-request-test
 request='[Agent: Local Codex] inspect the current revision and worktree'

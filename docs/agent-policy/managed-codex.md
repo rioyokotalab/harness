@@ -25,6 +25,7 @@ owner-authorized closer permits it.
   failed; report the status and reason. Only local `status=submitted` proves
   submission. Never retry acknowledged or ambiguous delivery.
 - `LOCAL_REPLY_REQUIRED request_id=ID reply_target=harness max_replies=1`
-  creates one routed report; the consumer stops for explicit confirmation.
+  creates one routed Codex-or-Claude report; the consumer stops for explicit
+  producer confirmation.
 - Acceptance-critical Mac replies use same-channel `request`, independent of
   reverse `login`, agent forwarding, or duplicate TUI injection.

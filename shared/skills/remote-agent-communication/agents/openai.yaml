@@ -1,4 +1,4 @@
 interface:
   display_name: "Remote Agent Communication"
-  short_description: "Exchange identified prompts and reliable replies"
-  default_prompt: "Use $remote-agent-communication to send an identified request to a managed Codex thread and obtain one bounded reply."
+  short_description: "Exchange bounded Codex and Claude checkpoints"
+  default_prompt: "Use $remote-agent-communication to send a bounded identified request or producer-consumer checkpoint between managed Codex and Claude agents."
