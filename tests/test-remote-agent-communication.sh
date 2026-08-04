@@ -37,6 +37,8 @@ done
 if grep -E 'capture-pane|pipe-pane|show-buffer' "$HELPER" >/dev/null; then
     fail "message transport may inspect pane content"
 fi
+grep -F 'Producer pane inspection is a separate' "$SKILL" >/dev/null ||
+    fail "producer inspection and content-blind transport are conflated"
 HELPER_PATH=$HELPER python3 -B - <<'PY'
 import os
 import runpy

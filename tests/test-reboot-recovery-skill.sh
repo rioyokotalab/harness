@@ -87,6 +87,9 @@ assert_contains "$SKILL" \
     'Never inspect, expose, copy, hash, generate, or modify credentials' \
     "router credential boundary"
 assert_contains "$SKILL" \
+    'sole portfolio producer may inspect task-relevant owner tmux' \
+    "producer pane-inspection exception"
+assert_contains "$SKILL" \
     'Never read or capture tmux pane or transcript contents.' \
     "router tmux privacy boundary"
 assert_contains "$SKILL" 'Dirty, divergent, or non-current Git state' \
