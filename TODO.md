@@ -16,9 +16,9 @@ mutable-state query is unknown, never absence.
 
 ### Har-394 — Recover the Personal Codex pane
 
-**Phase:** bridge-first preflight; no app-server or lifecycle write has been
-sent. The current TUI addresses a missing thread while its supervised root is
-`notLoaded`, so no in-place rollback is eligible.
+**Phase:** bridge-first preflight passed; no app-server or lifecycle write has
+been sent. The current TUI addresses an archived wrong-root thread while its
+supervised Personal root is `notLoaded`, so no in-place rollback is eligible.
 
 **Record:** `docs/tasks/Har-394.md`. Create and accept exactly one fresh
 Personal root and provisional pane before promoting or retiring anything.
