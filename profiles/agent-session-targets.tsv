@@ -1,0 +1,7 @@
+# target	client	window_index	window_name	pane_index	canonical_repository
+harness	codex	0	cowork	0	@HARNESS_ROOT@
+harness	claude	0	cowork	1	@HARNESS_ROOT@
+personal	codex	1	codex	0	/mnt/nfs-03/safe/Users/rioyokota/projects/personal
+personal	claude	2	claude	0	/mnt/nfs-03/safe/Users/rioyokota/projects/personal
+students	codex	1	codex	1	/mnt/nfs-03/safe/Users/rioyokota/projects/students
+students	claude	2	claude	1	/mnt/nfs-03/safe/Users/rioyokota/projects/students

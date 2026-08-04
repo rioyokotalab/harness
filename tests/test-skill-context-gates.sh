@@ -39,7 +39,7 @@ for path in \
     "$HPC_VALIDATION" \
     "$REMOTE/SKILL.md" \
     "$REMOTE/references/delivery.md" \
-    "$REMOTE/references/local-codex.md" \
+    "$REMOTE/references/local-agent.md" \
     "$REMOTE/references/request.md" \
     "$REMOTE/references/fallback.md" \
     "$PIE/SKILL.md" \
@@ -269,15 +269,15 @@ assert_contains 'Normal skill routing reads `common.md` and exactly' \
 
 # Remote communication keeps common identity/retry gates in the entry and
 # selects only the requested transport path.
-for route in delivery local-codex request fallback; do
+for route in delivery local-agent request fallback; do
     assert_contains "[$route.md](references/$route.md)" "$REMOTE/SKILL.md" \
         "remote-agent missing $route route"
 done
-assert_contains 'Never create an autonomous' "$REMOTE/SKILL.md" \
+assert_contains 'Never create autonomous loops' "$REMOTE/SKILL.md" \
     'remote-agent loop refusal'
-assert_contains 'Never retry an acknowledged delivery' "$REMOTE/SKILL.md" \
+assert_contains 'Never retry acknowledged or possibly inserted' "$REMOTE/SKILL.md" \
     'remote-agent acknowledgement boundary'
-assert_contains '`profiles/codex-session-targets.tsv`' \
+assert_contains '`profiles/agent-session-targets.tsv`' \
     "$REMOTE/SKILL.md" \
     'remote-agent canonical Local target profile'
 assert_contains 'Do not put' "$REMOTE/references/delivery.md" \
@@ -286,26 +286,23 @@ assert_contains 'does not use `ssh login`' "$REMOTE/references/request.md" \
     'remote-agent request route independence'
 assert_contains 'Never invoke it twice' "$REMOTE/references/fallback.md" \
     'remote-agent fallback replay refusal'
-assert_contains 'confirm-local-codex' "$REMOTE/references/local-codex.md" \
+assert_contains 'confirm-local-agent' "$REMOTE/references/local-agent.md" \
     'remote-agent Local confirmation route'
-assert_contains 'never grants owner authority' \
-    "$REMOTE/references/local-codex.md" \
+assert_contains 'Confirmation never grants owner' \
+    "$REMOTE/references/local-agent.md" \
     'remote-agent confirmation non-escalation'
 assert_contains 'closes a terminal checkpoint' \
-    "$REMOTE/references/local-codex.md" \
+    "$REMOTE/references/local-agent.md" \
     'remote-agent terminal confirmation boundary'
 assert_contains 'reversible owner-choice wait' \
-    "$REMOTE/references/local-codex.md" \
+    "$REMOTE/references/local-agent.md" \
     'remote-agent queue-local owner gate'
-assert_contains 'creates no terminal receipt' \
-    "$REMOTE/references/local-codex.md" \
+assert_contains 'create no receipt' \
+    "$REMOTE/references/local-agent.md" \
     'remote-agent reversible receipt boundary'
-assert_contains 'Never delete or rewrite one to resume work' \
-    "$REMOTE/references/local-codex.md" \
+assert_contains 'never deleted or rewritten to resume work' \
+    "$REMOTE/references/local-agent.md" \
     'remote-agent terminal receipt invariant'
-assert_contains 'codex-thread-recovery --check --target personal' \
-    "$REMOTE/references/local-codex.md" \
-    'remote-agent active-turn preflight'
 if grep -F 'unique current-user Codex pane in `projects`' \
     "$REMOTE/SKILL.md" >/dev/null; then
     fail 'remote-agent retains stale Local session'

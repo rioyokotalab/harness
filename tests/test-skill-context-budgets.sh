@@ -94,7 +94,7 @@ pie_reduction=$(((PIE_BEFORE - pie_largest) * 100 / PIE_BEFORE))
 remote_entry=$(words "$REMOTE/SKILL.md")
 assert_max "$remote_entry" 245 'remote-agent entry'
 remote_largest=0
-for name in delivery local-codex request fallback; do
+for name in delivery local-agent request fallback; do
     route_words=$(words "$REMOTE/references/$name.md")
     assert_max "$route_words" 400 "remote-agent $name reference"
     selected_words=$((remote_entry + route_words))
@@ -102,7 +102,7 @@ for name in delivery local-codex request fallback; do
     [ "$selected_words" -le "$remote_largest" ] ||
         remote_largest=$selected_words
 done
-remote_local_reference=$(words "$REMOTE/references/local-codex.md")
+remote_local_reference=$(words "$REMOTE/references/local-agent.md")
 remote_local=$((remote_entry + remote_local_reference))
 assert_max "$remote_local" 500 'remote-agent Local Codex selected route'
 remote_delivery_reference=$(words "$REMOTE/references/delivery.md")
