@@ -5,8 +5,8 @@ description: Onboard or migrate one Git project to a repository-native producer/
 
 # Onboard Project Repository
 
-Create an independently operable repository whose producer assigns durable
-work and whose consumers execute only selected packets. Preserve existing work
+Create an independently operable repository whose producer normally curates
+durable work and whose consumers execute selected packets. Preserve existing work
 and keep project-specific privacy, source, compute, deployment, and authority
 rules local.
 
@@ -21,14 +21,17 @@ rules local.
 4. Adapt the files under `assets/scaffold/` through normal patch-based edits.
    Assets are templates, not authority: retain stronger target rules and omit
    features the target cannot validate.
-5. Add focused synthetic tests for writer boundaries, selector lifecycle,
+5. Add focused synthetic tests for advisory role overlap, immutable packets, selector lifecycle,
    queue parity, reversible parking, terminal reconciliation, bounded records,
    proportional validation, and any enabled checkpoint protocol.
-6. Validate and publish producer-owned allocation separately from consumer-
-   owned implementation. Verify protected readback and leave no temporary
-   branch or worktree residue.
+6. Avoid overlapping branches where practical, validate the complete atomic
+   ledger change, and publish through the target's protected route. Verify
+   protected readback and leave no temporary branch or worktree residue.
 
-Never copy private task content between repositories. The portfolio producer
-may write each repository's producer paths, but a consumer may not. A ready
-packet does not grant source access, credentials, deployment, account changes,
-or another external mutation unless its local policy and exact authority do.
+Never copy private task content between repositories. Producer and consumer
+have the same repository capabilities; producer-path ownership is a strong
+coordination default, not a permission boundary. A consumer may edit those
+paths when an in-scope solution requires it after checking overlap, recording
+the reason, and preserving all ledger invariants. A ready packet does not grant
+source access, credentials, deployment, account changes, or another external
+mutation unless its local policy and contextual owner authority do.

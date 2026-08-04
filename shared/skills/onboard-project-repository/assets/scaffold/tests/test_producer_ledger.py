@@ -503,7 +503,7 @@ class ProducerLedgerTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("receipt-identity", result.stdout)
 
-    def test_writer_boundaries(self) -> None:
+    def test_role_boundaries_are_advisory(self) -> None:
         producer_root = self.fixture()
         self.init_git(producer_root)
         (producer_root / "PRODUCER.md").write_text(
@@ -518,7 +518,8 @@ class ProducerLedgerTests(unittest.TestCase):
         result = self.run_tool(
             producer_root, "check-consumer-diff", "--base", "HEAD"
         )
-        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("advisory=role-overlap advisory_paths=1", result.stdout)
 
         consumer_root = self.fixture()
         self.init_git(consumer_root)
@@ -528,15 +529,18 @@ class ProducerLedgerTests(unittest.TestCase):
             0,
         )
         result = self.run_tool(consumer_root, "check-producer-diff", "--base", "HEAD")
-        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("advisory=role-overlap advisory_paths=1", result.stdout)
 
-    def test_producer_cannot_change_a_published_packet(self) -> None:
+    def test_both_roles_cannot_change_a_published_packet(self) -> None:
         root = self.fixture()
         self.init_git(root)
         self.mutate_packet(root, lambda text: text + "\nchanged\n")
-        result = self.run_tool(root, "check-producer-diff", "--base", "HEAD")
-        self.assertNotEqual(result.returncode, 0, result.stdout)
-        self.assertIn("producer-immutable-packet", result.stdout)
+        for role in ("producer", "consumer"):
+            with self.subTest(role=role):
+                result = self.run_tool(root, f"check-{role}-diff", "--base", "HEAD")
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertIn("immutable-packet", result.stdout)
 
     def test_producer_may_add_a_new_packet(self) -> None:
         root = self.fixture()
@@ -549,7 +553,7 @@ class ProducerLedgerTests(unittest.TestCase):
         result = self.run_tool(root, "check-producer-diff", "--base", "HEAD")
         self.assertEqual(result.returncode, 0, result.stdout)
 
-    def test_consumer_cannot_allocate_task_record(self) -> None:
+    def test_consumer_role_check_advises_on_unindexed_task_record(self) -> None:
         root = self.fixture()
         self.init_git(root)
         (root / "docs/tasks/Fix-002.md").write_text("# unauthorized\n", encoding="utf-8")
@@ -562,8 +566,8 @@ class ProducerLedgerTests(unittest.TestCase):
             check=True,
         )
         result = self.run_tool(root, "check-consumer-diff", "--base", "HEAD^")
-        self.assertNotEqual(result.returncode, 0, result.stdout)
-        self.assertIn("consumer-writer-boundary", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("advisory=role-overlap advisory_paths=1", result.stdout)
 
     def test_consumer_diff_includes_untracked_nonignored_path(self) -> None:
         root = self.fixture()
@@ -577,9 +581,8 @@ class ProducerLedgerTests(unittest.TestCase):
         producer_path = root / "docs/producer/untracked.tsv"
         producer_path.write_text("synthetic\n", encoding="utf-8")
         result = self.run_tool(root, "check-consumer-diff", "--base", "HEAD")
-        self.assertNotEqual(result.returncode, 0, result.stdout)
-        self.assertIn("consumer-writer-boundary", result.stdout)
-        self.assertIn("docs/producer/untracked.tsv", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("advisory=role-overlap advisory_paths=1", result.stdout)
 
     def test_disjoint_producer_and_consumer_changes_merge(self) -> None:
         root = self.fixture()

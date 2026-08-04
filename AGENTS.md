@@ -70,10 +70,10 @@ refinements remain mandatory.
   selected packet and matching record, or remain idle. Never select a packet
   with a terminal receipt. Inspect Git and routed evidence; never preload another record or
   `docs/history/`. Fetch before collaborative edits.
-- Only the portfolio producer edits `PRODUCER.md` or `docs/producer/`.
-  Consumers create no IDs/goals; handle nested issues LIFO or write a blocked
-  receipt. Before publication run
-  `python3 tools/producer-ledger.py check-consumer-diff --base origin/main`.
+- Producer and consumer are trust-equivalent; producer-path and ID ownership
+  avoids conflicts but grants no extra permission. Either may cross it after
+  fetch/overlap checks, atomic ledger updates, and a recorded reason. Role
+  overlap is advisory; packet immutability and validation remain hard.
 - Resume the first unverified recorded action. Revalidate only mutable inputs
   used by that action; a failed query is unknown, not evidence of absence.
 - Keep Harness independent of the sibling `website` repository.

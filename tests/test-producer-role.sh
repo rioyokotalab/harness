@@ -39,5 +39,10 @@ for fixture in \
     fi
 done
 
+# Pane identity remains useful diagnostics but is not repository authority.
+export PRODUCER_ROLE_FIXTURE='harness|cowork|1|harness|codex'
+"$ROOT/libexec/harness-producer-ledger" check-producer-diff \
+    "$ROOT" HEAD --pane %0 >/dev/null
+
 python3 "$ROOT/tests/test_producer_ledger.py"
 printf 'producer_role_tests=pass\n'
