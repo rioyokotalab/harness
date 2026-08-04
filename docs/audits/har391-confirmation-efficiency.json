@@ -1,0 +1,63 @@
+{
+  "schema": "harness-confirmation-efficiency-v1",
+  "source": "docs/tasks/Har-390.md",
+  "measurement": {
+    "confirmation_latency": "normalized-round-trips",
+    "context": "maximum-4096-byte-report-budget",
+    "publication": "consumer-protected-publications"
+  },
+  "scenarios": [
+    {
+      "name": "source-free-terminal-packet",
+      "legacy": {
+        "confirmations": 5,
+        "publications": 2,
+        "latency_units": 5,
+        "report_budget_bytes": 20480
+      },
+      "planned": {
+        "confirmations": 1,
+        "publications": 1,
+        "latency_units": 1,
+        "report_budget_bytes": 4096
+      }
+    },
+    {
+      "name": "independent-correction",
+      "legacy": {
+        "confirmations": 6,
+        "publications": 2,
+        "latency_units": 6,
+        "report_budget_bytes": 24576
+      },
+      "planned": {
+        "confirmations": 3,
+        "publications": 1,
+        "latency_units": 3,
+        "report_budget_bytes": 12288
+      }
+    },
+    {
+      "name": "frozen-boundaries",
+      "legacy": {
+        "confirmations": 13,
+        "publications": 0,
+        "latency_units": 13,
+        "report_budget_bytes": 53248
+      },
+      "planned": {
+        "confirmations": 13,
+        "publications": 0,
+        "latency_units": 13,
+        "report_budget_bytes": 53248
+      }
+    }
+  ],
+  "claims": {
+    "actual_historical_elapsed_seconds": "not-claimed",
+    "actual_historical_token-count": "not-available-from-durable-public-evidence",
+    "authority": "unchanged",
+    "source_access": "not-authorized",
+    "external_write": "not-authorized"
+  }
+}

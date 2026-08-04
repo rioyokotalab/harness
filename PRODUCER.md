@@ -11,7 +11,6 @@ Next free ID: Har-392.
 
 | Task | State | Priority | Packet |
 | --- | --- | ---: | --- |
-| Har-391 | gated: next owner-started nightly run | 10 | `docs/producer/tasks/Har-391.md` |
 | Har-196 | gated | 20 | `docs/producer/tasks/Har-196.md` |
 | Har-328 | gated | 30 | `docs/producer/tasks/Har-328.md` |
 | Har-303 | gated | 40 | `docs/producer/tasks/Har-303.md` |

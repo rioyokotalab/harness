@@ -1,5 +1,5 @@
 task	state	summary	source
-Har-391	active	Reduce producer-consumer confirmation overhead	TODO.md;docs/tasks/Har-391.md
+Har-391	complete	Reduce producer-consumer confirmation overhead	docs/tasks/Har-391.md;docs/audits/har391-confirmation-efficiency.json;docs/consumer/receipts/Har-391.md
 Har-390	complete	Unify Codex and Claude producer-consumer communication	docs/tasks/Har-390.md
 Har-389	complete	Converge reusable producer and consumer protocol	docs/tasks/Har-389.md;docs/consumer/receipts/Har-389.md
 Har-388	complete	Harden consumer autonomy and task efficiency	docs/tasks/Har-388.md;docs/plans/har388-consumer-autonomy.md;docs/audits/har388-consumer-autonomy/time-slices.md;docs/consumer/receipts/Har-388.md
