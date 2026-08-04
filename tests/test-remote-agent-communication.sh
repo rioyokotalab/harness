@@ -6,6 +6,7 @@ HELPER=$ROOT/shared/skills/remote-agent-communication/scripts/agent-message
 SKILL=$ROOT/shared/skills/remote-agent-communication/SKILL.md
 DELIVERY=$ROOT/shared/skills/remote-agent-communication/references/delivery.md
 LOCAL_AGENT=$ROOT/shared/skills/remote-agent-communication/references/local-agent.md
+LOCAL_PROTOCOL=$ROOT/shared/skills/remote-agent-communication/references/local-agent.protocol
 REQUEST=$ROOT/shared/skills/remote-agent-communication/references/request.md
 FALLBACK=$ROOT/shared/skills/remote-agent-communication/references/fallback.md
 RUNTIME_POLICY=$ROOT/docs/agent-policy/managed-codex.md
@@ -29,7 +30,7 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for path in "$SKILL" "$DELIVERY" "$LOCAL_AGENT" "$REQUEST" "$FALLBACK" \
+for path in "$SKILL" "$DELIVERY" "$LOCAL_AGENT" "$LOCAL_PROTOCOL" "$REQUEST" "$FALLBACK" \
     "$RUNTIME_POLICY"; do
     [ -f "$path" ] && [ ! -L "$path" ] ||
         fail "missing routed communication resource: $path"
@@ -88,6 +89,14 @@ fake_bin=$TEST_ROOT/bin
 state=$TEST_ROOT/state
 mkdir -p "$home/harness" "$home/personal" "$home/students" \
     "$home/.local/bin" "$fake_bin" "$state"
+for repository in harness personal students; do
+    mkdir -p "$home/$repository/.agents/skills" \
+        "$home/$repository/.claude/skills"
+    ln -s "$ROOT/shared/skills/remote-agent-communication" \
+        "$home/$repository/.agents/skills/remote-agent-communication"
+    ln -s "$ROOT/shared/skills/remote-agent-communication" \
+        "$home/$repository/.claude/skills/remote-agent-communication"
+done
 {
     printf '# target\tclient\twindow_index\twindow_name\tpane_index\tcanonical_repository\n'
     printf 'harness\tcodex\t0\tcowork\t0\t@HARNESS_ROOT@\n'
@@ -290,13 +299,26 @@ grep -F 'load-buffer ' "$state/operations" >/dev/null ||
     fail "private buffer load"
 grep -F 'paste-buffer ' "$state/operations" >/dev/null ||
     fail "private buffer paste"
-grep -F 'send-keys -t %0 C-m' "$state/operations" >/dev/null ||
+grep -F 'send-keys -t %0 Enter' "$state/operations" >/dev/null ||
     fail "separate submit"
 if grep -F "$message" "$state/operations" >/dev/null; then
     fail "message leaked into tmux arguments"
 fi
 [ "$(tr -d ' ' <"$state/message-bytes")" -eq "${#message}" ] ||
     fail "message byte delivery"
+
+maximum=$state/maximum-message
+awk 'BEGIN {
+    prefix = "[Agent: Riken Codex] "
+    printf "%s", prefix
+    for (i = length(prefix); i < 4096; i++) printf "x"
+}' >"$maximum"
+run_helper receive --source riken --target-role controller \
+    <"$maximum" >"$state/maximum.out"
+[ "$(tr -d ' ' <"$state/message-bytes")" -eq 4096 ] ||
+    fail "maximum message byte delivery"
+tail -n 1 "$state/operations" | grep -F -x 'send-keys -t %0 Enter' \
+    >/dev/null || fail "maximum message named submit"
 
 if printf '%s\n' 'message without identity' |
     run_helper receive --source riken --target-role controller \
@@ -436,7 +458,7 @@ grep -F -x \
 ssh_calls_after=$(wc -l <"$state/ssh-calls")
 [ "$ssh_calls_before" -eq "$ssh_calls_after" ] ||
     fail "local Claude delivery used SSH"
-grep -F 'send-keys -t %0 C-m' "$state/operations" >/dev/null ||
+grep -F 'send-keys -t %0 Enter' "$state/operations" >/dev/null ||
     fail "local Claude separate submit"
 if grep -F "$local_claude_message" "$state/operations" >/dev/null; then
     fail "local Claude message leaked into tmux arguments"
@@ -493,6 +515,36 @@ if printf '%s\n' "$local_claude_message" |
     >"$state/local-claude-ambiguous.out" 2>&1; then
     fail "ambiguous Local Claude pane accepted"
 fi
+
+(
+    cd "$home/harness"
+    run_helper check-local-agent-compatibility \
+        --target personal --target-client claude \
+        >"$state/local-compatibility.out"
+)
+grep -F -x \
+    'AGENT_MESSAGE_LOCAL_COMPATIBILITY target=personal client=claude version=1 status=compatible' \
+    "$state/local-compatibility.out" >/dev/null ||
+    fail "Local target protocol compatibility"
+
+stale_skill=$home/stale-communication-skill
+mkdir -p "$stale_skill/references"
+printf '0\n' >"$stale_skill/references/local-agent.protocol"
+students_discovery=$home/students/.agents/skills/remote-agent-communication
+unlink "$students_discovery"
+ln -s "$stale_skill" "$students_discovery"
+if (
+    cd "$home/harness"
+    run_helper check-local-agent-compatibility \
+        --target students --target-client codex \
+        >"$state/local-stale.out" 2>&1
+); then
+    fail "stale Local target protocol accepted"
+fi
+grep -F 'Local agent target communication skill is stale' \
+    "$state/local-stale.out" >/dev/null || fail "stale Local target reason"
+unlink "$students_discovery"
+ln -s "$ROOT/shared/skills/remote-agent-communication" "$students_discovery"
 
 local_personal_claude='[Agent: Local Codex] run the bounded Personal checkpoint'
 (

@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-393	active	Harden local agent communication reliability	TODO.md;docs/tasks/Har-393.md;docs/audits/har393-student-mentoring-overnight/session.md
 Har-392	complete	Authorize task-relevant producer pane inspection	docs/tasks/Har-392.md;docs/consumer/receipts/Har-392.md
 Har-391	complete	Reduce producer-consumer confirmation overhead	docs/tasks/Har-391.md;docs/audits/har391-confirmation-efficiency.json;docs/consumer/receipts/Har-391.md
 Har-390	complete	Unify Codex and Claude producer-consumer communication	docs/tasks/Har-390.md
