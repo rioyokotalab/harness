@@ -394,23 +394,29 @@ def check_diff(base: str, role: str) -> None:
     prefix = str(config["prefix"])
     tasks = {row["task"] for row in read_rows()}
     paths = changed_paths(base)
+    immutable = changed_published_packets(base)
+    if immutable:
+        fail(f"immutable-packet:{','.join(sorted(immutable))}")
     if role == "producer":
-        bad = [
+        advisory = [
             path for path in paths
             if path != "PRODUCER.md" and not path.startswith("docs/producer/")
         ]
-        immutable = changed_published_packets(base)
-        if immutable:
-            fail(f"producer-immutable-packet:{','.join(sorted(immutable))}")
     else:
-        bad = [path for path in paths if path == "PRODUCER.md" or path.startswith("docs/producer/")]
+        advisory = [
+            path for path in paths
+            if path == "PRODUCER.md" or path.startswith("docs/producer/")
+        ]
         for path in paths:
             match = re.fullmatch(rf"docs/tasks/({re.escape(prefix)}-\d{{3}})\.md", path)
             if match and match.group(1) not in tasks:
-                bad.append(path)
-    if bad:
-        fail(f"{role}-writer-boundary:{','.join(sorted(set(bad)))}")
-    print(f"PRODUCER_LEDGER_DIFF status=pass role={role} paths={len(paths)}")
+                advisory.append(path)
+    advisory_count = len(set(advisory))
+    advisory_state = "role-overlap" if advisory_count else "none"
+    print(
+        f"PRODUCER_LEDGER_DIFF status=pass role={role} paths={len(paths)} "
+        f"advisory={advisory_state} advisory_paths={advisory_count}"
+    )
 
 
 def main() -> None:

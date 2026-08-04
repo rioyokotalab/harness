@@ -17,11 +17,14 @@ LIFO inside the selected task and never allocate another durable goal.
 
 ## Ownership and lifecycle
 
-Only the portfolio producer writes `PRODUCER.md` and `docs/producer/`. Consumers
-write `TODO.md`, `docs/tasks/`, implementation paths, tests, and immutable
-terminal receipts. Both roles run a base-relative diff guard that includes
-untracked, nonignored paths. Producer and consumer changes use independent
-branches and protected publications.
+Producer and consumer are trust-equivalent repository agents. The producer
+normally writes `PRODUCER.md` and `docs/producer/`; consumers normally write
+`TODO.md`, `docs/tasks/`, implementation paths, tests, and immutable terminal
+receipts. Either role may cross that ownership convention when necessary for
+an in-scope solution after fetching, checking overlap, recording the reason,
+and preserving all ledger invariants atomically. Both roles run a base-relative
+diff advisory that includes untracked, nonignored paths. Immutable published
+packets and ledger validation remain hard gates.
 
 A ready packet grants only its bounded repository reads, edits, tests, and
 declared normal publication. Consumers exhaust safe synthetic or parameterized
@@ -47,13 +50,14 @@ evidence only when target identity, environment contract, acceptance scope, and
 owning checks are unchanged. Publication, policy, validator, lifecycle, safety,
 credential, external-write, or unknown changes require complete validation.
 
-When a managed consumer reports checkpoints, use one bounded value-free report
-bound to a request ID. Exact accepted, changes-required, or rejected envelopes
-never broaden scope. Accepted with a new request ID continues; accepted without
-one acknowledges terminal completion and stops. Malformed, duplicate-with-
-changed-bytes, or mismatched envelopes fail closed. Repositories without a
-managed message route retain the lifecycle contract but need not install the
-checkpoint parser.
+Managed checkpoint reports are optional coordination and review, not consumer
+authorization. When used, bind one bounded value-free report to a request ID.
+Accepted, changes-required, or rejected envelopes never broaden scope.
+Ordinary packet work may proceed asynchronously without producer confirmation.
+Owner authorization has no magic phrase: clear plain-language approval of the
+immediately preceding bounded proposal is sufficient. Reconfirm only for
+material ambiguity, changed target/input/scope, a separately gated action, or
+an ambiguous prior result.
 
 ## Project-specific layer
 
@@ -70,8 +74,8 @@ authorizes changing it.
 - Cold start selects exactly one executable packet or idles.
 - Queue/index parity, packet immutability, task IDs, assignment compatibility,
   active-record bounds, receipts, and strict convergence fail closed.
-- Producer and consumer diff guards reject cross-role tracked and untracked
-  changes.
+- Producer and consumer diff checks report cross-role tracked and untracked
+  changes as coordination advisories while both reject packet mutation.
 - Reversible gates and terminal handoffs are covered by synthetic regressions.
 - The target's focused and complete offline validation pass.
 - Protected readback matches the candidate; temporary branches and worktrees

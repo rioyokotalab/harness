@@ -10,7 +10,7 @@ usage() {
     printf '%s\n' \
         'Usage: harness producer-ledger role-check --pane PANE' \
         '       harness producer-ledger validate REPOSITORY' \
-        '       harness producer-ledger check-producer-diff REPOSITORY BASE --pane PANE'
+        '       harness producer-ledger check-producer-diff REPOSITORY BASE [--pane PANE]'
 }
 
 role_check() {
@@ -62,13 +62,12 @@ case "$command_name" in
         exec python3 "$tool" validate
         ;;
     check-producer-diff)
-        [ "$#" -eq 4 ] && [ "$3" = --pane ] || {
+        { [ "$#" -eq 2 ] || { [ "$#" -eq 4 ] && [ "$3" = --pane ]; }; } || {
             usage >&2
             exit 2
         }
         repository=$1
         base=$2
-        role_check --pane "$4" >/dev/null
         tool=$(repository_tool "$repository")
         exec python3 "$tool" check-producer-diff --base "$base"
         ;;
