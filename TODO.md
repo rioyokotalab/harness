@@ -12,6 +12,15 @@ Confirm branch, worktree, recent commits, ownership, and mutable inputs. Resume
 the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
+## Active
+
+### Har-395 — Retire rejected Personal recovery controls
+
+**Phase:** exact live cleanup and recoverable root archival.
+
+**Record:** `docs/tasks/Har-395.md`. Preserve the accepted Personal root and
+all unrelated tmux, phone-control, app-server, and repository state.
+
 ## Deferred gates
 
 ### Har-196 — Backup lifecycle phase 2
