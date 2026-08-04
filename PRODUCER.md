@@ -11,7 +11,6 @@ Next free ID: Har-396.
 
 | Task | State | Priority | Packet |
 | --- | --- | ---: | --- |
-| Har-395 | ready | 0 | `docs/producer/tasks/Har-395.md` |
 | Har-196 | gated | 20 | `docs/producer/tasks/Har-196.md` |
 | Har-328 | gated | 30 | `docs/producer/tasks/Har-328.md` |
 | Har-303 | gated | 40 | `docs/producer/tasks/Har-303.md` |
