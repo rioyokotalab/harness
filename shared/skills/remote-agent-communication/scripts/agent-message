@@ -8,6 +8,7 @@ import fcntl
 import json
 import os
 import re
+import shlex
 import shutil
 import stat
 import subprocess
@@ -274,7 +275,33 @@ def claude_processes(tty: str) -> int:
     except UnicodeDecodeError:
         return 0
     names = [Path(command.strip()).name for command in commands]
-    return 1 if names.count("claude") == 1 else 0
+    if names.count("claude") != 1:
+        return 0
+    arguments = run(
+        [executable("ps"), "-t", tty.removeprefix("/dev/"), "-o", "args="]
+    )
+    if arguments.returncode != 0:
+        return 0
+    try:
+        rows = arguments.stdout.decode("utf-8").splitlines()
+    except UnicodeDecodeError:
+        return 0
+    matches: list[list[str]] = []
+    for row in rows:
+        try:
+            argv = shlex.split(row)
+        except ValueError:
+            return 0
+        if argv and Path(argv[0]).name == "claude":
+            matches.append(argv)
+    if len(matches) != 1:
+        return 0
+    argv = matches[0]
+    return 1 if any(
+        argv[index : index + 2]
+        == ["--permission-mode", "bypassPermissions"]
+        for index in range(len(argv) - 1)
+    ) else 0
 
 
 def select_local_agent_pane(target_name: str, target_client: str) -> Pane:

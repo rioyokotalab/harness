@@ -99,7 +99,10 @@ because Linux Codex releases are pinned and upgraded transactionally by the
 harness; accepting the native update offer would install into Node's global
 prefix without moving the managed command link. Claude uses
 `permissions.defaultMode = "bypassPermissions"` and suppresses the one-time
-dangerous-mode warning. Claude starts with Fable/high and has Opus/high as its
+dangerous-mode warning. Managed interactive Claude processes also carry the
+same explicit `--permission-mode bypassPermissions` pair so project-local
+`dontAsk` settings cannot silently disable consumer tools. Claude starts with
+Fable/high and has Opus/high as its
 sole ordered native fallback for an overloaded, unavailable, or otherwise
 eligible server-failed turn. Authentication, billing, rate-limit,
 request-size, transport, and shared session or weekly usage-limit failures do

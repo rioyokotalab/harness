@@ -223,7 +223,18 @@ def claude_process_ok(identity):
     if basename not in ("claude", "node"):
         return False
     joined = " ".join(identity["argv"])
-    return "claude" in joined
+    if "claude" not in joined:
+        return False
+    argv = identity["argv"]
+    for position in range(0, len(LAUNCH_FLAGS), 2):
+        option = LAUNCH_FLAGS[position]
+        value = LAUNCH_FLAGS[position + 1]
+        if not any(
+            argv[index : index + 2] == [option, value]
+            for index in range(len(argv) - 1)
+        ):
+            return False
+    return True
 
 
 def tmux_panes():
