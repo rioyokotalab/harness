@@ -16,12 +16,12 @@ mutable-state query is unknown, never absence.
 
 ### Har-394 — Recover the Personal Codex pane
 
-**Phase:** R1 and R2 remain preserved after tool-free cold starts. The owner
-authorized a distinct R3 using a plain controller cold start rather than the
-cross-agent message envelope; R3 is not yet created.
+**Phase:** accepted R3 is promoted as canonical Personal root/pane; R1 and R2
+remain preserved. Reversible cutover validation passes. Old frozen TUI leaf
+retirement and final recovery/doctor acceptance remain.
 
-**Record:** `docs/tasks/Har-394.md`. Preserve all existing chains, never replay
-either prompt, and promote R3 only after full terminal-tool bridge acceptance.
+**Record:** `docs/tasks/Har-394.md`. Publish this cutover checkpoint before the
+single exact old-leaf SIGTERM, then run final lifecycle acceptance.
 
 ## Deferred gates
 
