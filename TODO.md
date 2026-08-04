@@ -14,6 +14,14 @@ mutable-state query is unknown, never absence.
 
 ## Deferred gates
 
+### Har-391 — Reduce producer/consumer confirmation overhead
+
+**Phase:** gated to the next owner-started nightly run; benchmark and reduce
+confirmations, protected publications, latency, and token cost without weakening
+authority, source, write, repository, or client boundaries.
+
+**Record:** `docs/tasks/Har-391.md`.
+
 ### Har-196 — Backup lifecycle phase 2
 
 **Phase:** read-only monitoring; seven successors are terminal-success. AL
