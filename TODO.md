@@ -14,13 +14,6 @@ mutable-state query is unknown, never absence.
 
 ## Deferred gates
 
-### Har-390 — Unify cross-client producer/consumer communication
-
-**Phase:** focused transport implementation passes; protected publication and
-the Personal Claude round-trip remain.
-
-**Record:** `docs/tasks/Har-390.md`.
-
 ### Har-196 — Backup lifecycle phase 2
 
 **Phase:** read-only monitoring; seven successors are terminal-success. AL
