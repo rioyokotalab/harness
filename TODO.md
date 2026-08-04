@@ -12,6 +12,17 @@ Confirm branch, worktree, recent commits, ownership, and mutable inputs. Resume
 the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
+## Active
+
+### Har-394 — Recover the Personal Codex pane
+
+**Phase:** bridge-first preflight; no app-server or lifecycle write has been
+sent. The current TUI addresses a missing thread while its supervised root is
+`notLoaded`, so no in-place rollback is eligible.
+
+**Record:** `docs/tasks/Har-394.md`. Create and accept exactly one fresh
+Personal root and provisional pane before promoting or retiring anything.
+
 ## Deferred gates
 
 ### Har-196 — Backup lifecycle phase 2
