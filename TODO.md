@@ -16,13 +16,12 @@ mutable-state query is unknown, never absence.
 
 ### Har-394 — Recover the Personal Codex pane
 
-**Phase:** provisional cold start rejected at the terminal-tool evidence gate;
-no promotion occurred. All root/name/launch/submission writes are consumed and
-must not be retried. A changed-input recovery decision is required.
+**Phase:** owner authorized one changed-input second fresh-root attempt with an
+explicit terminal-tool-evidence cold start. The old canonical and rejected R1
+chains remain preserved; R2 is not yet created or promoted.
 
-**Record:** `docs/tasks/Har-394.md`. Preserve both old and rejected provisional
-chains; do not promote, retire, archive, or send another turn without a newly
-frozen changed-input route.
+**Record:** `docs/tasks/Har-394.md`. Create only the distinct R2 root/runtime,
+never replay either prior prompt, and promote only after full bridge acceptance.
 
 ## Deferred gates
 
