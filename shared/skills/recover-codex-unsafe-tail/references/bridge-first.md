@@ -6,7 +6,7 @@
    must not block bridge launch or promotion and must not be signaled.
 2. Send one initialized app-server `thread/start` with cwd equal to
    `TARGET`'s exact closed-map repository, frozen approval policy, and sandbox.
-   Record returned ID immediately; never retry a sent request.
+   Record its ID; never retry a sent request.
 3. Read empty root with `includeTurns=false`. An unmaterialized
    `includeTurns=true` error does not prove creation failed.
 4. Set a unique provisional name; require same-connection readback.
@@ -14,7 +14,7 @@
    root. If installed version creates exact mode `0664`, use a no-follow
    descriptor transaction to change only that inode to `0600`; reject other
    metadata.
-6. Use a distinct provisional root, tmux window, and runtime name. Launch one
+6. Use distinct provisional root, tmux window, and runtime name. Launch one
    detached bridge with `harness codex-resilient --run --name
    PROVISIONAL_RUNTIME --target TARGET --remote-session NEW_ID`; never reuse
    canonical window or runtime. Require process/start identities, watcher
@@ -30,11 +30,12 @@
    - preserve unrelated work and leave controller mutations to the controller;
    - remain running and idle in the same thread.
 
-8. Monitor only thread/turn status and item type, role, and status. Accept one
-   completed assistant-bearing cold-start turn with terminal tool items, zero
-   active items, and no `systemError`.
+8. Require assistant-bearing completion, terminal tools, zero active items, and
+   no `systemError`. `thread/read` projection may omit TUI tool items; fallback
+   through a no-follow descriptor and require paired completed tool-call/output IDs
+   without payloads.
 9. Revalidate every protected identity. Rename the old root to a unique blocked
-   label, then the accepted root to the canonical project name, using one
+   label, then the accepted root to the canonical name, using one
    read-before/write/read-after transaction per root.
 10. Root promotion is rename-only. For a window-native target, rename the
     accepted bridge window to the canonical name while keeping its pane,

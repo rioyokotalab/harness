@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-394	complete	Recover the Personal Codex pane	docs/tasks/Har-394.md;docs/consumer/receipts/Har-394.md
 Har-393	complete	Harden local agent communication reliability	docs/tasks/Har-393.md;docs/audits/har393-student-mentoring-overnight/session.md;docs/consumer/receipts/Har-393.md
 Har-392	complete	Authorize task-relevant producer pane inspection	docs/tasks/Har-392.md;docs/consumer/receipts/Har-392.md
 Har-391	complete	Reduce producer-consumer confirmation overhead	docs/tasks/Har-391.md;docs/audits/har391-confirmation-efficiency.json;docs/consumer/receipts/Har-391.md
