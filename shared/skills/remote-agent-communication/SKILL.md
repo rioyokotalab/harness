@@ -34,7 +34,9 @@ Read no other route or duplicate a request across transports.
 - Local `status=submitted` proves only submission.
 - Never retry acknowledged or possibly inserted delivery; retain input and
   diagnose without reinjection.
-- Never inspect panes. Resolve each Local target from exactly one
+- The transport never inspects panes. Producer pane inspection is a separate
+  task action governed by the selected repository's managed policy. Resolve
+  each Local target from exactly one
   `profiles/agent-session-targets.tsv` row matching client, window, pane, role,
   repository, process, and TTY.
 - Stop on absent or ambiguous target, route, identity, input, lock, timeout, or

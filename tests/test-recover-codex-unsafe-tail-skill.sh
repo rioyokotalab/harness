@@ -67,6 +67,8 @@ assert_contains '--status --name NAME --target TARGET' "$SKILL" \
     'target-aware diagnosis'
 assert_contains 'supervisor/watcher/launcher/TUI identities and start' "$SKILL" \
     'runtime identity gate'
+assert_contains 'sole portfolio producer may inspect task-relevant owner' \
+    "$SKILL" 'producer pane-inspection exception'
 assert_contains 'Never read pane text, transcript or message text' "$SKILL" \
     'pane/transcript content boundary'
 assert_contains 'reconstruct or replay a rejected prompt' "$SKILL" \

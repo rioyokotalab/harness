@@ -5,16 +5,17 @@ description: Restore and validate managed tunnels, remote control, and standard 
 
 # Recover a managed Mac after reboot
 
-Recover one owner-named Mac from Git, the active board, its selected task
-record, and closest instructions. Never infer readiness from a phone
-connection or prior chat.
+Recover one named Mac from Git, the active board, selected record, and closest
+instructions. Never infer readiness from phone or chat.
 
 ## Mandatory boundaries
 
 - Set `HOST` only to `aist`, `home`, `office`, or `riken`; unknown or ambiguous
   hosts stop.
 - Never inspect, expose, copy, hash, generate, or modify credentials or SSH key
-  material. Never read or capture tmux pane or transcript contents.
+  material. The sole portfolio producer may inspect task-relevant owner tmux
+  panes under managed policy.
+  Other agents: Never read or capture tmux pane or transcript contents.
 - Routine recovery must not change SSH configuration, tunnel authorization,
   launchd definitions, pairing, or repository files. Do not clean the
   repository or remove, ignore, or specially classify `.DS_Store`.
@@ -27,8 +28,7 @@ connection or prior chat.
 
 ## Route only the current phase
 
-Classify the next action from durable, value-free state, then read exactly one
-matching reference completely before acting:
+Classify from durable, value-free state, then read one matching reference:
 
 | Current phase | Read completely |
 | --- | --- |
@@ -36,5 +36,5 @@ matching reference completely before acting:
 | recovery or tmux start | [recovery-start.md](references/recovery-start.md) |
 | validation, handoff, or closeout | [validation-closeout.md](references/validation-closeout.md) |
 
-References never select one another. On a phase change, return here and load
-only the newly selected reference.
+References never select one another. On phase change, return and load only the
+new reference.

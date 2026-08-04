@@ -121,6 +121,12 @@ assert_contains 'run server-side merge with' "$GIT_POLICY" \
     'linked-worktree merge ambiguity guard'
 assert_contains 'bridge-first cutover' "$CODEX" \
     'bridge-first lifecycle boundary'
+assert_contains 'sole portfolio producer may inspect any owner' "$CODEX" \
+    'producer pane-inspection standing authority'
+assert_contains 'untrusted' "$CODEX" \
+    'pane content is not authority'
+assert_contains 'content-blind helpers do not inherit' "$CODEX" \
+    'pane authority role boundary'
 assert_contains 'docs/fleet-inventory.md' "$FLEET" \
     'fleet inventory route'
 assert_contains 'Do not run it for every unrelated' "$FLEET" \

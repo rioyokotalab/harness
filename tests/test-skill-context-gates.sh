@@ -406,6 +406,8 @@ assert_contains '--status --name NAME --target TARGET' "$UNSAFE/SKILL.md" \
     'unsafe-tail target-aware status marker'
 assert_contains 'supervisor/watcher/launcher/TUI identities' \
     "$UNSAFE/SKILL.md" 'unsafe-tail identity marker'
+assert_contains 'sole portfolio producer may inspect task-relevant owner' \
+    "$UNSAFE/SKILL.md" 'unsafe-tail producer pane-inspection exception'
 assert_contains 'Never read pane text, transcript or message text' \
     "$UNSAFE/SKILL.md" 'unsafe-tail content marker'
 assert_contains 'reconstruct or replay a rejected prompt' "$UNSAFE/SKILL.md" \
