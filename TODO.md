@@ -12,15 +12,6 @@ Confirm branch, worktree, recent commits, ownership, and mutable inputs. Resume
 the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
-## Active
-
-### Har-389 — Cross-repository protocol convergence
-
-**Phase:** implement and validate the reusable protocol and repository
-onboarding scaffold.
-
-**Record:** `docs/tasks/Har-389.md`.
-
 ## Deferred gates
 
 ### Har-196 — Backup lifecycle phase 2
