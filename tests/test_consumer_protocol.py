@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import unittest
@@ -16,6 +17,7 @@ from consumer_protocol import (
     authorize_next_stage,
     parse_confirmation,
     parse_report,
+    plan_checkpoint_batches,
     plan_owner_gate,
 )
 
@@ -44,6 +46,29 @@ TERMINAL_CONFIRMATION = "\n".join(
         "confirmation request_id=fixture-stage-1 status=accepted",
     )
 )
+
+
+def stage(
+    name: str,
+    *,
+    authority: str = "packet",
+    risk: str = "low",
+    source: str = "none",
+    effect: str = "none",
+    repository: str = "personal",
+    client: str = "claude",
+    boundary: str = "none",
+) -> dict[str, str]:
+    return {
+        "name": name,
+        "authority": authority,
+        "risk": risk,
+        "source": source,
+        "effect": effect,
+        "repository": repository,
+        "client": client,
+        "boundary": boundary,
+    }
 
 
 def policy_text() -> str:
@@ -343,6 +368,149 @@ class ConsumerProtocolTests(unittest.TestCase):
         self.assertEqual(value["actions"], ("emit-checkpoint-report",))
         self.assertFalse(value["publication_required"])
         self.assertTrue(value["report_required"])
+
+    def test_source_free_packet_batches_confirmations_and_publications(self) -> None:
+        value = plan_checkpoint_batches(
+            [
+                stage("plan"),
+                stage("implement"),
+                stage("validate"),
+                stage("publish", effect="protected-publication"),
+                stage("receipt", effect="protected-publication"),
+            ]
+        )
+        self.assertEqual(
+            value["checkpoints"],
+            (("plan", "implement", "validate", "publish", "receipt"),),
+        )
+        self.assertEqual(value["legacy_confirmations"], 5)
+        self.assertEqual(value["planned_confirmations"], 1)
+        self.assertEqual(value["confirmations_saved"], 4)
+        self.assertEqual(value["legacy_publications"], 2)
+        self.assertEqual(value["planned_publications"], 1)
+        self.assertEqual(value["publications_saved"], 1)
+        self.assertEqual(value["legacy_report_budget_bytes"], 20_480)
+        self.assertEqual(value["planned_report_budget_bytes"], 4_096)
+        self.assertEqual(value["round_trips_saved"], 4)
+
+    def test_independent_correction_remains_its_own_checkpoint(self) -> None:
+        value = plan_checkpoint_batches(
+            [
+                stage("plan"),
+                stage("implement"),
+                stage("correct", boundary="independent-correction"),
+                stage("validate"),
+                stage("publish", effect="protected-publication"),
+                stage("receipt", effect="protected-publication"),
+            ]
+        )
+        self.assertEqual(
+            value["checkpoints"],
+            (
+                ("plan", "implement"),
+                ("correct",),
+                ("validate", "publish", "receipt"),
+            ),
+        )
+        self.assertEqual(value["isolated"], ("correct",))
+        self.assertEqual(value["planned_confirmations"], 3)
+        self.assertEqual(value["planned_publications"], 1)
+
+    def test_every_frozen_boundary_isolated_and_scope_changes_split(self) -> None:
+        values = [stage("start")]
+        values.extend(
+            (
+                stage("owner", boundary="owner-choice"),
+                stage("changed", boundary="changed-input"),
+                stage("unknown", boundary="ambiguity"),
+                stage("correction", boundary="independent-correction"),
+                stage("review", boundary="independent-review"),
+                stage("live", source="live"),
+                stage("private", source="private"),
+                stage("write", effect="external-write"),
+            )
+        )
+        values.extend(
+            (
+                stage("other-authority", authority="other"),
+                stage("other-risk", authority="other", risk="high"),
+                stage(
+                    "other-repository",
+                    authority="other",
+                    risk="high",
+                    repository="students",
+                ),
+                stage(
+                    "other-client",
+                    authority="other",
+                    risk="high",
+                    repository="students",
+                    client="codex",
+                ),
+            )
+        )
+        value = plan_checkpoint_batches(values)
+        self.assertEqual(
+            value["isolated"],
+            (
+                "owner",
+                "changed",
+                "unknown",
+                "correction",
+                "review",
+                "live",
+                "private",
+                "write",
+            ),
+        )
+        self.assertEqual(value["planned_confirmations"], len(values))
+        self.assertEqual(value["authority"], "unchanged")
+        self.assertEqual(value["source_access"], "not-authorized")
+        self.assertEqual(value["external_write"], "not-authorized")
+
+    def test_batch_planner_rejects_unbounded_or_malformed_claims(self) -> None:
+        cases = (
+            ("batch-stages-invalid", []),
+            ("batch-stages-invalid", [stage(f"s-{index}") for index in range(33)]),
+            ("batch-stage-invalid", [{"name": "partial"}]),
+            ("batch-source-invalid", [stage("bad-source", source="cached")]),
+            ("batch-effect-invalid", [stage("bad-effect", effect="network")]),
+            ("batch-boundary-invalid", [stage("bad-boundary", boundary="maybe")]),
+            ("batch-name-invalid", [stage("same"), stage("same")]),
+        )
+        for reason, stages in cases:
+            with self.subTest(reason=reason):
+                self.assertDenied(
+                    reason,
+                    lambda stages=stages: plan_checkpoint_batches(stages),
+                )
+
+    def test_batch_plan_cli_reports_only_bounded_metrics(self) -> None:
+        payload = {
+            "stages": [
+                stage("plan"),
+                stage("publish", effect="protected-publication"),
+                stage("receipt", effect="protected-publication"),
+            ]
+        }
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "tools/consumer_protocol.py"),
+                "batch-plan",
+            ],
+            input=json.dumps(payload).encode("utf-8"),
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            result.stdout,
+            b"CONSUMER_PROTOCOL status=batch-plan-valid "
+            b"legacy_confirmations=3 planned_confirmations=1 "
+            b"legacy_publications=2 planned_publications=1 "
+            b"authority=unchanged scope=unchanged\n",
+        )
 
     def test_gate_plan_never_supplies_answer_or_authority(self) -> None:
         for value in (

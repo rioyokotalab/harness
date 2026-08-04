@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 
@@ -28,6 +29,27 @@ FORBIDDEN_VALUE = re.compile(
 )
 MAX_BYTES = 4096
 SAFE_ACTION = re.compile(r"[a-z][a-z0-9-]{0,63}")
+MAX_BATCH_STAGES = 32
+STAGE_FIELDS = {
+    "name",
+    "authority",
+    "risk",
+    "source",
+    "effect",
+    "repository",
+    "client",
+    "boundary",
+}
+SOURCES = {"none", "live", "private"}
+EFFECTS = {"none", "protected-publication", "external-write"}
+BOUNDARIES = {
+    "none",
+    "owner-choice",
+    "changed-input",
+    "ambiguity",
+    "independent-correction",
+    "independent-review",
+}
 
 
 class ProtocolError(ValueError):
@@ -89,6 +111,97 @@ def plan_owner_gate(
         "publication_required": not partial_record_published,
         "report_required": True,
         "owner_choice_required": True,
+    }
+
+
+def plan_checkpoint_batches(
+    stages: tuple[dict[str, object], ...] | list[dict[str, object]],
+) -> dict[str, object]:
+    """Batch only adjacent source-free stages with an identical frozen scope."""
+    if not isinstance(stages, (tuple, list)) or not 0 < len(stages) <= MAX_BATCH_STAGES:
+        raise ProtocolError("batch-stages-invalid")
+
+    normalized: list[dict[str, str]] = []
+    names: set[str] = set()
+    for stage in stages:
+        if not isinstance(stage, dict) or set(stage) != STAGE_FIELDS:
+            raise ProtocolError("batch-stage-invalid")
+        if any(not isinstance(value, str) for value in stage.values()):
+            raise ProtocolError("batch-stage-invalid")
+        value = dict(stage)
+        for field in ("name", "authority", "risk", "repository", "client"):
+            if SAFE_ACTION.fullmatch(value[field]) is None:
+                raise ProtocolError(f"batch-{field}-invalid")
+        if value["name"] in names:
+            raise ProtocolError("batch-name-invalid")
+        names.add(value["name"])
+        if value["source"] not in SOURCES:
+            raise ProtocolError("batch-source-invalid")
+        if value["effect"] not in EFFECTS:
+            raise ProtocolError("batch-effect-invalid")
+        if value["boundary"] not in BOUNDARIES:
+            raise ProtocolError("batch-boundary-invalid")
+        normalized.append(value)
+
+    batches: list[list[dict[str, str]]] = []
+    current: list[dict[str, str]] = []
+    current_scope: tuple[str, ...] | None = None
+    isolated: list[str] = []
+
+    def flush() -> None:
+        nonlocal current, current_scope
+        if current:
+            batches.append(current)
+            current = []
+            current_scope = None
+
+    for stage in normalized:
+        scope = tuple(
+            stage[field]
+            for field in ("authority", "risk", "repository", "client")
+        )
+        hard_boundary = (
+            stage["source"] != "none"
+            or stage["effect"] == "external-write"
+            or stage["boundary"] != "none"
+        )
+        if hard_boundary:
+            flush()
+            batches.append([stage])
+            isolated.append(stage["name"])
+            continue
+        if current_scope is not None and scope != current_scope:
+            flush()
+        if not current:
+            current_scope = scope
+        current.append(stage)
+    flush()
+
+    legacy_publications = sum(
+        stage["effect"] == "protected-publication" for stage in normalized
+    )
+    planned_publications = sum(
+        any(stage["effect"] == "protected-publication" for stage in batch)
+        for batch in batches
+    )
+    return {
+        "checkpoints": tuple(
+            tuple(stage["name"] for stage in batch) for batch in batches
+        ),
+        "isolated": tuple(isolated),
+        "legacy_confirmations": len(normalized),
+        "planned_confirmations": len(batches),
+        "confirmations_saved": len(normalized) - len(batches),
+        "legacy_publications": legacy_publications,
+        "planned_publications": planned_publications,
+        "publications_saved": legacy_publications - planned_publications,
+        "legacy_report_budget_bytes": len(normalized) * MAX_BYTES,
+        "planned_report_budget_bytes": len(batches) * MAX_BYTES,
+        "round_trips_saved": len(normalized) - len(batches),
+        "authority": "unchanged",
+        "scope": "unchanged",
+        "source_access": "not-authorized",
+        "external_write": "not-authorized",
     }
 
 
@@ -209,19 +322,41 @@ def authorize_next_stage(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("kind", choices=("report", "confirmation"))
-    parser.add_argument("--request-id", required=True)
+    parser.add_argument("kind", choices=("report", "confirmation", "batch-plan"))
+    parser.add_argument("--request-id")
     parser.add_argument("--next-request-id")
     args = parser.parse_args()
     text = sys.stdin.read()
     try:
-        if args.kind == "report":
+        if args.kind == "batch-plan":
+            if args.request_id is not None or args.next_request_id is not None:
+                raise ProtocolError("batch-argument-invalid")
+            try:
+                payload = json.loads(text)
+            except (UnicodeError, json.JSONDecodeError) as error:
+                raise ProtocolError("batch-input-invalid") from error
+            if not isinstance(payload, dict) or set(payload) != {"stages"}:
+                raise ProtocolError("batch-input-invalid")
+            value = plan_checkpoint_batches(payload["stages"])
+            print(
+                "CONSUMER_PROTOCOL status=batch-plan-valid "
+                f"legacy_confirmations={value['legacy_confirmations']} "
+                f"planned_confirmations={value['planned_confirmations']} "
+                f"legacy_publications={value['legacy_publications']} "
+                f"planned_publications={value['planned_publications']} "
+                "authority=unchanged scope=unchanged"
+            )
+        elif args.kind == "report":
+            if args.request_id is None:
+                raise ProtocolError("request-id-required")
             value = parse_report(text, args.request_id)
             print(
                 "CONSUMER_PROTOCOL status=report-valid "
                 f"request_id={value['request_id']} confirmation_required=yes"
             )
         else:
+            if args.request_id is None:
+                raise ProtocolError("request-id-required")
             value = parse_confirmation(text, args.request_id, args.next_request_id)
             continuation = value["continuation"]
             next_value = value.get("next_request_id", "none")
