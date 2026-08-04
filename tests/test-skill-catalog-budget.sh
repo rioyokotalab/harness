@@ -18,6 +18,10 @@ expected = {
     "onboard-external-user": ("first-time external user",),
     "onboard-mirrored-node": ("newly configured SSH alias",),
     "onboard-personal-mac": ("exactly one personal Mac",),
+    "onboard-project-repository": (
+        "repository-native producer/consumer",
+        "project-specific policy",
+    ),
     "operate-native-hpc": ("native scheduler", "matched experiments"),
     "plan-interview-execute": ("fully frozen authorized execution",),
     "reboot-recovery": (

@@ -1,0 +1,14 @@
+# PROJECT task board
+
+This is the consumer-owned execution board. Read `PRODUCER.md`, run
+`python3 tools/producer-ledger.py next-ready`, then read only the selected
+packet and its matching record. Remain idle when the selector reports idle.
+
+## Queue
+
+No consumer task is active.
+
+## Completed-task lookup
+
+Use `docs/tasks/index.tsv` for terminal history; do not load history during an
+ordinary cold start.

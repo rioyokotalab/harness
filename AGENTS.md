@@ -49,18 +49,18 @@ Multiple matches select multiple files.
 | [housekeeping-and-promotion.md](docs/agent-policy/housekeeping-and-promotion.md) | housekeeping, residue cleanup, launcher cleanup diagnosis, or promotion of reusable guidance |
 | [research.md](docs/agent-policy/research.md) | factual or literature research, research-program work, scientific/HPC experiments, performance claims, or presentations |
 | [duration.md](docs/agent-policy/duration.md) | an explicit duration, end time/date, time window, overnight run, or instruction to keep iterating |
+| [producer-consumer.md](docs/agent-policy/producer-consumer.md) | producer packets, consumer execution, parking, receipts, or checkpoint confirmations |
 
 Do not preload them. Route unknown policy-sensitive actions to the specific
 workflow or owner decision; never silently skip a gate.
 
 ## Skill routing
 
-Select the smallest exact skill set. Read each selected `SKILL.md` completely,
-then only references routed for the current phase or target. Complexity alone
-does not select a broad workflow; closer project rules win, and skills never
-become runtime dependencies. Before a skill-directed action, name the skill and
-reason in commentary; repeat this for an external action or pause. Installed skill descriptions are the trigger index; do not duplicate them here. The
-deletion and duration refinements remain mandatory.
+Select the smallest exact skill set, read its `SKILL.md` completely, then only
+routed references. Closer project rules win; skills grant no authority. Name a
+skill before its first action and again for an external action or pause.
+Installed skill descriptions are the trigger index. The deletion and duration
+refinements remain mandatory.
 
 ## Harness repository
 
@@ -72,7 +72,8 @@ deletion and duration refinements remain mandatory.
   `docs/history/`. Fetch before collaborative edits.
 - Only the portfolio producer edits `PRODUCER.md` or `docs/producer/`.
   Consumers create no IDs/goals; handle nested issues LIFO or write a blocked
-  receipt. Run `PRODUCER.md`'s consumer diff check before publication.
+  receipt. Before publication run
+  `python3 tools/producer-ledger.py check-consumer-diff --base origin/main`.
 - Resume the first unverified recorded action. Revalidate only mutable inputs
   used by that action; a failed query is unknown, not evidence of absence.
 - Keep Harness independent of the sibling `website` repository.

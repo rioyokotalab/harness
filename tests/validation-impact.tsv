@@ -38,6 +38,9 @@
 ^shared/skills/onboard-mirrored-node/(scripts|agents)/|R3|-|mirrored-node executable or client configuration
 ^shared/skills/onboard-external-user/(SKILL\.md|references/(boundary|preflight|installation|acceptance)\.md)$|R1|tests/test-onboard-external-user.sh|external-user routed contract
 ^shared/skills/onboard-external-user/(scripts|agents)/|R3|-|external-user executable or client configuration
+^shared/skills/onboard-project-repository/(SKILL\.md|references/.*\.md)$|R1|tests/test-onboard-project-repository.sh|project repository onboarding skill
+^shared/skills/onboard-project-repository/(assets|agents)/|R3|-|project repository scaffold or client configuration
+^docs/agent-policy/producer-consumer\.md$|R3|-|producer and consumer lifecycle policy
 ^shared/skills/reboot-recovery/(SKILL\.md|references/(status-discovery|recovery-start|validation-closeout)\.md)$|R1|tests/test-reboot-recovery-skill.sh|reboot recovery routed safety gates
 ^shared/skills/reboot-recovery/(scripts|agents)/|R3|-|reboot recovery executable or client configuration
 ^tests/test-reboot-recovery-skill\.sh$|R3|-|reboot recovery validator

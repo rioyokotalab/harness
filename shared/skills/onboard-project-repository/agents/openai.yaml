@@ -1,0 +1,4 @@
+interface:
+  display_name: "Onboard Project Repository"
+  short_description: "Install a repository-native producer/consumer project scaffold."
+  default_prompt: "Onboard this repository with the generic producer/consumer infrastructure while preserving project-specific policy."
