@@ -8,6 +8,6 @@ PYTHONDONTWRITEBYTECODE=1 python3 -B "$ROOT/tools/harness-ledgers.py" validate
 PYTHONDONTWRITEBYTECODE=1 python3 -B "$ROOT/tools/harness-ledgers.py" next-task \
     | grep -F 'status=idle' >/dev/null
 PYTHONDONTWRITEBYTECODE=1 python3 -B "$ROOT/tools/harness-ledgers.py" next-nightly \
-    | grep -F 'status=idle' >/dev/null
+    | grep -F 'status=selected task=Nit-001' >/dev/null
 
 printf '%s\n' 'HARNESS_LEDGER_TEST status=pass'

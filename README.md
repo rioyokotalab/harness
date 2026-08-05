@@ -39,7 +39,17 @@ explicit request to put work in the nightly ledger allocates `Nit-*`.
 Repository-local producer/consumer ledgers remain available to independently
 operated sibling projects and are coordinated from their own roots.
 
- ## Start here
+## Current operating model
+
+As of 2026-08-05, Harness directly executes ordinary `Har-*` work and is the
+only repository that starts portfolio nightlies. The current nightly queue is
+selected from `NIGHTLY.md`; ordinary deferred work remains in `TODO.md`.
+Personal, Students, Swallow, and Website retain independent repository-local
+producer/consumer ledgers with trust-equivalent agents and protected
+publication. Harness supplies shared workflows and portfolio coordination but
+does not store their private task payloads or become a runtime dependency.
+
+## Start here
 
 For an existing managed checkout:
 
