@@ -166,14 +166,85 @@ legacy_codex_live() {
         '
 }
 
+auth_probe_timeout() {
+    if [ -n "${HARNESS_TEST_AUTH_PROBE_TIMEOUT:-}" ]; then
+        [ "${HARNESS_TESTING:-}" = 1 ] || die "test probe timeout override is unsafe"
+        printf '%s' "$HARNESS_TEST_AUTH_PROBE_TIMEOUT"
+        return
+    fi
+    printf '10'
+}
+
+keychain_accessible() {
+    # securityd refuses non-GUI callers ("User interaction is not allowed"),
+    # so over plain SSH `claude auth status` reads no credential and answers
+    # logged-out on a healthy host. Only when this probe succeeds is a
+    # logged-out answer definitive. A host without the tool has no keychain
+    # to lock, so its answers are always definitive.
+    command -v security >/dev/null 2>&1 || return 0
+    security show-keychain-info >/dev/null 2>&1
+}
+
+claude_auth_via_session() {
+    # Re-ask from the GUI login session, where the launchd agent started the
+    # tmux server and the keychain is unlocked. run-shell executes outside
+    # every window: no pane or transcript is read. Prints ok or
+    # unauthenticated; fails when the probe cannot answer.
+    session_exists || return 1
+    probe_dir=$(mktemp -d "${TMPDIR:-/tmp}/harness-claude-auth.XXXXXX") ||
+        return 1
+    probe_result=
+    if $TMUX run-shell -b "\"$(claude_bin)\" auth status </dev/null >\"$probe_dir/status\" 2>/dev/null; : >\"$probe_dir/done\"" 2>/dev/null; then
+        waited=0
+        limit=$(auth_probe_timeout)
+        while [ ! -f "$probe_dir/done" ] && [ "$waited" -lt "$limit" ]; do
+            sleep 1
+            waited=$((waited + 1))
+        done
+        if [ -f "$probe_dir/done" ]; then
+            if tr -d ' \n' <"$probe_dir/status" 2>/dev/null |
+                grep -q '"loggedIn":true'; then
+                probe_result=ok
+            elif tr -d ' \n' <"$probe_dir/status" 2>/dev/null |
+                grep -q '"loggedIn":false'; then
+                probe_result=unauthenticated
+            fi
+        fi
+    fi
+    rm -f "$probe_dir/status" "$probe_dir/done"
+    rmdir "$probe_dir" 2>/dev/null || true
+    [ -n "$probe_result" ] || return 1
+    printf '%s' "$probe_result"
+}
+
+claude_auth_state=
+resolve_claude_auth() {
+    # Three-state fact resolved once per invocation: ok, unauthenticated, or
+    # unknown. A failed query is unknown, never evidence of a logout.
+    [ -z "$claude_auth_state" ] || return 0
+    binary=$(claude_bin)
+    if [ ! -x "$binary" ]; then
+        claude_auth_state=unknown
+        return 0
+    fi
+    if "$binary" auth status </dev/null 2>/dev/null | tr -d ' \n' |
+        grep -q '"loggedIn":true'; then
+        claude_auth_state=ok
+        return 0
+    fi
+    if keychain_accessible; then
+        claude_auth_state=unauthenticated
+        return 0
+    fi
+    claude_auth_state=$(claude_auth_via_session) || claude_auth_state=unknown
+}
+
 claude_ready() {
-    # A window launched without credentials exits at once, so an unauthenticated
-    # host would recreate and lose it on every tick. Treat authentication as a
-    # precondition and report it instead of looping.
-    binary=$(claude_bin) || return 1
-    [ -x "$binary" ] || return 1
-    "$binary" auth status 2>/dev/null | tr -d ' \n' |
-        grep -q '"loggedIn":true'
+    # A window launched without credentials exits at once, so a host not
+    # definitively authenticated would recreate and lose it on every tick.
+    # Treat authentication as a precondition and report it instead of looping.
+    resolve_claude_auth
+    [ "$claude_auth_state" = ok ]
 }
 
 ensure_session() {
@@ -204,7 +275,7 @@ ensure_session() {
         created="$created codex-respawn"
     fi
     if ! claude_ready; then
-        created="$created claude-deferred-unauthenticated"
+        created="$created claude-deferred-$claude_auth_state"
     elif ! $TMUX list-windows -t "=$SESSION" -F '#{window_name}' 2>/dev/null |
         grep -qx "$CLAUDE_WINDOW"; then
         $TMUX new-window -d -t "=$SESSION" -n "$CLAUDE_WINDOW" \
@@ -263,8 +334,8 @@ status() {
     claude_state=absent
     window_live "$CODEX_WINDOW" && codex_state=live
     window_live "$CLAUDE_WINDOW" && claude_state=live
-    claude_auth=ok
-    claude_ready || claude_auth=unauthenticated
+    resolve_claude_auth
+    claude_auth=$claude_auth_state
     remote=degraded
     codex_remote_control_ready && remote=ready
     printf 'MACOS_AGENT_SESSION mode=status host=%s session=present codex=%s claude=%s claude_auth=%s codex_remote_control=%s\n' \

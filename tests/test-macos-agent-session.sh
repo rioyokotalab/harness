@@ -115,6 +115,14 @@ case \$1 in
         # requested window is absent, so a probe never reports "missing".
         printf '%s\n' "\${FAKE_CLAUDE_DEAD:-0}"
         exit 0 ;;
+    run-shell)
+        # The GUI-session re-check. Model the server context by marking the
+        # command's environment; a hang models a probe that never answers.
+        [ "\${FAKE_TMUX_RUN_SHELL_HANG:-0}" = 1 ] && exit 0
+        shift
+        [ "\${1:-}" = -b ] && shift
+        FAKE_TMUX_RUN=1 sh -c "\$1"
+        exit 0 ;;
 esac
 exit 0
 SH
@@ -123,7 +131,13 @@ chmod 700 "$BIN/tmux"
 cat >"$BIN/claude" <<'SH'
 #!/bin/sh
 if [ "${1:-}" = auth ]; then
-    if [ "${FAKE_CLAUDE_LOGGED_OUT:-0}" = 1 ]; then
+    logged_out=${FAKE_CLAUDE_LOGGED_OUT:-0}
+    # Inside the tmux server context the keychain is unlocked, so the answer
+    # can differ from the direct calling context.
+    if [ "${FAKE_TMUX_RUN:-0}" = 1 ]; then
+        logged_out=${FAKE_TMUX_CLAUDE_LOGGED_OUT:-0}
+    fi
+    if [ "$logged_out" = 1 ]; then
         echo '{"loggedIn":false,"authMethod":"none"}'
     else
         echo '{"loggedIn":true,"authMethod":"claude.ai"}'
@@ -132,6 +146,15 @@ fi
 exit 0
 SH
 chmod 700 "$BIN/claude"
+
+# Deterministic keychain view: on a real Mac over SSH the host keychain is
+# locked, which would silently change which auth path the tool takes.
+cat >"$BIN/security" <<'SH'
+#!/bin/sh
+[ "${FAKE_KEYCHAIN_LOCKED:-0}" = 1 ] && exit 1
+exit 0
+SH
+chmod 700 "$BIN/security"
 
 # Deterministic process view: readiness must not depend on the host's real ps.
 cat >"$BIN/id" <<'SH'
@@ -180,6 +203,7 @@ agent() {
     HARNESS_TEST_AGENT_REPO="$TEST_ROOT/repo" \
     HARNESS_TEST_BIN="$BIN" \
     HARNESS_TEST_CLAUDE_PROJECTS="${FAKE_PROJECTS:-$TEST_ROOT/projects}" \
+    HARNESS_TEST_AUTH_PROBE_TIMEOUT=1 \
         "$HARNESS" macos-agent-session "$@"
 }
 
@@ -293,6 +317,46 @@ FAKE_CLAUDE_LOGGED_OUT=1 agent --host office --status >"$TEST_ROOT/noauth-status
 grep -Fq 'claude_auth=unauthenticated' "$TEST_ROOT/noauth-status.out" ||
     fail "status did not report the unauthenticated reason"
 printf 'session\ncodex\nclaude\n' >"$STATE"
+
+# --- a locked keychain must not turn a logged-in host into a logout -------
+# Direct context answers logged-out only because securityd refused it; the
+# GUI-session re-check is definitive and must both report ok and not defer.
+printf 'session\ncodex\n' >"$STATE"
+: >"$TEST_ROOT/tmux-calls"
+FAKE_KEYCHAIN_LOCKED=1 FAKE_CLAUDE_LOGGED_OUT=1 \
+    agent --host office --run-once >"$TEST_ROOT/locked.out" ||
+    fail "locked-keychain run failed"
+grep -Fq 'claude-deferred' "$TEST_ROOT/locked.out" &&
+    fail "a locked keychain deferred a logged-in host"
+grep -Fq 'bypassPermissions' "$TEST_ROOT/tmux-calls" ||
+    fail "the claude window was not created behind a locked keychain"
+printf 'session\ncodex\nclaude\n' >"$STATE"
+FAKE_KEYCHAIN_LOCKED=1 FAKE_CLAUDE_LOGGED_OUT=1 \
+    agent --host office --status >"$TEST_ROOT/locked-status.out" 2>&1 || true
+grep -Fq 'claude_auth=ok' "$TEST_ROOT/locked-status.out" ||
+    fail "status behind a locked keychain did not trust the GUI-context answer"
+
+# --- a GUI-context logout is definitive even behind a locked keychain -----
+FAKE_KEYCHAIN_LOCKED=1 FAKE_CLAUDE_LOGGED_OUT=1 FAKE_TMUX_CLAUDE_LOGGED_OUT=1 \
+    agent --host office --status >"$TEST_ROOT/locked-out-status.out" 2>&1 || true
+grep -Fq 'claude_auth=unauthenticated' "$TEST_ROOT/locked-out-status.out" ||
+    fail "a definitive GUI-context logout was not reported"
+
+# --- an unanswerable probe is unknown, never unauthenticated --------------
+printf 'session\ncodex\n' >"$STATE"
+: >"$TEST_ROOT/tmux-calls"
+FAKE_KEYCHAIN_LOCKED=1 FAKE_CLAUDE_LOGGED_OUT=1 FAKE_TMUX_RUN_SHELL_HANG=1 \
+    agent --host office --run-once >"$TEST_ROOT/unknown.out" ||
+    fail "unknown-auth run failed"
+grep -Fq 'claude-deferred-unknown' "$TEST_ROOT/unknown.out" ||
+    fail "an unanswerable probe did not defer as unknown"
+grep -Fq 'bypassPermissions' "$TEST_ROOT/tmux-calls" &&
+    fail "a claude window was launched on an unknown auth state"
+printf 'session\ncodex\nclaude\n' >"$STATE"
+FAKE_KEYCHAIN_LOCKED=1 FAKE_CLAUDE_LOGGED_OUT=1 FAKE_TMUX_RUN_SHELL_HANG=1 \
+    agent --host office --status >"$TEST_ROOT/unknown-status.out" 2>&1 || true
+grep -Fq 'claude_auth=unknown' "$TEST_ROOT/unknown-status.out" ||
+    fail "an unanswerable probe was not reported as unknown"
 
 # --- a command that merely mentions the supervisor must not defer --------
 printf 'session\nclaude\n' >"$STATE"
