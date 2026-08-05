@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "repository": "harness",
+  "prefix": "Nit",
+  "next_id": 1,
+  "max_active_record_words": 900
+}

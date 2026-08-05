@@ -1,26 +1,27 @@
 task	state	summary	source
-Har-396	complete	Equalize producer and consumer permissions	docs/tasks/Har-396.md;docs/plans/har396-equal-agent-permissions.md;docs/consumer/receipts/Har-396.md
-Har-395	complete	Retire rejected Personal recovery controls	docs/tasks/Har-395.md;docs/consumer/receipts/Har-395.md
-Har-394	complete	Recover the Personal Codex pane	docs/tasks/Har-394.md;docs/consumer/receipts/Har-394.md
-Har-393	complete	Harden local agent communication reliability	docs/tasks/Har-393.md;docs/audits/har393-student-mentoring-overnight/session.md;docs/consumer/receipts/Har-393.md
-Har-392	complete	Authorize task-relevant producer pane inspection	docs/tasks/Har-392.md;docs/consumer/receipts/Har-392.md
-Har-391	complete	Reduce producer-consumer confirmation overhead	docs/tasks/Har-391.md;docs/audits/har391-confirmation-efficiency.json;docs/consumer/receipts/Har-391.md
+Har-397	complete	Separate nightly work and retire the Harness self-consumer model	docs/tasks/Har-397.md;docs/plans/har397-nightly-ledger.md
+Har-396	complete	Equalize producer and consumer permissions	docs/tasks/Har-396.md;docs/plans/har396-equal-agent-permissions.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-396.md
+Har-395	complete	Retire rejected Personal recovery controls	docs/tasks/Har-395.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-395.md
+Har-394	complete	Recover the Personal Codex pane	docs/tasks/Har-394.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-394.md
+Har-393	complete	Harden local agent communication reliability	docs/tasks/Har-393.md;docs/audits/har393-student-mentoring-overnight/session.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-393.md
+Har-392	complete	Authorize task-relevant producer pane inspection	docs/tasks/Har-392.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-392.md
+Har-391	complete	Reduce producer-consumer confirmation overhead	docs/tasks/Har-391.md;docs/audits/har391-confirmation-efficiency.json;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-391.md
 Har-390	complete	Unify Codex and Claude producer-consumer communication	docs/tasks/Har-390.md
-Har-389	complete	Converge reusable producer and consumer protocol	docs/tasks/Har-389.md;docs/consumer/receipts/Har-389.md
-Har-388	complete	Harden consumer autonomy and task efficiency	docs/tasks/Har-388.md;docs/plans/har388-consumer-autonomy.md;docs/audits/har388-consumer-autonomy/time-slices.md;docs/consumer/receipts/Har-388.md
-Har-387	complete	Harden immutable packet and current disposition semantics	docs/tasks/Har-387.md;docs/consumer/receipts/Har-387.md
-Har-386	complete	Make Personal managed clients repository-native	docs/tasks/Har-386.md;docs/consumer/receipts/Har-386.md
-Har-385	complete	Retire all non-main portfolio branches	docs/tasks/Har-385.md;docs/consumer/receipts/Har-385.md
-Har-384	complete	Relocate Students and Swallow roots under projects	docs/tasks/Har-384.md;docs/consumer/receipts/Har-384.md
-Har-383	complete	Build the synthetic productive-idle selector	docs/tasks/Har-383.md;docs/audits/har383-productive-idle-pilot/scenario-results.tsv;docs/audits/har383-productive-idle-pilot/acceptance-results.tsv;docs/consumer/receipts/Har-383.md
-Har-382	complete	Migrate archive ownership to immutable repository aliases	docs/tasks/Har-382.md;docs/consumer/receipts/Har-382.md
-Har-381	complete	Converge producer lifecycle and close portfolio residue	docs/tasks/Har-381.md;docs/plans/har381-producer-lifecycle-closeout.md;docs/audits/har381-producer-lifecycle-closeout/time-slices.md;docs/consumer/receipts/Har-381.md
+Har-389	complete	Converge reusable producer and consumer protocol	docs/tasks/Har-389.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-389.md
+Har-388	complete	Harden consumer autonomy and task efficiency	docs/tasks/Har-388.md;docs/plans/har388-consumer-autonomy.md;docs/audits/har388-consumer-autonomy/time-slices.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-388.md
+Har-387	complete	Harden immutable packet and current disposition semantics	docs/tasks/Har-387.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-387.md
+Har-386	complete	Make Personal managed clients repository-native	docs/tasks/Har-386.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-386.md
+Har-385	complete	Retire all non-main portfolio branches	docs/tasks/Har-385.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-385.md
+Har-384	complete	Relocate Students and Swallow roots under projects	docs/tasks/Har-384.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-384.md
+Har-383	complete	Build the synthetic productive-idle selector	docs/tasks/Har-383.md;docs/audits/har383-productive-idle-pilot/scenario-results.tsv;docs/audits/har383-productive-idle-pilot/acceptance-results.tsv;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-383.md
+Har-382	complete	Migrate archive ownership to immutable repository aliases	docs/tasks/Har-382.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-382.md
+Har-381	complete	Converge producer lifecycle and close portfolio residue	docs/tasks/Har-381.md;docs/plans/har381-producer-lifecycle-closeout.md;docs/audits/har381-producer-lifecycle-closeout/time-slices.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-381.md
 Har-380	complete	Document the producer and consumer repository layout	docs/tasks/Har-380.md
-Har-379	complete	Aist-driven T-293 self-healing validation with Claude co-pilot	docs/tasks/Har-379.md;docs/plans/har379-t293-aist-validation.md;docs/audits/har379-t293-aist-validation/time-slices.md;docs/consumer/receipts/Har-379.md
+Har-379	complete	Aist-driven T-293 self-healing validation with Claude co-pilot	docs/tasks/Har-379.md;docs/plans/har379-t293-aist-validation.md;docs/audits/har379-t293-aist-validation/time-slices.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-379.md
 Har-378	complete	Install repository-local producer and asynchronous consumer ledgers	docs/tasks/Har-378.md;docs/plans/har378-producer-consumer-ledgers.md
 Har-377	complete	Admit the independent Website root in fleet agent sentinels	docs/tasks/Har-377.md
 Har-376	complete	Adopt repository-specific task namespaces and retire the co alias	docs/tasks/Har-376.md
-Har-371	complete	Migrate legacy managed primary branches at safe session boundaries	docs/tasks/Har-371.md;docs/consumer/receipts/Har-371.md
+Har-371	complete	Migrate legacy managed primary branches at safe session boundaries	docs/tasks/Har-371.md;docs/history/harness-producer-consumer-ledger-2026-08-05/consumer/receipts/Har-371.md
 Har-328	time-gated	Deferred Local reboot during Institute outage	TODO.md;docs/tasks/Har-328.md;docs/history/TODO-full-archive-2026-07-30.md
 Har-303	blocked	NFS latency requires trusted server access	TODO.md;docs/tasks/Har-303.md;docs/audits/t303-nfs-observation-2026-07-24.md
 Har-196	time-gated	Backup lifecycle weekly successors	TODO.md;docs/tasks/Har-196.md;docs/backup-lifecycle-phase2.md

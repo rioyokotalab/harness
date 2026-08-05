@@ -50,7 +50,7 @@ grep -Fx '@AGENTS.md' "$ROOT/CLAUDE.md" >/dev/null ||
     fail "Claude project instructions do not import AGENTS.md"
 [ ! -e "$ROOT/.claude/CLAUDE.md" ] ||
     fail "redundant project .claude/CLAUDE.md remains"
-grep -F 'Git, `PRODUCER.md`, and `TODO.md` are durable truth' "$ROOT/AGENTS.md" \
+grep -F 'Git and `TODO.md` are the ordinary durable truth' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project takeover source of truth"
 grep -F 'chat and client memory' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project cross-client handoff policy"

@@ -10,6 +10,11 @@ durable work and whose consumers execute selected packets. Preserve existing wor
 and keep project-specific privacy, source, compute, deployment, and authority
 rules local.
 
+Do not install this protocol into Harness itself. Harness uses direct `Har-*`
+and `Nit-*` ledgers; this skill is only for sibling or future project roots.
+Any target-local `docs/producer/NIGHTLY.md` is portfolio guidance read by
+Harness, not authority for a target consumer to start a nightly run.
+
 ## Route
 
 1. Read the target root policy and Git state. Confirm its identity, visibility,

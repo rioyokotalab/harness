@@ -34,7 +34,7 @@ cases = [
     (
         ["TODO.md", "docs/tasks/index.tsv"],
         "R0",
-        ["tests/test-task-ledger-routing.sh"],
+        ["tests/test-harness-ledgers.sh", "tests/test-task-ledger-routing.sh"],
         True,
     ),
     (
@@ -56,40 +56,15 @@ cases = [
         True,
     ),
     (
-        ["PRODUCER.md"],
+        ["NIGHTLY.md", "docs/nightly/config.json", "docs/nightly/index.tsv"],
         "R1",
-        [
-            "tests/test-producer-role.sh",
-            "tests/test-task-ledger-routing.sh",
-        ],
+        ["tests/test-harness-ledgers.sh"],
         True,
     ),
     (
-        [
-            "docs/producer/config.json",
-            "docs/producer/index.tsv",
-            "docs/producer/tasks/Har-389.md",
-        ],
+        ["docs/nightly/tasks/Nit-001.md"],
         "R1",
-        [
-            "tests/test-producer-role.sh",
-            "tests/test-task-ledger-routing.sh",
-        ],
-        True,
-    ),
-    (
-        ["docs/producer/NIGHTLY.md"],
-        "R1",
-        ["tests/test-producer-role.sh"],
-        True,
-    ),
-    (
-        ["docs/consumer/receipts/Har-389.md"],
-        "R1",
-        [
-            "tests/test-producer-role.sh",
-            "tests/test-task-ledger-routing.sh",
-        ],
+        ["tests/test-harness-ledgers.sh"],
         True,
     ),
     (
@@ -535,7 +510,10 @@ if not __debug__:
 
 docs, skill, ordinary, unknown = (json.loads(value) for value in sys.argv[1:])
 assert docs["tier"] == "R0"
-assert docs["suites"] == ["tests/test-task-ledger-routing.sh"]
+assert docs["suites"] == [
+    "tests/test-harness-ledgers.sh",
+    "tests/test-task-ledger-routing.sh",
+]
 assert skill["tier"] == "R1"
 assert skill["suites"] == [
     "tests/test-skill-context-budgets.sh",
