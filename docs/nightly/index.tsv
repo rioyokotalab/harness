@@ -1,1 +1,2 @@
 task	state	priority	created	record	summary
+Nit-001	ready	10	2026-08-05	docs/nightly/tasks/Nit-001.md	Evaluate public agent-instruction collections and reduce Harness execution overhead
