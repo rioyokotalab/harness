@@ -4,8 +4,7 @@ tests/test-bash-startup-unify.sh|canonical Bash startup transaction
 tests/test-focused-runner.sh|parallel focused-suite runner
 tests/test-validation-router.sh|risk-tier validation selector
 tests/test-task-ledger-routing.sh|compact active-task ledger routing
-tests/test-producer-role.sh|producer and consumer coordination contract
-tests/test-productive-idle-pilot.sh|synthetic productive-idle selector
+tests/test-harness-ledgers.sh|independent ordinary and nightly ledger contract
 tests/test-agent-policy-routing.sh|conditional agent-policy routing
 tests/test-context-routing-benchmark.sh|mandatory context benchmark
 tests/test-skill-context-budgets.sh|selected skill context budgets

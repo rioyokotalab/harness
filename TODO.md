@@ -1,10 +1,11 @@
 # Personal harness task board
 
-After `PRODUCER.md`, run `python3 tools/producer-ledger.py next-ready`, then
-read this board, the matching record, and only routed policy. Idle means idle.
+Run `python3 tools/harness-ledgers.py next-task`, then read this board, the
+matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
+Next free ID: Har-398.
 
 ## Resume contract
 

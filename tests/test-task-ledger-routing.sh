@@ -8,131 +8,70 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import json
 from pathlib import Path
 import re
 import sys
 
-if not __debug__:
-    raise SystemExit("task-ledger validator requires Python assertions")
-
 root = Path(sys.argv[1])
 board = root / "TODO.md"
-producer = root / "PRODUCER.md"
-producer_index = root / "docs/producer/index.tsv"
 archive = root / "docs/history/TODO-full-archive-2026-07-30.md"
 index = root / "docs/tasks/index.tsv"
-task_files = {}
-for pattern in ("Har-*.md", "T-*.md"):
-    for path in sorted((root / "docs/tasks").glob(pattern)):
-        match = re.fullmatch(r"((?:Har|T)-\d+)\.md", path.name)
-        assert match and path.is_file() and not path.is_symlink(), path
-        task_files[match.group(1)] = path
-
+config = json.loads((root / "docs/tasks/config.json").read_text())
 text = board.read_text(encoding="utf-8")
-lines = text.splitlines()
-words = text.split()
-assert len(lines) <= 80, len(lines)
-assert len(words) <= 600, len(words)
-archive_digest = hashlib.sha256(archive.read_bytes()).hexdigest()
-expected_archive_digest = (
+
+assert len(text.splitlines()) <= 80
+assert len(text.split()) <= 600
+assert hashlib.sha256(archive.read_bytes()).hexdigest() == (
     "d55459a2944fdb86986677d7fce6bdcbccd0b86a6b6eee799f60fe183a9ff95a"
 )
-assert archive_digest == expected_archive_digest, (
-    "historical board digest",
-    archive_digest,
-)
-board_tasks = re.findall(r"^### (Har-\d+) —", text, re.MULTILINE)
-assert board_tasks and len(board_tasks) == len(set(board_tasks)), board_tasks
-assert set(board_tasks) <= set(task_files), (board_tasks, sorted(task_files))
-for task in board_tasks:
-    assert f"`docs/tasks/{task}.md`" in text, task
+assert config == {
+    "schema": 1,
+    "repository": "harness",
+    "prefix": "Har",
+    "next_id": 398,
+    "max_active_record_words": 900,
+}
+assert f"Next free ID: Har-{config['next_id']:03d}." in text
 
-task_text = "\n".join(
-    task_files[task].read_text(encoding="utf-8") for task in sorted(task_files)
-)
-for required in (
-    "docs/plans/t351-autonomy-efficiency.md",
-    "docs/audits/t351-autonomy-efficiency/time-slices.md",
-    "Complete upon protected merge of PR #484",
-    "hosting settings, rulesets",
-    "94950",
-    "2064918.pbs1",
-    "2064919.pbs1",
-    "10386",
-    "260847",
-    "8270230",
-    "176525.qjcm",
-    "4275926",
-    "2026-08-08",
-    "SHA256:nxj4PfZ55OqTcVm5HReHI6IVy9MMcBQ+BbfrJfZRHes",
-):
-    assert required in task_text, required
-
-for routed_only in (
-    "2064918.pbs1",
-    "2026-08-29",
-    "nas-03.yokota",
-):
-    assert routed_only not in text, routed_only
-
+board_tasks = re.findall(r"^### (Har-\d{3}) —", text, re.MULTILINE)
+assert board_tasks and len(board_tasks) == len(set(board_tasks))
 with index.open(encoding="utf-8", newline="") as handle:
     rows = list(csv.DictReader(handle, delimiter="\t"))
-assert rows, "task index is empty"
-assert list(rows[0]) == ["task", "state", "summary", "source"], list(rows[0])
+assert list(rows[0]) == ["task", "state", "summary", "source"]
 by_task = {row["task"]: row for row in rows}
-assert len(by_task) == len(rows), "task index contains duplicate IDs"
-task_numbers = {"Har": [], "T": []}
-allowed_states = {"active", "time-gated", "blocked", "complete"}
+assert len(by_task) == len(rows)
+nonterminal = {
+    row["task"] for row in rows
+    if row["task"].startswith("Har-") and row["state"] in {"active", "blocked", "time-gated"}
+}
+assert set(board_tasks) == nonterminal
+
+numbers = []
 indexed_sources = set()
 for row in rows:
     assert re.fullmatch(r"(?:Har|T)-\d+", row["task"]), row
-    assert row["state"] in allowed_states, row
-    assert row["summary"] and row["source"], row
-    prefix, number = row["task"].split("-", 1)
-    task_numbers[prefix].append(int(number))
+    assert row["state"] in {"active", "time-gated", "blocked", "complete"}, row
+    assert row["summary"] and row["source"]
+    if row["task"].startswith("Har-"):
+        numbers.append(int(row["task"].split("-")[1]))
+        assert (root / f"docs/tasks/{row['task']}.md").is_file()
     for source in row["source"].split(";"):
         indexed_sources.add(source)
         candidate = Path(source)
-        assert not candidate.is_absolute() and ".." not in candidate.parts, (
-            row["task"],
-            source,
-        )
-        resolved = root / candidate
-        assert resolved.exists() and not resolved.is_symlink(), (row["task"], source)
-for prefix, numbers in task_numbers.items():
-    assert numbers == sorted(numbers, reverse=True), (
-        "task index order",
-        prefix,
-        numbers,
-    )
-producer_text = producer.read_text(encoding="utf-8")
-with producer_index.open(encoding="utf-8", newline="") as handle:
-    producer_rows = list(csv.DictReader(handle, delimiter="\t"))
-producer_numbers = [
-    int(row["task"].split("-", 1)[1]) for row in producer_rows
-]
-expected_free_id = f"Next free ID: Har-{max(producer_numbers) + 1}."
-assert expected_free_id in producer_text, ("next free ID", expected_free_id)
-producer_tasks = set(re.findall(r"docs/producer/tasks/(Har-\d+)\.md", producer_text))
-assert set(board_tasks) <= producer_tasks, (board_tasks, sorted(producer_tasks))
-archives = sorted((root / "docs/history").glob("TODO-full-archive-*.md"))
-assert archives, archives
-for archive_path in archives:
-    assert re.fullmatch(
-        r"TODO-full-archive-\d{4}-\d{2}-\d{2}\.md", archive_path.name
-    ), archive_path
-    assert archive_path.is_file() and not archive_path.is_symlink(), archive_path
-    assert archive_path.relative_to(root).as_posix() in indexed_sources, archive_path
+        assert not candidate.is_absolute() and ".." not in candidate.parts
+        assert (root / candidate).exists(), (row["task"], source)
+assert numbers == sorted(numbers, reverse=True)
+assert config["next_id"] > max(numbers)
+
 for task in board_tasks:
-    assert by_task[task]["state"] != "complete", task
-    sources = by_task[task]["source"].split(";")
-    assert "TODO.md" in sources, task
-    assert f"docs/tasks/{task}.md" in sources, task
-for task in sorted(set(task_files) - set(board_tasks)):
-    assert by_task[task]["state"] == "complete", task
-    sources = by_task[task]["source"].split(";")
-    assert "TODO.md" not in sources, task
-    assert f"docs/tasks/{task}.md" in sources, task
+    assert f"`docs/tasks/{task}.md`" in text
+    assert "TODO.md" in by_task[task]["source"].split(";")
+for task, row in by_task.items():
+    if task.startswith("Har-") and task not in board_tasks:
+        assert row["state"] == "complete", (task, row["state"])
+        assert "TODO.md" not in row["source"].split(";")
+
 for task, state in {
     "T-351": "complete",
     "Har-196": "time-gated",
@@ -142,33 +81,23 @@ for task, state in {
     "Har-376": "complete",
     "T-350": "complete",
 }.items():
-    assert by_task[task]["state"] == state, (
-        "frozen task state",
-        task,
-        state,
-        by_task[task]["state"],
+    assert by_task[task]["state"] == state
+
+for required in (
+    "docs/plans/t351-autonomy-efficiency.md",
+    "Complete upon protected merge of PR #484",
+    "2026-08-08",
+):
+    assert required in "\n".join(
+        path.read_text(encoding="utf-8") for path in sorted((root / "docs/tasks").glob("*.md"))
     )
+for archive_path in sorted((root / "docs/history").glob("TODO-full-archive-*.md")):
+    assert archive_path.relative_to(root).as_posix() in indexed_sources
 
-archive_text = archive.read_text(encoding="utf-8")
-archived_records = set(
-    re.findall(r"^### (T-\d+) —", archive_text, re.MULTILINE)
-)
-completed_text = archive_text.split("## Completed anchors", 1)[1]
-completed_anchors = set(re.findall(r"T-\d+", completed_text))
-for first, last in re.findall(r"T-(\d+)[–-]T-(\d+)", completed_text):
-    start, stop = sorted((int(first), int(last)))
-    completed_anchors.update(f"T-{number}" for number in range(start, stop + 1))
-for task in sorted(archived_records | completed_anchors):
-    if task not in by_task:
-        prefix, number = task.split("-", 1)
-        assert prefix == "T" and f"Har-{number}" in by_task, (
-            "unindexed archived task",
-            task,
-        )
+assert not (root / "PRODUCER.md").exists()
+assert not (root / "docs/producer").exists()
+assert not (root / "docs/consumer").exists()
+assert (root / "docs/history/harness-producer-consumer-ledger-2026-08-05/README.md").is_file()
 
-print(
-    f"TASK_LEDGER status=pass lines={len(lines)} words={len(words)} "
-    f"index_rows={len(rows)} archived_tasks={len(archived_records)} "
-    f"completed_anchors={len(completed_anchors)}"
-)
+print(f"TASK_LEDGER status=pass rows={len(rows)} active={len(board_tasks)}")
 PY

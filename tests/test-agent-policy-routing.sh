@@ -10,7 +10,7 @@ FLEET=$ROOT/docs/agent-policy/fleet.md
 HOUSEKEEPING=$ROOT/docs/agent-policy/housekeeping-and-promotion.md
 RESEARCH=$ROOT/docs/agent-policy/research.md
 DURATION=$ROOT/docs/agent-policy/duration.md
-PRODUCER_CONSUMER=$ROOT/docs/agent-policy/producer-consumer.md
+PORTFOLIO=$ROOT/docs/agent-policy/portfolio-coordination.md
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 words() { wc -w <"$1" | tr -d ' '; }
@@ -29,7 +29,7 @@ assert_contains() {
 }
 
 for path in "$AGENTS" "$GIT_POLICY" "$EXTERNAL" "$CODEX" "$FLEET" \
-    "$HOUSEKEEPING" "$RESEARCH" "$DURATION" "$PRODUCER_CONSUMER"; do
+    "$HOUSEKEEPING" "$RESEARCH" "$DURATION" "$PORTFOLIO"; do
     [ -f "$path" ] && [ ! -L "$path" ] ||
         fail "missing regular policy file: $path"
 done
@@ -42,7 +42,7 @@ fleet_words=$(words "$FLEET")
 housekeeping_words=$(words "$HOUSEKEEPING")
 research_words=$(words "$RESEARCH")
 duration_words=$(words "$DURATION")
-producer_consumer_words=$(words "$PRODUCER_CONSUMER")
+portfolio_words=$(words "$PORTFOLIO")
 
 assert_max "$root_words" 760 'always-read policy'
 assert_max "$git_words" 255 'repository Git policy'
@@ -52,7 +52,7 @@ assert_max "$fleet_words" 300 'fleet policy'
 assert_max "$housekeeping_words" 265 'housekeeping/promotion policy'
 assert_max "$research_words" 85 'research policy'
 assert_max "$duration_words" 85 'duration policy'
-assert_max "$producer_consumer_words" 180 'producer/consumer policy'
+assert_max "$portfolio_words" 180 'portfolio coordination policy'
 assert_max "$((root_words + git_words))" 1015 'Git selected route'
 assert_max "$((root_words + external_words))" 940 \
     'external-operation selected route'
@@ -67,7 +67,7 @@ assert_max "$((root_words + research_words))" 840 'research selected route'
 assert_max "$((root_words + duration_words))" 850 'duration selected route'
 
 for route in repository-git external-operations managed-codex fleet \
-    housekeeping-and-promotion research duration producer-consumer; do
+    housekeeping-and-promotion research duration portfolio-coordination; do
     assert_contains "[$route.md](docs/agent-policy/$route.md)" "$AGENTS" \
         "missing policy route: $route"
 done
@@ -91,12 +91,16 @@ assert_contains 'safety, lifecycle, cleanup,' "$AGENTS" \
     'full validation escalation'
 assert_contains 'not merely because a session resumed' "$AGENTS" \
     'unchanged validation reuse'
-assert_contains 'Git, `PRODUCER.md`, and `TODO.md` are durable truth' "$AGENTS" \
+assert_contains 'Git and `TODO.md` are the ordinary durable truth' "$AGENTS" \
     'durable source of truth'
 assert_contains 'chat and client memory' "$AGENTS" \
     'cross-client durable handoff boundary'
-assert_contains 'tools/producer-ledger.py next-ready' "$AGENTS" \
+assert_contains 'tools/harness-ledgers.py next-task' "$AGENTS" \
     'selected active-task route'
+assert_contains 'tools/harness-ledgers.py next-nightly' "$AGENTS" \
+    'selected nightly-task route'
+assert_contains 'has no Harness-local producer' "$AGENTS" \
+    'Harness self-consumer retirement'
 assert_contains 'never expand it with task chronology' "$AGENTS" \
     'compact board handoff gate'
 assert_contains 'never preload' "$AGENTS" 'archive selective-read gate'
@@ -145,12 +149,12 @@ if grep -F 'codex-claude-cowork' "$DURATION" >/dev/null; then
 fi
 assert_contains 'max(300, 50 * ceil(requested hours))' "$DURATION" \
     'duration summary floor'
-assert_contains 'safe work item' "$PRODUCER_CONSUMER" \
-    'safe-work-first producer route'
-assert_contains 'create no terminal receipt' "$PRODUCER_CONSUMER" \
-    'reversible parking receipt boundary'
-assert_contains 'tools/consumer_validation.py --describe' "$PRODUCER_CONSUMER" \
-    'proportional consumer validation route'
+assert_contains 'coordination defaults, not' "$PORTFOLIO" \
+    'sibling role coordination boundary'
+assert_contains 'Messages are optional transport' "$PORTFOLIO" \
+    'asynchronous durable-state route'
+assert_contains 'private findings stay in their' "$PORTFOLIO" \
+    'portfolio privacy boundary'
 assert_contains 'saved-thread or unsafe-tail recovery' "$AGENTS" \
     'exact managed recovery selector'
 assert_contains 'fleet-health or maintenance checks' "$AGENTS" \
@@ -171,4 +175,4 @@ grep -Fx '@AGENTS.md' "$ROOT/CLAUDE.md" >/dev/null ||
     fail 'Claude does not import the policy router'
 
 printf '%s\n' \
-    "AGENT_POLICY_ROUTING status=pass root_words=$root_words git=$git_words external=$external_words codex=$codex_words fleet=$fleet_words housekeeping=$housekeeping_words research=$research_words duration=$duration_words producer_consumer=$producer_consumer_words"
+    "AGENT_POLICY_ROUTING status=pass root_words=$root_words git=$git_words external=$external_words codex=$codex_words fleet=$fleet_words housekeeping=$housekeeping_words research=$research_words duration=$duration_words portfolio=$portfolio_words"

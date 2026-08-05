@@ -13,31 +13,31 @@ not depend on a sibling checkout.
 ```text
 repository/
 ├── AGENTS.md                     # Cold-start instructions
-├── PRODUCER.md                   # Producer-owned queue and next free task ID
-├── TODO.md                       # Consumer-owned execution board
+├── TODO.md                       # Ordinary Har-* active board
+├── NIGHTLY.md                    # Separate Nit-* nightly queue and procedure
 │
 ├── docs/
-│   ├── producer/                 # Producer-only writes
-│   │   ├── config.json           # Repository name, prefix, privacy, size limits
-│   │   ├── assignment.tsv        # Current consumer assignment
-│   │   ├── index.tsv             # All producer-created task dispositions
-│   │   ├── NIGHTLY.md            # Owner-started nightly procedure
+│   ├── tasks/                    # Ordinary direct-execution ledger
+│   │   ├── config.json           # Har prefix, next ID, record bound
+│   │   ├── index.tsv             # Ordinary task dispositions and lookup
+│   │   └── Har-NNN.md            # Detailed execution state
+│   ├── nightly/                  # Nightly-only direct-execution ledger
+│   │   ├── config.json           # Nit prefix, next ID, record bound
+│   │   ├── index.tsv             # Nightly task dispositions and lookup
 │   │   └── tasks/
-│   │       └── <ID>.md           # Immutable task packets
-│   │
-│   ├── tasks/                    # Consumer-owned execution records
-│   │   ├── index.tsv             # Historical/completed-task lookup
-│   │   └── <ID>.md               # Detailed execution state
-│   │
-│   ├── consumer/
-│   │   └── receipts/
-│   │       └── <ID>.md           # Completion or blocked receipts
+│   │       └── Nit-NNN.md         # Detailed nightly execution state
 │   │
 │   └── history/                  # Archived historical boards and chronology
 │
 └── tools/
-    └── producer-ledger.py        # Schema and writer-boundary validator
+    └── harness-ledgers.py        # Har/Nit namespace and schema validator
 ```
+
+Harness executes both ledgers directly; it is not its own producer/consumer
+pair. Ordinary work uses `Har-*`. Only an owner-started nightly run or an
+explicit request to put work in the nightly ledger allocates `Nit-*`.
+Repository-local producer/consumer ledgers remain available to independently
+operated sibling projects and are coordinated from their own roots.
 
  ## Start here
 
@@ -67,11 +67,12 @@ preserves every credential and runtime-state file, and records rollback
 preimages. It never installs or authorizes a plugin, marketplace, MCP server,
 connector, or credential.
 
-The producer queue lives in [PRODUCER.md](PRODUCER.md); consumers then use
-[TODO.md](TODO.md) and the matching execution record. Completed command-level
-evidence lives in Git history and [docs/audits/](docs/audits/). A cold-started
-agent reads the root `AGENTS.md` or `CLAUDE.md`, the repository-native selected producer packet,
-the consumer board, and only the matching record. It reads the canonical
+Ordinary work lives in [TODO.md](TODO.md); nightly work lives separately in
+[NIGHTLY.md](NIGHTLY.md). Both route to compact matching execution records.
+Completed command-level evidence lives in Git history and
+[docs/audits/](docs/audits/). A cold-started agent reads the root `AGENTS.md`
+or `CLAUDE.md`, selects the appropriate direct ledger, and reads only the
+matching record. It reads the canonical
 [fleet inventory](docs/fleet-inventory.md) only for fleet or host work.
 
 For a new account that does not share the owner's hidden files, credentials,
@@ -104,9 +105,10 @@ requiring an active controller session. See
 
 ### Resume work safely
 
-Both clients reconstruct unfinished work from Git, [PRODUCER.md](PRODUCER.md),
-[TODO.md](TODO.md), and the selected task records—not conversation history or
-client-local memory:
+Both clients reconstruct unfinished ordinary work from Git, [TODO.md](TODO.md),
+and the selected `Har-*` record—not conversation history or client-local
+memory. They read [NIGHTLY.md](NIGHTLY.md) only for an owner-started nightly or
+an explicit nightly-ledger request:
 
 ```bash
 cd "$HOME/harness"
