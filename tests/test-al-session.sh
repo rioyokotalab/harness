@@ -637,6 +637,9 @@ auth_status=$(run_harness "$auth_home" --status)
 [ "$auth_status" = \
     'AL_SESSION mode=status target=absent ownership=managed jump=ready action=renewal-required' ] ||
     fail "terminal authentication status"
+# While authentication still fails, an explicit start must not restart and
+# must preserve the halted unit and receipt as evidence.
+printf '%s\n' auth >"$TEST_ROOT/ssh-mode"
 if run_harness "$auth_home" --start >"$TEST_ROOT/auth-restart.out" 2>&1; then
     fail "terminal authentication failure restarted"
 fi
@@ -644,6 +647,30 @@ grep -F -x \
     'AL_SESSION mode=start target=absent ownership=managed jump=ready action=renewal-required' \
     "$TEST_ROOT/auth-restart.out" >/dev/null ||
     fail "terminal authentication start classification"
+[ -f "$auth_home/.ssh/fake-unit" ] &&
+    [ -f "$auth_home/.ssh/.harness-al-session.state" ] ||
+    fail "failed start discarded the halted generation's evidence"
+still_required=$(run_harness "$auth_home" --status)
+[ "$still_required" = \
+    'AL_SESSION mode=status target=absent ownership=managed jump=ready action=renewal-required' ] ||
+    fail "failed renewal start changed the reported state"
+
+# After owner renewal the same explicit start is the designed recovery: the
+# fresh probe succeeds, the halted generation and receipt are retired, and a
+# new marked unit is created.
+printf '%s\n' success >"$TEST_ROOT/ssh-mode"
+old_marker=$(sed -n 's/^marker=//p' "$auth_home/.ssh/.harness-al-session.state")
+renewed=$(run_harness "$auth_home" --start)
+[ "$renewed" = \
+    'AL_SESSION mode=start target=ready ownership=managed jump=ready action=created' ] ||
+    fail "renewed start did not recover the managed session"
+new_marker=$(sed -n 's/^marker=//p' "$auth_home/.ssh/.harness-al-session.state")
+[ -n "$new_marker" ] && [ "$new_marker" != "$old_marker" ] ||
+    fail "renewed start did not publish a fresh marked generation"
+renewed_status=$(run_harness "$auth_home" --status)
+[ "$renewed_status" = \
+    'AL_SESSION mode=status target=ready ownership=managed jump=ready action=none' ] ||
+    fail "renewed session is not ready and managed"
 run_harness "$auth_home" --stop >/dev/null
 
 permanent_home=$(new_home terminal-permanent)
