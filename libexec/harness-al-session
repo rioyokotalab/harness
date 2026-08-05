@@ -435,10 +435,15 @@ if [ "$target_state" = recovering ]; then
         "$jump"
     exit 0
 fi
+renew_managed=no
 if [ "$ownership" = managed ]; then
-    printf 'AL_SESSION mode=start target=absent ownership=managed jump=%s action=%s\n' \
-        "$jump" "$managed_action"
-    exit 1
+    # A receipt-matched marked unit halted on a terminal classification. An
+    # explicit start is the designed owner recovery after certificate
+    # renewal: probe fresh authentication first, and discard the failed
+    # generation only once the route actually works again. A failed probe
+    # reports its fresh classification and leaves the unit, receipt, and
+    # socket state untouched.
+    renew_managed=yes
 fi
 if [ "$ownership" = stale ]; then
     if [ "$receipt_schema" = schema=2 ]; then
@@ -449,11 +454,14 @@ fi
 
 systemctl --user show-environment >/dev/null 2>&1 ||
     die "AL session control requires a running user systemd manager"
+# During managed renewal the loaded failed unit is expected and must survive
+# until fresh authentication succeeds, so this residue check is skipped.
 unit_load=$(systemctl --user show --property=LoadState --value \
     "$unit_name" 2>/dev/null || true)
-case "$unit_load" in
-    ''|not-found) ;;
-    loaded)
+case "$renew_managed:$unit_load" in
+    yes:*) ;;
+    *:''|*:not-found) ;;
+    *:loaded)
         systemctl --user is-active --quiet "$unit_name" &&
             die "AL session transient unit is already active without a managed master"
         systemctl --user reset-failed "$unit_name" >/dev/null 2>&1 || true
@@ -505,12 +513,23 @@ if ! ssh -o BatchMode=yes -o ConnectionAttempts=1 \
     fi
     unlink "$private_log"
     private_log=
-    printf 'AL_SESSION mode=start target=absent ownership=none jump=%s action=%s\n' \
-        "$jump" "$result"
+    probe_ownership=none
+    [ "$renew_managed" = no ] || probe_ownership=managed
+    printf 'AL_SESSION mode=start target=absent ownership=%s jump=%s action=%s\n' \
+        "$probe_ownership" "$jump" "$result"
     exit 1
 fi
 unlink "$private_log"
 private_log=
+
+if [ "$renew_managed" = yes ]; then
+    # Fresh authentication works again: retire the halted generation and its
+    # receipt, then start a new marked unit below.
+    remove_marked_unit
+    remove_receipt_stale_socket
+    unlink "$state_file" ||
+        die "AL session control cannot retire the renewed receipt"
+fi
 
 ssh_command=$(command -v ssh)
 case "$ssh_command" in /*) ;; *) die "AL session SSH command is not absolute" ;; esac

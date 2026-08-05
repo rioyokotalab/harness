@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-400	complete	Let an explicit AL session start recover after owner renewal	docs/tasks/Har-400.md;docs/plans/t302-al-session-resilience.md
 Har-399	complete	Make remote Mac claude_auth probes truthful behind a locked keychain	docs/tasks/Har-399.md
 Har-398	complete	Refresh all five repository READMEs from protected state	docs/tasks/Har-398.md;docs/plans/har398-portfolio-readme-refresh.md
 Har-397	complete	Separate nightly work and retire the Harness self-consumer model	docs/tasks/Har-397.md;docs/plans/har397-nightly-ledger.md
