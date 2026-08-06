@@ -20,7 +20,7 @@ PLAN_KEYS = {
     "custodian",
     "exposure",
     "profile",
-    "profile_sha256",
+    "credential_policy_sha256",
     "read",
     "rotation",
     "schema",
@@ -42,8 +42,24 @@ def fail(reason: str) -> None:
     raise broker.ContractError(reason)
 
 
-def profile_digest(profile: dict[str, Any]) -> str:
-    return hashlib.sha256(broker.canonical_json(profile).encode("utf-8")).hexdigest()
+def credential_policy_digest(profile: dict[str, Any]) -> str:
+    projection = {
+        key: profile[key]
+        for key in (
+            "capabilities",
+            "clients",
+            "contract",
+            "expected_scopes",
+            "profile",
+            "provider_mode",
+            "provider_schema",
+            "schema",
+            "service_identity",
+            "socket",
+            "writes",
+        )
+    }
+    return hashlib.sha256(broker.canonical_json(projection).encode("utf-8")).hexdigest()
 
 
 def validate_role(value: object, reason: str) -> dict[str, Any]:
@@ -90,8 +106,8 @@ def validate_plan(profile: dict[str, Any], value: dict[str, Any]) -> dict[str, A
         fail("credential-plan-version-invalid")
     if value["profile"] != profile["profile"]:
         fail("credential-profile-mismatch")
-    if value["profile_sha256"] != profile_digest(profile):
-        fail("credential-profile-digest-mismatch")
+    if value["credential_policy_sha256"] != credential_policy_digest(profile):
+        fail("credential-policy-digest-mismatch")
     if value["custodian"] != "root-systemd-creds":
         fail("credential-custodian-invalid")
     topology = value["topology"]
