@@ -41,6 +41,9 @@ class SlackSystemdTests(unittest.TestCase):
         )
         self.assertIn("--credential-state ready --provider slack-mcp", text)
         self.assertIn("--credential %d/slack-access-read", text)
+        self.assertIn("--audit /var/log/harness-slack-personal/audit.jsonl", text)
+        self.assertIn("LogsDirectory=harness-slack-personal", text)
+        self.assertIn("LogsDirectoryMode=0700", text)
         self.assertIn("RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6", text)
         self.assertIn("CapabilityBoundingSet=\n", text)
         self.assertIn("ProtectProc=invisible", text)
@@ -48,6 +51,31 @@ class SlackSystemdTests(unittest.TestCase):
         self.assertNotIn("slack-access-write", text)
         self.assertNotIn("slack-refresh", text)
         self.assertNotIn("slack-client-secret", text)
+
+    def test_personal_rotation_is_root_custodied_and_profile_local(self) -> None:
+        read_service = (SYSTEMD / "harness-slack-personal-rotate-read.service.in").read_text(
+            encoding="utf-8"
+        )
+        write_service = (SYSTEMD / "harness-slack-personal-rotate-write.service.in").read_text(
+            encoding="utf-8"
+        )
+        for role, service in (("read", read_service), ("write", write_service)):
+            timer = (SYSTEMD / f"harness-slack-personal-rotate-{role}.timer.in").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("User=root", service)
+            self.assertIn("LoadCredentialEncrypted=slack-client-secret:", service)
+            self.assertIn(f"LoadCredentialEncrypted=slack-refresh-{role}:", service)
+            self.assertNotIn(f"slack-refresh-{'write' if role == 'read' else 'read'}:", service)
+            self.assertNotIn("slack-access-read:", service)
+            self.assertNotIn("slack-access-write:", service)
+            self.assertIn("ReadWritePaths=@@CREDENTIAL_STORE@@", service)
+            self.assertIn("OnUnitActiveSec=8h", timer)
+            self.assertIn("Persistent=true", timer)
+            self.assertIn(f"Unit=harness-slack-personal-rotate-{role}.service", timer)
+            self.assertIn(f"--role {role}", service)
+        self.assertIn("--restart-service harness-slack-personal.service", read_service)
+        self.assertNotIn("--restart-service", write_service)
 
 
 if __name__ == "__main__":

@@ -77,9 +77,17 @@ def plan(current_profile: dict[str, object], topology: str = "user-read-bot-writ
         }
         write = {"credential": "slack-access-write", "kind": "bot", "scopes": ["chat:write"]}
         exposure = {
-            "read_rotator": ["slack-client-secret", "slack-refresh-read"],
+            "read_rotator": [
+                "slack-client-id",
+                "slack-client-secret",
+                "slack-refresh-read",
+            ],
             "read_service": ["slack-access-read"],
-            "write_rotator": ["slack-client-secret", "slack-refresh-write"],
+            "write_rotator": [
+                "slack-client-id",
+                "slack-client-secret",
+                "slack-refresh-write",
+            ],
             "write_transaction": ["slack-access-write"],
         }
         rotation = {
@@ -97,7 +105,11 @@ def plan(current_profile: dict[str, object], topology: str = "user-read-bot-writ
         }
         write = {"credential": None, "kind": "none", "scopes": []}
         exposure = {
-            "read_rotator": ["slack-client-secret", "slack-refresh-read"],
+            "read_rotator": [
+                "slack-client-id",
+                "slack-client-secret",
+                "slack-refresh-read",
+            ],
             "read_service": ["slack-access-read"],
             "write_rotator": [],
             "write_transaction": [],

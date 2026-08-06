@@ -68,6 +68,13 @@ free. Enrollment accepts a credential only through a local hidden prompt into
 the encrypted service-manager store; it never enters an argument, environment,
 repository, transcript, or ordinary log.
 
+Personal uses confidential OAuth rather than PKCE. Slack documents that a
+PKCE-enabled localhost redirect is a desktop redirect and cannot request bot
+scopes; it also gives those public-client refresh tokens a 30-day lifetime.
+The protected manifest therefore leaves PKCE disabled, fixes one localhost
+callback, and obtains the split user-read and bot-write tokens in one standard
+combined OAuth installation. Slack MCP remains a separate app-settings toggle.
+
 ### D-002 — Custody and rotation
 
 Status: selected after independent review.
@@ -81,10 +88,11 @@ credential into a private runtime file for the exact process:
 - transient Personal write service: current bot access token only, after the
   frozen transaction gate;
 - steady Swallow read service: current bot access token only;
-- profile rotator: client secret and current single-use refresh token only;
+- profile rotator: client ID, client secret, and current single-use refresh
+  token only;
 - Students adapter: no Slack credential.
 
-Rotators run before expected expiry (nominally eight hours into Slack's
+Separate read and write rotators run before expected expiry (nominally eight hours into Slack's
 twelve-hour lifetime), at boot, and at resume. A rotation performs one exchange,
 stages and validates the new set, atomically cuts over one profile, restarts
 only that profile, runs a value-free canary, and retains one bounded rollback

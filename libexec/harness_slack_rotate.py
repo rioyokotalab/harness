@@ -1,0 +1,271 @@
+#!/usr/bin/env python3
+"""Rotate one Personal Slack credential role exactly once."""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import sys
+from typing import Any, Callable
+import urllib.error
+import urllib.parse
+import urllib.request
+
+import harness_slack_mcp_remote as remote
+
+
+TOKEN_ENDPOINT = "https://slack.com/api/oauth.v2.access"
+ROLE = {
+    "read": {
+        "access": "slack-access-read",
+        "kind": "user",
+        "refresh": "slack-refresh-read",
+        "scopes": {
+            "canvases:read",
+            "channels:history",
+            "files:read",
+            "groups:history",
+            "users:read",
+        },
+    },
+    "write": {
+        "access": "slack-access-write",
+        "kind": "bot",
+        "refresh": "slack-refresh-write",
+        "scopes": {"chat:write"},
+    },
+}
+MAX_RESPONSE_BYTES = 64 * 1024
+
+
+class RotationError(ValueError):
+    """Stable value-free rotation failure."""
+
+
+def fail(reason: str) -> None:
+    raise RotationError(reason)
+
+
+def _scopes(value: object) -> set[str]:
+    if not isinstance(value, str):
+        fail("rotation-response-invalid")
+    result = {item for item in value.replace(",", " ").split() if item}
+    if not result:
+        fail("rotation-response-invalid")
+    return result
+
+
+def validate_response(role: str, value: object) -> tuple[str, str]:
+    policy = ROLE.get(role)
+    if policy is None:
+        fail("rotation-role-invalid")
+    if not isinstance(value, dict) or value.get("ok") is not True:
+        fail("rotation-refresh-rejected")
+    if (
+        value.get("token_type") != policy["kind"]
+        or value.get("expires_in") != 43200
+        or _scopes(value.get("scope")) != policy["scopes"]
+    ):
+        fail("rotation-response-invalid")
+    access = value.get("access_token")
+    refresh = value.get("refresh_token")
+    for token in (access, refresh):
+        if (
+            not isinstance(token, str)
+            or not 16 <= len(token) <= remote.MAX_CREDENTIAL_BYTES
+            or any(character.isspace() for character in token)
+        ):
+            fail("rotation-response-invalid")
+    return access, refresh
+
+
+def exchange_once(
+    client_id: str, client_secret: str, refresh_token: str
+) -> dict[str, Any]:
+    basic = base64.b64encode(f"{client_id}:{client_secret}".encode("utf-8")).decode(
+        "ascii"
+    )
+    request = urllib.request.Request(
+        TOKEN_ENDPOINT,
+        data=urllib.parse.urlencode(
+            {"grant_type": "refresh_token", "refresh_token": refresh_token}
+        ).encode("ascii"),
+        headers={
+            "Accept": "application/json",
+            "Authorization": f"Basic {basic}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as result:
+            payload = result.read(MAX_RESPONSE_BYTES + 1)
+    except urllib.error.HTTPError:
+        fail("rotation-refresh-rejected")
+    except (OSError, TimeoutError, urllib.error.URLError):
+        # The request may have reached Slack and consumed the single-use
+        # refresh token. Never retry an ambiguous exchange.
+        fail("rotation-refresh-ambiguous")
+    if len(payload) > MAX_RESPONSE_BYTES:
+        fail("rotation-response-invalid")
+    try:
+        value = json.loads(payload)
+    except (UnicodeError, json.JSONDecodeError):
+        fail("rotation-response-invalid")
+    if not isinstance(value, dict):
+        fail("rotation-response-invalid")
+    return value
+
+
+def _encrypt(name: str, value: str, output: Path) -> None:
+    try:
+        result = subprocess.run(
+            [
+                "systemd-creds",
+                "encrypt",
+                "--name",
+                name,
+                "-",
+                str(output),
+            ],
+            input=value.encode("utf-8"),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        fail("rotation-store-failed")
+    if result.returncode != 0:
+        fail("rotation-store-failed")
+    os.chmod(output, 0o600)
+
+
+def store_pair(
+    store: Path,
+    role: str,
+    access: str,
+    refresh: str,
+    encrypt: Callable[[str, str, Path], None] = _encrypt,
+    owner_uid: int = 0,
+) -> None:
+    policy = ROLE[role]
+    try:
+        info = store.lstat()
+    except OSError:
+        fail("rotation-store-invalid")
+    if (
+        not stat.S_ISDIR(info.st_mode)
+        or stat.S_IMODE(info.st_mode) != 0o700
+        or info.st_uid != owner_uid
+    ):
+        fail("rotation-store-invalid")
+    stage = store / f".rotate-{role}-{os.getpid()}"
+    previous = store / f".previous-{role}"
+    stage.mkdir(mode=0o700)
+    try:
+        staged_access = stage / str(policy["access"])
+        staged_refresh = stage / str(policy["refresh"])
+        encrypt(str(policy["access"]), access, staged_access)
+        encrypt(str(policy["refresh"]), refresh, staged_refresh)
+        for name in (str(policy["access"]), str(policy["refresh"])):
+            info = (stage / name).lstat()
+            if (
+                not stat.S_ISREG(info.st_mode)
+                or info.st_uid != owner_uid
+                or stat.S_IMODE(info.st_mode) != 0o600
+                or info.st_nlink != 1
+                or info.st_size == 0
+            ):
+                fail("rotation-store-failed")
+        previous.mkdir(mode=0o700, exist_ok=True)
+        # Save only the still-valid access generation. A consumed refresh token
+        # is never retained as a candidate for replay.
+        current_access = store / str(policy["access"])
+        if current_access.exists():
+            old = previous / str(policy["access"])
+            if old.exists():
+                old.unlink()
+            os.replace(current_access, old)
+        # Commit the new single-use refresh before its paired access token so a
+        # crash cannot lose the only usable refresh generation.
+        os.replace(staged_refresh, store / str(policy["refresh"]))
+        os.replace(staged_access, store / str(policy["access"]))
+    finally:
+        for child in tuple(stage.iterdir()) if stage.exists() else ():
+            child.unlink()
+        if stage.exists():
+            stage.rmdir()
+
+
+def rotate_role(
+    role: str,
+    credentials: Path,
+    store: Path,
+    *,
+    exchange: Callable[[str, str, str], dict[str, Any]] = exchange_once,
+    store_action: Callable[[Path, str, str, str], None] = store_pair,
+) -> None:
+    policy = ROLE[role]
+    client_id = remote.read_credential(str(credentials / "slack-client-id"))
+    client_secret = remote.read_credential(str(credentials / "slack-client-secret"))
+    refresh = remote.read_credential(str(credentials / str(policy["refresh"])))
+    response = exchange(client_id, client_secret, refresh)
+    access, next_refresh = validate_response(role, response)
+    store_action(store, role, access, next_refresh)
+
+
+def validate_restart(role: str, service: str | None) -> None:
+    if (
+        role == "read" and service != "harness-slack-personal.service"
+    ) or (role == "write" and service is not None):
+        fail("rotation-restart-invalid")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--credentials", required=True)
+    parser.add_argument("--role", choices=tuple(ROLE), required=True)
+    parser.add_argument("--store", required=True)
+    parser.add_argument("--restart-service")
+    args = parser.parse_args()
+    try:
+        if os.geteuid() != 0:
+            fail("rotation-root-required")
+        validate_restart(args.role, args.restart_service)
+        rotate_role(args.role, Path(args.credentials), Path(args.store))
+        if args.restart_service:
+            result = subprocess.run(
+                ["systemctl", "restart", args.restart_service],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=30,
+                check=False,
+            )
+            if result.returncode != 0:
+                fail("rotation-restart-failed")
+    except RotationError as exc:
+        reason = str(exc)
+        status = (
+            "renewal-required"
+            if reason == "rotation-refresh-rejected"
+            else "repair-required"
+            if reason == "rotation-refresh-ambiguous"
+            else "failed"
+        )
+        print(f"SLACK_ROTATION status={status} reason={reason}", file=sys.stderr)
+        return 2
+    except Exception:
+        print("SLACK_ROTATION status=failed reason=internal-error", file=sys.stderr)
+        return 2
+    print(f"SLACK_ROTATION status=complete profile=personal role={args.role}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

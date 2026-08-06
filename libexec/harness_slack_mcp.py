@@ -11,9 +11,11 @@ import pwd
 import socket
 import stat
 import sys
+import time
 from typing import Any, BinaryIO, Callable
 
 import harness_slack_broker as broker
+import harness_slack_audit as audit_log
 import harness_slack_mcp_remote as remote_mcp
 
 
@@ -90,12 +92,14 @@ class MCPServer:
         profile: dict[str, Any],
         credential_state: str = "absent",
         provider: Callable[[str, dict[str, Any]], object] | None = None,
+        audit: audit_log.AuditLog | None = None,
     ) -> None:
         if credential_state not in {"absent", "ready"}:
             fail("credential-state-invalid")
         self.profile = profile
         self.credential_state = credential_state
         self.provider = provider
+        self.audit = audit
         self.schema = broker.tool_schema(profile, "absent")
         self.tools = {item["name"]: item for item in self.schema["tools"]}
 
@@ -132,6 +136,19 @@ class MCPServer:
         arguments = params["arguments"]
         if not isinstance(name, str) or not isinstance(arguments, dict) or name not in self.tools:
             return error_response(request_id, "tool-unavailable", -32602)
+        started = time.monotonic()
+
+        def audited(result: dict[str, object], outcome: str, reason: str) -> dict[str, object]:
+            if self.audit is not None:
+                try:
+                    self.audit.write(name.replace("_", "-"), outcome, reason, started)
+                except audit_log.AuditError:
+                    return response(
+                        request_id,
+                        tool_result({"reason": "audit-unavailable", "status": "failed"}, True),
+                    )
+            return result
+
         if name == "slack_broker_status":
             if self.credential_state != "ready" or self.provider is None:
                 status, reason = "renewal-required", "credential-unavailable"
@@ -143,42 +160,68 @@ class MCPServer:
                     provider_ready = False
                 status = "ready" if provider_ready else "repair-required"
                 reason = "accepted" if provider_ready else "provider-unavailable"
-            return response(
-                request_id,
-                tool_result(
-                    {
-                        "contract": broker.CONTRACT,
-                        "profile": self.profile["profile"],
-                        "reason": reason,
-                        "schema": 1,
-                        "status": status,
-                    }
+            return audited(
+                response(
+                    request_id,
+                    tool_result(
+                        {
+                            "contract": broker.CONTRACT,
+                            "profile": self.profile["profile"],
+                            "reason": reason,
+                            "schema": 1,
+                            "status": status,
+                        }
+                    ),
                 ),
+                "complete" if status == "ready" else "failed",
+                reason,
             )
         if self.credential_state != "ready" or self.provider is None:
-            return response(
-                request_id,
-                tool_result({"reason": "credential-unavailable", "status": "failed"}, True),
+            return audited(
+                response(
+                    request_id,
+                    tool_result(
+                        {"reason": "credential-unavailable", "status": "failed"}, True
+                    ),
+                ),
+                "failed",
+                "credential-unavailable",
             )
         try:
             provider_request = request_for_tool(self.profile, name, arguments)
             decision = broker.authorize(self.profile, provider_request)
             if not decision["allowed"]:
-                return response(request_id, tool_result(decision, True))
+                return audited(
+                    response(request_id, tool_result(decision, True)),
+                    "denied",
+                    "request-denied",
+                )
             result = self.provider(name, arguments)
         except (broker.ContractError, MCPError):
-            return response(
-                request_id,
-                tool_result({"reason": "request-denied", "status": "failed"}, True),
+            return audited(
+                response(
+                    request_id,
+                    tool_result({"reason": "request-denied", "status": "failed"}, True),
+                ),
+                "denied",
+                "request-denied",
             )
         except Exception:
-            return response(
-                request_id,
-                tool_result({"reason": "provider-failed", "status": "failed"}, True),
+            return audited(
+                response(
+                    request_id,
+                    tool_result({"reason": "provider-failed", "status": "failed"}, True),
+                ),
+                "failed",
+                "provider-failed",
             )
-        return response(
-            request_id,
-            tool_result({"trust": "untrusted-context", "value": result}),
+        return audited(
+            response(
+                request_id,
+                tool_result({"trust": "untrusted-context", "value": result}),
+            ),
+            "complete",
+            "accepted",
         )
 
 
@@ -271,6 +314,7 @@ def parser() -> argparse.ArgumentParser:
     service.add_argument("--credential-state", choices=("absent", "ready"), default="absent")
     service.add_argument("--provider", choices=("none", "slack-mcp"), default="none")
     service.add_argument("--credential")
+    service.add_argument("--audit")
     bridge = commands.add_parser("stdio")
     bridge.add_argument("--socket", required=True)
     return result
@@ -288,7 +332,7 @@ def main() -> int:
             except KeyError:
                 fail("client-user-invalid")
             if args.credential_state == "absent":
-                if args.provider != "none" or args.credential is not None:
+                if args.provider != "none" or args.credential is not None or args.audit is not None:
                     fail("provider-state-invalid")
                 provider = None
             else:
@@ -296,11 +340,20 @@ def main() -> int:
                     fail("provider-state-invalid")
                 token = remote_mcp.read_credential(args.credential)
                 provider = remote_mcp.SlackRemoteMCP(profile, token)
+                if args.audit is None:
+                    fail("audit-state-invalid")
+            audit = audit_log.AuditLog(profile, args.audit) if args.audit else None
             listener = socket.socket(fileno=3)
             serve_listener(
-                MCPServer(profile, args.credential_state, provider), listener, client_uid
+                MCPServer(profile, args.credential_state, provider, audit), listener, client_uid
             )
-    except (broker.ContractError, MCPError, remote_mcp.RemoteMCPError, OSError):
+    except (
+        audit_log.AuditError,
+        broker.ContractError,
+        MCPError,
+        remote_mcp.RemoteMCPError,
+        OSError,
+    ):
         print("SLACK_MCP status=failed reason=runtime-unavailable", file=sys.stderr)
         return 2
     return 0
