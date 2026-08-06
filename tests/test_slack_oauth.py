@@ -6,6 +6,8 @@ import sys
 import os
 import pty
 import select
+import contextlib
+import io
 import subprocess
 import tempfile
 import time
@@ -44,6 +46,15 @@ def response(**overrides: object) -> dict[str, object]:
 
 
 class SlackOAuthTests(unittest.TestCase):
+    def test_progress_is_value_free_and_machine_readable(self) -> None:
+        output = io.StringIO()
+        with contextlib.redirect_stderr(output):
+            OAUTH.progress("fixture-phase")
+        self.assertEqual(
+            output.getvalue(),
+            "SLACK_OAUTH status=progress phase=fixture-phase\n",
+        )
+
     def test_hidden_prompt_uses_inherited_tty_without_echo(self) -> None:
         script = f"""
 import importlib.util

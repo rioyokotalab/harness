@@ -70,6 +70,10 @@ def fail(reason: str) -> None:
     raise OAuthError(reason)
 
 
+def progress(phase: str) -> None:
+    print(f"SLACK_OAUTH status=progress phase={phase}", file=sys.stderr)
+
+
 def _bounded_secret(value: object, reason: str) -> str:
     if (
         not isinstance(value, str)
@@ -356,6 +360,7 @@ def authorize(
     server.timeout = CALLBACK_TIMEOUT_SECONDS
     try:
         _probe_tunnel(server, os.environ.get("HARNESS_OAUTH_BROWSER_HOST", ""))
+        progress("callback-route-ready")
         _open_browser(authorization_url(client_id, state), helper)
         _handle_until(
             server,
@@ -368,6 +373,7 @@ def authorize(
     query = _Callback.query
     if not query:
         fail("oauth-callback-timeout")
+    progress("callback-received")
     if query.get("state") != [state]:
         fail("oauth-state-mismatch")
     if "error" in query:
@@ -377,8 +383,12 @@ def authorize(
         fail("oauth-code-missing")
     # The temporary verifier is exchanged exactly once. Network ambiguity is
     # terminal and deliberately never retried.
+    progress("token-exchange-starting")
     response = exchange(code[0], client_id, client_secret)
-    sink(validate_token_response(response, client_id, client_secret))
+    progress("token-exchange-received")
+    bundle = validate_token_response(response, client_id, client_secret)
+    progress("credential-response-valid")
+    sink(bundle)
 
 
 def _sink_socket(
@@ -445,6 +455,7 @@ def main() -> int:
     try:
         client_id = _hidden_prompt("Slack client ID (hidden): ")
         client_secret = _hidden_prompt("Slack client secret (hidden): ")
+        progress("hidden-input-ready")
         print(
             "SLACK_OAUTH status=waiting action=complete-browser-consent",
             file=sys.stderr,
