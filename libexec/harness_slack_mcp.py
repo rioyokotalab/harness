@@ -39,6 +39,16 @@ def fail(reason: str) -> None:
     raise MCPError(reason)
 
 
+def stable_runtime_reason(error: Exception) -> str:
+    reason = str(error)
+    if (
+        not 1 <= len(reason) <= 64
+        or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789-" for character in reason)
+    ):
+        return "runtime-unavailable"
+    return reason
+
+
 def response(request_id: object, result: object) -> dict[str, object]:
     return {"id": request_id, "jsonrpc": "2.0", "result": result}
 
@@ -352,9 +362,14 @@ def main() -> int:
         broker.ContractError,
         MCPError,
         remote_mcp.RemoteMCPError,
-        OSError,
-    ):
-        print("SLACK_MCP status=failed reason=runtime-unavailable", file=sys.stderr)
+    ) as exc:
+        print(
+            f"SLACK_MCP status=failed reason={stable_runtime_reason(exc)}",
+            file=sys.stderr,
+        )
+        return 2
+    except OSError:
+        print("SLACK_MCP status=failed reason=runtime-os-error", file=sys.stderr)
         return 2
     return 0
 
