@@ -1,0 +1,14 @@
+[Unit]
+Description=Harness Slack broker socket @@PROFILE@@
+
+[Socket]
+ListenStream=/run/harness-slack-broker/@@PROFILE@@.sock
+SocketMode=0600
+SocketUser=@@CLIENT_USER@@
+SocketGroup=@@CLIENT_USER@@
+DirectoryMode=0755
+RemoveOnStop=yes
+Service=harness-slack-@@PROFILE@@.service
+
+[Install]
+WantedBy=sockets.target

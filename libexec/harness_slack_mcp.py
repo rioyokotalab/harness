@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import pwd
 import socket
 import stat
 import sys
@@ -257,7 +258,7 @@ def parser() -> argparse.ArgumentParser:
     commands = result.add_subparsers(dest="command", required=True)
     service = commands.add_parser("service")
     service.add_argument("--profile", required=True)
-    service.add_argument("--client-uid", type=int, required=True)
+    service.add_argument("--client-user", required=True)
     service.add_argument("--credential-state", choices=("absent",), default="absent")
     bridge = commands.add_parser("stdio")
     bridge.add_argument("--profile", required=True)
@@ -271,10 +272,12 @@ def main() -> int:
         if args.command == "stdio":
             relay_stdio(profile["socket"], sys.stdin.buffer, sys.stdout.buffer)
         else:
-            if args.client_uid < 0:
-                fail("client-uid-invalid")
+            try:
+                client_uid = pwd.getpwnam(args.client_user).pw_uid
+            except KeyError:
+                fail("client-user-invalid")
             listener = socket.socket(fileno=3)
-            serve_listener(MCPServer(profile, args.credential_state), listener, args.client_uid)
+            serve_listener(MCPServer(profile, args.credential_state), listener, client_uid)
     except (broker.ContractError, MCPError, OSError):
         print("SLACK_MCP status=failed reason=runtime-unavailable", file=sys.stderr)
         return 2
