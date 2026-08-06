@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-403.
+Next free ID: Har-410.
 
 ## Resume contract
 
@@ -14,6 +14,37 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Deferred gates
+
+### Har-403 — Deploy the client-neutral Slack broker
+
+**Phase:** executing; discover profile-local runtime inputs, deploy one profile
+at a time, validate live parity, then revoke only proven superseded connectors.
+**Record:** `docs/tasks/Har-403.md`.
+
+### Har-404 — Investigate the Students dependency alert
+
+**Phase:** pending; identify and remediate the high-severity alert reported by
+GitHub without broad dependency churn. **Record:** `docs/tasks/Har-404.md`.
+
+### Har-405 — Make complete gates worktree-compatible
+
+**Phase:** pending; preserve production metadata checks while making Students
+and Swallow validation reliable in isolated worktrees. **Record:** `docs/tasks/Har-405.md`.
+
+### Har-406 — Make the Swallow gate self-describing
+
+**Phase:** pending; remove the implicit render-mode environment prerequisite
+from ordinary static validation. **Record:** `docs/tasks/Har-406.md`.
+
+### Har-408 — Make merged-branch cleanup idempotent
+
+**Phase:** pending; tolerate already-deleted remote PR refs without a failed
+cleanup result. **Record:** `docs/tasks/Har-408.md`.
+
+### Har-409 — Reconcile the failed Riken routes
+
+**Phase:** pending; both managed Riken routes failed the pre-deployment fleet
+check while other nodes passed. **Record:** `docs/tasks/Har-409.md`.
 
 ### Har-196 — Backup lifecycle phase 2
 

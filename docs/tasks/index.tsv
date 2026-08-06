@@ -1,4 +1,11 @@
 task	state	summary	source
+Har-409	active	Reconcile the failed Riken routes	TODO.md;docs/tasks/Har-409.md
+Har-408	active	Make merged-branch cleanup idempotent	TODO.md;docs/tasks/Har-408.md
+Har-407	complete	Restore the Personal cold-start policy ceiling	docs/tasks/Har-407.md
+Har-406	active	Make the Swallow complete gate self-describing	TODO.md;docs/tasks/Har-406.md
+Har-405	active	Make complete gates worktree-compatible	TODO.md;docs/tasks/Har-405.md
+Har-404	active	Investigate the Students dependency alert	TODO.md;docs/tasks/Har-404.md
+Har-403	active	Deploy the client-neutral Slack broker	TODO.md;docs/tasks/Har-403.md;docs/plans/har403-live-slack-deployment.md
 Har-402	complete	Build a client-neutral Slack broker contract	docs/tasks/Har-402.md;docs/plans/har402-client-neutral-slack-broker.md
 Har-401	complete	Make Claude-to-controller messaging first-class	docs/tasks/Har-401.md
 Har-400	complete	Let an explicit AL session start recover after owner renewal	docs/tasks/Har-400.md;docs/plans/t302-al-session-resilience.md
