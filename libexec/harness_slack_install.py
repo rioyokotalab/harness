@@ -7,7 +7,9 @@ import json
 import os
 from pathlib import Path
 import shutil
+import socket
 import stat
+import struct
 import subprocess
 import sys
 from typing import Callable
@@ -37,6 +39,8 @@ RELEASE_FILES = (
     "harness_slack_rotate.py",
 )
 MAX_INPUT_BYTES = 64 * 1024
+ENROLLMENT_SOCKET = Path("/run/harness-slack-personal-enroll.sock")
+SOCKET_TIMEOUT_SECONDS = 900
 
 
 class InstallError(ValueError):
@@ -61,6 +65,72 @@ def validate_bundle(value: object) -> dict[str, str]:
             fail("credential-bundle-invalid")
         result[name] = secret
     return result
+
+
+def _receive_exact(connection: socket.socket, size: int) -> bytes:
+    value = bytearray()
+    while len(value) < size:
+        chunk = connection.recv(size - len(value))
+        if not chunk:
+            fail("credential-bundle-invalid")
+        value.extend(chunk)
+    return bytes(value)
+
+
+def receive_once(
+    path: Path,
+    client_uid: int,
+    client_gid: int,
+    install: Callable[[dict[str, str]], None],
+    *,
+    socket_uid: int = 0,
+) -> None:
+    if (
+        not path.is_absolute()
+        or client_uid < 1
+        or client_gid < 1
+        or os.path.lexists(path)
+    ):
+        fail("credential-sink-invalid")
+    listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        listener.bind(str(path))
+        os.chown(path, socket_uid, client_gid)
+        os.chmod(path, 0o660)
+        listener.listen(1)
+        listener.settimeout(SOCKET_TIMEOUT_SECONDS)
+        connection, _address = listener.accept()
+        # Remove the rendezvous immediately after the sole connection so no
+        # second client can race the consumed one-shot sink.
+        path.unlink()
+        with connection:
+            connection.settimeout(900)
+            credentials = connection.getsockopt(
+                socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i")
+            )
+            _pid, peer_uid, peer_gid = struct.unpack("3i", credentials)
+            if peer_uid != client_uid or peer_gid != client_gid:
+                fail("credential-client-invalid")
+            size = int.from_bytes(_receive_exact(connection, 4), "big")
+            if not 1 <= size <= MAX_INPUT_BYTES:
+                fail("credential-bundle-invalid")
+            payload = _receive_exact(connection, size)
+            if connection.recv(1):
+                fail("credential-bundle-invalid")
+            try:
+                bundle = validate_bundle(json.loads(payload))
+            except (UnicodeError, json.JSONDecodeError):
+                fail("credential-bundle-invalid")
+            finally:
+                payload = b""
+            install(bundle)
+            connection.sendall(b"SLACK_CREDENTIAL_SINK status=complete\n")
+    except socket.timeout:
+        fail("credential-sink-timeout")
+    finally:
+        listener.close()
+        if os.path.lexists(path):
+            path.unlink()
 
 
 def _git(*arguments: str) -> str:
@@ -96,8 +166,10 @@ def protected_revision() -> str:
     return revision
 
 
-def preflight() -> str:
+def preflight(expected_revision: str | None = None) -> str:
     revision = protected_revision()
+    if expected_revision is not None and revision != expected_revision:
+        fail("source-revision-changed")
     if os.path.lexists(CREDENTIAL_STORE):
         fail("credential-store-not-empty")
     try:
@@ -319,16 +391,50 @@ def activate(prior_service: bytes) -> None:
         raise
 
 
+def install_personal(bundle: dict[str, str], expected_revision: str | None = None) -> None:
+    revision = protected_revision()
+    if expected_revision is not None and revision != expected_revision:
+        fail("source-revision-changed")
+    release = install_release(revision)
+    install_credentials(bundle)
+    prior = install_units(release)
+    activate(prior)
+
+
 def main() -> int:
-    if sys.argv[1:] not in (["preflight"], ["install-personal"]):
+    arguments = sys.argv[1:]
+    if (
+        arguments not in (["preflight"], ["install-personal"])
+        and not (
+            len(arguments) == 4
+            and arguments[0] == "serve-personal"
+            and arguments[1].isdigit()
+            and arguments[2].isdigit()
+            and len(arguments[3]) == 40
+            and all(character in "0123456789abcdef" for character in arguments[3])
+        )
+    ):
         print("SLACK_LIVE_INSTALL status=failed reason=argument-invalid", file=sys.stderr)
         return 2
     try:
         if os.geteuid() != 0:
             fail("root-required")
-        if sys.argv[1:] == ["preflight"]:
+        if arguments == ["preflight"]:
             preflight()
             print("SLACK_LIVE_INSTALL status=pass action=preflight profile=personal")
+            return 0
+        if arguments[0] == "serve-personal":
+            client_uid = int(arguments[1])
+            client_gid = int(arguments[2])
+            revision = arguments[3]
+            preflight(revision)
+            receive_once(
+                ENROLLMENT_SOCKET,
+                client_uid,
+                client_gid,
+                lambda bundle: install_personal(bundle, revision),
+            )
+            print("SLACK_LIVE_INSTALL status=complete profile=personal credentials=6")
             return 0
         payload = sys.stdin.buffer.read(MAX_INPUT_BYTES + 1)
         if len(payload) > MAX_INPUT_BYTES:
@@ -337,11 +443,7 @@ def main() -> int:
             bundle = validate_bundle(json.loads(payload))
         except (UnicodeError, json.JSONDecodeError):
             fail("credential-bundle-invalid")
-        revision = protected_revision()
-        release = install_release(revision)
-        install_credentials(bundle)
-        prior = install_units(release)
-        activate(prior)
+        install_personal(bundle)
     except InstallError as exc:
         print(f"SLACK_LIVE_INSTALL status=failed reason={exc}", file=sys.stderr)
         return 2

@@ -15,50 +15,156 @@ REPOSITORY=$(CDPATH='' cd -- "$ROOT/.." && pwd)
 helper=$ROOT/harness-oauth-browser-open
 oauth=$ROOT/harness-slack-oauth
 sink=$ROOT/harness-slack-install
-for path in "$helper" "$oauth" "$sink"; do
-    [ -f "$path" ] && [ ! -L "$path" ] && [ -x "$path" ] ||
-        fail helper-invalid
-    [ "$(stat -c %u "$path")" = "$(id -u)" ] &&
-        [ "$(stat -c %h "$path")" = 1 ] || fail helper-invalid
-done
-[ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "$SSH_AUTH_SOCK" ] &&
-    [ "$(stat -c %u "$SSH_AUTH_SOCK")" = "$(id -u)" ] ||
-    fail ssh-agent-unavailable
+launcher=$ROOT/harness-slack-personal-enroll
+socket_path=/run/harness-slack-personal-enroll.sock
 
-git -C "$REPOSITORY" fetch origin main >/dev/null 2>&1 ||
-    fail protected-source-fetch-failed
-[ "$(git -C "$REPOSITORY" branch --show-current)" = main ] ||
-    fail protected-source-invalid
-[ -z "$(git -C "$REPOSITORY" status --porcelain)" ] ||
-    fail protected-source-invalid
-[ "$(git -C "$REPOSITORY" rev-parse HEAD)" = \
-    "$(git -C "$REPOSITORY" rev-parse origin/main)" ] ||
-    fail protected-source-invalid
-# Authenticate before OAuth so a temporary verifier and token response never
-# wait on an administrator-password gate.
-sudo -v || fail root-authentication-failed
-sudo "$sink" preflight >/dev/null || fail live-install-preflight-failed
+validate_owner_helpers() {
+    for path in "$helper" "$oauth" "$sink"; do
+        [ -f "$path" ] && [ ! -L "$path" ] && [ -x "$path" ] ||
+            fail helper-invalid
+        [ "$(stat -c %u "$path")" = "$(id -u)" ] &&
+            [ "$(stat -c %h "$path")" = 1 ] || fail helper-invalid
+    done
+    [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "$SSH_AUTH_SOCK" ] &&
+        [ ! -L "$SSH_AUTH_SOCK" ] &&
+        [ "$(stat -c %u "$SSH_AUTH_SOCK")" = "$(id -u)" ] ||
+        fail ssh-agent-unavailable
+}
 
-port=53683
-python3 - "$port" <<'PY' || fail oauth-callback-port-unavailable
+validate_protected_source() {
+    git -C "$REPOSITORY" fetch origin main >/dev/null 2>&1 ||
+        fail protected-source-fetch-failed
+    [ "$(git -C "$REPOSITORY" branch --show-current)" = main ] ||
+        fail protected-source-invalid
+    [ -z "$(git -C "$REPOSITORY" status --porcelain)" ] ||
+        fail protected-source-invalid
+    [ "$(git -C "$REPOSITORY" rev-parse HEAD)" = \
+        "$(git -C "$REPOSITORY" rev-parse origin/main)" ] ||
+        fail protected-source-invalid
+}
+
+run_worker() {
+    validate_owner_helpers
+    validate_protected_source
+    [ -S "$socket_path" ] && [ ! -L "$socket_path" ] &&
+        [ "$(stat -c %u "$socket_path")" = 0 ] &&
+        [ "$(stat -c %g "$socket_path")" = "$(id -g)" ] &&
+        [ "$(stat -c %a "$socket_path")" = 660 ] ||
+        fail credential-sink-unavailable
+
+    port=53683
+    python3 - "$port" <<'PY' || fail oauth-callback-port-unavailable
 import socket
 import sys
 with socket.socket() as listener:
     listener.bind(("127.0.0.1", int(sys.argv[1])))
 PY
-forward="127.0.0.1:$port:127.0.0.1:$port"
-ssh -x -O forward -o ExitOnForwardFailure=yes -R "$forward" "$browser_host" \
-    >/dev/null 2>&1 || fail oauth-tunnel-failed
-cleanup() {
+    forward="127.0.0.1:$port:127.0.0.1:$port"
+    ssh -x -O forward -o ExitOnForwardFailure=yes -R "$forward" "$browser_host" \
+        >/dev/null 2>&1 || fail oauth-tunnel-failed
+    # Invoked by the EXIT and signal traps.
+    # shellcheck disable=SC2329
+    cleanup_worker() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        ssh -x -O cancel -R "$forward" "$browser_host" >/dev/null 2>&1 || true
+        exit "$status"
+    }
+    trap cleanup_worker EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+
+    HARNESS_OAUTH_BROWSER_HOST=$browser_host \
+        "$oauth" --browser-helper "$helper" --credential-socket "$socket_path"
+}
+
+if [ "${HARNESS_SLACK_ENROLL_WORKER:-}" = 1 ]; then
+    [ "$(id -u)" != 0 ] || fail worker-identity-invalid
+    run_worker
+    exit 0
+fi
+
+# The operator account owns administrator authority, while the repository and
+# SSH agent belong to the Harness owner. Root performs only orchestration and
+# installation; OAuth and every browser/SSH operation run as the owner.
+[ "$(id -u)" = 0 ] || fail root-required
+[ -d "$REPOSITORY" ] && [ ! -L "$REPOSITORY" ] || fail repository-invalid
+owner_uid=$(stat -c %u "$REPOSITORY")
+owner_gid=$(stat -c %g "$REPOSITORY")
+[ "$owner_uid" -gt 0 ] && [ "$owner_gid" -gt 0 ] || fail repository-invalid
+for path in "$launcher" "$helper" "$oauth" "$sink"; do
+    [ -f "$path" ] && [ ! -L "$path" ] && [ -x "$path" ] &&
+        [ "$(stat -c %u "$path")" = "$owner_uid" ] &&
+        [ "$(stat -c %g "$path")" = "$owner_gid" ] &&
+        [ "$(stat -c %h "$path")" = 1 ] || fail helper-invalid
+done
+owner_record=$(getent passwd "$owner_uid") || fail owner-identity-invalid
+owner_name=$(printf '%s\n' "$owner_record" | cut -d: -f1)
+owner_primary_gid=$(printf '%s\n' "$owner_record" | cut -d: -f4)
+owner_home=$(printf '%s\n' "$owner_record" | cut -d: -f6)
+[ -n "$owner_name" ] && [ "$owner_primary_gid" = "$owner_gid" ] &&
+    [ "$owner_home" = "$(dirname -- "$REPOSITORY")" ] ||
+    fail owner-identity-invalid
+owner_agent=/run/user/$owner_uid/openssh_agent
+[ -S "$owner_agent" ] && [ ! -L "$owner_agent" ] &&
+    [ "$(stat -c %u "$owner_agent")" = "$owner_uid" ] ||
+    fail ssh-agent-unavailable
+
+run_as_owner() {
+    /usr/sbin/runuser -u "$owner_name" -- env -i \
+        HOME="$owner_home" USER="$owner_name" LOGNAME="$owner_name" \
+        PATH=/usr/local/bin:/usr/bin:/bin \
+        SSH_AUTH_SOCK="$owner_agent" \
+        HARNESS_SLACK_ENROLL_WORKER="${HARNESS_SLACK_ENROLL_WORKER:-0}" "$@"
+}
+
+run_as_owner git -C "$REPOSITORY" fetch origin main >/dev/null 2>&1 ||
+    fail protected-source-fetch-failed
+revision=$(git -c "safe.directory=$REPOSITORY" -C "$REPOSITORY" rev-parse HEAD) ||
+    fail protected-source-invalid
+[ -z "$(git -c "safe.directory=$REPOSITORY" -C "$REPOSITORY" status --porcelain)" ] &&
+    [ "$(git -c "safe.directory=$REPOSITORY" -C "$REPOSITORY" branch --show-current)" = main ] &&
+    [ "$revision" = "$(git -c "safe.directory=$REPOSITORY" -C "$REPOSITORY" rev-parse origin/main)" ] ||
+    fail protected-source-invalid
+
+"$sink" preflight >/dev/null || fail live-install-preflight-failed
+"$sink" serve-personal "$owner_uid" "$owner_gid" "$revision" >/dev/null &
+sink_pid=$!
+# Invoked by the EXIT and signal traps.
+# shellcheck disable=SC2329
+cleanup_parent() {
     status=$?
     trap - EXIT HUP INT TERM
-    ssh -x -O cancel -R "$forward" "$browser_host" >/dev/null 2>&1 || true
+    if kill -0 "$sink_pid" 2>/dev/null && [ -S "$socket_path" ]; then
+        kill "$sink_pid" 2>/dev/null || true
+    fi
+    wait "$sink_pid" 2>/dev/null || true
+    if [ -S "$socket_path" ] && [ ! -L "$socket_path" ] &&
+        [ "$(stat -c %u "$socket_path")" = 0 ] &&
+        [ "$(stat -c %g "$socket_path")" = "$owner_gid" ] &&
+        [ "$(stat -c %a "$socket_path")" = 660 ]; then
+        unlink "$socket_path"
+    fi
     exit "$status"
 }
-trap cleanup EXIT
+trap cleanup_parent EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-HARNESS_OAUTH_BROWSER_HOST=$browser_host \
-    "$oauth" --browser-helper "$helper" --credential-sink "$sink"
+attempt=0
+while [ ! -S "$socket_path" ]; do
+    kill -0 "$sink_pid" 2>/dev/null || fail credential-sink-unavailable
+    attempt=$((attempt + 1))
+    [ "$attempt" -le 100 ] || fail credential-sink-unavailable
+    sleep 0.1
+done
+
+worker_status=0
+HARNESS_SLACK_ENROLL_WORKER=1 \
+    run_as_owner "$launcher" --browser-host "$browser_host" || worker_status=$?
+[ "$worker_status" -eq 0 ] || exit "$worker_status"
+wait "$sink_pid" || fail live-install-failed
+trap - EXIT HUP INT TERM
+exit 0
