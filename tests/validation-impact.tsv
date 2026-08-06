@@ -66,9 +66,11 @@
 ^libexec/harness[-_]slack[-_]credentials(\.py)?$|R3|tests/test-slack-broker.sh|isolated Slack credential lifecycle
 ^libexec/harness[-_]slack[-_]mcp([_-].*)?(\.py)?$|R3|tests/test-slack-broker.sh|Slack Unix-socket MCP transport
 ^config/slack/.*-app-manifest\.json$|R3|tests/test-slack-broker.sh|least-privilege Slack application manifests
+^config/slack/systemd/.*\.(service|socket)\.in$|R3|tests/test-slack-broker.sh|fail-closed Slack profile service templates
 ^tests/test_slack_broker\.py$|R2|tests/test-slack-broker.sh|client-neutral Slack broker focused tests
 ^tests/test_slack_credentials\.py$|R3|tests/test-slack-broker.sh|isolated Slack credential lifecycle tests
 ^tests/test_slack_mcp\.py$|R3|tests/test-slack-broker.sh|Slack Unix-socket MCP transport tests
+^tests/test_slack_systemd\.py$|R3|tests/test-slack-broker.sh|fail-closed Slack profile service template tests
 ^tests/test_slack_app_manifests\.py$|R3|tests/test-slack-broker.sh|least-privilege Slack application manifest tests
 ^tests/test-slack-broker\.sh$|R3|-|client-neutral Slack broker validator
 ^docs/ci-and-merge-controls\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow documentation
