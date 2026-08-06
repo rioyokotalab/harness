@@ -60,20 +60,52 @@ with socket.socket() as listener:
     listener.bind(("127.0.0.1", int(sys.argv[1])))
 PY
     forward="127.0.0.1:$port:127.0.0.1:$port"
-    ssh -x -O forward -o ExitOnForwardFailure=yes -R "$forward" "$browser_host" \
-        >/dev/null 2>&1 || fail oauth-tunnel-failed
+    runtime_dir=/run/user/$(id -u)
+    [ -d "$runtime_dir" ] && [ ! -L "$runtime_dir" ] &&
+        [ "$(stat -c %u "$runtime_dir")" = "$(id -u)" ] &&
+        [ "$(stat -c %g "$runtime_dir")" = "$(id -g)" ] &&
+        [ "$(stat -c %a "$runtime_dir")" = 700 ] ||
+        fail oauth-tunnel-failed
+    control_path=$runtime_dir/harness-slack-oauth-$$.sock
+    [ ! -e "$control_path" ] && [ ! -L "$control_path" ] ||
+        fail oauth-tunnel-failed
+    tunnel_pid=
     # Invoked by the EXIT and signal traps.
     # shellcheck disable=SC2329
     cleanup_worker() {
         status=$?
         trap - EXIT HUP INT TERM
-        ssh -x -O cancel -R "$forward" "$browser_host" >/dev/null 2>&1 || true
+        if [ -n "$tunnel_pid" ] && kill -0 "$tunnel_pid" 2>/dev/null; then
+            ssh -x -o BatchMode=yes -S "$control_path" -O exit "$browser_host" \
+                >/dev/null 2>&1 || true
+            if kill -0 "$tunnel_pid" 2>/dev/null; then
+                kill "$tunnel_pid" 2>/dev/null || true
+            fi
+            wait "$tunnel_pid" 2>/dev/null || true
+        fi
+        if [ -S "$control_path" ] && [ ! -L "$control_path" ] &&
+            [ "$(stat -c %u "$control_path")" = "$(id -u)" ]; then
+            unlink "$control_path"
+        fi
         exit "$status"
     }
     trap cleanup_worker EXIT
     trap 'exit 129' HUP
     trap 'exit 130' INT
     trap 'exit 143' TERM
+
+    ssh -x -M -N -T -S "$control_path" -o BatchMode=yes -o ControlPersist=no \
+        -o ExitOnForwardFailure=yes -R "$forward" "$browser_host" \
+        >/dev/null 2>&1 &
+    tunnel_pid=$!
+    attempt=0
+    while ! ssh -x -o BatchMode=yes -S "$control_path" -O check "$browser_host" \
+        >/dev/null 2>&1; do
+        kill -0 "$tunnel_pid" 2>/dev/null || fail oauth-tunnel-failed
+        attempt=$((attempt + 1))
+        [ "$attempt" -le 300 ] || fail oauth-tunnel-failed
+        sleep 0.1
+    done
 
     HARNESS_OAUTH_BROWSER_HOST=$browser_host \
         "$oauth" --browser-helper "$helper" --credential-socket "$socket_path"
@@ -154,7 +186,13 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 attempt=0
-while [ ! -S "$socket_path" ]; do
+sink_ready() {
+    [ -S "$socket_path" ] && [ ! -L "$socket_path" ] &&
+        [ "$(stat -c %u "$socket_path")" = 0 ] &&
+        [ "$(stat -c %g "$socket_path")" = "$owner_gid" ] &&
+        [ "$(stat -c %a "$socket_path")" = 660 ]
+}
+while ! sink_ready; do
     kill -0 "$sink_pid" 2>/dev/null || fail credential-sink-unavailable
     attempt=$((attempt + 1))
     [ "$attempt" -le 100 ] || fail credential-sink-unavailable
