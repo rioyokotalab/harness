@@ -6,6 +6,10 @@ fail() {
     exit 2
 }
 
+progress() {
+    printf 'SLACK_ENROLL status=progress phase=%s\n' "$1" >&2
+}
+
 [ "$#" -eq 2 ] && [ "$1" = --browser-host ] || fail argument-invalid
 browser_host=$2
 case $browser_host in aist|home|office|riken) ;; *) fail browser-host-invalid ;; esac
@@ -46,6 +50,7 @@ validate_protected_source() {
 run_worker() {
     validate_owner_helpers
     validate_protected_source
+    progress owner-preflight-ready
     [ -S "$socket_path" ] && [ ! -L "$socket_path" ] &&
         [ "$(stat -c %u "$socket_path")" = 0 ] &&
         [ "$(stat -c %g "$socket_path")" = "$(id -g)" ] &&
@@ -59,17 +64,19 @@ import sys
 with socket.socket() as listener:
     listener.bind(("127.0.0.1", int(sys.argv[1])))
 PY
+    progress callback-port-ready
     forward="127.0.0.1:$port:127.0.0.1:$port"
     runtime_dir=/run/user/$(id -u)
     [ -d "$runtime_dir" ] && [ ! -L "$runtime_dir" ] &&
         [ "$(stat -c %u "$runtime_dir")" = "$(id -u)" ] &&
         [ "$(stat -c %g "$runtime_dir")" = "$(id -g)" ] &&
         [ "$(stat -c %a "$runtime_dir")" = 700 ] ||
-        fail oauth-tunnel-failed
+        fail oauth-runtime-dir-invalid
     control_path=$runtime_dir/harness-slack-oauth-$$.sock
     [ ! -e "$control_path" ] && [ ! -L "$control_path" ] ||
-        fail oauth-tunnel-failed
+        fail oauth-control-path-conflict
     tunnel_pid=
+    tunnel_log=
     # Invoked by the EXIT and signal traps.
     # shellcheck disable=SC2329
     cleanup_worker() {
@@ -87,6 +94,13 @@ PY
             [ "$(stat -c %u "$control_path")" = "$(id -u)" ]; then
             unlink "$control_path"
         fi
+        if [ -f "$tunnel_log" ] && [ ! -L "$tunnel_log" ] &&
+            [ "$(stat -c %u "$tunnel_log")" = "$(id -u)" ] &&
+            [ "$(stat -c %g "$tunnel_log")" = "$(id -g)" ] &&
+            [ "$(stat -c %a "$tunnel_log")" = 600 ] &&
+            [ "$(stat -c %h "$tunnel_log")" = 1 ]; then
+            unlink "$tunnel_log"
+        fi
         exit "$status"
     }
     trap cleanup_worker EXIT
@@ -94,19 +108,42 @@ PY
     trap 'exit 130' INT
     trap 'exit 143' TERM
 
+    tunnel_log=$(mktemp "$runtime_dir/harness-slack-oauth-XXXXXX.log") ||
+        fail oauth-tunnel-log-failed
+    [ -f "$tunnel_log" ] && [ ! -L "$tunnel_log" ] &&
+        [ "$(stat -c %u "$tunnel_log")" = "$(id -u)" ] &&
+        [ "$(stat -c %g "$tunnel_log")" = "$(id -g)" ] &&
+        [ "$(stat -c %a "$tunnel_log")" = 600 ] &&
+        [ "$(stat -c %h "$tunnel_log")" = 1 ] ||
+        fail oauth-tunnel-log-failed
+    progress tunnel-starting
     ssh -x -M -N -T -S "$control_path" -o BatchMode=yes -o ControlPersist=no \
         -o ExitOnForwardFailure=yes -R "$forward" "$browser_host" \
-        >/dev/null 2>&1 &
+        >/dev/null 2>"$tunnel_log" &
     tunnel_pid=$!
     attempt=0
     while ! ssh -x -o BatchMode=yes -S "$control_path" -O check "$browser_host" \
         >/dev/null 2>&1; do
-        kill -0 "$tunnel_pid" 2>/dev/null || fail oauth-tunnel-failed
+        if ! kill -0 "$tunnel_pid" 2>/dev/null; then
+            if grep -Eq 'remote port forwarding failed|cannot listen to port|Address already in use' "$tunnel_log"; then
+                fail oauth-tunnel-remote-bind-failed
+            fi
+            if grep -Eq 'Permission denied|No more authentication methods' "$tunnel_log"; then
+                fail oauth-tunnel-authentication-failed
+            fi
+            if grep -Eq 'Connection refused|Connection timed out|No route to host|Could not resolve' "$tunnel_log"; then
+                fail oauth-tunnel-route-failed
+            fi
+            fail oauth-tunnel-master-exited
+        fi
         attempt=$((attempt + 1))
-        [ "$attempt" -le 300 ] || fail oauth-tunnel-failed
+        [ "$attempt" -le 300 ] || fail oauth-tunnel-ready-timeout
         sleep 0.1
     done
+    progress tunnel-ready
+    unlink "$tunnel_log"
 
+    progress oauth-starting
     HARNESS_OAUTH_BROWSER_HOST=$browser_host \
         "$oauth" --browser-helper "$helper" --credential-socket "$socket_path"
 }
@@ -121,6 +158,7 @@ fi
 # SSH agent belong to the Harness owner. Root performs only orchestration and
 # installation; OAuth and every browser/SSH operation run as the owner.
 [ "$(id -u)" = 0 ] || fail root-required
+progress administrator-preflight
 [ -d "$REPOSITORY" ] && [ ! -L "$REPOSITORY" ] || fail repository-invalid
 owner_uid=$(stat -c %u "$REPOSITORY")
 owner_gid=$(stat -c %g "$REPOSITORY")
@@ -159,6 +197,7 @@ revision=$(git -c "safe.directory=$REPOSITORY" -C "$REPOSITORY" rev-parse HEAD) 
     [ "$(git -c "safe.directory=$REPOSITORY" -C "$REPOSITORY" branch --show-current)" = main ] &&
     [ "$revision" = "$(git -c "safe.directory=$REPOSITORY" -C "$REPOSITORY" rev-parse origin/main)" ] ||
     fail protected-source-invalid
+progress protected-source-ready
 
 "$sink" preflight >/dev/null || fail live-install-preflight-failed
 "$sink" serve-personal "$owner_uid" "$owner_gid" "$revision" >/dev/null &
@@ -198,8 +237,10 @@ while ! sink_ready; do
     [ "$attempt" -le 100 ] || fail credential-sink-unavailable
     sleep 0.1
 done
+progress credential-sink-ready
 
 worker_status=0
+progress owner-worker-starting
 HARNESS_SLACK_ENROLL_WORKER=1 \
     run_as_owner "$launcher" --browser-host "$browser_host" || worker_status=$?
 [ "$worker_status" -eq 0 ] || exit "$worker_status"

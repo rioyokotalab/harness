@@ -88,6 +88,33 @@ class SlackInstallTests(unittest.TestCase):
         self.assertIn('-o BatchMode=yes -o ControlPersist=no', text)
         self.assertIn('-S "$control_path" -O check', text)
         self.assertIn('-S "$control_path" -O exit', text)
+        for phase in (
+            "administrator-preflight",
+            "protected-source-ready",
+            "credential-sink-ready",
+            "owner-worker-starting",
+            "owner-preflight-ready",
+            "callback-port-ready",
+            "tunnel-starting",
+            "tunnel-ready",
+            "oauth-starting",
+        ):
+            self.assertIn(f"progress {phase}", text)
+        for reason in (
+            "oauth-runtime-dir-invalid",
+            "oauth-control-path-conflict",
+            "oauth-tunnel-log-failed",
+            "oauth-tunnel-remote-bind-failed",
+            "oauth-tunnel-authentication-failed",
+            "oauth-tunnel-route-failed",
+            "oauth-tunnel-master-exited",
+            "oauth-tunnel-ready-timeout",
+        ):
+            self.assertIn(f"fail {reason}", text)
+        self.assertNotIn("fail oauth-tunnel-failed", text)
+        self.assertIn('tunnel_log=$(mktemp "$runtime_dir/harness-slack-oauth-XXXXXX.log")', text)
+        self.assertIn('2>"$tunnel_log" &', text)
+        self.assertIn('unlink "$tunnel_log"', text)
         self.assertNotIn("-O forward", text)
         self.assertNotIn("-O cancel", text)
         self.assertNotIn("sudo -v", text)
