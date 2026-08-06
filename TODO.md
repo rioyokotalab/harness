@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-402.
+Next free ID: Har-403.
 
 ## Resume contract
 
@@ -14,6 +14,15 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Deferred gates
+
+### Har-402 — Build a client-neutral Slack broker contract
+
+**Phase:** executing; implement the public, secret-free broker core and
+offline parity/security contract. Repository-private profiles remain in their
+own ledgers; live Slack, credentials, deployment, and connector retirement are
+separate gates.
+
+**Record:** `docs/tasks/Har-402.md`.
 
 ### Har-196 — Backup lifecycle phase 2
 

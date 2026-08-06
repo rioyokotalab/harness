@@ -31,6 +31,7 @@ tests/test-actions-sustainability.sh|GitHub Actions sustainability focused suite
 tests/test-repository-independence.sh|repository independence focused suite
 tests/test-claude-takeover.sh|Claude takeover focused suite
 tests/test-claude-handoff.sh|task-bound Claude handoff focused suite
+tests/test-slack-broker.sh|client-neutral Slack broker policy contract
 tests/test-personal-agent.sh|bounded non-managed Personal agent
 tests/test-codex-arg0-wrapper.sh|Codex arg0 NFS wrapper focused suite
 tests/test-codex-login.sh|Codex login-node launcher focused suite

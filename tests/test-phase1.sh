@@ -97,6 +97,7 @@ for script in \
     "$ROOT/libexec/harness-codex-runtime-launch" \
     "$ROOT/libexec/harness-codex-runtime-release" \
     "$ROOT/libexec/harness-personal-agent" \
+    "$ROOT/libexec/harness-slack-broker" \
     "$ROOT/libexec/codex-arg0-launcher-wrapper" \
     "$ROOT/libexec/harness-storage-readiness" \
     "$ROOT/libexec/harness-replica" \
@@ -174,6 +175,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "Python syntax: harness-codex-recovery-helper"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness_codex_targets.py").read_text(), feature_version=(3, 6))' ||
     fail "Python syntax: harness_codex_targets"
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness_slack_broker.py").read_text())' ||
+    fail "Python syntax: harness_slack_broker"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
     fail "Python syntax: focused-suite runner"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/shared/skills/remote-agent-communication/scripts/agent-message").read_text())' ||

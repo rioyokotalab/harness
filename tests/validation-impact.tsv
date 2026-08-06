@@ -62,6 +62,9 @@
 ^tools/refresh-context-benchmark\.py$|R3|-|context benchmark generator
 ^\.github/workflows/|R3|-|hosted workflow
 ^tests/test-actions-sustainability\.sh$|R3|-|hosted workflow trigger contract
+^libexec/harness[-_]slack[-_]broker(\.py)?$|R2|tests/test-slack-broker.sh|client-neutral Slack broker policy contract
+^tests/test_slack_broker\.py$|R2|tests/test-slack-broker.sh|client-neutral Slack broker focused tests
+^tests/test-slack-broker\.sh$|R3|-|client-neutral Slack broker validator
 ^docs/ci-and-merge-controls\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow documentation
 ^docs/audits/t351-autonomy-efficiency/actions-transition\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow evidence
 ^bin/|R3|-|public command dispatcher

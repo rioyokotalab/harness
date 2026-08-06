@@ -29,7 +29,7 @@ assert config == {
     "schema": 1,
     "repository": "harness",
     "prefix": "Har",
-    "next_id": 402,
+    "next_id": 403,
     "max_active_record_words": 900,
 }
 assert f"Next free ID: Har-{config['next_id']:03d}." in text
