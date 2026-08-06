@@ -28,6 +28,7 @@ if IFS= read -r _; then
 fi
 case $authorization_url in
     'https://accounts.google.com/o/oauth2/v2/auth?'*) ;;
+    'https://slack.com/oauth/v2/authorize?'*) ;;
     *) fail authorization-url-invalid ;;
 esac
 case $authorization_url in

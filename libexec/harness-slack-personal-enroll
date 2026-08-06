@@ -1,0 +1,64 @@
+#!/bin/sh
+set -eu
+
+fail() {
+    printf 'SLACK_ENROLL status=failed reason=%s\n' "$1" >&2
+    exit 2
+}
+
+[ "$#" -eq 2 ] && [ "$1" = --browser-host ] || fail argument-invalid
+browser_host=$2
+case $browser_host in aist|home|office|riken) ;; *) fail browser-host-invalid ;; esac
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+REPOSITORY=$(CDPATH='' cd -- "$ROOT/.." && pwd)
+helper=$ROOT/harness-oauth-browser-open
+oauth=$ROOT/harness-slack-oauth
+sink=$ROOT/harness-slack-install
+for path in "$helper" "$oauth" "$sink"; do
+    [ -f "$path" ] && [ ! -L "$path" ] && [ -x "$path" ] ||
+        fail helper-invalid
+    [ "$(stat -c %u "$path")" = "$(id -u)" ] &&
+        [ "$(stat -c %h "$path")" = 1 ] || fail helper-invalid
+done
+[ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "$SSH_AUTH_SOCK" ] &&
+    [ "$(stat -c %u "$SSH_AUTH_SOCK")" = "$(id -u)" ] ||
+    fail ssh-agent-unavailable
+
+git -C "$REPOSITORY" fetch origin main >/dev/null 2>&1 ||
+    fail protected-source-fetch-failed
+[ "$(git -C "$REPOSITORY" branch --show-current)" = main ] ||
+    fail protected-source-invalid
+[ -z "$(git -C "$REPOSITORY" status --porcelain)" ] ||
+    fail protected-source-invalid
+[ "$(git -C "$REPOSITORY" rev-parse HEAD)" = \
+    "$(git -C "$REPOSITORY" rev-parse origin/main)" ] ||
+    fail protected-source-invalid
+# Authenticate before OAuth so a temporary verifier and token response never
+# wait on an administrator-password gate.
+sudo -v || fail root-authentication-failed
+sudo "$sink" preflight >/dev/null || fail live-install-preflight-failed
+
+port=53683
+python3 - "$port" <<'PY' || fail oauth-callback-port-unavailable
+import socket
+import sys
+with socket.socket() as listener:
+    listener.bind(("127.0.0.1", int(sys.argv[1])))
+PY
+forward="127.0.0.1:$port:127.0.0.1:$port"
+ssh -x -O forward -o ExitOnForwardFailure=yes -R "$forward" "$browser_host" \
+    >/dev/null 2>&1 || fail oauth-tunnel-failed
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    ssh -x -O cancel -R "$forward" "$browser_host" >/dev/null 2>&1 || true
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+HARNESS_OAUTH_BROWSER_HOST=$browser_host \
+    "$oauth" --browser-helper "$helper" --credential-sink "$sink"

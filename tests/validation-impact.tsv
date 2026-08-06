@@ -63,13 +63,23 @@
 ^\.github/workflows/|R3|-|hosted workflow
 ^tests/test-actions-sustainability\.sh$|R3|-|hosted workflow trigger contract
 ^libexec/harness[-_]slack[-_]broker(\.py)?$|R2|tests/test-slack-broker.sh|client-neutral Slack broker policy contract
+^libexec/harness[-_]slack[-_]audit(\.py)?$|R3|tests/test-slack-broker.sh|bounded value-free Slack audit runtime
 ^libexec/harness[-_]slack[-_]credentials(\.py)?$|R3|tests/test-slack-broker.sh|isolated Slack credential lifecycle
+^libexec/harness[-_]slack[-_]oauth(\.py)?$|R3|tests/test-slack-broker.sh|Personal Slack confidential OAuth enrollment
+^libexec/harness[-_]slack[-_]rotate(\.py)?$|R3|tests/test-slack-broker.sh|Personal Slack single-use credential rotation
+^libexec/harness[-_]slack[-_]install(\.py)?$|R3|tests/test-slack-broker.sh|Personal Slack privileged encrypted-credential installation
+^libexec/harness[-_]slack[-_]personal[-_]enroll$|R3|tests/test-slack-broker.sh|Personal Slack remote-browser enrollment
 ^libexec/harness[-_]slack[-_]mcp([_-].*)?(\.py)?$|R3|tests/test-slack-broker.sh|Slack Unix-socket MCP transport
 ^libexec/harness[-_]slack[-_]profile(\.py)?$|R3|tests/test-slack-broker.sh|Slack declaration to runtime profile boundary
 ^config/slack/.*-app-manifest\.json$|R3|tests/test-slack-broker.sh|least-privilege Slack application manifests
-^config/slack/systemd/.*\.(service|socket)\.in$|R3|tests/test-slack-broker.sh|fail-closed Slack profile service templates
+^config/slack/systemd/.*\.(service|socket|timer)\.in$|R3|tests/test-slack-broker.sh|fail-closed Slack profile service templates
+^libexec/harness-oauth-browser-open$|R3|tests/test-personal-agent.sh|bounded remote OAuth browser handoff
 ^tests/test_slack_broker\.py$|R2|tests/test-slack-broker.sh|client-neutral Slack broker focused tests
+^tests/test_slack_audit\.py$|R3|tests/test-slack-broker.sh|bounded value-free Slack audit tests
 ^tests/test_slack_credentials\.py$|R3|tests/test-slack-broker.sh|isolated Slack credential lifecycle tests
+^tests/test_slack_oauth\.py$|R3|tests/test-slack-broker.sh|Personal Slack confidential OAuth tests
+^tests/test_slack_rotate\.py$|R3|tests/test-slack-broker.sh|Personal Slack credential rotation tests
+^tests/test_slack_install\.py$|R3|tests/test-slack-broker.sh|Personal Slack encrypted installation tests
 ^tests/test_slack_mcp([_-].*)?\.py$|R3|tests/test-slack-broker.sh|Slack Unix-socket and remote transport tests
 ^tests/test_slack_profile\.py$|R3|tests/test-slack-broker.sh|Slack runtime profile boundary tests
 ^tests/test_slack_systemd\.py$|R3|tests/test-slack-broker.sh|fail-closed Slack profile service template tests

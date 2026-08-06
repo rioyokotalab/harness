@@ -152,6 +152,29 @@ class SlackMCPTests(unittest.TestCase):
         self.assertNotIn("synthetic-private-provider-value", serialized)
         self.assertIn("provider-failed", serialized)
 
+    def test_audit_failure_suppresses_provider_result(self) -> None:
+        class FailingAudit:
+            def write(self, *_arguments: object) -> None:
+                raise MCP.audit_log.AuditError("synthetic-audit-private-value")
+
+        server = MCP.MCPServer(
+            profile(),
+            "ready",
+            lambda _name, _arguments: {"synthetic": "private-provider-value"},
+            FailingAudit(),
+        )
+        result = server.handle(
+            request(
+                1,
+                "tools/call",
+                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+            )
+        )
+        serialized = json.dumps(result)
+        self.assertIn("audit-unavailable", serialized)
+        self.assertNotIn("private-provider-value", serialized)
+        self.assertNotIn("synthetic-audit-private-value", serialized)
+
     def test_status_checks_provider_readiness_without_leaking_failure(self) -> None:
         class UnreadyProvider:
             def ready(self) -> bool:

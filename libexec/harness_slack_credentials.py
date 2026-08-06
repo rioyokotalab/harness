@@ -134,9 +134,17 @@ def validate_plan(profile: dict[str, Any], value: dict[str, Any]) -> dict[str, A
         ):
             fail("credential-topology-profile-mismatch")
         exposure = {
-            "read_rotator": ["slack-client-secret", "slack-refresh-read"],
+            "read_rotator": [
+                "slack-client-id",
+                "slack-client-secret",
+                "slack-refresh-read",
+            ],
             "read_service": ["slack-access-read"],
-            "write_rotator": ["slack-client-secret", "slack-refresh-write"],
+            "write_rotator": [
+                "slack-client-id",
+                "slack-client-secret",
+                "slack-refresh-write",
+            ],
             "write_transaction": ["slack-access-write"],
         }
     elif topology == "bot-read":
@@ -152,7 +160,11 @@ def validate_plan(profile: dict[str, Any], value: dict[str, Any]) -> dict[str, A
         ):
             fail("credential-topology-profile-mismatch")
         exposure = {
-            "read_rotator": ["slack-client-secret", "slack-refresh-read"],
+            "read_rotator": [
+                "slack-client-id",
+                "slack-client-secret",
+                "slack-refresh-read",
+            ],
             "read_service": ["slack-access-read"],
             "write_rotator": [],
             "write_transaction": [],

@@ -1,0 +1,11 @@
+[Unit]
+Description=Harness Personal Slack read credential rotation schedule
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=8h
+Persistent=true
+Unit=harness-slack-personal-rotate-read.service
+
+[Install]
+WantedBy=timers.target

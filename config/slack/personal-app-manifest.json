@@ -10,6 +10,9 @@
     }
   },
   "oauth_config": {
+    "redirect_urls": [
+      "http://localhost:53683/slack/oauth/callback"
+    ],
     "scopes": {
       "bot": [
         "chat:write"

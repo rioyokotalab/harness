@@ -1,0 +1,33 @@
+[Unit]
+Description=Harness Personal Slack read credential rotation
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+LoadCredentialEncrypted=slack-client-id:@@CREDENTIAL_STORE@@/slack-client-id
+LoadCredentialEncrypted=slack-client-secret:@@CREDENTIAL_STORE@@/slack-client-secret
+LoadCredentialEncrypted=slack-refresh-read:@@CREDENTIAL_STORE@@/slack-refresh-read
+ExecStart=@@RELEASE@@/libexec/harness-slack-rotate --credentials %d --role read --store @@CREDENTIAL_STORE@@ --restart-service harness-slack-personal.service
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectSystem=strict
+ReadWritePaths=@@CREDENTIAL_STORE@@
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+UMask=0077

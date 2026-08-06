@@ -32,6 +32,11 @@ class SlackManifestTests(unittest.TestCase):
     def test_personal_splits_user_read_from_bot_write(self) -> None:
         manifest = self.load("personal-app-manifest.json")
         self.assert_common(manifest)
+        self.assertEqual(
+            manifest["oauth_config"]["redirect_urls"],
+            ["http://localhost:53683/slack/oauth/callback"],
+        )
+        self.assertNotIn("pkce_enabled", manifest["oauth_config"])
         scopes = manifest["oauth_config"]["scopes"]
         self.assertEqual(scopes["bot"], ["chat:write"])
         self.assertEqual(

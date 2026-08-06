@@ -1,0 +1,11 @@
+[Unit]
+Description=Harness Personal Slack write credential rotation schedule
+
+[Timer]
+OnBootSec=7min
+OnUnitActiveSec=8h
+Persistent=true
+Unit=harness-slack-personal-rotate-write.service
+
+[Install]
+WantedBy=timers.target
