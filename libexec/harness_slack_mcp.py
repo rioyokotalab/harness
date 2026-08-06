@@ -272,17 +272,17 @@ def parser() -> argparse.ArgumentParser:
     service.add_argument("--provider", choices=("none", "slack-mcp"), default="none")
     service.add_argument("--credential")
     bridge = commands.add_parser("stdio")
-    bridge.add_argument("--profile", required=True)
+    bridge.add_argument("--socket", required=True)
     return result
 
 
 def main() -> int:
     args = parser().parse_args()
     try:
-        profile = broker.validate_profile(broker.load_json(args.profile))
         if args.command == "stdio":
-            relay_stdio(profile["socket"], sys.stdin.buffer, sys.stdout.buffer)
+            relay_stdio(args.socket, sys.stdin.buffer, sys.stdout.buffer)
         else:
+            profile = broker.validate_profile(broker.load_json(args.profile))
             try:
                 client_uid = pwd.getpwnam(args.client_user).pw_uid
             except KeyError:

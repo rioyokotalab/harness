@@ -131,6 +131,12 @@ class ScriptedTransport:
 
 
 class SlackRemoteMCPTests(unittest.TestCase):
+    def test_fail_closed_unbound_profile_can_never_receive_provider(self) -> None:
+        unbound = linked_profile()
+        unbound["resources"] = ["deployment-unbound"]
+        with self.assertRaisesRegex(REMOTE.RemoteMCPError, "provider-resource-unbound"):
+            REMOTE.SlackRemoteMCP(unbound, "synthetic-token-value")
+
     def test_initialize_session_inventory_and_channel_mapping(self) -> None:
         transport = ScriptedTransport(
             [
