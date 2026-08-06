@@ -35,13 +35,19 @@ def response(role: str, **overrides: object) -> dict[str, object]:
 
 
 class SlackRotationTests(unittest.TestCase):
-    def test_each_role_requires_exact_kind_scope_and_ttl(self) -> None:
+    def test_each_role_requires_exact_kind_scope_and_bounded_ttl(self) -> None:
         for role in ROTATE.ROLE:
-            access, refresh = ROTATE.validate_response(role, response(role))
-            self.assertIn(role, access)
-            self.assertIn(role, refresh)
-            with self.assertRaisesRegex(ROTATE.RotationError, "rotation-response-invalid"):
-                ROTATE.validate_response(role, response(role, expires_in=3600))
+            for ttl in (ROTATE.MIN_ROTATING_TTL_SECONDS, 43199, 43200):
+                access, refresh = ROTATE.validate_response(
+                    role, response(role, expires_in=ttl)
+                )
+                self.assertIn(role, access)
+                self.assertIn(role, refresh)
+            for ttl in (3599, 43201, True, "43200"):
+                with self.assertRaisesRegex(
+                    ROTATE.RotationError, "rotation-response-invalid"
+                ):
+                    ROTATE.validate_response(role, response(role, expires_in=ttl))
             with self.assertRaisesRegex(ROTATE.RotationError, "rotation-response-invalid"):
                 ROTATE.validate_response(role, response(role, scope="extra:read"))
 
