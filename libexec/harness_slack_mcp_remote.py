@@ -260,6 +260,8 @@ class SlackRemoteMCP:
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self.profile = broker.validate_profile(profile)
+        if "deployment-unbound" in self.profile["resources"]:
+            raise RemoteMCPError("provider-resource-unbound")
         if not 16 <= len(token) <= 8192 or any(character.isspace() for character in token):
             raise RemoteMCPError("credential-format-invalid")
         self._token = token

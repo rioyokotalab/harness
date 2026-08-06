@@ -10,6 +10,7 @@ import sys
 import tempfile
 import threading
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -68,6 +69,20 @@ def request(identifier: int, method: str, params: dict[str, object] | None = Non
 
 
 class SlackMCPTests(unittest.TestCase):
+    def test_stdio_cli_accepts_only_socket_descriptor(self) -> None:
+        with mock.patch.object(
+            sys, "argv", ["harness_slack_mcp.py", "stdio", "--socket", "/tmp/test.sock"]
+        ):
+            args = MCP.parser().parse_args()
+        self.assertEqual(args.socket, "/tmp/test.sock")
+        with mock.patch.object(
+            sys,
+            "argv",
+            ["harness_slack_mcp.py", "stdio", "--profile", "/tmp/profile.json"],
+        ), mock.patch("sys.stderr", new=io.StringIO()):
+            with self.assertRaises(SystemExit):
+                MCP.parser().parse_args()
+
     def test_initialize_and_tool_listing_are_client_neutral(self) -> None:
         server = MCP.MCPServer(profile())
         initialized = server.handle(request(1, "initialize", {}))
