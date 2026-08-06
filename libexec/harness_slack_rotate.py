@@ -20,6 +20,8 @@ import harness_slack_mcp_remote as remote
 
 
 TOKEN_ENDPOINT = "https://slack.com/api/oauth.v2.access"
+MIN_ROTATING_TTL_SECONDS = 60 * 60
+MAX_ROTATING_TTL_SECONDS = 12 * 60 * 60
 ROLE = {
     "read": {
         "access": "slack-access-read",
@@ -66,9 +68,11 @@ def validate_response(role: str, value: object) -> tuple[str, str]:
         fail("rotation-role-invalid")
     if not isinstance(value, dict) or value.get("ok") is not True:
         fail("rotation-refresh-rejected")
+    ttl = value.get("expires_in")
     if (
         value.get("token_type") != policy["kind"]
-        or value.get("expires_in") != 43200
+        or type(ttl) is not int
+        or not MIN_ROTATING_TTL_SECONDS <= ttl <= MAX_ROTATING_TTL_SECONDS
         or _scopes(value.get("scope")) != policy["scopes"]
     ):
         fail("rotation-response-invalid")

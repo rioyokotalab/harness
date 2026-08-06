@@ -159,9 +159,9 @@ raise SystemExit(0 if value == 'fixture-private-value' else 3)
             )
 
     def test_missing_refresh_and_wrong_ttl_fail_closed(self) -> None:
-        with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-bot-token-invalid"):
+        with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-bot-expiry-invalid"):
             OAUTH.validate_token_response(
-                response(expires_in=3600), "fixture.client", "fixture-client-secret"
+                response(expires_in=3599), "fixture.client", "fixture-client-secret"
             )
         with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-bot-refresh-invalid"):
             OAUTH.validate_token_response(
@@ -169,6 +169,63 @@ raise SystemExit(0 if value == 'fixture-private-value' else 3)
                 "fixture.client",
                 "fixture-client-secret",
             )
+
+    def test_existing_rotating_installation_accepts_bounded_remaining_ttl(self) -> None:
+        for expires_in in (OAUTH.MIN_INITIAL_TTL_SECONDS, 43199, 43200):
+            with self.subTest(expires_in=expires_in):
+                candidate = response(expires_in=expires_in)
+                candidate["authed_user"] = dict(
+                    candidate["authed_user"], expires_in=expires_in
+                )
+                self.assertEqual(
+                    set(
+                        OAUTH.validate_token_response(
+                            candidate, "fixture.client", "fixture-client-secret"
+                        )
+                    ),
+                    OAUTH.BUNDLE_FIELDS,
+                )
+
+    def test_initial_ttl_floor_exceeds_both_first_rotation_delays(self) -> None:
+        delays: list[int] = []
+        for role in ("read", "write"):
+            timer = (
+                ROOT
+                / "config"
+                / "slack"
+                / "systemd"
+                / f"harness-slack-personal-rotate-{role}.timer.in"
+            ).read_text(encoding="utf-8")
+            line = next(
+                item for item in timer.splitlines() if item.startswith("OnBootSec=")
+            )
+            value = line.removeprefix("OnBootSec=")
+            self.assertTrue(value.endswith("min"))
+            delays.append(int(value.removesuffix("min")) * 60)
+        self.assertLess(max(delays), OAUTH.MIN_INITIAL_TTL_SECONDS)
+
+    def test_initial_ttl_and_token_type_failures_are_value_free_and_precise(self) -> None:
+        cases = (
+            (response(token_type="user"), "oauth-bot-type-invalid"),
+            (response(expires_in=43201), "oauth-bot-expiry-invalid"),
+            (response(expires_in="43200"), "oauth-bot-expiry-invalid"),
+        )
+        wrong_user_type = response()
+        wrong_user_type["authed_user"] = dict(
+            wrong_user_type["authed_user"], token_type="bot"
+        )
+        cases += ((wrong_user_type, "oauth-user-type-invalid"),)
+        wrong_user_ttl = response()
+        wrong_user_ttl["authed_user"] = dict(
+            wrong_user_ttl["authed_user"], expires_in=3599
+        )
+        cases += ((wrong_user_ttl, "oauth-user-expiry-invalid"),)
+        for candidate, reason in cases:
+            with self.subTest(reason=reason):
+                with self.assertRaisesRegex(OAUTH.OAuthError, reason):
+                    OAUTH.validate_token_response(
+                        candidate, "fixture.client", "fixture-client-secret"
+                    )
 
     def test_official_nonrotating_response_requires_app_token_rotation(self) -> None:
         nonrotating = response()

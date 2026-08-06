@@ -38,6 +38,12 @@ PROBE_PATH = "/slack/oauth/probe"
 CALLBACK_TIMEOUT_SECONDS = 300
 MAX_SECRET_BYTES = 8192
 MAX_SINK_RESPONSE_BYTES = 256
+# A repeated installation can return the remaining lifetime of an existing
+# rotating access token.  The installed timers perform their first refresh no
+# later than seven minutes after boot, so one hour preserves a wide fail-closed
+# margin without accepting a near-expiry credential.
+MIN_INITIAL_TTL_SECONDS = 60 * 60
+MAX_ROTATING_TTL_SECONDS = 12 * 60 * 60
 BOT_SCOPES = ("chat:write",)
 USER_SCOPES = (
     "canvases:read",
@@ -130,22 +136,30 @@ def validate_token_response(
     if not isinstance(response, dict) or response.get("ok") is not True:
         fail("oauth-exchange-rejected")
     if response.get("token_type") != "bot":
-        fail("oauth-bot-token-invalid")
+        fail("oauth-bot-type-invalid")
     if "expires_in" not in response and "refresh_token" not in response:
         fail("oauth-token-rotation-required")
-    if response.get("expires_in") != 43200:
-        fail("oauth-bot-token-invalid")
+    bot_ttl = response.get("expires_in")
+    if (
+        type(bot_ttl) is not int
+        or not MIN_INITIAL_TTL_SECONDS <= bot_ttl <= MAX_ROTATING_TTL_SECONDS
+    ):
+        fail("oauth-bot-expiry-invalid")
     if _scope_set(response.get("scope"), "oauth-bot-scope-invalid") != set(BOT_SCOPES):
         fail("oauth-bot-scope-invalid")
     user = response.get("authed_user")
     if not isinstance(user, dict):
         fail("oauth-user-token-invalid")
     if user.get("token_type") != "user":
-        fail("oauth-user-token-invalid")
+        fail("oauth-user-type-invalid")
     if "expires_in" not in user and "refresh_token" not in user:
         fail("oauth-token-rotation-required")
-    if user.get("expires_in") != 43200:
-        fail("oauth-user-token-invalid")
+    user_ttl = user.get("expires_in")
+    if (
+        type(user_ttl) is not int
+        or not MIN_INITIAL_TTL_SECONDS <= user_ttl <= MAX_ROTATING_TTL_SECONDS
+    ):
+        fail("oauth-user-expiry-invalid")
     if _scope_set(user.get("scope"), "oauth-user-scope-invalid") != set(USER_SCOPES):
         fail("oauth-user-scope-invalid")
     return {
