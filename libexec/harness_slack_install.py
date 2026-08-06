@@ -20,6 +20,7 @@ RELEASE_ROOT = Path("/opt/harness-slack-broker/releases")
 PROFILE_SOURCE = Path("/etc/harness-slack-broker/profiles/personal.json")
 CREDENTIAL_ROOT = Path("/etc/harness-slack-broker/credentials/personal")
 CREDENTIAL_STORE = CREDENTIAL_ROOT / "current"
+QUARANTINE_STORE = CREDENTIAL_ROOT / "quarantine-before-reenroll"
 UNIT_ROOT = Path("/etc/systemd/system")
 EXPECTED_FIELDS = {
     "slack-access-read",
@@ -355,6 +356,49 @@ def _systemctl(*arguments: str) -> None:
         fail("service-manager-failed")
 
 
+def quarantine_personal(
+    *,
+    owner_uid: int = 0,
+    systemctl_action: Callable[..., None] | None = None,
+) -> None:
+    protected_revision()
+    if systemctl_action is None:
+        systemctl_action = _systemctl
+    try:
+        store = CREDENTIAL_STORE.lstat()
+    except OSError:
+        fail("credential-store-invalid")
+    if (
+        not stat.S_ISDIR(store.st_mode)
+        or stat.S_ISLNK(store.st_mode)
+        or store.st_uid != owner_uid
+        or stat.S_IMODE(store.st_mode) != 0o700
+        or store.st_nlink != 2
+        or os.path.lexists(QUARANTINE_STORE)
+    ):
+        fail("credential-store-invalid")
+    entries = {path.name: path for path in CREDENTIAL_STORE.iterdir()}
+    if set(entries) != EXPECTED_FIELDS:
+        fail("credential-store-invalid")
+    for path in entries.values():
+        info = path.lstat()
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or stat.S_ISLNK(info.st_mode)
+            or info.st_uid != owner_uid
+            or stat.S_IMODE(info.st_mode) != 0o600
+            or info.st_nlink != 1
+            or info.st_size == 0
+        ):
+            fail("credential-store-invalid")
+    for role in ("read", "write"):
+        systemctl_action(
+            "disable", "--now", f"harness-slack-personal-rotate-{role}.timer"
+        )
+    systemctl_action("stop", "harness-slack-personal.service")
+    os.rename(CREDENTIAL_STORE, QUARANTINE_STORE)
+
+
 def activate(prior_service: bytes) -> None:
     try:
         _systemctl("daemon-reload")
@@ -404,7 +448,7 @@ def install_personal(bundle: dict[str, str], expected_revision: str | None = Non
 def main() -> int:
     arguments = sys.argv[1:]
     if (
-        arguments not in (["preflight"], ["install-personal"])
+        arguments not in (["preflight"], ["install-personal"], ["quarantine-personal"])
         and not (
             len(arguments) == 4
             and arguments[0] == "serve-personal"
@@ -422,6 +466,10 @@ def main() -> int:
         if arguments == ["preflight"]:
             preflight()
             print("SLACK_LIVE_INSTALL status=pass action=preflight profile=personal")
+            return 0
+        if arguments == ["quarantine-personal"]:
+            quarantine_personal()
+            print("SLACK_LIVE_INSTALL status=complete profile=personal action=quarantined")
             return 0
         if arguments[0] == "serve-personal":
             client_uid = int(arguments[1])
