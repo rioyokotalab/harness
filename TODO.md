@@ -15,15 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Deferred gates
 
-### Har-402 — Build a client-neutral Slack broker contract
-
-**Phase:** executing; implement the public, secret-free broker core and
-offline parity/security contract. Repository-private profiles remain in their
-own ledgers; live Slack, credentials, deployment, and connector retirement are
-separate gates.
-
-**Record:** `docs/tasks/Har-402.md`.
-
 ### Har-196 — Backup lifecycle phase 2
 
 **Phase:** read-only monitoring; seven successors are terminal-success. AL
