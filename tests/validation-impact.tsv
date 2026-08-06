@@ -63,7 +63,13 @@
 ^\.github/workflows/|R3|-|hosted workflow
 ^tests/test-actions-sustainability\.sh$|R3|-|hosted workflow trigger contract
 ^libexec/harness[-_]slack[-_]broker(\.py)?$|R2|tests/test-slack-broker.sh|client-neutral Slack broker policy contract
+^libexec/harness[-_]slack[-_]credentials(\.py)?$|R3|tests/test-slack-broker.sh|isolated Slack credential lifecycle
+^libexec/harness[-_]slack[-_]mcp([_-].*)?(\.py)?$|R3|tests/test-slack-broker.sh|Slack Unix-socket MCP transport
+^config/slack/.*-app-manifest\.json$|R3|tests/test-slack-broker.sh|least-privilege Slack application manifests
 ^tests/test_slack_broker\.py$|R2|tests/test-slack-broker.sh|client-neutral Slack broker focused tests
+^tests/test_slack_credentials\.py$|R3|tests/test-slack-broker.sh|isolated Slack credential lifecycle tests
+^tests/test_slack_mcp\.py$|R3|tests/test-slack-broker.sh|Slack Unix-socket MCP transport tests
+^tests/test_slack_app_manifests\.py$|R3|tests/test-slack-broker.sh|least-privilege Slack application manifest tests
 ^tests/test-slack-broker\.sh$|R3|-|client-neutral Slack broker validator
 ^docs/ci-and-merge-controls\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow documentation
 ^docs/audits/t351-autonomy-efficiency/actions-transition\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow evidence

@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-410	complete	Make the Harness ledger integration check state-aware	docs/tasks/Har-410.md
 Har-409	active	Reconcile the failed Riken routes	TODO.md;docs/tasks/Har-409.md
 Har-408	active	Make merged-branch cleanup idempotent	TODO.md;docs/tasks/Har-408.md
 Har-407	complete	Restore the Personal cold-start policy ceiling	docs/tasks/Har-407.md
