@@ -95,9 +95,9 @@ def receive_once(
     listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     try:
         listener.bind(str(path))
+        listener.listen(1)
         os.chown(path, socket_uid, client_gid)
         os.chmod(path, 0o660)
-        listener.listen(1)
         listener.settimeout(SOCKET_TIMEOUT_SECONDS)
         connection, _address = listener.accept()
         # Remove the rendezvous immediately after the sole connection so no

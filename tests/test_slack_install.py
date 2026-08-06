@@ -84,6 +84,12 @@ class SlackInstallTests(unittest.TestCase):
             text.index('run_as_owner "$launcher" --browser-host'),
         )
         self.assertIn('--credential-socket "$socket_path"', text)
+        self.assertIn('-M -N -T -S "$control_path"', text)
+        self.assertIn('-o BatchMode=yes -o ControlPersist=no', text)
+        self.assertIn('-S "$control_path" -O check', text)
+        self.assertIn('-S "$control_path" -O exit', text)
+        self.assertNotIn("-O forward", text)
+        self.assertNotIn("-O cancel", text)
         self.assertNotIn("sudo -v", text)
         self.assertNotIn("sudo \"$sink\"", text)
         self.assertNotIn("client-secret=", text)
@@ -122,7 +128,12 @@ class SlackInstallTests(unittest.TestCase):
             thread = threading.Thread(target=serve)
             thread.start()
             for _attempt in range(100):
-                if path.exists():
+                if (
+                    path.exists()
+                    and path.stat().st_uid == os.getuid()
+                    and path.stat().st_gid == os.getgid()
+                    and path.stat().st_mode & 0o777 == 0o660
+                ):
                     break
                 time.sleep(0.01)
             self.assertTrue(path.exists())
