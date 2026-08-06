@@ -36,9 +36,10 @@ scripts/agent-message send-local-agent --source local --source-client codex \
   --target personal --target-client claude < MESSAGE_FILE
 ```
 
-This submission-only route requires one metadata-verified pane, creates no
-process, reads no content, and never auto-replies. `send-local-codex` and
-`send-local-claude` remain compatibility aliases.
+This route needs one verified pane; creates no process, reads nothing, never
+auto-replies. `send-local-codex`/`send-local-claude` are aliases;
+Claude→Harness Codex adds `--source-client
+claude` (default: Codex).
 
 ## One best-effort reply
 

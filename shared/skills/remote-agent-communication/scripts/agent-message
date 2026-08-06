@@ -992,11 +992,14 @@ def confirm_local_agent(
 
 
 def send_local_codex(
-    source: str, target: str, requested_id: str | None = None
+    source: str,
+    target: str,
+    requested_id: str | None = None,
+    source_client: str = "codex",
 ) -> None:
     send_local_agent(
         source,
-        "codex",
+        source_client,
         target,
         "codex",
         requested_id,
@@ -1005,9 +1008,14 @@ def send_local_codex(
 
 
 def read_local_codex_report(
-    source: str, target: str, requested_id: str
+    source: str,
+    target: str,
+    requested_id: str,
+    source_client: str = "codex",
 ) -> None:
-    read_local_agent_report(source, "codex", target, "codex", requested_id)
+    read_local_agent_report(
+        source, source_client, target, "codex", requested_id
+    )
 
 
 def confirm_local_codex(
@@ -1415,13 +1423,22 @@ def build_parser() -> argparse.ArgumentParser:
     local_agent_confirmation.add_argument("--next-request-id")
     local_codex_command = commands.add_parser("send-local-codex")
     local_codex_command.add_argument("--source", required=True)
+    local_codex_command.add_argument(
+        "--source-client", choices=SENDER_CLIENTS, default="codex"
+    )
     local_codex_command.add_argument("--target", required=True)
     local_codex_reply = commands.add_parser("reply-local-codex")
     local_codex_reply.add_argument("--source", required=True)
+    local_codex_reply.add_argument(
+        "--source-client", choices=SENDER_CLIENTS, default="codex"
+    )
     local_codex_reply.add_argument("--target", required=True)
     local_codex_reply.add_argument("--request-id", required=True)
     local_codex_read = commands.add_parser("read-local-codex-report")
     local_codex_read.add_argument("--source", required=True)
+    local_codex_read.add_argument(
+        "--source-client", choices=SENDER_CLIENTS, default="codex"
+    )
     local_codex_read.add_argument("--target", required=True)
     local_codex_read.add_argument("--request-id", required=True)
     local_codex_confirmation = commands.add_parser("confirm-local-codex")
@@ -1495,14 +1512,24 @@ def main() -> int:
                 arguments.next_request_id,
             )
         elif arguments.command == "send-local-codex":
-            send_local_codex(arguments.source, arguments.target)
+            send_local_codex(
+                arguments.source,
+                arguments.target,
+                source_client=arguments.source_client,
+            )
         elif arguments.command == "reply-local-codex":
             send_local_codex(
-                arguments.source, arguments.target, arguments.request_id
+                arguments.source,
+                arguments.target,
+                arguments.request_id,
+                arguments.source_client,
             )
         elif arguments.command == "read-local-codex-report":
             read_local_codex_report(
-                arguments.source, arguments.target, arguments.request_id
+                arguments.source,
+                arguments.target,
+                arguments.request_id,
+                arguments.source_client,
             )
         elif arguments.command == "confirm-local-codex":
             confirm_local_codex(
