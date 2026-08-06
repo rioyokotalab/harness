@@ -124,7 +124,7 @@ def plan(current_profile: dict[str, object], topology: str = "user-read-bot-writ
         "custodian": "root-systemd-creds",
         "exposure": exposure,
         "profile": current_profile["profile"],
-        "profile_sha256": CREDENTIALS.profile_digest(current_profile),
+        "credential_policy_sha256": CREDENTIALS.credential_policy_digest(current_profile),
         "read": read,
         "rotation": rotation,
         "schema": 1,
@@ -148,9 +148,17 @@ class SlackCredentialTests(unittest.TestCase):
     def test_plan_is_pinned_to_exact_profile_bytes(self) -> None:
         current_profile = BROKER.validate_profile(profile())
         candidate = plan(current_profile)
-        candidate["profile_sha256"] = "0" * 64
-        with self.assertRaisesRegex(BROKER.ContractError, "credential-profile-digest-mismatch"):
+        candidate["credential_policy_sha256"] = "0" * 64
+        with self.assertRaisesRegex(BROKER.ContractError, "credential-policy-digest-mismatch"):
             CREDENTIALS.validate_plan(current_profile, candidate)
+
+    def test_private_resources_are_excluded_from_credential_digest(self) -> None:
+        first = BROKER.validate_profile(profile(resource_policy="exact", resources=["private-one"]))
+        second = BROKER.validate_profile(profile(resource_policy="exact", resources=["private-two"]))
+        self.assertEqual(
+            CREDENTIALS.credential_policy_digest(first),
+            CREDENTIALS.credential_policy_digest(second),
+        )
 
     def test_collapsed_personal_token_is_rejected(self) -> None:
         current_profile = BROKER.validate_profile(profile())
