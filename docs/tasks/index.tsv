@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-402	active	Build a client-neutral Slack broker contract	TODO.md;docs/tasks/Har-402.md
 Har-401	complete	Make Claude-to-controller messaging first-class	docs/tasks/Har-401.md
 Har-400	complete	Let an explicit AL session start recover after owner renewal	docs/tasks/Har-400.md;docs/plans/t302-al-session-resilience.md
 Har-399	complete	Make remote Mac claude_auth probes truthful behind a locked keychain	docs/tasks/Har-399.md

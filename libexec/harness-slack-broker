@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+exec python3 -B "$ROOT/libexec/harness_slack_broker.py" "$@"
