@@ -1,26 +1,33 @@
-# Local producer and consumer agents
+# Local agent routes
 
-Permit controller↔consumer routes only. Use one mode-0600 file without SSH or
-pane reads. Claude needs
-`--permission-mode bypassPermissions`.
-
-Before required reply, check the target skill:
+Permit declared controller↔consumer and Harness cross-client routes. Use one
+mode-0600 file; no SSH/pane reads. Claude needs `--permission-mode
+bypassPermissions`. Before required replies, check:
 
 ```text
 scripts/agent-message check-local-agent-compatibility \
   --target personal --target-client claude
 ```
 
-On stale, sync. A bounded request may name the verified owner-managed helper
-both ways; record it.
+Sync stale targets; record named verified owner-managed helpers.
 
 ```text
 scripts/agent-message send-local-agent --source local --source-client codex \
   --target personal --target-client claude < MESSAGE_FILE
 ```
 
-Request a report with `LOCAL_REPLY_REQUIRED request_id=ID
-reply_target=harness max_replies=1`. The consumer sends five lines:
+Local Claude→Harness Codex:
+
+```text
+scripts/agent-message send-local-codex --source local \
+  --source-client claude --target harness < MESSAGE_FILE
+```
+
+Omission defaults to Codex. Reply/read aliases accept
+`--source-client claude`; client-explicit commands are authoritative.
+
+Request five lines with `LOCAL_REPLY_REQUIRED request_id=ID
+reply_target=harness max_replies=1`:
 
 ```text
 [Agent: Personal Claude] request_id=ID status=complete|blocked|rejected|failed confirmation_required=yes
@@ -36,8 +43,7 @@ scripts/agent-message reply-local-agent --source personal \
   --request-id ID < REPORT_FILE
 ```
 
-Mode-0600 reports use source/client/ID. Duplicates require exact bytes. Read
-without waking the consumer:
+Reports key source/client/ID; duplicates need exact bytes. Read:
 
 ```text
 scripts/agent-message read-local-agent-report --source personal \
@@ -53,12 +59,12 @@ scripts/agent-message confirm-local-agent --source local \
   --request-id OLD --status accepted --next-request-id NEW
 ```
 
-Confirmation removes the report. `accepted` with a fresh ID advances; without
-one it closes a terminal checkpoint. `changes-required` requires a fresh ID;
-`rejected` forbids one. Confirmation never grants owner authority, source
-access, or writes.
+Confirmation removes the report. `accepted` plus a fresh ID advances; without
+one it closes a terminal checkpoint. `changes-required` needs a fresh ID;
+`rejected` forbids one.
+Confirmation never grants owner authority, source access, or writes.
 
-Elapsed time or unchanged tree is not failure. Check metadata; never replay an
-ambiguous submission. At a reversible owner-choice wait, publish safe work,
+Time or unchanged tree is not failure. Check metadata; never replay ambiguous
+submissions. At a reversible owner-choice wait, publish safe work,
 create no receipt, report once, and gate only that task. A blocked receipt is
 terminal and never deleted or rewritten to resume work.

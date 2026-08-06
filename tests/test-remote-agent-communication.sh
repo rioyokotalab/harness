@@ -583,6 +583,23 @@ if grep -F "$local_codex_message" "$state/operations" >/dev/null; then
     fail "Local Personal message leaked into tmux arguments"
 fi
 
+local_claude_to_codex='[Agent: Local Claude] owner-requested controller reply'
+(
+    cd "$home/harness"
+    printf '%s\n' "$local_claude_to_codex" |
+        FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
+        FAKE_PANE_ROLE=harness FAKE_PANE_PATH=$home/harness \
+        run_helper send-local-codex --source local \
+        --source-client claude --target harness \
+        >"$state/local-claude-to-codex.out"
+)
+grep -F -x \
+    'AGENT_MESSAGE_LOCAL_CODEX_SEND source=local target=harness client=claude status=submitted' \
+    "$state/local-claude-to-codex.out" >/dev/null ||
+    fail "Local Claude-to-controller compatibility output"
+grep -F -x "$local_claude_to_codex" "$state/last-message" >/dev/null ||
+    fail "Local Claude-to-controller message changed"
+
 ssh_calls_before=$(wc -l <"$state/ssh-calls")
 (
     cd "$home/harness"
@@ -847,21 +864,21 @@ EOF
     cd "$home/personal"
     FAKE_WINDOW_INDEX=0 FAKE_WINDOW_NAME=cowork FAKE_PANE_INDEX=0 \
     FAKE_PANE_ROLE=harness FAKE_PANE_PATH=$home/harness \
-        run_helper reply-local-agent --source personal \
-        --source-client claude --target harness --target-client codex \
+        run_helper reply-local-codex --source personal \
+        --source-client claude --target harness \
         --request-id "$claude_reply_id" <"$state/local-claude-report" \
         >"$state/local-claude-report.out"
 )
 grep -F -x \
-    "AGENT_MESSAGE_LOCAL_AGENT_REPLY source=personal target=harness client=claude target_client=codex request_id=$claude_reply_id status=submitted" \
+    "AGENT_MESSAGE_LOCAL_CODEX_REPLY source=personal target=harness client=claude request_id=$claude_reply_id status=submitted" \
     "$state/local-claude-report.out" >/dev/null ||
-    fail "Local Claude report output"
+    fail "Local Claude compatibility report output"
 claude_report_state=$home/.local/state/harness/local-agent-reports/personal--claude--$claude_reply_id.report
 [ -f "$claude_report_state" ] || fail "Local Claude report was not preserved"
 (
     cd "$home/harness"
-    run_helper read-local-agent-report --source personal \
-        --source-client claude --target harness --target-client codex \
+    run_helper read-local-codex-report --source personal \
+        --source-client claude --target harness \
         --request-id "$claude_reply_id" >"$state/local-claude-report-read.out"
 )
 cmp -s "$state/local-claude-report" "$state/local-claude-report-read.out" ||
