@@ -112,3 +112,38 @@ is executable only after authoritative replacement readback, exact scope and
 identity validation, Codex/Claude parity, rollback health, and a fresh mapping
 showing the old connector is unique and unused. An absent, shared, failed, or
 ambiguous readback stops without retry.
+
+## Provider evidence and implementation
+
+Slack's official MCP documentation specifies JSON-RPC 2.0 over Streamable HTTP
+at the fixed `https://mcp.slack.com/mcp` endpoint, confidential OAuth, and
+tool-specific scopes on a user token. It explicitly says that persistent
+SSE-based connections and dynamic client registration are unavailable. The MCP
+transport specification requires one HTTP POST per message, acceptance of JSON
+and SSE response content types, optional session-ID propagation, and the
+negotiated protocol header on subsequent requests.
+
+Primary sources:
+
+- <https://docs.slack.dev/ai/slack-mcp-server/>
+- <https://docs.slack.dev/ai/slack-mcp-server/developing/>
+- <https://docs.slack.dev/reference/methods/conversations.history/>
+- <https://modelcontextprotocol.io/specification/2025-06-18/basic/transports>
+
+The first protected provider adapter therefore targets only Personal's user
+read credential. It uses the fixed HTTPS origin, refuses redirects, loads the
+token only from a service-manager credential file, bounds request and response
+bytes and time, applies the broker's read-only 429/5xx retry decisions, tracks
+the optional session ID, and discovers the required remote tools before use.
+Local tool authorization remains ahead of every provider invocation and no
+remote write tool is mapped. Upstream results remain untrusted context and all
+upstream failures collapse to stable value-free reasons. Before a linked file
+or canvas read, the adapter uses bounded structured `conversations.history`
+metadata to require the exact provider-generated file ID under an authorized
+source message. An identifier in rendered message text cannot satisfy proof.
+
+Slack's current MCP documentation does not establish bot-token support for the
+MCP read tools. Swallow therefore remains fail-closed until an authoritative
+metadata-only compatibility check succeeds or a separate bounded Web API
+adapter is protected. This uncertainty cannot be treated as provider absence
+and cannot justify connector revocation.

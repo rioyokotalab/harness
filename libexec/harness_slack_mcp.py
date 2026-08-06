@@ -14,6 +14,7 @@ import sys
 from typing import Any, BinaryIO, Callable
 
 import harness_slack_broker as broker
+import harness_slack_mcp_remote as remote_mcp
 
 
 MCP_PROTOCOL = "2025-06-18"
@@ -132,8 +133,16 @@ class MCPServer:
         if not isinstance(name, str) or not isinstance(arguments, dict) or name not in self.tools:
             return error_response(request_id, "tool-unavailable", -32602)
         if name == "slack_broker_status":
-            status = "ready" if self.credential_state == "ready" and self.provider else "renewal-required"
-            reason = "accepted" if status == "ready" else "credential-unavailable"
+            if self.credential_state != "ready" or self.provider is None:
+                status, reason = "renewal-required", "credential-unavailable"
+            else:
+                try:
+                    readiness = getattr(self.provider, "ready", None)
+                    provider_ready = readiness is None or readiness() is True
+                except Exception:
+                    provider_ready = False
+                status = "ready" if provider_ready else "repair-required"
+                reason = "accepted" if provider_ready else "provider-unavailable"
             return response(
                 request_id,
                 tool_result(
@@ -259,7 +268,9 @@ def parser() -> argparse.ArgumentParser:
     service = commands.add_parser("service")
     service.add_argument("--profile", required=True)
     service.add_argument("--client-user", required=True)
-    service.add_argument("--credential-state", choices=("absent",), default="absent")
+    service.add_argument("--credential-state", choices=("absent", "ready"), default="absent")
+    service.add_argument("--provider", choices=("none", "slack-mcp"), default="none")
+    service.add_argument("--credential")
     bridge = commands.add_parser("stdio")
     bridge.add_argument("--profile", required=True)
     return result
@@ -276,9 +287,20 @@ def main() -> int:
                 client_uid = pwd.getpwnam(args.client_user).pw_uid
             except KeyError:
                 fail("client-user-invalid")
+            if args.credential_state == "absent":
+                if args.provider != "none" or args.credential is not None:
+                    fail("provider-state-invalid")
+                provider = None
+            else:
+                if args.provider != "slack-mcp" or args.credential is None:
+                    fail("provider-state-invalid")
+                token = remote_mcp.read_credential(args.credential)
+                provider = remote_mcp.SlackRemoteMCP(profile, token)
             listener = socket.socket(fileno=3)
-            serve_listener(MCPServer(profile, args.credential_state), listener, client_uid)
-    except (broker.ContractError, MCPError, OSError):
+            serve_listener(
+                MCPServer(profile, args.credential_state, provider), listener, client_uid
+            )
+    except (broker.ContractError, MCPError, remote_mcp.RemoteMCPError, OSError):
         print("SLACK_MCP status=failed reason=runtime-unavailable", file=sys.stderr)
         return 2
     return 0
