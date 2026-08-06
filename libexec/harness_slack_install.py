@@ -30,6 +30,10 @@ EXPECTED_FIELDS = {
     "slack-refresh-read",
     "slack-refresh-write",
 }
+PREVIOUS_FIELDS = {
+    ".previous-read": "slack-access-read",
+    ".previous-write": "slack-access-write",
+}
 RELEASE_FILES = (
     "harness-slack-mcp-service",
     "harness-slack-rotate",
@@ -367,20 +371,22 @@ def quarantine_personal(
     try:
         store = CREDENTIAL_STORE.lstat()
     except OSError:
-        fail("credential-store-invalid")
+        fail("credential-store-missing")
     if (
         not stat.S_ISDIR(store.st_mode)
         or stat.S_ISLNK(store.st_mode)
         or store.st_uid != owner_uid
         or stat.S_IMODE(store.st_mode) != 0o700
-        or store.st_nlink != 2
-        or os.path.lexists(QUARANTINE_STORE)
     ):
-        fail("credential-store-invalid")
+        fail("credential-store-root-invalid")
+    if os.path.lexists(QUARANTINE_STORE):
+        fail("credential-quarantine-exists")
     entries = {path.name: path for path in CREDENTIAL_STORE.iterdir()}
-    if set(entries) != EXPECTED_FIELDS:
-        fail("credential-store-invalid")
-    for path in entries.values():
+    previous = set(entries) - EXPECTED_FIELDS
+    if not EXPECTED_FIELDS <= set(entries) or not previous <= set(PREVIOUS_FIELDS):
+        fail("credential-store-entries-invalid")
+    for name in EXPECTED_FIELDS:
+        path = entries[name]
         info = path.lstat()
         if (
             not stat.S_ISREG(info.st_mode)
@@ -390,7 +396,32 @@ def quarantine_personal(
             or info.st_nlink != 1
             or info.st_size == 0
         ):
-            fail("credential-store-invalid")
+            fail("credential-store-file-invalid")
+    for name in previous:
+        path = entries[name]
+        info = path.lstat()
+        if (
+            not stat.S_ISDIR(info.st_mode)
+            or stat.S_ISLNK(info.st_mode)
+            or info.st_uid != owner_uid
+            or stat.S_IMODE(info.st_mode) != 0o700
+            or info.st_nlink != 2
+        ):
+            fail("credential-store-previous-invalid")
+        children = tuple(path.iterdir())
+        if len(children) != 1 or children[0].name != PREVIOUS_FIELDS[name]:
+            fail("credential-store-previous-invalid")
+        child = children[0]
+        child_info = child.lstat()
+        if (
+            not stat.S_ISREG(child_info.st_mode)
+            or stat.S_ISLNK(child_info.st_mode)
+            or child_info.st_uid != owner_uid
+            or stat.S_IMODE(child_info.st_mode) != 0o600
+            or child_info.st_nlink != 1
+            or child_info.st_size == 0
+        ):
+            fail("credential-store-previous-invalid")
     for role in ("read", "write"):
         systemctl_action(
             "disable", "--now", f"harness-slack-personal-rotate-{role}.timer"

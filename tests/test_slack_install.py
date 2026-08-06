@@ -67,6 +67,41 @@ class SlackInstallTests(unittest.TestCase):
                 ],
             )
 
+    def test_reenrollment_quarantine_accepts_valid_previous_generations(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            current = root / "current"
+            quarantine = root / "quarantine-before-reenroll"
+            current.mkdir(mode=0o700)
+            for name in INSTALL.EXPECTED_FIELDS:
+                path = current / name
+                path.write_bytes(b"encrypted-fixture")
+                path.chmod(0o600)
+            for directory, access in INSTALL.PREVIOUS_FIELDS.items():
+                previous = current / directory
+                previous.mkdir(mode=0o700)
+                path = previous / access
+                path.write_bytes(b"encrypted-previous-fixture")
+                path.chmod(0o600)
+            with (
+                mock.patch.object(INSTALL, "CREDENTIAL_STORE", current),
+                mock.patch.object(INSTALL, "QUARANTINE_STORE", quarantine),
+                mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
+            ):
+                INSTALL.quarantine_personal(
+                    owner_uid=os.geteuid(), systemctl_action=lambda *_args: None
+                )
+            self.assertFalse(current.exists())
+            self.assertEqual(
+                set(path.name for path in quarantine.iterdir()),
+                INSTALL.EXPECTED_FIELDS | set(INSTALL.PREVIOUS_FIELDS),
+            )
+            for directory, access in INSTALL.PREVIOUS_FIELDS.items():
+                self.assertEqual(
+                    tuple(path.name for path in (quarantine / directory).iterdir()),
+                    (access,),
+                )
+
     def test_reenrollment_quarantine_rejects_extra_or_existing_target(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -82,7 +117,36 @@ class SlackInstallTests(unittest.TestCase):
                 mock.patch.object(INSTALL, "QUARANTINE_STORE", quarantine),
                 mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
             ):
-                with self.assertRaisesRegex(INSTALL.InstallError, "credential-store-invalid"):
+                with self.assertRaisesRegex(
+                    INSTALL.InstallError, "credential-store-entries-invalid"
+                ):
+                    INSTALL.quarantine_personal(owner_uid=os.geteuid())
+            self.assertTrue(current.is_dir())
+            self.assertFalse(quarantine.exists())
+
+    def test_reenrollment_quarantine_rejects_invalid_previous_generation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            current = root / "current"
+            quarantine = root / "quarantine-before-reenroll"
+            current.mkdir(mode=0o700)
+            for name in INSTALL.EXPECTED_FIELDS:
+                path = current / name
+                path.write_bytes(b"encrypted-fixture")
+                path.chmod(0o600)
+            previous = current / ".previous-write"
+            previous.mkdir(mode=0o700)
+            invalid = previous / "unexpected"
+            invalid.write_bytes(b"encrypted-fixture")
+            invalid.chmod(0o600)
+            with (
+                mock.patch.object(INSTALL, "CREDENTIAL_STORE", current),
+                mock.patch.object(INSTALL, "QUARANTINE_STORE", quarantine),
+                mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
+            ):
+                with self.assertRaisesRegex(
+                    INSTALL.InstallError, "credential-store-previous-invalid"
+                ):
                     INSTALL.quarantine_personal(owner_uid=os.geteuid())
             self.assertTrue(current.is_dir())
             self.assertFalse(quarantine.exists())
