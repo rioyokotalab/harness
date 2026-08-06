@@ -1,24 +1,26 @@
 #!/usr/bin/env python3
 """One-shot confidential OAuth for the Personal Slack profile.
 
-Credential values stay in process memory and are delivered only to a supplied
-privileged sink over stdin. Output and exceptions use stable value-free
-reasons.
+Credential values stay in process memory and are delivered only to a
+root-authenticated, one-shot local Unix socket. Output and exceptions use
+stable value-free reasons.
 """
 
 from __future__ import annotations
 
 import argparse
 import base64
-import getpass
 import http.server
 import json
 import os
 from pathlib import Path
 import secrets
+import socket
 import stat
+import struct
 import subprocess
 import sys
+import termios
 import time
 from typing import Any, Callable
 import urllib.error
@@ -35,6 +37,7 @@ CALLBACK_PATH = "/slack/oauth/callback"
 PROBE_PATH = "/slack/oauth/probe"
 CALLBACK_TIMEOUT_SECONDS = 300
 MAX_SECRET_BYTES = 8192
+MAX_SINK_RESPONSE_BYTES = 256
 BOT_SCOPES = ("chat:write",)
 USER_SCOPES = (
     "canvases:read",
@@ -78,6 +81,34 @@ def _scope_set(value: object, reason: str) -> set[str]:
     if not scopes:
         fail(reason)
     return scopes
+
+
+def _hidden_prompt(prompt: str) -> str:
+    """Read one bounded value from inherited stdin with echo proven off."""
+    try:
+        descriptor = sys.stdin.fileno()
+        if not os.isatty(descriptor):
+            fail("oauth-hidden-prompt-unavailable")
+        original = termios.tcgetattr(descriptor)
+        hidden = original[:]
+        hidden[3] &= ~termios.ECHO
+        termios.tcsetattr(descriptor, termios.TCSAFLUSH, hidden)
+    except (OSError, ValueError, termios.error):
+        fail("oauth-hidden-prompt-unavailable")
+    try:
+        sys.stderr.write(prompt)
+        sys.stderr.flush()
+        value = sys.stdin.readline(MAX_SECRET_BYTES + 2)
+        if not value.endswith("\n"):
+            fail("oauth-hidden-prompt-unavailable")
+        return value[:-1].removesuffix("\r")
+    finally:
+        try:
+            termios.tcsetattr(descriptor, termios.TCSADRAIN, original)
+            sys.stderr.write("\n")
+            sys.stderr.flush()
+        except (OSError, ValueError, termios.error):
+            fail("oauth-hidden-prompt-unavailable")
 
 
 def authorization_url(client_id: str, state: str) -> str:
@@ -328,34 +359,70 @@ def authorize(
     sink(validate_token_response(response, client_id, client_secret))
 
 
-def _sink_command(bundle: dict[str, str], command: Path) -> None:
-    if set(bundle) != BUNDLE_FIELDS or not command.is_absolute():
+def _sink_socket(
+    bundle: dict[str, str],
+    path: Path,
+    *,
+    server_uid: int = 0,
+    client_gid: int | None = None,
+) -> None:
+    if set(bundle) != BUNDLE_FIELDS or not path.is_absolute():
+        fail("oauth-credential-sink-invalid")
+    if client_gid is None:
+        client_gid = os.getgid()
+    try:
+        info = path.lstat()
+    except OSError:
+        fail("oauth-credential-sink-invalid")
+    if (
+        not stat.S_ISSOCK(info.st_mode)
+        or info.st_uid != server_uid
+        or info.st_gid != client_gid
+        or stat.S_IMODE(info.st_mode) != 0o660
+    ):
         fail("oauth-credential-sink-invalid")
     payload = json.dumps(bundle, separators=(",", ":")).encode("utf-8")
+    if len(payload) > 64 * 1024:
+        fail("oauth-credential-sink-invalid")
     try:
-        result = subprocess.run(
-            ["sudo", str(command), "install-personal"],
-            input=payload,
-            stdout=subprocess.DEVNULL,
-            timeout=180,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+            connection.settimeout(900)
+            connection.connect(str(path))
+            credentials = connection.getsockopt(
+                socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i")
+            )
+            _pid, peer_uid, _peer_gid = struct.unpack("3i", credentials)
+            if peer_uid != server_uid:
+                fail("oauth-credential-sink-invalid")
+            connection.sendall(len(payload).to_bytes(4, "big") + payload)
+            connection.shutdown(socket.SHUT_WR)
+            response_parts: list[bytes] = []
+            response_size = 0
+            while True:
+                chunk = connection.recv(MAX_SINK_RESPONSE_BYTES + 1 - response_size)
+                if not chunk:
+                    break
+                response_parts.append(chunk)
+                response_size += len(chunk)
+                if response_size > MAX_SINK_RESPONSE_BYTES:
+                    fail("oauth-credential-sink-failed")
+            response = b"".join(response_parts)
+    except (OSError, TimeoutError):
         fail("oauth-credential-sink-failed")
     finally:
         payload = b""
-    if result.returncode != 0:
+    if response != b"SLACK_CREDENTIAL_SINK status=complete\n":
         fail("oauth-credential-sink-failed")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--browser-helper", required=True)
-    parser.add_argument("--credential-sink", required=True)
+    parser.add_argument("--credential-socket", required=True)
     args = parser.parse_args()
     try:
-        client_id = getpass.getpass("Slack client ID (hidden): ")
-        client_secret = getpass.getpass("Slack client secret (hidden): ")
+        client_id = _hidden_prompt("Slack client ID (hidden): ")
+        client_secret = _hidden_prompt("Slack client secret (hidden): ")
         print(
             "SLACK_OAUTH status=waiting action=complete-browser-consent",
             file=sys.stderr,
@@ -364,7 +431,7 @@ def main() -> int:
             client_id,
             client_secret,
             Path(args.browser_helper),
-            lambda bundle: _sink_command(bundle, Path(args.credential_sink)),
+            lambda bundle: _sink_socket(bundle, Path(args.credential_socket)),
         )
     except OAuthError as exc:
         print(f"SLACK_OAUTH status=failed reason={exc}", file=sys.stderr)

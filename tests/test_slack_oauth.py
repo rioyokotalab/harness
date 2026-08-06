@@ -4,8 +4,11 @@ import importlib.util
 from pathlib import Path
 import sys
 import os
+import pty
+import select
 import subprocess
 import tempfile
+import time
 import unittest
 import urllib.parse
 
@@ -41,6 +44,76 @@ def response(**overrides: object) -> dict[str, object]:
 
 
 class SlackOAuthTests(unittest.TestCase):
+    def test_hidden_prompt_uses_inherited_tty_without_echo(self) -> None:
+        script = f"""
+import importlib.util
+spec = importlib.util.spec_from_file_location('oauth_prompt_test', {str(ROOT / 'libexec' / 'harness_slack_oauth.py')!r})
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+value = module._hidden_prompt('Fixture hidden prompt: ')
+raise SystemExit(0 if value == 'fixture-private-value' else 3)
+"""
+        master, slave = pty.openpty()
+        process: subprocess.Popen[bytes] | None = None
+        try:
+            process = subprocess.Popen(
+                [sys.executable, "-B", "-c", script],
+                stdin=slave,
+                stdout=slave,
+                stderr=slave,
+                start_new_session=True,
+                close_fds=True,
+            )
+            os.close(slave)
+            slave = -1
+            output = bytearray()
+            sent = False
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                ready, _writable, _errors = select.select([master], [], [], 0.1)
+                if ready:
+                    try:
+                        chunk = os.read(master, 4096)
+                    except OSError:
+                        chunk = b""
+                    output.extend(chunk)
+                if not sent and b"Fixture hidden prompt: " in output:
+                    os.write(master, b"fixture-private-value\n")
+                    sent = True
+                if process.poll() is not None:
+                    break
+            self.assertTrue(sent)
+            self.assertEqual(process.wait(timeout=1), 0)
+            self.assertNotIn(b"fixture-private-value", output)
+        finally:
+            if process is not None and process.poll() is None:
+                process.terminate()
+                process.wait(timeout=1)
+            if slave >= 0:
+                os.close(slave)
+            os.close(master)
+
+    def test_hidden_prompt_fails_closed_without_tty(self) -> None:
+        result = subprocess.run(
+            [
+                str(ROOT / "libexec" / "harness-slack-oauth"),
+                "--browser-helper",
+                "/fixture/browser-helper",
+                "--credential-socket",
+                "/fixture/credential-socket",
+            ],
+            input=b"fixture-private-value\n",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(
+            result.stderr,
+            b"SLACK_OAUTH status=failed reason=oauth-hidden-prompt-unavailable\n",
+        )
+        self.assertNotIn(b"fixture-private-value", result.stdout + result.stderr)
+
     def test_callback_wait_loop_ignores_unaccepted_requests(self) -> None:
         class Server:
             timeout = 0.0
