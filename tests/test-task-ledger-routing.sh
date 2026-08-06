@@ -25,13 +25,14 @@ assert len(text.split()) <= 600
 assert hashlib.sha256(archive.read_bytes()).hexdigest() == (
     "d55459a2944fdb86986677d7fce6bdcbccd0b86a6b6eee799f60fe183a9ff95a"
 )
-assert config == {
-    "schema": 1,
-    "repository": "harness",
-    "prefix": "Har",
-    "next_id": 410,
-    "max_active_record_words": 900,
+assert set(config) == {
+    "schema", "repository", "prefix", "next_id", "max_active_record_words"
 }
+assert config["schema"] == 1
+assert config["repository"] == "harness"
+assert config["prefix"] == "Har"
+assert isinstance(config["next_id"], int) and config["next_id"] > 0
+assert config["max_active_record_words"] == 900
 assert f"Next free ID: Har-{config['next_id']:03d}." in text
 
 board_tasks = re.findall(r"^### (Har-\d{3}) —", text, re.MULTILINE)

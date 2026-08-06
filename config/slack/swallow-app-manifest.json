@@ -1,0 +1,27 @@
+{
+  "display_information": {
+    "description": "Exact-channel read-only Swallow Slack access for Harness",
+    "name": "Harness Swallow"
+  },
+  "features": {
+    "bot_user": {
+      "always_online": false,
+      "display_name": "Harness Swallow"
+    }
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": [
+        "canvases:read",
+        "channels:history",
+        "files:read",
+        "groups:history"
+      ]
+    }
+  },
+  "settings": {
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": true
+  }
+}
