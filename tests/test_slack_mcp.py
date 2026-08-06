@@ -69,6 +69,16 @@ def request(identifier: int, method: str, params: dict[str, object] | None = Non
 
 
 class SlackMCPTests(unittest.TestCase):
+    def test_runtime_reason_preserves_only_stable_value_free_classes(self) -> None:
+        self.assertEqual(
+            MCP.stable_runtime_reason(MCP.MCPError("provider-tool-drift")),
+            "provider-tool-drift",
+        )
+        self.assertEqual(
+            MCP.stable_runtime_reason(MCP.MCPError("private value")),
+            "runtime-unavailable",
+        )
+
     def test_stdio_cli_accepts_only_socket_descriptor(self) -> None:
         with mock.patch.object(
             sys, "argv", ["harness_slack_mcp.py", "stdio", "--socket", "/tmp/test.sock"]

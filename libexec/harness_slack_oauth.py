@@ -43,7 +43,9 @@ MAX_SINK_RESPONSE_BYTES = 256
 # later than seven minutes after boot, so one hour preserves a wide fail-closed
 # margin without accepting a near-expiry credential.
 MIN_INITIAL_TTL_SECONDS = 60 * 60
-MAX_ROTATING_TTL_SECONDS = 12 * 60 * 60
+# Slack documents 12 hours. A five-minute upper tolerance keeps the eight-hour
+# local rotation policy unchanged while accepting provider rounding/drift.
+MAX_ROTATING_TTL_SECONDS = 12 * 60 * 60 + 5 * 60
 BOT_SCOPES = ("chat:write",)
 USER_SCOPES = (
     "canvases:read",

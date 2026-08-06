@@ -182,7 +182,12 @@ raise SystemExit(0 if value == 'fixture-private-value' else 3)
             )
 
     def test_existing_rotating_installation_accepts_bounded_remaining_ttl(self) -> None:
-        for expires_in in (OAUTH.MIN_INITIAL_TTL_SECONDS, 43199, 43200):
+        for expires_in in (
+            OAUTH.MIN_INITIAL_TTL_SECONDS,
+            43199,
+            43200,
+            OAUTH.MAX_ROTATING_TTL_SECONDS,
+        ):
             with self.subTest(expires_in=expires_in):
                 candidate = response(expires_in=expires_in)
                 candidate["authed_user"] = dict(
@@ -218,7 +223,10 @@ raise SystemExit(0 if value == 'fixture-private-value' else 3)
     def test_initial_ttl_and_token_type_failures_are_value_free_and_precise(self) -> None:
         cases = (
             (response(token_type="user"), "oauth-bot-type-invalid"),
-            (response(expires_in=43201), "oauth-bot-expiry-invalid"),
+            (
+                response(expires_in=OAUTH.MAX_ROTATING_TTL_SECONDS + 1),
+                "oauth-bot-expiry-invalid",
+            ),
             (response(expires_in="43200"), "oauth-bot-expiry-invalid"),
         )
         wrong_user_type = response()

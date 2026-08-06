@@ -37,19 +37,35 @@ def response(role: str, **overrides: object) -> dict[str, object]:
 class SlackRotationTests(unittest.TestCase):
     def test_each_role_requires_exact_kind_scope_and_bounded_ttl(self) -> None:
         for role in ROTATE.ROLE:
-            for ttl in (ROTATE.MIN_ROTATING_TTL_SECONDS, 43199, 43200):
+            for ttl in (
+                ROTATE.MIN_ROTATING_TTL_SECONDS,
+                43199,
+                43200,
+                ROTATE.MAX_ROTATING_TTL_SECONDS,
+            ):
                 access, refresh = ROTATE.validate_response(
                     role, response(role, expires_in=ttl)
                 )
                 self.assertIn(role, access)
                 self.assertIn(role, refresh)
-            for ttl in (3599, 43201, True, "43200"):
+            for ttl in (3599, ROTATE.MAX_ROTATING_TTL_SECONDS + 1, True, "43200"):
                 with self.assertRaisesRegex(
-                    ROTATE.RotationError, "rotation-response-invalid"
+                    ROTATE.RotationError, "rotation-expiry-invalid"
                 ):
                     ROTATE.validate_response(role, response(role, expires_in=ttl))
-            with self.assertRaisesRegex(ROTATE.RotationError, "rotation-response-invalid"):
+            with self.assertRaisesRegex(ROTATE.RotationError, "rotation-scope-invalid"):
                 ROTATE.validate_response(role, response(role, scope="extra:read"))
+
+    def test_rotation_shape_failures_are_precise_and_value_free(self) -> None:
+        cases = (
+            ({"token_type": "other"}, "rotation-token-type-invalid"),
+            ({"access_token": None}, "rotation-access-token-invalid"),
+            ({"refresh_token": None}, "rotation-refresh-token-invalid"),
+        )
+        for changes, reason in cases:
+            with self.subTest(reason=reason):
+                with self.assertRaisesRegex(ROTATE.RotationError, reason):
+                    ROTATE.validate_response("read", response("read", **changes))
 
     def test_explicit_provider_denial_requires_renewal(self) -> None:
         with self.assertRaisesRegex(ROTATE.RotationError, "rotation-refresh-rejected"):
