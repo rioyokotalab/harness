@@ -137,6 +137,23 @@ class SlackMCPTests(unittest.TestCase):
         self.assertNotIn("synthetic-private-provider-value", serialized)
         self.assertIn("provider-failed", serialized)
 
+    def test_status_checks_provider_readiness_without_leaking_failure(self) -> None:
+        class UnreadyProvider:
+            def ready(self) -> bool:
+                raise RuntimeError("synthetic-private-provider-value")
+
+            def __call__(self, _name: str, _arguments: dict[str, object]) -> object:
+                raise AssertionError("not called")
+
+        server = MCP.MCPServer(profile(), "ready", UnreadyProvider())
+        status = server.handle(
+            request(1, "tools/call", {"arguments": {}, "name": "slack_broker_status"})
+        )
+        serialized = json.dumps(status)
+        self.assertIn("repair-required", serialized)
+        self.assertIn("provider-unavailable", serialized)
+        self.assertNotIn("synthetic-private-provider-value", serialized)
+
     def test_stdio_bridge_relays_newline_delimited_json_rpc(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             socket_path = str(Path(directory) / "broker.sock")
