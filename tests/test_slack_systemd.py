@@ -32,6 +32,23 @@ class SlackSystemdTests(unittest.TestCase):
         self.assertIn("SocketUser=@@CLIENT_USER@@", text)
         self.assertIn("Service=harness-slack-@@PROFILE@@.service", text)
 
+    def test_personal_ready_service_receives_only_encrypted_read_access(self) -> None:
+        text = (SYSTEMD / "harness-slack-personal-read.service.in").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "LoadCredentialEncrypted=slack-access-read:@@READ_CREDENTIAL_SOURCE@@", text
+        )
+        self.assertIn("--credential-state ready --provider slack-mcp", text)
+        self.assertIn("--credential %d/slack-access-read", text)
+        self.assertIn("RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6", text)
+        self.assertIn("CapabilityBoundingSet=\n", text)
+        self.assertIn("ProtectProc=invisible", text)
+        self.assertNotIn("Environment=", text)
+        self.assertNotIn("slack-access-write", text)
+        self.assertNotIn("slack-refresh", text)
+        self.assertNotIn("slack-client-secret", text)
+
 
 if __name__ == "__main__":
     unittest.main()

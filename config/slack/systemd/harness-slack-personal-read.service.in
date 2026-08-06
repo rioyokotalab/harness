@@ -1,0 +1,39 @@
+[Unit]
+Description=Harness Personal Slack read broker
+Requires=harness-slack-@@PROFILE@@.socket
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@@SERVICE_IDENTITY@@
+Group=@@SERVICE_IDENTITY@@
+LoadCredential=profile:@@PROFILE_SOURCE@@
+LoadCredentialEncrypted=slack-access-read:@@READ_CREDENTIAL_SOURCE@@
+ExecStart=@@RELEASE@@/libexec/harness-slack-mcp-service --profile %d/profile --client-user @@CLIENT_USER@@ --credential-state ready --provider slack-mcp --credential %d/slack-access-read
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+ProtectSystem=strict
+ProcSubset=pid
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
