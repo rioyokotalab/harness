@@ -129,14 +129,22 @@ def validate_token_response(
 ) -> dict[str, str]:
     if not isinstance(response, dict) or response.get("ok") is not True:
         fail("oauth-exchange-rejected")
-    if response.get("token_type") != "bot" or response.get("expires_in") != 43200:
+    if response.get("token_type") != "bot":
+        fail("oauth-bot-token-invalid")
+    if "expires_in" not in response and "refresh_token" not in response:
+        fail("oauth-token-rotation-required")
+    if response.get("expires_in") != 43200:
         fail("oauth-bot-token-invalid")
     if _scope_set(response.get("scope"), "oauth-bot-scope-invalid") != set(BOT_SCOPES):
         fail("oauth-bot-scope-invalid")
     user = response.get("authed_user")
     if not isinstance(user, dict):
         fail("oauth-user-token-invalid")
-    if user.get("token_type") != "user" or user.get("expires_in") != 43200:
+    if user.get("token_type") != "user":
+        fail("oauth-user-token-invalid")
+    if "expires_in" not in user and "refresh_token" not in user:
+        fail("oauth-token-rotation-required")
+    if user.get("expires_in") != 43200:
         fail("oauth-user-token-invalid")
     if _scope_set(user.get("scope"), "oauth-user-scope-invalid") != set(USER_SCOPES):
         fail("oauth-user-scope-invalid")
