@@ -9,6 +9,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +36,56 @@ def bundle() -> dict[str, str]:
 
 
 class SlackInstallTests(unittest.TestCase):
+    def test_reenrollment_quarantine_is_exact_and_recoverable(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            current = root / "current"
+            quarantine = root / "quarantine-before-reenroll"
+            current.mkdir(mode=0o700)
+            for name in INSTALL.EXPECTED_FIELDS:
+                path = current / name
+                path.write_bytes(b"encrypted-fixture")
+                path.chmod(0o600)
+            actions: list[tuple[str, ...]] = []
+            with (
+                mock.patch.object(INSTALL, "CREDENTIAL_STORE", current),
+                mock.patch.object(INSTALL, "QUARANTINE_STORE", quarantine),
+                mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
+            ):
+                INSTALL.quarantine_personal(
+                    owner_uid=os.geteuid(),
+                    systemctl_action=lambda *args: actions.append(args),
+                )
+            self.assertFalse(current.exists())
+            self.assertEqual(set(path.name for path in quarantine.iterdir()), INSTALL.EXPECTED_FIELDS)
+            self.assertEqual(
+                actions,
+                [
+                    ("disable", "--now", "harness-slack-personal-rotate-read.timer"),
+                    ("disable", "--now", "harness-slack-personal-rotate-write.timer"),
+                    ("stop", "harness-slack-personal.service"),
+                ],
+            )
+
+    def test_reenrollment_quarantine_rejects_extra_or_existing_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            current = root / "current"
+            quarantine = root / "quarantine-before-reenroll"
+            current.mkdir(mode=0o700)
+            for name in INSTALL.EXPECTED_FIELDS | {"extra"}:
+                path = current / name
+                path.write_bytes(b"encrypted-fixture")
+                path.chmod(0o600)
+            with (
+                mock.patch.object(INSTALL, "CREDENTIAL_STORE", current),
+                mock.patch.object(INSTALL, "QUARANTINE_STORE", quarantine),
+                mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
+            ):
+                with self.assertRaisesRegex(INSTALL.InstallError, "credential-store-invalid"):
+                    INSTALL.quarantine_personal(owner_uid=os.geteuid())
+            self.assertTrue(current.is_dir())
+            self.assertFalse(quarantine.exists())
     def test_bundle_is_exact_and_bounded(self) -> None:
         self.assertEqual(set(INSTALL.validate_bundle(bundle())), INSTALL.EXPECTED_FIELDS)
         extra = bundle()
