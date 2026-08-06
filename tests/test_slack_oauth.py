@@ -170,6 +170,21 @@ raise SystemExit(0 if value == 'fixture-private-value' else 3)
                 "fixture-client-secret",
             )
 
+    def test_official_nonrotating_response_requires_app_token_rotation(self) -> None:
+        nonrotating = response()
+        nonrotating.pop("expires_in")
+        nonrotating.pop("refresh_token")
+        user = dict(nonrotating["authed_user"])
+        user.pop("expires_in")
+        user.pop("refresh_token")
+        nonrotating["authed_user"] = user
+        with self.assertRaisesRegex(
+            OAUTH.OAuthError, "oauth-token-rotation-required"
+        ):
+            OAUTH.validate_token_response(
+                nonrotating, "fixture.client", "fixture-client-secret"
+            )
+
     def test_provider_failure_is_value_free(self) -> None:
         with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-exchange-rejected"):
             OAUTH.validate_token_response(
