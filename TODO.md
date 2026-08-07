@@ -15,38 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Deferred gates
 
-### Har-414 — Contain shared legacy Slack surfaces
-
-**Phase:** executing; the exact project-local Codex app disable and Claude
-Slack-only deny are under canary validation before hosted-account disconnect.
-**Record:** `docs/tasks/Har-414.md`.
-
-### Har-403 — Deploy the client-neutral Slack broker
-
-**Phase:** executing; all three profile paths passed bounded live acceptance;
-Har-414 owns the final client containment and hosted connector disconnect.
-**Record:** `docs/tasks/Har-403.md`.
-
-### Har-404 — Investigate the Students dependency alert
-
-**Phase:** pending; identify and remediate the high-severity alert reported by
-GitHub without broad dependency churn. **Record:** `docs/tasks/Har-404.md`.
-
-### Har-405 — Make complete gates worktree-compatible
-
-**Phase:** pending; preserve production metadata checks while making Students
-and Swallow validation reliable in isolated worktrees. **Record:** `docs/tasks/Har-405.md`.
-
-### Har-406 — Make the Swallow gate self-describing
-
-**Phase:** pending; remove the implicit render-mode environment prerequisite
-from ordinary static validation. **Record:** `docs/tasks/Har-406.md`.
-
-### Har-408 — Make merged-branch cleanup idempotent
-
-**Phase:** pending; tolerate already-deleted remote PR refs without a failed
-cleanup result. **Record:** `docs/tasks/Har-408.md`.
-
 ### Har-409 — Reconcile the failed Riken routes
 
 **Phase:** pending; both managed Riken routes failed the pre-deployment fleet
