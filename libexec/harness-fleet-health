@@ -7,15 +7,23 @@ HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 
 usage() {
     cat >&2 <<'EOF'
-Usage: harness fleet-health
+Usage: harness fleet-health [--hub t4 --login-node login1|login2]
 EOF
 }
 
-case "$#" in
-    0) ;;
-    1)
-        case "$1" in -h|--help) usage; exit 0 ;; *) usage; exit 2 ;; esac
-        ;;
+hub=
+hub_login=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --hub) [ "$#" -ge 2 ] || { usage; exit 2; }; hub=$2; shift 2 ;;
+        --login-node) [ "$#" -ge 2 ] || { usage; exit 2; }; hub_login=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+case "$hub:$hub_login" in
+    :) ;;
+    t4:login1|t4:login2) ;;
     *) usage; exit 2 ;;
 esac
 
@@ -206,9 +214,22 @@ resolve_agent_socket() {
 }
 
 agent_socket=$(resolve_agent_socket 2>/dev/null || true)
+if [ "$hub" = t4 ]; then
+    "$HARNESS_ROOT/bin/harness" t4-hub --doctor --login-node "$hub_login" \
+        >/dev/null || {
+            echo "harness fleet-health: t4 hub preflight failed" >&2
+            exit 2
+        }
+fi
 
 probe_ordinary() {
     [ -n "$agent_socket" ] || return 1
+    if [ "$hub" = t4 ]; then
+        SSH_AUTH_SOCK=$agent_socket "$HARNESS_ROOT/bin/harness" t4-hub \
+            --connect "$1" --login-node "$hub_login" -- true \
+            >/dev/null 2>&1
+        return
+    fi
     SSH_AUTH_SOCK=$agent_socket ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
         -o ConnectionAttempts=1 "$1" true >/dev/null 2>&1
 }
@@ -225,11 +246,25 @@ probe_pair() {
 }
 
 probe_al() {
+    if [ "$hub" = t4 ]; then
+        probe_ordinary al
+        return
+    fi
     "$HARNESS_ROOT/bin/harness" al-session --status >/dev/null 2>&1 &&
         probe_ordinary al
 }
 
 run_fleet_probe() {
+    if [ "$hub" = t4 ]; then
+        case "$1" in
+            ab|ab2|ri|al|rc|abq|aist|home|office|riken)
+                probe_ordinary "$1"
+                ;;
+            t4) return 0 ;;
+            *) return 2 ;;
+        esac
+        return
+    fi
     case "$1" in
         ab|ab2|ri|rc|t4) probe_ordinary "$1" ;;
         al) probe_al ;;
@@ -273,7 +308,11 @@ record_probe_result() {
     esac
 }
 
-local_status=pass
+if [ "$hub" = t4 ]; then
+    local_status=excluded
+else
+    local_status=pass
+fi
 set --
 if [ -n "$ab_maintenance" ]; then
     ab_status=maintenance
@@ -301,7 +340,9 @@ if [ -n "$rc_maintenance" ]; then
 else
     set -- "$@" rc
 fi
-if [ -n "$t4_maintenance" ]; then
+if [ "$hub" = t4 ]; then
+    t4_status=pass
+elif [ -n "$t4_maintenance" ]; then
     t4_status=maintenance
 else
     set -- "$@" t4
@@ -403,7 +444,11 @@ print_remote_linux() {
     esac
 }
 
-printf 'FLEET_HEALTH node=local class=linux status=%s routes=local\n' "$local_status"
+if [ "$hub" = t4 ]; then
+    printf 'FLEET_HEALTH node=local class=linux status=excluded routes=skipped reason=local-outage hub=t4\n'
+else
+    printf 'FLEET_HEALTH node=local class=linux status=%s routes=local\n' "$local_status"
+fi
 print_remote_linux ab "$ab_status" 1 \
     "$ab_maintenance_end" "$ab_maintenance_url" "$ab_status_url"
 print_remote_linux ab2 "$ab2_status" 1 \
@@ -414,14 +459,25 @@ print_remote_linux al "$al_status" managed \
     "$al_maintenance_end" "$al_maintenance_url" "$al_status_url"
 print_remote_linux rc "$rc_status" 1 \
     "$rc_maintenance_end" "$rc_maintenance_url" "$rc_status_url"
-print_remote_linux t4 "$t4_status" 1 \
-    "$t4_maintenance_end" "$t4_maintenance_url" "$t4_status_url"
+if [ "$hub" = t4 ]; then
+    printf 'FLEET_HEALTH node=t4 class=linux status=pass routes=local hub=t4 login_node=%s\n' "$hub_login"
+else
+    print_remote_linux t4 "$t4_status" 1 \
+        "$t4_maintenance_end" "$t4_maintenance_url" "$t4_status_url"
+fi
 print_remote_linux abq "$abq_status" 2 \
     "$abq_maintenance_end" "$abq_maintenance_url" "$abq_status_url"
-printf 'FLEET_HEALTH node=aist class=mac status=%s routes=2\n' "$aist_status"
-printf 'FLEET_HEALTH node=home class=mac status=%s routes=2\n' "$home_status"
-printf 'FLEET_HEALTH node=office class=mac status=%s routes=2\n' "$office_status"
-printf 'FLEET_HEALTH node=riken class=mac status=%s routes=2\n' "$riken_status"
+if [ "$hub" = t4 ]; then
+    printf 'FLEET_HEALTH node=aist class=mac status=%s routes=1 hub=%s\n' "$aist_status" "$hub_login"
+    printf 'FLEET_HEALTH node=home class=mac status=%s routes=1 hub=%s\n' "$home_status" "$hub_login"
+    printf 'FLEET_HEALTH node=office class=mac status=%s routes=1 hub=%s\n' "$office_status" "$hub_login"
+    printf 'FLEET_HEALTH node=riken class=mac status=%s routes=1 hub=%s\n' "$riken_status" "$hub_login"
+else
+    printf 'FLEET_HEALTH node=aist class=mac status=%s routes=2\n' "$aist_status"
+    printf 'FLEET_HEALTH node=home class=mac status=%s routes=2\n' "$home_status"
+    printf 'FLEET_HEALTH node=office class=mac status=%s routes=2\n' "$office_status"
+    printf 'FLEET_HEALTH node=riken class=mac status=%s routes=2\n' "$riken_status"
+fi
 
 append_failure() {
     current=$1
@@ -435,6 +491,7 @@ append_failure() {
 
 linux_failures=
 linux_maintenance=
+linux_excluded=
 for health_pair in \
     "local:$local_status" "ab:$ab_status" "ab2:$ab2_status" "ri:$ri_status" \
     "al:$al_status" "rc:$rc_status" "t4:$t4_status" "abq:$abq_status"; do
@@ -444,6 +501,9 @@ for health_pair in \
         pass) ;;
         maintenance)
             linux_maintenance=$(append_failure "$linux_maintenance" "$health_name")
+            ;;
+        excluded)
+            linux_excluded=$(append_failure "$linux_excluded" "$health_name")
             ;;
         *)
             linux_failures=$(append_failure "$linux_failures" "$health_name")
@@ -468,6 +528,9 @@ elif [ -n "$linux_maintenance" ]; then
     linux_summary="Linux maintenance nodes=$linux_maintenance"
 else
     linux_summary='Linux pass'
+fi
+if [ -n "$linux_excluded" ]; then
+    linux_summary="$linux_summary excluded nodes=$linux_excluded"
 fi
 if [ -n "$mac_failures" ]; then
     mac_summary="Macs fail nodes=$mac_failures"

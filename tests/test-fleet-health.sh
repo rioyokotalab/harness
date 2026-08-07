@@ -37,8 +37,10 @@ mkdir -p "$PUBLIC/bin" "$PUBLIC/libexec" "$PUBLIC/profiles" "$FAKE_BIN" "$STATE"
 cp "$ROOT/bin/harness" "$PUBLIC/bin/harness"
 cp "$ROOT/libexec/harness-inventory" "$PUBLIC/libexec/harness-inventory"
 cp "$HEALTH" "$PUBLIC/libexec/harness-fleet-health"
+cp "$ROOT/libexec/harness-t4-hub" "$PUBLIC/libexec/harness-t4-hub"
 cp "$ROOT/profiles/fleet-status-sources.tsv" "$PUBLIC/profiles/"
 cp "$ROOT/profiles/fleet-maintenance.tsv" "$PUBLIC/profiles/"
+cp "$ROOT/profiles/t4-hub-routes.tsv" "$PUBLIC/profiles/"
 
 cat >"$PUBLIC/libexec/harness-al-session" <<'EOF'
 #!/bin/sh
@@ -176,6 +178,33 @@ for route in abq abq2 aist aist2 home home2 office office2 riken riken2; do
     grep "^$route " "$STATE/calls" | grep -F 'ControlPath=none' >/dev/null ||
         fail "independent route path contract missing for $route"
 done
+
+: >"$STATE/calls"
+PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
+    HARNESS_LOGICAL_HOST=t4 HARNESS_T4_HUB_HOSTNAME=login1 \
+    HARNESS_FLEET_HEALTH_NOW_EPOCH=1785312000 \
+    HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" \
+    --hub t4 --login-node login1 >"$TEMP_DIR/hub.out"
+grep -F -x \
+    'FLEET_HEALTH node=local class=linux status=excluded routes=skipped reason=local-outage hub=t4' \
+    "$TEMP_DIR/hub.out" >/dev/null || fail "hub Local exclusion"
+grep -F -x \
+    'FLEET_HEALTH node=t4 class=linux status=pass routes=local hub=t4 login_node=login1' \
+    "$TEMP_DIR/hub.out" >/dev/null || fail "hub local t4 result"
+grep -F -x 'FLEET_HEALTH node=riken class=mac status=pass routes=1 hub=login1' \
+    "$TEMP_DIR/hub.out" >/dev/null || fail "hub Mac route result"
+grep -F -x 'Fleet: Linux pass excluded nodes=local; Macs pass.' \
+    "$TEMP_DIR/hub.out" >/dev/null || fail "hub compact summary"
+for route in ab ab2 ri al rc abq aist home office riken; do
+    [ "$(grep -c "^$route " "$STATE/calls")" -eq 1 ] ||
+        fail "hub route was not probed exactly once: $route"
+done
+for excluded in t4 abq2 aist2 home2 office2 riken2; do
+    grep "^$excluded " "$STATE/calls" >/dev/null &&
+        fail "hub probed excluded route: $excluded"
+done
+grep -F -x 'al-session' "$STATE/calls" >/dev/null &&
+    fail "hub used Local AL session state"
 
 : >"$STATE/calls"
 : >"$STATE/abq.fail"

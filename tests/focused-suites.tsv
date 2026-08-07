@@ -15,6 +15,7 @@ tests/test-remote-session.sh|remote-session focused suite
 tests/test-remote-agent-communication.sh|remote agent communication focused suite|4
 tests/test-reboot-recovery-skill.sh|managed Mac reboot recovery skill
 tests/test-fleet-health.sh|canonical fleet health focused suite
+tests/test-t4-hub.sh|bounded on-demand t4 bastion focused suite
 tests/test-connection-monitor.sh|managed Mac connection monitor focused suite
 tests/test-tmux-codex-monitor.sh|Local tmux Codex monitor focused suite
 tests/test-tmux-claude-monitor.sh|Local tmux Claude monitor focused suite

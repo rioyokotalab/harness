@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-424.
+Next free ID: Har-425.
 
 ## Resume contract
 
@@ -14,6 +14,12 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Active
+
+### Har-424 — Establish the Local-outage failover environment
+
+**Phase:** executing the authorized on-demand t4 bastion and temporary Riken
+development environment. **Record:**
+`docs/tasks/Har-424.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
 

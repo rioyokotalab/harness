@@ -9,8 +9,11 @@ one of:
 
 - `$HOME/harness`
 - `/mnt/nfs-03/safe/Users/rioyokota/projects/students`
+- `$HOME/projects/students` (macOS)
 - `/mnt/nfs-03/safe/Users/rioyokota/projects/swallow`
+- `$HOME/projects/swallow` (macOS)
 - `/mnt/nfs-03/safe/Users/rioyokota/projects/personal`
+- `$HOME/projects/personal` (macOS)
 - `/mnt/nfs-03/safe/Users/rioyokota/projects/website` (Linux)
 - `$HOME/projects/website` (macOS)
 
