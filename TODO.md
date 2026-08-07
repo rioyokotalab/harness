@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-422.
+Next free ID: Har-423.
 
 ## Resume contract
 
@@ -17,14 +17,14 @@ mutable-state query is unknown, never absence.
 
 ### Har-414 — Contain shared legacy Slack surfaces
 
-**Phase:** pending; Codex and Claude still advertise broad global Slack
-integrations inside Personal, but authoritative readback shows they are shared
-rather than uniquely revocable. **Record:** `docs/tasks/Har-414.md`.
+**Phase:** executing; the exact project-local Codex app disable and Claude
+Slack-only deny are under canary validation before hosted-account disconnect.
+**Record:** `docs/tasks/Har-414.md`.
 
 ### Har-403 — Deploy the client-neutral Slack broker
 
-**Phase:** executing; discover profile-local runtime inputs, deploy one profile
-at a time, validate live parity, then revoke only proven superseded connectors.
+**Phase:** executing; all three profile paths passed bounded live acceptance;
+Har-414 owns the final client containment and hosted connector disconnect.
 **Record:** `docs/tasks/Har-403.md`.
 
 ### Har-404 — Investigate the Students dependency alert

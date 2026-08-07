@@ -97,6 +97,9 @@ cmp -s "$ROOT/.codex/config.toml" \
 grep -Fx 'approval_policy = { granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }' \
     "$ROOT/.codex/config.toml" >/dev/null ||
     fail "project Codex MCP-only approval policy"
+grep -Fx 'apps.asdk_app_69a1d78e929881919bba0dbda1f6436d.enabled = false' \
+    "$ROOT/.codex/config.toml" >/dev/null ||
+    fail "legacy Codex Slack app remains enabled"
 grep -Fx 'check_for_update_on_startup = false' \
     "$ROOT/.codex/config.toml" >/dev/null ||
     fail "managed Codex startup update check remains enabled"
@@ -120,6 +123,7 @@ assert data.get("$schema") == "https://json.schemastore.org/claude-code-settings
 assert data.get("model") == "fable"
 assert data.get("effortLevel") == "high"
 assert data.get("fallbackModel") == ["opus"]
+assert data.get("deniedMcpServers") == [{"serverName": "claude.ai Slack"}]
 assert data.get("permissions") == {"defaultMode": "bypassPermissions"}
 assert data.get("skipDangerousModePermissionPrompt") is True
 PY

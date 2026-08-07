@@ -96,18 +96,20 @@ validate_sources() {
         .model == "fable" and
         .effortLevel == "high" and
         .fallbackModel == ["opus"] and
+        .deniedMcpServers == [{"serverName":"claude.ai Slack"}] and
         .permissions == {"defaultMode":"bypassPermissions"} and
         .skipDangerousModePermissionPrompt == true
     ' "$claude_policy" >/dev/null 2>&1 ||
         die "project Claude policy is invalid"
     awk '
         $0 == "approval_policy = { granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }" { approval++ }
+        $0 == "apps.asdk_app_69a1d78e929881919bba0dbda1f6436d.enabled = false" { slack_app++ }
         $0 == "check_for_update_on_startup = false" { update++ }
         $0 == "model = \"gpt-5.6-sol\"" { model++ }
         $0 == "model_reasoning_effort = \"high\"" { effort++ }
         $0 == "sandbox_mode = \"danger-full-access\"" { sandbox++ }
         END {
-            exit !(NR == 5 && approval == 1 && update == 1 &&
+            exit !(NR == 6 && approval == 1 && slack_app == 1 && update == 1 &&
                 model == 1 && effort == 1 && sandbox == 1)
         }
     ' "$codex_policy" >/dev/null 2>&1 ||

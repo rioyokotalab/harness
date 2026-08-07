@@ -1,5 +1,10 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "deniedMcpServers": [
+    {
+      "serverName": "claude.ai Slack"
+    }
+  ],
   "effortLevel": "high",
   "fallbackModel": [
     "opus"
