@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -31,7 +32,129 @@ OAUTH = importlib.util.module_from_spec(OAUTH_SPEC)
 OAUTH_SPEC.loader.exec_module(OAUTH)
 
 
+def unbound_profile() -> dict[str, object]:
+    return {
+        "audit": {"max_bytes": 16777216, "retention_days": 30},
+        "capabilities": [
+            "canvas-read",
+            "file-read",
+            "private-channel-read",
+            "public-channel-read",
+            "thread-read",
+        ],
+        "clients": ["claude", "codex"],
+        "contract": "harness-slack-broker-v1",
+        "expected_scopes": [
+            "canvases:read",
+            "channels:history",
+            "files:read",
+            "groups:history",
+        ],
+        "limits": {
+            "max_bytes": 1048576,
+            "max_items": 200,
+            "max_pages": 8,
+            "max_read_attempts": 3,
+            "max_seconds": 30,
+        },
+        "profile": "swallow",
+        "provider_mode": "web-api",
+        "provider_schema": "slack-web-api-2026-08",
+        "resource_policy": "exact",
+        "resources": ["deployment-unbound"],
+        "schema": 1,
+        "service_identity": "harness_slack_swallow",
+        "socket": "/run/harness-slack-broker/swallow.sock",
+        "writes": "disabled",
+    }
+
+
 class SlackSwallowInstallTests(unittest.TestCase):
+    def test_resource_binding_is_hidden_atomic_exact_and_stable(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            profile = Path(temporary) / "swallow.json"
+            profile.write_text(json.dumps(unbound_profile()) + "\n", encoding="utf-8")
+            profile.chmod(0o644)
+            actions: list[tuple[str, ...]] = []
+            sleeps: list[float] = []
+            with (
+                mock.patch.object(INSTALL, "PROFILE_SOURCE", profile),
+                mock.patch.object(
+                    INSTALL.common, "protected_revision", return_value="a" * 40
+                ),
+            ):
+                INSTALL.bind_resource(
+                    "C12345678",
+                    systemctl_action=lambda *args: actions.append(args),
+                    sleeper=sleeps.append,
+                    owner_uid=os.geteuid(),
+                )
+            value = json.loads(profile.read_text(encoding="utf-8"))
+            self.assertEqual(value["resources"], ["C12345678"])
+            self.assertEqual(profile.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(
+                actions,
+                [
+                    ("restart", "harness-slack-swallow.service"),
+                    ("is-active", "--quiet", "harness-slack-swallow.service"),
+                    ("is-active", "--quiet", "harness-slack-swallow.service"),
+                ],
+            )
+            self.assertEqual(sleeps, [1.0])
+
+    def test_resource_binding_rejects_invalid_and_non_unbound_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            profile = Path(temporary) / "swallow.json"
+            original = json.dumps(unbound_profile()) + "\n"
+            profile.write_text(original, encoding="utf-8")
+            with (
+                mock.patch.object(INSTALL, "PROFILE_SOURCE", profile),
+                mock.patch.object(
+                    INSTALL.common, "protected_revision", return_value="a" * 40
+                ),
+            ):
+                with self.assertRaisesRegex(INSTALL.SwallowInstallError, "resource-invalid"):
+                    INSTALL.bind_resource("private/value", owner_uid=os.geteuid())
+                value = unbound_profile()
+                value["resources"] = ["C12345678"]
+                profile.write_text(json.dumps(value) + "\n", encoding="utf-8")
+                with self.assertRaisesRegex(INSTALL.SwallowInstallError, "profile-invalid"):
+                    INSTALL.bind_resource("C87654321", owner_uid=os.geteuid())
+            self.assertIn("C12345678", profile.read_text(encoding="utf-8"))
+
+    def test_resource_binding_rolls_back_if_service_dies_after_restart(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            profile = Path(temporary) / "swallow.json"
+            original = json.dumps(unbound_profile()) + "\n"
+            profile.write_text(original, encoding="utf-8")
+            profile.chmod(0o644)
+            active_checks = 0
+
+            def systemctl_action(*args: str) -> None:
+                nonlocal active_checks
+                if args[:2] == ("is-active", "--quiet"):
+                    active_checks += 1
+                    if active_checks == 2:
+                        raise INSTALL.common.InstallError("service-manager-failed")
+
+            with (
+                mock.patch.object(INSTALL, "PROFILE_SOURCE", profile),
+                mock.patch.object(
+                    INSTALL.common, "protected_revision", return_value="a" * 40
+                ),
+            ):
+                with self.assertRaisesRegex(
+                    INSTALL.common.InstallError, "service-manager-failed"
+                ):
+                    INSTALL.bind_resource(
+                        "G12345678",
+                        systemctl_action=systemctl_action,
+                        sleeper=lambda _seconds: None,
+                        owner_uid=os.geteuid(),
+                    )
+            self.assertEqual(profile.read_text(encoding="utf-8"), original)
+            self.assertEqual(profile.stat().st_mode & 0o777, 0o644)
+
     def test_bundle_contains_only_bot_read_rotation_material(self) -> None:
         bundle = {name: f"fixture-{name}-value" for name in INSTALL.EXPECTED_FIELDS}
         self.assertEqual(set(INSTALL.validate_bundle(bundle)), INSTALL.EXPECTED_FIELDS)

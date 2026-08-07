@@ -6,11 +6,15 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import re
 import stat
 import subprocess
 import sys
+import termios
+import time
 from typing import Callable
 
+import harness_slack_broker as broker
 import harness_slack_install as common
 
 
@@ -36,6 +40,8 @@ EXPECTED_FIELDS = {
 UNIT_ROOT = Path("/etc/systemd/system")
 ENROLLMENT_SOCKET = Path("/run/harness-slack-swallow-enroll.sock")
 MAX_INPUT_BYTES = 64 * 1024
+RESOURCE_RE = re.compile(r"[CG][A-Z0-9]{8,31}\Z")
+UNBOUND_RESOURCE = "deployment-unbound"
 
 
 class SwallowInstallError(ValueError):
@@ -60,6 +66,130 @@ def validate_bundle(value: object) -> dict[str, str]:
             fail("credential-bundle-invalid")
         result[name] = secret
     return result
+
+
+def _hidden_resource() -> str:
+    """Read one bounded exact Slack channel identifier with terminal echo off."""
+    try:
+        descriptor = sys.stdin.fileno()
+        if not os.isatty(descriptor):
+            fail("resource-prompt-unavailable")
+        original = termios.tcgetattr(descriptor)
+        hidden = original[:]
+        hidden[3] &= ~termios.ECHO
+        termios.tcsetattr(descriptor, termios.TCSAFLUSH, hidden)
+    except (OSError, ValueError, termios.error):
+        fail("resource-prompt-unavailable")
+    try:
+        sys.stderr.write("Slack channel ID (hidden): ")
+        sys.stderr.flush()
+        value = sys.stdin.readline(34)
+        if not value.endswith("\n"):
+            fail("resource-prompt-unavailable")
+        return value[:-1].removesuffix("\r")
+    finally:
+        try:
+            termios.tcsetattr(descriptor, termios.TCSADRAIN, original)
+            sys.stderr.write("\n")
+            sys.stderr.flush()
+        except (OSError, ValueError, termios.error):
+            fail("resource-prompt-unavailable")
+
+
+def _atomic_profile(
+    content: bytes,
+    mode: int = 0o600,
+    *,
+    owner_uid: int = 0,
+) -> None:
+    parent = PROFILE_SOURCE.parent
+    try:
+        parent_info = parent.lstat()
+    except OSError:
+        fail("profile-store-invalid")
+    if (
+        not stat.S_ISDIR(parent_info.st_mode)
+        or stat.S_ISLNK(parent_info.st_mode)
+        or parent_info.st_uid != owner_uid
+        or parent_info.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+    ):
+        fail("profile-store-invalid")
+    temporary = parent / f".{PROFILE_SOURCE.name}.{os.getpid()}.tmp"
+    if os.path.lexists(temporary):
+        fail("profile-store-invalid")
+    try:
+        with temporary.open("xb") as stream:
+            os.fchmod(stream.fileno(), mode)
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, PROFILE_SOURCE)
+        descriptor = os.open(parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    finally:
+        if temporary.is_file() and not temporary.is_symlink():
+            temporary.unlink()
+
+
+def bind_resource(
+    resource: str,
+    *,
+    systemctl_action: Callable[..., None] = common._systemctl,
+    sleeper: Callable[[float], None] = time.sleep,
+    owner_uid: int = 0,
+) -> None:
+    common.protected_revision()
+    if RESOURCE_RE.fullmatch(resource) is None:
+        fail("resource-invalid")
+    try:
+        info = PROFILE_SOURCE.lstat()
+        prior = PROFILE_SOURCE.read_bytes()
+        value = broker.load_json(str(PROFILE_SOURCE))
+        validated = broker.validate_profile(value)
+    except (OSError, broker.ContractError):
+        fail("profile-invalid")
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != owner_uid
+        or info.st_nlink != 1
+        or info.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+        or validated["profile"] != "swallow"
+        or validated["provider_mode"] != "web-api"
+        or validated["resource_policy"] != "exact"
+        or validated["resources"] != [UNBOUND_RESOURCE]
+        or validated["writes"] != "disabled"
+    ):
+        fail("profile-invalid")
+    candidate = dict(validated)
+    candidate["resources"] = [resource]
+    try:
+        broker.validate_profile(candidate)
+    except broker.ContractError:
+        fail("profile-invalid")
+    replacement = (broker.canonical_json(candidate) + "\n").encode("utf-8")
+    _atomic_profile(replacement, owner_uid=owner_uid)
+    try:
+        systemctl_action("restart", "harness-slack-swallow.service")
+        common.ensure_service_stable(
+            "harness-slack-swallow.service",
+            systemctl_action=systemctl_action,
+            sleeper=sleeper,
+        )
+    except common.InstallError:
+        _atomic_profile(
+            prior,
+            stat.S_IMODE(info.st_mode),
+            owner_uid=owner_uid,
+        )
+        try:
+            systemctl_action("restart", "harness-slack-swallow.service")
+        except common.InstallError:
+            pass
+        raise
 
 
 def preflight(expected_revision: str | None = None) -> str:
@@ -173,7 +303,7 @@ def activate(prior_service: bytes) -> None:
         common._systemctl("daemon-reload")
         common._systemctl("enable", "--now", timer)
         common._systemctl("restart", service)
-        common._systemctl("is-active", "--quiet", service)
+        common.ensure_service_stable(service)
         common._systemctl("is-active", "--quiet", timer)
     except common.InstallError as error:
         common._atomic_unit(service, prior_service)
@@ -234,7 +364,7 @@ def refresh_read_service() -> None:
     try:
         common._systemctl("daemon-reload")
         common._systemctl("restart", service_path.name)
-        common._systemctl("is-active", "--quiet", service_path.name)
+        common.ensure_service_stable(service_path.name)
     except common.InstallError as error:
         common._atomic_unit(service_path.name, prior)
         try:
@@ -363,6 +493,7 @@ def main() -> int:
         ["install-swallow"],
         ["quarantine-swallow"],
         ["diagnose-swallow-read-scopes"],
+        ["bind-swallow-resource"],
         ["refresh-swallow-read-service"],
     )
     if arguments not in commands and not valid_serve:
@@ -381,6 +512,13 @@ def main() -> int:
             return 0
         if arguments == ["diagnose-swallow-read-scopes"]:
             diagnose_read_scopes()
+            return 0
+        if arguments == ["bind-swallow-resource"]:
+            bind_resource(_hidden_resource())
+            print(
+                "SLACK_LIVE_INSTALL status=complete profile=swallow "
+                "action=resource-bound"
+            )
             return 0
         if arguments == ["refresh-swallow-read-service"]:
             refresh_read_service()
