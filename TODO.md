@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-412.
+Next free ID: Har-413.
 
 ## Resume contract
 
@@ -14,6 +14,12 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Deferred gates
+
+### Har-412 — Allow concurrent Slack broker clients
+
+**Phase:** executing as a LIFO Har-403 blocker; the live profile accepts one
+persistent client at a time, so Claude monopolizes the listener and Codex sees
+the project server as unavailable. **Record:** `docs/tasks/Har-412.md`.
 
 ### Har-403 — Deploy the client-neutral Slack broker
 
