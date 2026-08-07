@@ -76,13 +76,48 @@ def tool_result(value: object, is_error: bool = False) -> dict[str, object]:
 
 
 def bounded_tool_response(request_id: object, value: object) -> dict[str, object]:
-    candidate = response(
-        request_id,
-        tool_result({"trust": "untrusted-context", "value": value}),
-    )
-    encoded = (broker.canonical_json(candidate) + "\n").encode("utf-8")
-    if len(encoded) <= MAX_MESSAGE_BYTES:
+    def candidate_for(candidate_value: object) -> tuple[dict[str, object], int]:
+        candidate = response(
+            request_id,
+            tool_result({"trust": "untrusted-context", "value": candidate_value}),
+        )
+        size = len((broker.canonical_json(candidate) + "\n").encode("utf-8"))
+        return candidate, size
+
+    candidate, size = candidate_for(value)
+    if size <= MAX_MESSAGE_BYTES:
         return candidate
+    if (
+        isinstance(value, dict)
+        and set(value) <= {"has_more", "messages"}
+        and isinstance(value.get("messages"), list)
+        and value["messages"]
+        and isinstance(value.get("has_more", False), bool)
+    ):
+        messages = value["messages"]
+        lower, upper = 0, len(messages) - 1
+        best_count = 0
+        best: dict[str, object] | None = None
+        while lower <= upper:
+            count = (lower + upper) // 2
+            bounded_value = dict(value)
+            bounded_value["messages"] = messages[:count]
+            bounded_value["has_more"] = True
+            bounded, bounded_size = candidate_for(bounded_value)
+            if bounded_size <= MAX_MESSAGE_BYTES:
+                best_count = count
+                best = bounded
+                lower = count + 1
+            else:
+                upper = count - 1
+        if best is not None and best_count > 0:
+            return best
+        return response(
+            request_id,
+            tool_result(
+                {"reason": "provider-item-too-large", "status": "failed"}, True
+            ),
+        )
     return response(
         request_id,
         tool_result(
