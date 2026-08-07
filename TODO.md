@@ -15,12 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Deferred gates
 
-### Har-413 — Preserve stable Slack read failure classes
-
-**Phase:** executing as a LIFO Har-403 blocker; the one-shot Personal read
-failed upstream but the broker collapsed its safe internal reason to generic
-`provider-failed`. **Record:** `docs/tasks/Har-413.md`.
-
 ### Har-403 — Deploy the client-neutral Slack broker
 
 **Phase:** executing; discover profile-local runtime inputs, deploy one profile
