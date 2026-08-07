@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-413.
+Next free ID: Har-414.
 
 ## Resume contract
 
@@ -14,6 +14,12 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Deferred gates
+
+### Har-413 — Preserve stable Slack read failure classes
+
+**Phase:** executing as a LIFO Har-403 blocker; the one-shot Personal read
+failed upstream but the broker collapsed its safe internal reason to generic
+`provider-failed`. **Record:** `docs/tasks/Har-413.md`.
 
 ### Har-403 — Deploy the client-neutral Slack broker
 

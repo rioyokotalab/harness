@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-413	active	Preserve stable Slack read failure classes	TODO.md;docs/tasks/Har-413.md
 Har-412	complete	Allow concurrent Slack broker clients	docs/tasks/Har-412.md
 Har-411	complete	Exclude private targets from credential-policy pinning	docs/tasks/Har-411.md
 Har-410	complete	Make the Harness ledger integration check state-aware	docs/tasks/Har-410.md

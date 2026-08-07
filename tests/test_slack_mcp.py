@@ -162,6 +162,33 @@ class SlackMCPTests(unittest.TestCase):
         self.assertNotIn("synthetic-private-provider-value", serialized)
         self.assertIn("provider-failed", serialized)
 
+    def test_remote_failure_preserves_only_stable_internal_reason(self) -> None:
+        def stable_provider(_name: str, _arguments: dict[str, object]) -> object:
+            raise MCP.remote_mcp.RemoteMCPError("provider-tool-failed")
+
+        stable = MCP.MCPServer(profile(), "ready", stable_provider).handle(
+            request(
+                1,
+                "tools/call",
+                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+            )
+        )
+        self.assertIn("provider-tool-failed", json.dumps(stable))
+
+        def private_provider(_name: str, _arguments: dict[str, object]) -> object:
+            raise MCP.remote_mcp.RemoteMCPError("synthetic private value")
+
+        private = MCP.MCPServer(profile(), "ready", private_provider).handle(
+            request(
+                2,
+                "tools/call",
+                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+            )
+        )
+        serialized = json.dumps(private)
+        self.assertIn("runtime-unavailable", serialized)
+        self.assertNotIn("synthetic private value", serialized)
+
     def test_audit_failure_suppresses_provider_result(self) -> None:
         class FailingAudit:
             def write(self, *_arguments: object) -> None:

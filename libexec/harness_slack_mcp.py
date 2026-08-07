@@ -222,6 +222,16 @@ class MCPServer:
                 "denied",
                 "request-denied",
             )
+        except remote_mcp.RemoteMCPError as exc:
+            reason = stable_runtime_reason(exc)
+            return audited(
+                response(
+                    request_id,
+                    tool_result({"reason": reason, "status": "failed"}, True),
+                ),
+                "failed",
+                reason,
+            )
         except Exception:
             return audited(
                 response(
