@@ -104,12 +104,24 @@ def request_for_tool(profile: dict[str, Any], name: str, arguments: dict[str, An
         if arguments:
             fail("tool-arguments-invalid")
         return request
+    internal_exact = (
+        profile["resource_policy"] == "exact" and len(profile["resources"]) == 1
+    )
+    bound_resource = profile["resources"][0] if internal_exact else None
     if operation in {"read_channel", "read_profile", "read_thread"}:
-        request["resource"] = arguments.get("resource")
+        expected = {"thread"} if operation == "read_thread" else set()
+        if not internal_exact:
+            expected.add("resource")
+        if set(arguments) != expected:
+            fail("tool-arguments-invalid")
+        request["resource"] = bound_resource or arguments.get("resource")
     if operation == "read_thread":
         request["thread"] = arguments.get("thread")
     if operation in {"read_canvas", "read_file"}:
-        request["linked_from"] = arguments.get("linked_from")
+        expected = {"resource"} if internal_exact else {"linked_from", "resource"}
+        if set(arguments) != expected:
+            fail("tool-arguments-invalid")
+        request["linked_from"] = bound_resource or arguments.get("linked_from")
         request["resource"] = arguments.get("resource")
     return request
 
@@ -228,7 +240,12 @@ class MCPServer:
                     "denied",
                     "request-denied",
                 )
-            result = self.provider(name, arguments)
+            provider_arguments = {
+                key: provider_request[key]
+                for key in ("linked_from", "resource", "thread")
+                if key in provider_request
+            }
+            result = self.provider(name, provider_arguments)
         except (broker.ContractError, MCPError):
             return audited(
                 response(

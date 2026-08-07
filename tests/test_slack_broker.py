@@ -90,6 +90,22 @@ class BrokerContractTests(unittest.TestCase):
         self.assertNotIn("slack_send_once", names)
         self.assertTrue(all(tool["inputSchema"]["additionalProperties"] is False for tool in schema["tools"]))
         self.assertTrue(all("untrusted" in tool["description"].lower() for tool in schema["tools"]))
+        by_name = {tool["name"]: tool["inputSchema"] for tool in schema["tools"]}
+        self.assertEqual(by_name["slack_read_channel"]["properties"], {})
+        self.assertEqual(by_name["slack_read_channel"]["required"], [])
+        self.assertEqual(by_name["slack_read_thread"]["required"], ["thread"])
+        self.assertEqual(by_name["slack_read_linked_file"]["required"], ["resource"])
+
+    def test_workspace_visible_schema_keeps_explicit_resource_arguments(self) -> None:
+        accepted = BROKER.validate_profile(
+            profile(resource_policy="workspace-visible", resources=[])
+        )
+        schema = BROKER.tool_schema(accepted, "absent")
+        by_name = {tool["name"]: tool["inputSchema"] for tool in schema["tools"]}
+        self.assertEqual(by_name["slack_read_channel"]["required"], ["resource"])
+        self.assertEqual(
+            by_name["slack_read_thread"]["required"], ["resource", "thread"]
+        )
 
     def test_single_transaction_write_is_exact_and_no_retry(self) -> None:
         accepted = BROKER.validate_profile(
