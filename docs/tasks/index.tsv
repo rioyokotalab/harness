@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-423	active	Reconcile five repositories across the fleet	TODO.md;docs/tasks/Har-423.md
 Har-422	complete	Restore the remote-agent skill context budget	docs/tasks/Har-422.md
 Har-421	complete	Bound Slack message results to whole-item prefixes	docs/tasks/Har-421.md
 Har-420	complete	Keep exact Slack targets inside the broker	docs/tasks/Har-420.md
@@ -12,7 +13,7 @@ Har-413	complete	Preserve stable Slack read failure classes	docs/tasks/Har-413.m
 Har-412	complete	Allow concurrent Slack broker clients	docs/tasks/Har-412.md
 Har-411	complete	Exclude private targets from credential-policy pinning	docs/tasks/Har-411.md
 Har-410	complete	Make the Harness ledger integration check state-aware	docs/tasks/Har-410.md
-Har-409	active	Reconcile the failed Riken routes	TODO.md;docs/tasks/Har-409.md
+Har-409	complete	Reconcile the failed Riken routes	docs/tasks/Har-409.md
 Har-408	complete	Make merged-branch cleanup idempotent	docs/tasks/Har-408.md
 Har-407	complete	Restore the Personal cold-start policy ceiling	docs/tasks/Har-407.md
 Har-406	complete	Make the Swallow complete gate self-describing	docs/tasks/Har-406.md

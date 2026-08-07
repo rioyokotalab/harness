@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-423.
+Next free ID: Har-424.
 
 ## Resume contract
 
@@ -13,12 +13,15 @@ Confirm branch, worktree, recent commits, ownership, and mutable inputs. Resume
 the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
+## Active
+
+### Har-423 — Reconcile five repositories across the fleet
+
+**Phase:** inventory and guarded housekeeping; then synchronize clean managed
+checkouts and prepare the Students Claude consumer. **Record:**
+`docs/tasks/Har-423.md`.
+
 ## Deferred gates
-
-### Har-409 — Reconcile the failed Riken routes
-
-**Phase:** pending; both managed Riken routes failed the pre-deployment fleet
-check while other nodes passed. **Record:** `docs/tasks/Har-409.md`.
 
 ### Har-196 — Backup lifecycle phase 2
 

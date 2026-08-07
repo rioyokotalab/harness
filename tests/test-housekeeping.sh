@@ -196,6 +196,7 @@ REPO=$TEST_ROOT/branches
 init_repo "$REPO"
 BASE=$(git -C "$REPO" rev-parse main)
 git -C "$REPO" branch ancestor "$BASE"
+git -C "$REPO" branch ancestor-twin "$BASE"
 git -C "$REPO" checkout -qb squash
 printf 'squash\n' >>"$REPO/tracked"
 git -C "$REPO" commit -qam squash
@@ -226,6 +227,7 @@ EOF
 
 OUT=$(house --plan --routine branches) || fail "branch plan failed"
 printf '%s\n' "$OUT" | grep -Fq 'CANDIDATE branch=ancestor' || fail "ancestor was rejected"
+printf '%s\n' "$OUT" | grep -Fq 'CANDIDATE branch=ancestor-twin' || fail "duplicate-tip ancestor was rejected"
 printf '%s\n' "$OUT" | grep -Fq 'CANDIDATE branch=squash' || fail "exact squash head was rejected"
 printf '%s\n' "$OUT" | grep -Fq 'REPORT branch=reused' || fail "reused branch was accepted"
 printf '%s\n' "$OUT" | grep -Fq 'reason=merged-pr-head-mismatch' || fail "reused reason missing"
@@ -235,7 +237,7 @@ HARNESS_TEST_EXPECT_GH_CWD=$REPO house --plan --routine branches >/dev/null ||
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
 OUT=$(house --apply --routine branches --receipt "$PLAN" --token "$TOKEN") || fail "branch apply failed"
-printf '%s\n' "$OUT" | grep -Fq 'removed=2' || fail "branch apply count changed"
+printf '%s\n' "$OUT" | grep -Fq 'removed=3' || fail "branch apply count changed"
 ARCHIVE=$(printf '%s\n' "$OUT" | sed -n 's/.*archive_receipt=\([^ ]*\).*/\1/p')
 [ -f "$ARCHIVE" ] || fail "branch archive receipt missing"
 BRANCH_BUNDLE=$(sed -n 's/^bundle=//p' "$ARCHIVE")
@@ -245,6 +247,10 @@ BRANCH_BUNDLE=$(sed -n 's/^bundle=//p' "$ARCHIVE")
 [ "$(stat -c %h "$BRANCH_BUNDLE")" = 1 ] || fail "archive bundle link count changed"
 grep -Fq 'classification=merged-pr-exact-head pr=1' "$ARCHIVE" ||
     fail "archive receipt omitted PR classification"
+grep -Fq "item branch=ancestor tip=$BASE " "$ARCHIVE" ||
+    fail "archive receipt omitted first duplicate-tip branch"
+grep -Fq "item branch=ancestor-twin tip=$BASE " "$ARCHIVE" ||
+    fail "archive receipt omitted second duplicate-tip branch"
 house --audit --receipt "$ARCHIVE" | grep -Fq 'status=pass' || fail "branch archive audit failed"
 git -C "$REPO" show-ref --verify --quiet refs/heads/ancestor && fail "ancestor branch survived"
 git -C "$REPO" show-ref --verify --quiet refs/heads/squash && fail "squash branch survived"
@@ -486,7 +492,7 @@ chmod 600 "$STATE/legacy.bundle" "$STATE/legacy.tar.gz"
 ARCHIVE_FILES_BEFORE=$(find "$STATE" -type f | wc -l)
 OUT=$(house --plan --routine archives) || fail "archive inventory failed"
 printf '%s\n' "$OUT" | grep -Fq \
-    'routine=archives mode=report receipts=2 items=3 unique_tips=3' ||
+    'routine=archives mode=report receipts=2 items=4 unique_tips=3' ||
     fail "archive inventory summary changed"
 printf '%s\n' "$OUT" | grep -Fq \
     'archive_only=2 pr_equal=0 pr_unknown=1' ||

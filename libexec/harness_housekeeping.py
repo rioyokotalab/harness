@@ -208,8 +208,6 @@ def parse_items(path: Path) -> List[Tuple[str, str]]:
         or len({name for name, _tip in items}) != len(items)
     ):
         die("archive items are empty or duplicated")
-    if len({tip for _name, tip in items}) != len(items):
-        die("archive tips must be unique")
     return items
 
 
@@ -231,7 +229,6 @@ def archive_create(
         not items
         or len(set(items)) != len(items)
         or len({name for name, _tip in items}) != len(items)
-        or len({_tip for _name, _tip in items}) != len(items)
     ):
         die("archive items are empty or duplicated")
     lexical_state, state = state_directory()
