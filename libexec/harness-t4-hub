@@ -112,9 +112,48 @@ if [ -n "$connect_target" ]; then
             ;;
         mac)
             [ "$host_override" = - ] || die "Mac route unexpectedly overrides its tunnel endpoint"
-            set -- ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
+            endpoint=$(ssh -G "$route_alias" 2>/dev/null | awk '
+                $1 == "hostname" { hosts++; host=$2 }
+                $1 == "port" { ports++; port=$2 }
+                END {
+                    if (hosts == 1 && ports == 1) print host "|" port
+                    else exit 1
+                }
+            ') || die "Mac tunnel endpoint is unavailable"
+            endpoint_host=${endpoint%%|*}
+            endpoint_port=${endpoint#*|}
+            case "$endpoint_host" in localhost|127.0.0.1|::1) ;; *) die "Mac tunnel endpoint is not loopback" ;; esac
+            case "$endpoint_port" in ''|*[!0-9]*) die "Mac tunnel port is malformed" ;; esac
+            [ "$endpoint_port" -ge 1 ] && [ "$endpoint_port" -le 65535 ] ||
+                die "Mac tunnel port is outside the valid range"
+            known_hosts=$(mktemp /tmp/harness-t4-hub-known-hosts.XXXXXX) ||
+                die "cannot allocate scoped host-key state"
+            chmod 600 "$known_hosts"
+            [ -f "$known_hosts" ] && [ ! -L "$known_hosts" ] &&
+                [ "$(socket_owner "$known_hosts")" = "$(id -u)" ] &&
+                [ "$(path_mode "$known_hosts")" = 600 ] &&
+                [ "$(path_links "$known_hosts")" = 1 ] || {
+                    [ ! -e "$known_hosts" ] || unlink "$known_hosts"
+                    die "scoped host-key state is unsafe"
+                }
+            host_key_alias=t4-hub-$connect_target
+            ssh-keyscan -T 5 -p "$endpoint_port" "$endpoint_host" 2>/dev/null |
+                awk -v alias="$host_key_alias" 'NF >= 3 { print alias, $2, $3 }' \
+                    >"$known_hosts" || true
+            if [ ! -s "$known_hosts" ]; then
+                unlink "$known_hosts"
+                die "Mac tunnel host key is unavailable"
+            fi
+            set +e
+            ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
                 -o ConnectionAttempts=1 -o ControlMaster=no -o ControlPath=none \
-                "$route_alias" "$@"
+                -o StrictHostKeyChecking=yes -o CheckHostIP=no \
+                -o "HostKeyAlias=$host_key_alias" \
+                -o "UserKnownHostsFile=$known_hosts" "$route_alias" "$@"
+            connect_status=$?
+            set -e
+            unlink "$known_hosts"
+            exit "$connect_status"
             ;;
         *) die "selected target is not connectable through t4" ;;
     esac
@@ -124,7 +163,7 @@ fi
 if [ "$mode" = doctor ]; then
     [ -z "$logical_host" ] || { usage; exit 2; }
     require_t4_login
-    for required in awk hostname id ssh stat uname; do
+    for required in awk chmod hostname id mktemp ssh ssh-keyscan stat uname unlink; do
         command -v "$required" >/dev/null 2>&1 || die "required command is unavailable"
     done
     echo "T4_HUB status=ready role=hub login_node=$login_node auth=forwarded routes=declared"

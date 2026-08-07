@@ -53,6 +53,8 @@ if [ -n "$query" ]; then
     case "$query" in
         tunnel) printf '%s\n' 'remoteforward localhost:6101 localhost:22' ;;
         tunnel2) printf '%s\n' 'remoteforward localhost:6102 localhost:22' ;;
+        riken) printf '%s\n' 'hostname localhost' 'port 6101' ;;
+        riken2) printf '%s\n' 'hostname localhost' 'port 6102' ;;
         duplicate) printf '%s\n' 'remoteforward localhost:6101 localhost:22' 'remoteforward localhost:6102 localhost:22' ;;
         *) exit 1 ;;
     esac
@@ -78,6 +80,14 @@ esac
 exit 0
 EOF
 chmod 755 "$FAKE_BIN/ssh"
+
+cat >"$FAKE_BIN/ssh-keyscan" <<'EOF'
+#!/bin/sh
+set -eu
+[ "${HARNESS_T4_HUB_KEYSCAN_FAIL:-0}" != 1 ] || exit 1
+printf '%s\n' '[localhost]:6102 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFIXTURE'
+EOF
+chmod 755 "$FAKE_BIN/ssh-keyscan"
 
 AGENT=$TEST_ROOT/agent.sock
 python3 - "$AGENT" <<'PY'
@@ -142,8 +152,22 @@ grep -F -- '-o HostName=as.v3.abci.ai ab true' "$TEST_ROOT/ssh.log" >/dev/null |
 : >"$TEST_ROOT/ssh.log"
 SSH_AUTH_SOCK=$AGENT HARNESS_LOGICAL_HOST=t4 HARNESS_T4_HUB_HOSTNAME=login2 \
     "$PUBLIC/bin/harness" t4-hub --connect riken --login-node login2 -- true
-grep -F -- '-o ControlMaster=no -o ControlPath=none riken2 true' \
+grep -F -- '-o ControlMaster=no -o ControlPath=none -o StrictHostKeyChecking=yes -o CheckHostIP=no -o HostKeyAlias=t4-hub-riken' \
+    "$TEST_ROOT/ssh.log" >/dev/null || fail "scoped Mac host-key policy"
+grep -F -- 'riken2 true' \
     "$TEST_ROOT/ssh.log" >/dev/null || fail "secondary Mac route"
+known_hosts=$(sed -n 's/.*UserKnownHostsFile=\([^ ]*\).*/\1/p' "$TEST_ROOT/ssh.log")
+[ -n "$known_hosts" ] && [ ! -e "$known_hosts" ] ||
+    fail "scoped Mac host-key state remained"
+
+if HARNESS_T4_HUB_KEYSCAN_FAIL=1 SSH_AUTH_SOCK=$AGENT \
+    HARNESS_LOGICAL_HOST=t4 HARNESS_T4_HUB_HOSTNAME=login2 \
+    "$PUBLIC/bin/harness" t4-hub --connect riken --login-node login2 -- true \
+    >"$TEST_ROOT/keyscan.out" 2>"$TEST_ROOT/keyscan.err"; then
+    fail "Mac route accepted an unavailable host key"
+fi
+grep -F 'Mac tunnel host key is unavailable' "$TEST_ROOT/keyscan.err" >/dev/null ||
+    fail "missing host-key failure class"
 
 if SSH_AUTH_SOCK=$AGENT HARNESS_LOGICAL_HOST=t4 HARNESS_T4_HUB_HOSTNAME=login2 \
     "$PUBLIC/bin/harness" t4-hub --doctor --login-node login1 \

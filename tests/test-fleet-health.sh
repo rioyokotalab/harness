@@ -52,13 +52,26 @@ chmod 755 "$PUBLIC/libexec/harness-al-session"
 cat >"$FAKE_BIN/ssh" <<'EOF'
 #!/bin/sh
 route=
+query=
+previous=
 for argument do
+    if [ "$previous" = G ]; then query=$argument; previous=; continue; fi
+    case "$argument" in -G) previous=G; continue ;; esac
     case "$argument" in
         ab|ab2|ri|al|rc|t4|abq|abq2|aist|aist2|home|home2|office|office2|riken|riken2)
             route=$argument
             ;;
     esac
 done
+if [ -n "$query" ]; then
+    case "$query" in
+        aist|aist2|home|home2|office|office2|riken|riken2)
+            printf '%s\n' 'hostname localhost' 'port 6122'
+            exit 0
+            ;;
+        *) exit 1 ;;
+    esac
+fi
 [ -n "$route" ] || exit 2
 
 counter_lock=$HARNESS_FLEET_HEALTH_STATE/concurrency.lock
@@ -100,6 +113,12 @@ fi
 exit 0
 EOF
 chmod 755 "$FAKE_BIN/ssh"
+
+cat >"$FAKE_BIN/ssh-keyscan" <<'EOF'
+#!/bin/sh
+printf '%s\n' '[localhost]:6122 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFIXTURE'
+EOF
+chmod 755 "$FAKE_BIN/ssh-keyscan"
 
 SSH_AUTH_SOCK=$TEMP_DIR/agent.sock
 export SSH_AUTH_SOCK

@@ -314,8 +314,10 @@ harness fleet-health --hub t4 --login-node login1
 
 The hub command never copies keys or edits the existing SSH root. It preserves
 Local's routes, uses a private control socket, suppresses private SSH
-diagnostics, and schedules an unconditional bounded stop after 540 seconds.
-Run rollback after use; a stale receipt must be reconciled before another apply.
+diagnostics, verifies each loopback Mac endpoint with a private one-command
+host-key file, removes that file immediately, and schedules an unconditional
+bounded stop after 540 seconds. Run rollback after use; a stale receipt must be
+reconciled before another apply.
 
 Routine health reports cover the managed Linux nodes and both routes for every
 Mac. Transport-only `abci_login` and `alps_login` are omitted unless the
