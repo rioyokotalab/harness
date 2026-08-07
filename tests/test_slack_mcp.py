@@ -202,6 +202,22 @@ class SlackMCPTests(unittest.TestCase):
         self.assertIn("provider-unavailable", serialized)
         self.assertNotIn("synthetic-private-provider-value", serialized)
 
+    def test_status_preserves_only_known_provider_failure_class(self) -> None:
+        class UnreadyProvider:
+            def ready(self) -> bool:
+                raise MCP.remote_mcp.RemoteMCPError("provider-tool-drift")
+
+            def __call__(self, _name: str, _arguments: dict[str, object]) -> object:
+                raise AssertionError("not called")
+
+        server = MCP.MCPServer(profile(), "ready", UnreadyProvider())
+        status = server.handle(
+            request(1, "tools/call", {"arguments": {}, "name": "slack_broker_status"})
+        )
+        serialized = json.dumps(status)
+        self.assertIn("repair-required", serialized)
+        self.assertIn("provider-tool-drift", serialized)
+
     def test_stdio_bridge_relays_newline_delimited_json_rpc(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             socket_path = str(Path(directory) / "broker.sock")

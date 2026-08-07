@@ -166,10 +166,14 @@ class MCPServer:
                 try:
                     readiness = getattr(self.provider, "ready", None)
                     provider_ready = readiness is None or readiness() is True
+                    reason = "accepted" if provider_ready else "provider-unavailable"
+                except remote_mcp.RemoteMCPError as exc:
+                    provider_ready = False
+                    reason = stable_runtime_reason(exc)
                 except Exception:
                     provider_ready = False
+                    reason = "provider-unavailable"
                 status = "ready" if provider_ready else "repair-required"
-                reason = "accepted" if provider_ready else "provider-unavailable"
             return audited(
                 response(
                     request_id,
