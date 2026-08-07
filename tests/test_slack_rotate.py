@@ -28,7 +28,7 @@ def response(role: str, **overrides: object) -> dict[str, object]:
         "access_token": f"xoxe.fixture-{role}-access",
         "expires_in": 43200,
         "refresh_token": f"xoxe.fixture-{role}-refresh",
-        "scope": ",".join(sorted(policy["scopes"])),
+        "scope": ",".join(sorted(policy["effective_scopes"])),
         "token_type": policy["kind"],
     }
     value.update(overrides)
@@ -37,7 +37,7 @@ def response(role: str, **overrides: object) -> dict[str, object]:
 
 class SlackRotationTests(unittest.TestCase):
     def test_scope_doctor_reports_only_public_capability_identifiers(self) -> None:
-        actual = set(ROTATE.ROLE["read"]["scopes"]) | {"channels:read"}
+        actual = set(ROTATE.ROLE["read"]["effective_scopes"]) | {"channels:read"}
         value = ROTATE.diagnose_scopes(
             "read",
             Path("/fixture/credentials"),
@@ -103,7 +103,8 @@ class SlackRotationTests(unittest.TestCase):
             Path("/fixture/store"),
             exchange=lambda *_args: response("read", scope="extra:read"),
             verify_scopes=lambda token: (
-                verified.append(token) or set(ROTATE.ROLE["read"]["scopes"])
+                verified.append(token)
+                or set(ROTATE.ROLE["read"]["effective_scopes"])
             ),
             read_credential=lambda _path: "fixture-credential-value",
             store_action=lambda _store, role, access, refresh: stored.append(
@@ -118,7 +119,7 @@ class SlackRotationTests(unittest.TestCase):
         cases = (
             ({"channels:history"}, "rotation-scope-missing"),
             (
-                set(ROTATE.ROLE["read"]["scopes"]) | {"extra:read"},
+                set(ROTATE.ROLE["read"]["effective_scopes"]) | {"extra:read"},
                 "rotation-scope-additional",
             ),
             ({"channels:history", "extra:read"}, "rotation-scope-drift"),

@@ -36,12 +36,24 @@ ROLE = {
             "groups:history",
             "users:read",
         },
+        # Slack documents `identify` as inherent to user tokens and explicit
+        # for classic or migrated app lineage. It adds no capability beyond
+        # the identity already inherent in the user token.
+        "effective_scopes": {
+            "canvases:read",
+            "channels:history",
+            "files:read",
+            "groups:history",
+            "identify",
+            "users:read",
+        },
     },
     "write": {
         "access": "slack-access-write",
         "kind": "bot",
         "refresh": "slack-refresh-write",
         "scopes": {"chat:write"},
+        "effective_scopes": {"chat:write"},
     },
 }
 MAX_RESPONSE_BYTES = 64 * 1024
@@ -129,7 +141,7 @@ def enforce_scopes(expected: set[str], actual: set[str]) -> None:
 
 def validate_response(role: str, value: object) -> tuple[str, str]:
     access, refresh, scopes = parse_response(role, value)
-    enforce_scopes(ROLE[role]["scopes"], scopes)
+    enforce_scopes(ROLE[role]["effective_scopes"], scopes)
     return access, refresh
 
 
@@ -295,7 +307,7 @@ def rotate_role(
     progress("exchange-received")
     access, next_refresh, response_scopes = parse_response(role, response)
     progress("response-shape-valid")
-    expected_scopes = policy["scopes"]
+    expected_scopes = policy["effective_scopes"]
     if response_scopes != expected_scopes:
         progress("scope-readback-starting")
         effective_scopes = verify_scopes(access)
@@ -325,8 +337,8 @@ def diagnose_scopes(
     policy = ROLE[role]
     access = read_credential(str(credentials / str(policy["access"])))
     actual = verify_scopes(access)
-    missing = sorted(policy["scopes"] - actual)
-    additional = sorted(actual - policy["scopes"])
+    missing = sorted(policy["effective_scopes"] - actual)
+    additional = sorted(actual - policy["effective_scopes"])
     status = "pass" if not missing and not additional else "drift"
     return (
         f"SLACK_SCOPE status={status} role={role} "
