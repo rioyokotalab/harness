@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-shot confidential OAuth for the Personal Slack profile.
+"""One-shot confidential OAuth for a supported Slack broker profile.
 
 Credential values stay in process memory and are delivered only to a
 root-authenticated, one-shot local Unix socket. Output and exceptions use
@@ -62,6 +62,18 @@ BUNDLE_FIELDS = {
     "slack-refresh-read",
     "slack-refresh-write",
 }
+SWALLOW_BOT_SCOPES = (
+    "canvases:read",
+    "channels:history",
+    "files:read",
+    "groups:history",
+)
+SWALLOW_BUNDLE_FIELDS = {
+    "slack-access-read",
+    "slack-client-id",
+    "slack-client-secret",
+    "slack-refresh-read",
+}
 
 
 class OAuthError(ValueError):
@@ -123,22 +135,30 @@ def _hidden_prompt(prompt: str) -> str:
             fail("oauth-hidden-prompt-unavailable")
 
 
-def authorization_url(client_id: str, state: str) -> str:
+def authorization_url(client_id: str, state: str, profile: str = "personal") -> str:
     client_id = _bounded_secret(client_id, "oauth-client-id-invalid")
     state = _bounded_secret(state, "oauth-state-invalid")
+    if profile not in {"personal", "swallow"}:
+        fail("oauth-profile-invalid")
     parameters = {
         "client_id": client_id,
         "redirect_uri": REDIRECT_URI,
-        "scope": ",".join(BOT_SCOPES),
+        "scope": ",".join(BOT_SCOPES if profile == "personal" else SWALLOW_BOT_SCOPES),
         "state": state,
-        "user_scope": ",".join(USER_SCOPES),
     }
+    if profile == "personal":
+        parameters["user_scope"] = ",".join(USER_SCOPES)
     return f"{AUTH_ENDPOINT}?{urllib.parse.urlencode(parameters)}"
 
 
 def validate_token_response(
-    response: object, client_id: str, client_secret: str
+    response: object,
+    client_id: str,
+    client_secret: str,
+    profile: str = "personal",
 ) -> dict[str, str]:
+    if profile not in {"personal", "swallow"}:
+        fail("oauth-profile-invalid")
     if not isinstance(response, dict) or response.get("ok") is not True:
         fail("oauth-exchange-rejected")
     if response.get("token_type") != "bot":
@@ -151,8 +171,31 @@ def validate_token_response(
         or not MIN_INITIAL_TTL_SECONDS <= bot_ttl <= MAX_ROTATING_TTL_SECONDS
     ):
         fail("oauth-bot-expiry-invalid")
-    if _scope_set(response.get("scope"), "oauth-bot-scope-invalid") != set(BOT_SCOPES):
+    expected_bot_scopes = BOT_SCOPES if profile == "personal" else SWALLOW_BOT_SCOPES
+    if _scope_set(response.get("scope"), "oauth-bot-scope-invalid") != set(expected_bot_scopes):
         fail("oauth-bot-scope-invalid")
+    if profile == "swallow":
+        user = response.get("authed_user")
+        if user is not None and (
+            not isinstance(user, dict)
+            or any(
+                field in user
+                for field in ("access_token", "expires_in", "refresh_token", "scope", "token_type")
+            )
+        ):
+            fail("oauth-user-token-unexpected")
+        return {
+            "slack-access-read": _bounded_secret(
+                response.get("access_token"), "oauth-bot-token-invalid"
+            ),
+            "slack-client-id": _bounded_secret(client_id, "oauth-client-id-invalid"),
+            "slack-client-secret": _bounded_secret(
+                client_secret, "oauth-client-secret-invalid"
+            ),
+            "slack-refresh-read": _bounded_secret(
+                response.get("refresh_token"), "oauth-bot-refresh-invalid"
+            ),
+        }
     user = response.get("authed_user")
     if not isinstance(user, dict):
         fail("oauth-user-token-invalid")
@@ -349,6 +392,7 @@ def authorize(
     helper: Path,
     sink: Callable[[dict[str, str]], None],
     *,
+    profile: str = "personal",
     exchange: Callable[[str, str, str], dict[str, Any]] = _exchange,
 ) -> None:
     state = secrets.token_urlsafe(32)
@@ -363,7 +407,7 @@ def authorize(
     try:
         _probe_tunnel(server, os.environ.get("HARNESS_OAUTH_BROWSER_HOST", ""))
         progress("callback-route-ready")
-        _open_browser(authorization_url(client_id, state), helper)
+        _open_browser(authorization_url(client_id, state, profile), helper)
         _handle_until(
             server,
             lambda: _Callback.query is not None,
@@ -388,7 +432,7 @@ def authorize(
     progress("token-exchange-starting")
     response = exchange(code[0], client_id, client_secret)
     progress("token-exchange-received")
-    bundle = validate_token_response(response, client_id, client_secret)
+    bundle = validate_token_response(response, client_id, client_secret, profile)
     progress("credential-response-valid")
     sink(bundle)
 
@@ -397,10 +441,11 @@ def _sink_socket(
     bundle: dict[str, str],
     path: Path,
     *,
+    expected_fields: set[str] = BUNDLE_FIELDS,
     server_uid: int = 0,
     client_gid: int | None = None,
 ) -> None:
-    if set(bundle) != BUNDLE_FIELDS or not path.is_absolute():
+    if set(bundle) != expected_fields or not path.is_absolute():
         fail("oauth-credential-sink-invalid")
     if client_gid is None:
         client_gid = os.getgid()
@@ -453,6 +498,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--browser-helper", required=True)
     parser.add_argument("--credential-socket", required=True)
+    parser.add_argument("--profile", choices=("personal", "swallow"), default="personal")
     args = parser.parse_args()
     try:
         client_id = _hidden_prompt("Slack client ID (hidden): ")
@@ -466,7 +512,14 @@ def main() -> int:
             client_id,
             client_secret,
             Path(args.browser_helper),
-            lambda bundle: _sink_socket(bundle, Path(args.credential_socket)),
+            lambda bundle: _sink_socket(
+                bundle,
+                Path(args.credential_socket),
+                expected_fields=(
+                    BUNDLE_FIELDS if args.profile == "personal" else SWALLOW_BUNDLE_FIELDS
+                ),
+            ),
+            profile=args.profile,
         )
     except OAuthError as exc:
         print(f"SLACK_OAUTH status=failed reason={exc}", file=sys.stderr)
@@ -474,7 +527,7 @@ def main() -> int:
     except Exception:
         print("SLACK_OAUTH status=failed reason=internal-error", file=sys.stderr)
         return 2
-    print("SLACK_OAUTH status=complete profile=personal credentials=encrypted")
+    print(f"SLACK_OAUTH status=complete profile={args.profile} credentials=encrypted")
     return 0
 
 

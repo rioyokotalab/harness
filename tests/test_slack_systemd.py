@@ -77,6 +77,35 @@ class SlackSystemdTests(unittest.TestCase):
         self.assertIn("--restart-service harness-slack-personal.service", read_service)
         self.assertNotIn("--restart-service", write_service)
 
+    def test_swallow_ready_service_uses_bot_web_api_without_write_credential(self) -> None:
+        text = (SYSTEMD / "harness-slack-swallow-read.service.in").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "LoadCredentialEncrypted=slack-access-read:@@READ_CREDENTIAL_SOURCE@@", text
+        )
+        self.assertIn("--credential-state ready --provider slack-web-api", text)
+        self.assertIn("--audit /var/log/harness-slack-swallow/audit.jsonl", text)
+        self.assertIn("RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6", text)
+        self.assertNotIn("slack-access-write", text)
+        self.assertNotIn("slack-refresh", text)
+        self.assertNotIn("slack-client-secret", text)
+
+    def test_swallow_rotation_is_single_role_and_profile_pinned(self) -> None:
+        service = (SYSTEMD / "harness-slack-swallow-rotate-read.service.in").read_text(
+            encoding="utf-8"
+        )
+        timer = (SYSTEMD / "harness-slack-swallow-rotate-read.timer.in").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("User=root", service)
+        self.assertIn("--profile swallow --role read", service)
+        self.assertIn("--restart-service harness-slack-swallow.service", service)
+        self.assertNotIn("slack-access-write", service)
+        self.assertNotIn("slack-refresh-write", service)
+        self.assertIn("OnUnitActiveSec=8h", timer)
+        self.assertIn("Persistent=true", timer)
+
 
 if __name__ == "__main__":
     unittest.main()

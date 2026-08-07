@@ -16,11 +16,22 @@ case $browser_host in aist|home|office|riken) ;; *) fail browser-host-invalid ;;
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 REPOSITORY=$(CDPATH='' cd -- "$ROOT/.." && pwd)
+profile=${HARNESS_SLACK_PROFILE:-personal}
+case $profile in
+personal)
+    sink=$ROOT/harness-slack-install
+    serve_command=serve-personal
+    ;;
+swallow)
+    sink=$ROOT/harness-slack-swallow-install
+    serve_command=serve-swallow
+    ;;
+*) fail profile-invalid ;;
+esac
 helper=$ROOT/harness-oauth-browser-open
 oauth=$ROOT/harness-slack-oauth
-sink=$ROOT/harness-slack-install
-launcher=$ROOT/harness-slack-personal-enroll
-socket_path=/run/harness-slack-personal-enroll.sock
+launcher=$ROOT/harness-slack-$profile-enroll
+socket_path=/run/harness-slack-$profile-enroll.sock
 
 validate_owner_helpers() {
     for path in "$helper" "$oauth" "$sink"; do
@@ -145,7 +156,8 @@ PY
 
     progress oauth-starting
     HARNESS_OAUTH_BROWSER_HOST=$browser_host \
-        "$oauth" --browser-helper "$helper" --credential-socket "$socket_path"
+        "$oauth" --profile "$profile" --browser-helper "$helper" \
+        --credential-socket "$socket_path"
 }
 
 if [ "${HARNESS_SLACK_ENROLL_WORKER:-}" = 1 ]; then
@@ -186,6 +198,7 @@ run_as_owner() {
         HOME="$owner_home" USER="$owner_name" LOGNAME="$owner_name" \
         PATH=/usr/local/bin:/usr/bin:/bin \
         SSH_AUTH_SOCK="$owner_agent" \
+        HARNESS_SLACK_PROFILE="$profile" \
         HARNESS_SLACK_ENROLL_WORKER="${HARNESS_SLACK_ENROLL_WORKER:-0}" "$@"
 }
 
@@ -200,7 +213,7 @@ revision=$(git -c "safe.directory=$REPOSITORY" -C "$REPOSITORY" rev-parse HEAD) 
 progress protected-source-ready
 
 "$sink" preflight >/dev/null || fail live-install-preflight-failed
-"$sink" serve-personal "$owner_uid" "$owner_gid" "$revision" >/dev/null &
+"$sink" "$serve_command" "$owner_uid" "$owner_gid" "$revision" >/dev/null &
 sink_pid=$!
 # Invoked by the EXIT and signal traps.
 # shellcheck disable=SC2329

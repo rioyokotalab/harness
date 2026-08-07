@@ -53,6 +53,10 @@ class SlackManifestTests(unittest.TestCase):
 
     def test_swallow_has_only_bounded_read_scopes(self) -> None:
         manifest = self.load("swallow-app-manifest.json")
+        self.assertEqual(
+            manifest["oauth_config"]["redirect_urls"],
+            ["http://localhost:53683/slack/oauth/callback"],
+        )
         self.assert_common(manifest)
         scopes = manifest["oauth_config"]["scopes"]
         self.assertEqual(set(scopes), {"bot"})

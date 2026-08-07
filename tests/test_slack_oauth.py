@@ -147,6 +147,51 @@ raise SystemExit(0 if value == 'fixture-private-value' else 3)
         self.assertEqual(query["state"], ["fixture-state"])
         self.assertNotIn("code_challenge", query)
 
+    def test_swallow_authorization_requests_bot_read_only(self) -> None:
+        parsed = urllib.parse.urlparse(
+            OAUTH.authorization_url("fixture.client", "fixture-state", "swallow")
+        )
+        query = urllib.parse.parse_qs(parsed.query)
+        self.assertEqual(query["scope"], [",".join(OAUTH.SWALLOW_BOT_SCOPES)])
+        self.assertNotIn("user_scope", query)
+
+    def test_swallow_rotating_bot_maps_to_read_only_bundle(self) -> None:
+        value = response(
+            scope=",".join(OAUTH.SWALLOW_BOT_SCOPES),
+        )
+        del value["authed_user"]
+        bundle = OAUTH.validate_token_response(
+            value, "fixture.client", "fixture-client-secret", "swallow"
+        )
+        self.assertEqual(set(bundle), OAUTH.SWALLOW_BUNDLE_FIELDS)
+        self.assertNotIn("slack-access-write", bundle)
+        self.assertNotIn("slack-refresh-write", bundle)
+        with_metadata = dict(value, authed_user={"id": "synthetic-user"})
+        self.assertEqual(
+            set(
+                OAUTH.validate_token_response(
+                    with_metadata,
+                    "fixture.client",
+                    "fixture-client-secret",
+                    "swallow",
+                )
+            ),
+            OAUTH.SWALLOW_BUNDLE_FIELDS,
+        )
+
+    def test_swallow_rejects_user_token_and_scope_drift(self) -> None:
+        with_user = response(scope=",".join(OAUTH.SWALLOW_BOT_SCOPES))
+        with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-user-token-unexpected"):
+            OAUTH.validate_token_response(
+                with_user, "fixture.client", "fixture-client-secret", "swallow"
+            )
+        wrong_scope = response(scope="channels:history")
+        del wrong_scope["authed_user"]
+        with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-bot-scope-invalid"):
+            OAUTH.validate_token_response(
+                wrong_scope, "fixture.client", "fixture-client-secret", "swallow"
+            )
+
     def test_combined_rotating_response_maps_to_isolated_credentials(self) -> None:
         bundle = OAUTH.validate_token_response(
             response(), "fixture.client", "fixture-client-secret"

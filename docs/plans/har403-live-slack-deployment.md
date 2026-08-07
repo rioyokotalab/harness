@@ -136,6 +136,10 @@ Primary sources:
 - <https://docs.slack.dev/ai/slack-mcp-server/>
 - <https://docs.slack.dev/ai/slack-mcp-server/developing/>
 - <https://docs.slack.dev/reference/methods/conversations.history/>
+- <https://docs.slack.dev/reference/methods/conversations.replies/>
+- <https://docs.slack.dev/reference/methods/files.info/>
+- <https://docs.slack.dev/reference/objects/file-object/>
+- <https://docs.slack.dev/reference/scopes/canvases.read/>
 - <https://modelcontextprotocol.io/specification/2025-06-18/basic/transports>
 
 The first protected provider adapter therefore targets only Personal's user
@@ -150,8 +154,25 @@ or canvas read, the adapter uses bounded structured `conversations.history`
 metadata to require the exact provider-generated file ID under an authorized
 source message. An identifier in rendered message text cannot satisfy proof.
 
-Slack's current MCP documentation does not establish bot-token support for the
-MCP read tools. Swallow therefore remains fail-closed until an authoritative
-metadata-only compatibility check succeeds or a separate bounded Web API
-adapter is protected. This uncertainty cannot be treated as provider absence
-and cannot justify connector revocation.
+Slack's hosted MCP documentation defines its authorization and tool scopes on
+a user token and describes separately generated bot tokens as an in-Slack
+experience. It does not establish bot-token MCP reads. Slack's Web API docs do
+explicitly allow bot tokens for `conversations.history`,
+`conversations.replies`, and `files.info` when the bot belongs to the relevant
+conversation; `files.info` is limited to files visible in those conversations,
+authenticated file URLs require `files:read`, and `canvases:read` supports bot
+tokens. The protected direction for Swallow is therefore a separate Web API
+adapter, not a speculative hosted-MCP bot connection.
+
+The synthetic candidate keeps provider calls behind the exact-resource broker,
+proves linked file/canvas identifiers from structured message attachments,
+pins authenticated downloads to HTTPS `files.slack.com/files-pri/`, bounds
+download bytes below the broker envelope, and returns binary content only as
+bounded base64. It adds bot-only confidential OAuth, four-field encrypted
+custody, one read rotator, one profile-local service/timer, recoverable
+quarantine, and a shared one-shot owner/browser enrollment path. No credential,
+private profile value, Slack source, or external write is accessed by synthetic
+acceptance. Live behavior remains unknown until the owner creates and installs
+the internal app from the protected manifest, invites it only to the exact
+configured channel, and authorizes one value-free scope/doctor acceptance
+followed by a separately bounded read.

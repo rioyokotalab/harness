@@ -2,24 +2,26 @@
 
 Permit declared controller↔consumer and Harness cross-client routes. Use one
 mode-0600 file; no SSH/pane reads. Claude needs `--permission-mode
-bypassPermissions`. Before required replies, check:
+bypassPermissions`. Set `SKILL_ROOT` to the directory containing the selected
+`SKILL.md`; every command below uses its repository-relative helper. Before a
+required reply to a consumer target, check:
 
 ```text
-scripts/agent-message check-local-agent-compatibility \
+"$SKILL_ROOT/scripts/agent-message" check-local-agent-compatibility \
   --target personal --target-client claude
 ```
 
 Sync stale targets; record named verified owner-managed helpers.
 
 ```text
-scripts/agent-message send-local-agent --source local --source-client codex \
+"$SKILL_ROOT/scripts/agent-message" send-local-agent --source local --source-client codex \
   --target personal --target-client claude < MESSAGE_FILE
 ```
 
 Local Claude→Harness Codex:
 
 ```text
-scripts/agent-message send-local-codex --source local \
+"$SKILL_ROOT/scripts/agent-message" send-local-codex --source local \
   --source-client claude --target harness < MESSAGE_FILE
 ```
 
@@ -38,7 +40,7 @@ next_action: ACTION
 ```
 
 ```text
-scripts/agent-message reply-local-agent --source personal \
+"$SKILL_ROOT/scripts/agent-message" reply-local-agent --source personal \
   --source-client claude --target harness --target-client codex \
   --request-id ID < REPORT_FILE
 ```
@@ -46,7 +48,7 @@ scripts/agent-message reply-local-agent --source personal \
 Reports key source/client/ID; duplicates need exact bytes. Read:
 
 ```text
-scripts/agent-message read-local-agent-report --source personal \
+"$SKILL_ROOT/scripts/agent-message" read-local-agent-report --source personal \
   --source-client claude --target harness --target-client codex \
   --request-id ID
 ```
@@ -54,7 +56,7 @@ scripts/agent-message read-local-agent-report --source personal \
 After review, confirm once:
 
 ```text
-scripts/agent-message confirm-local-agent --source local \
+"$SKILL_ROOT/scripts/agent-message" confirm-local-agent --source local \
   --source-client codex --target personal --target-client claude \
   --request-id OLD --status accepted --next-request-id NEW
 ```
@@ -63,6 +65,10 @@ Confirmation removes the report. `accepted` plus a fresh ID advances; without
 one it closes a terminal checkpoint. `changes-required` needs a fresh ID;
 `rejected` forbids one.
 Confirmation never grants owner authority, source access, or writes.
+
+The Harness cross-client route is not a consumer-compatibility target. Skip
+`check-local-agent-compatibility` for `--target harness`; endpoint validation
+inside the selected send command remains authoritative.
 
 Time or unchanged tree is not failure. Check metadata; never replay ambiguous
 submissions. At a reversible owner-choice wait, publish safe work,
