@@ -93,6 +93,29 @@ class SlackMCPTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 MCP.parser().parse_args()
 
+    def test_service_cli_accepts_explicit_web_api_provider(self) -> None:
+        with mock.patch.object(
+            sys,
+            "argv",
+            [
+                "harness_slack_mcp.py",
+                "service",
+                "--profile",
+                "/tmp/profile.json",
+                "--client-user",
+                "fixture-user",
+                "--credential-state",
+                "ready",
+                "--provider",
+                "slack-web-api",
+                "--credential",
+                "/tmp/credential",
+                "--audit",
+                "/tmp/audit",
+            ],
+        ):
+            self.assertEqual(MCP.parser().parse_args().provider, "slack-web-api")
+
     def test_initialize_and_tool_listing_are_client_neutral(self) -> None:
         server = MCP.MCPServer(profile())
         initialized = server.handle(request(1, "initialize", {}))
@@ -145,6 +168,24 @@ class SlackMCPTests(unittest.TestCase):
         )
         self.assertTrue(denied["result"]["isError"])
         self.assertEqual(len(calls), 1)
+
+    def test_oversize_provider_result_returns_stable_bounded_error(self) -> None:
+        server = MCP.MCPServer(
+            profile(),
+            "ready",
+            lambda _name, _arguments: {"content": "x" * MCP.MAX_MESSAGE_BYTES},
+        )
+        result = server.handle(
+            request(
+                1,
+                "tools/call",
+                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+            )
+        )
+        payload = (BROKER.canonical_json(result) + "\n").encode("utf-8")
+        self.assertLessEqual(len(payload), MCP.MAX_MESSAGE_BYTES)
+        self.assertIn("provider-result-too-large", payload.decode("utf-8"))
+        self.assertNotIn('"content":"xxx', payload.decode("utf-8"))
 
     def test_provider_exception_is_value_free(self) -> None:
         def provider(_name: str, _arguments: dict[str, object]) -> object:

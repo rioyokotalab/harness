@@ -297,12 +297,17 @@ class SlackInstallTests(unittest.TestCase):
         text = launcher.read_text(encoding="utf-8")
         self.assertIn('[ "$(id -u)" = 0 ] || fail root-required', text)
         self.assertIn('/usr/sbin/runuser -u "$owner_name"', text)
-        self.assertLess(text.index('"$sink" preflight'), text.index("serve-personal"))
+        self.assertLess(
+            text.index('"$sink" preflight'),
+            text.index('"$sink" "$serve_command"'),
+        )
         self.assertLess(
             text.index("serve-personal"),
             text.index('run_as_owner "$launcher" --browser-host'),
         )
         self.assertIn('--credential-socket "$socket_path"', text)
+        self.assertIn('--profile "$profile"', text)
+        self.assertIn('HARNESS_SLACK_PROFILE="$profile"', text)
         self.assertIn('-M -N -T -S "$control_path"', text)
         self.assertIn('-o BatchMode=yes -o ControlPersist=no', text)
         self.assertIn('-S "$control_path" -O check', text)

@@ -75,6 +75,22 @@ def tool_result(value: object, is_error: bool = False) -> dict[str, object]:
     }
 
 
+def bounded_tool_response(request_id: object, value: object) -> dict[str, object]:
+    candidate = response(
+        request_id,
+        tool_result({"trust": "untrusted-context", "value": value}),
+    )
+    encoded = (broker.canonical_json(candidate) + "\n").encode("utf-8")
+    if len(encoded) <= MAX_MESSAGE_BYTES:
+        return candidate
+    return response(
+        request_id,
+        tool_result(
+            {"reason": "provider-result-too-large", "status": "failed"}, True
+        ),
+    )
+
+
 def request_for_tool(profile: dict[str, Any], name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     operation = TOOL_OPERATION.get(name)
     if operation is None:
@@ -241,14 +257,10 @@ class MCPServer:
                 "failed",
                 "provider-failed",
             )
-        return audited(
-            response(
-                request_id,
-                tool_result({"trust": "untrusted-context", "value": result}),
-            ),
-            "complete",
-            "accepted",
-        )
+        bounded = bounded_tool_response(request_id, result)
+        if bounded["result"].get("isError") is True:
+            return audited(bounded, "failed", "provider-result-too-large")
+        return audited(bounded, "complete", "accepted")
 
 
 def read_message(stream: BinaryIO) -> object | None:
@@ -374,7 +386,9 @@ def parser() -> argparse.ArgumentParser:
     service.add_argument("--profile", required=True)
     service.add_argument("--client-user", required=True)
     service.add_argument("--credential-state", choices=("absent", "ready"), default="absent")
-    service.add_argument("--provider", choices=("none", "slack-mcp"), default="none")
+    service.add_argument(
+        "--provider", choices=("none", "slack-mcp", "slack-web-api"), default="none"
+    )
     service.add_argument("--credential")
     service.add_argument("--audit")
     bridge = commands.add_parser("stdio")
@@ -398,10 +412,14 @@ def main() -> int:
                     fail("provider-state-invalid")
                 provider = None
             else:
-                if args.provider != "slack-mcp" or args.credential is None:
+                if args.provider not in {"slack-mcp", "slack-web-api"} or args.credential is None:
                     fail("provider-state-invalid")
                 token = remote_mcp.read_credential(args.credential)
-                provider = remote_mcp.SlackRemoteMCP(profile, token)
+                provider = (
+                    remote_mcp.SlackRemoteMCP(profile, token)
+                    if args.provider == "slack-mcp"
+                    else remote_mcp.SlackWebAPI(profile, token)
+                )
                 if args.audit is None:
                     fail("audit-state-invalid")
             audit = audit_log.AuditLog(profile, args.audit) if args.audit else None

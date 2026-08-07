@@ -80,11 +80,18 @@ def response(identifier: int, result: dict[str, object], **headers: str) -> obje
 
 
 class ScriptedTransport:
-    def __init__(self, replies: list[object], web_replies: list[object] | None = None) -> None:
+    def __init__(
+        self,
+        replies: list[object],
+        web_replies: list[object] | None = None,
+        download_replies: list[object] | None = None,
+    ) -> None:
         self.replies = replies
         self.web_replies = web_replies or []
+        self.download_replies = download_replies or []
         self.calls: list[dict[str, object]] = []
         self.web_calls: list[dict[str, object]] = []
+        self.download_calls: list[dict[str, object]] = []
 
     def post(
         self,
@@ -104,6 +111,26 @@ class ScriptedTransport:
             }
         )
         reply = self.replies.pop(0)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
+
+    def download(
+        self,
+        url: str,
+        token: str,
+        timeout: int,
+        max_bytes: int,
+    ) -> object:
+        self.download_calls.append(
+            {
+                "max_bytes": max_bytes,
+                "timeout": timeout,
+                "token_matches": token == "synthetic-token-value",
+                "url": url,
+            }
+        )
+        reply = self.download_replies.pop(0)
         if isinstance(reply, Exception):
             raise reply
         return reply
@@ -501,6 +528,123 @@ class SlackRemoteMCPTests(unittest.TestCase):
             transport.web_api(
                 "chat.postMessage", {}, "synthetic-token-value", 7, 1024
             )
+
+    def test_web_api_provider_maps_channel_and_thread_without_mcp(self) -> None:
+        transport = ScriptedTransport(
+            [],
+            [
+                REMOTE.HTTPResponse(
+                    200,
+                    {"content-type": "application/json"},
+                    json.dumps(
+                        {
+                            "has_more": False,
+                            "messages": [{"text": "synthetic-channel"}],
+                            "ok": True,
+                            "response_metadata": {"next_cursor": ""},
+                        }
+                    ).encode(),
+                ),
+                REMOTE.HTTPResponse(
+                    200,
+                    {"content-type": "application/json"},
+                    json.dumps(
+                        {
+                            "messages": [{"text": "synthetic-thread"}],
+                            "ok": True,
+                        }
+                    ).encode(),
+                ),
+            ],
+        )
+        provider = REMOTE.SlackWebAPI(
+            profile(), "synthetic-token-value", transport=transport
+        )
+        self.assertTrue(provider.ready())
+        channel = provider("slack_read_channel", {"resource": "allowed-channel"})
+        thread = provider(
+            "slack_read_thread",
+            {"resource": "allowed-channel", "thread": "1234567890.123456"},
+        )
+        self.assertEqual(channel["messages"][0]["text"], "synthetic-channel")
+        self.assertEqual(thread["messages"][0]["text"], "synthetic-thread")
+        self.assertEqual(transport.calls, [])
+        self.assertEqual(
+            [call["method"] for call in transport.web_calls],
+            ["conversations.history", "conversations.replies"],
+        )
+        self.assertEqual(
+            transport.web_calls[1]["arguments"],
+            {"channel": "allowed-channel", "limit": 100, "ts": "1234567890.123456"},
+        )
+
+    def test_web_api_linked_file_requires_proof_and_pins_download(self) -> None:
+        target = linked_profile()
+        transport = ScriptedTransport(
+            [],
+            [
+                REMOTE.HTTPResponse(
+                    200,
+                    {"content-type": "application/json"},
+                    json.dumps(
+                        {
+                            "messages": [{"files": [{"id": "file-1"}]}],
+                            "ok": True,
+                            "response_metadata": {"next_cursor": ""},
+                        }
+                    ).encode(),
+                ),
+                REMOTE.HTTPResponse(
+                    200,
+                    {"content-type": "application/json"},
+                    json.dumps(
+                        {
+                            "file": {
+                                "id": "file-1",
+                                "url_private_download": "https://files.slack.com/files-pri/synthetic/file-1",
+                            },
+                            "ok": True,
+                        }
+                    ).encode(),
+                ),
+            ],
+            [
+                REMOTE.HTTPResponse(
+                    200, {"content-type": "text/plain; charset=utf-8"}, b"synthetic-file"
+                )
+            ],
+        )
+        provider = REMOTE.SlackWebAPI(
+            target, "synthetic-token-value", transport=transport
+        )
+        result = provider(
+            "slack_read_linked_file",
+            {"linked_from": "allowed-channel", "resource": "file-1"},
+        )
+        self.assertEqual(
+            [call["method"] for call in transport.web_calls],
+            ["conversations.history", "files.info"],
+        )
+        self.assertEqual(result["content"], "synthetic-file")
+        self.assertEqual(result["encoding"], "utf-8")
+        self.assertTrue(transport.download_calls[0]["token_matches"])
+        self.assertLessEqual(
+            transport.download_calls[0]["max_bytes"], REMOTE.MAX_PROVIDER_CONTENT_BYTES
+        )
+
+    def test_url_transport_rejects_non_slack_file_download_without_network(self) -> None:
+        transport = REMOTE.URLTransport()
+        for url in (
+            "https://example.invalid/files-pri/synthetic/file-1",
+            "https://files.slack.com.example.invalid/files-pri/synthetic/file-1",
+            "http://files.slack.com/files-pri/synthetic/file-1",
+            "https://files.slack.com:invalid/files-pri/synthetic/file-1",
+            "https://files.slack.com/other/synthetic/file-1",
+        ):
+            with self.subTest(url=url), self.assertRaisesRegex(
+                REMOTE.RemoteMCPError, "provider-file-url-invalid"
+            ):
+                transport.download(url, "synthetic-token-value", 7, 1024)
 
 
 if __name__ == "__main__":

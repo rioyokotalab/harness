@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-415.
+Next free ID: Har-417.
 
 ## Resume contract
 
@@ -14,6 +14,18 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Deferred gates
+
+### Har-416 — Make remote-agent helper resolution self-contained
+
+**Phase:** executing under Har-403; resolve the helper from the selected skill
+root and skip the consumer-only precheck for Harness cross-client sends.
+**Record:** `docs/tasks/Har-416.md`.
+
+### Har-415 — Bound Slack provider results
+
+**Phase:** executing under Har-403; return a stable bounded tool error rather
+than terminating a client connection when provider output exceeds the wire
+envelope. **Record:** `docs/tasks/Har-415.md`.
 
 ### Har-414 — Contain shared legacy Slack surfaces
 

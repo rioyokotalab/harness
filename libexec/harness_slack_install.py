@@ -96,6 +96,7 @@ def receive_once(
     install: Callable[[dict[str, str]], None],
     *,
     socket_uid: int = 0,
+    validator: Callable[[object], dict[str, str]] = validate_bundle,
 ) -> None:
     if (
         not path.is_absolute()
@@ -130,7 +131,7 @@ def receive_once(
             if connection.recv(1):
                 fail("credential-bundle-invalid")
             try:
-                bundle = validate_bundle(json.loads(payload))
+                bundle = validator(json.loads(payload))
             except (UnicodeError, json.JSONDecodeError):
                 fail("credential-bundle-invalid")
             finally:

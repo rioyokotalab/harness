@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rotate one Personal Slack credential role exactly once."""
+"""Rotate one profile-local Slack credential role exactly once."""
 
 from __future__ import annotations
 
@@ -56,6 +56,23 @@ ROLE = {
         "effective_scopes": {"chat:write"},
     },
 }
+SWALLOW_READ = {
+    "access": "slack-access-read",
+    "kind": "bot",
+    "refresh": "slack-refresh-read",
+    "scopes": {
+        "canvases:read",
+        "channels:history",
+        "files:read",
+        "groups:history",
+    },
+    "effective_scopes": {
+        "canvases:read",
+        "channels:history",
+        "files:read",
+        "groups:history",
+    },
+}
 MAX_RESPONSE_BYTES = 64 * 1024
 
 
@@ -98,10 +115,22 @@ def _scopes(value: object) -> set[str]:
     return result
 
 
-def parse_response(role: str, value: object) -> tuple[str, str, set[str]]:
-    policy = ROLE.get(role)
+def role_policy(profile: str, role: str) -> dict[str, object]:
+    if profile == "personal":
+        policy = ROLE.get(role)
+    elif profile == "swallow" and role == "read":
+        policy = SWALLOW_READ
+    else:
+        policy = None
     if policy is None:
         fail("rotation-role-invalid")
+    return policy
+
+
+def parse_response(
+    role: str, value: object, profile: str = "personal"
+) -> tuple[str, str, set[str]]:
+    policy = role_policy(profile, role)
     if not isinstance(value, dict) or value.get("ok") is not True:
         fail("rotation-refresh-rejected")
     ttl = value.get("expires_in")
@@ -139,9 +168,12 @@ def enforce_scopes(expected: set[str], actual: set[str]) -> None:
         fail("rotation-scope-additional")
 
 
-def validate_response(role: str, value: object) -> tuple[str, str]:
-    access, refresh, scopes = parse_response(role, value)
-    enforce_scopes(ROLE[role]["effective_scopes"], scopes)
+def validate_response(
+    role: str, value: object, profile: str = "personal"
+) -> tuple[str, str]:
+    policy = role_policy(profile, role)
+    access, refresh, scopes = parse_response(role, value, profile)
+    enforce_scopes(policy["effective_scopes"], scopes)
     return access, refresh
 
 
@@ -293,19 +325,20 @@ def rotate_role(
     credentials: Path,
     store: Path,
     *,
+    profile: str = "personal",
     exchange: Callable[[str, str, str], dict[str, Any]] = exchange_once,
     store_action: Callable[[Path, str, str, str], None] = store_pair,
     verify_scopes: Callable[[str], set[str]] = verify_access_scopes_once,
     read_credential: Callable[[str], str] = remote.read_credential,
 ) -> None:
-    policy = ROLE[role]
+    policy = role_policy(profile, role)
     client_id = read_credential(str(credentials / "slack-client-id"))
     client_secret = read_credential(str(credentials / "slack-client-secret"))
     refresh = read_credential(str(credentials / str(policy["refresh"])))
     progress("exchange-starting")
     response = exchange(client_id, client_secret, refresh)
     progress("exchange-received")
-    access, next_refresh, response_scopes = parse_response(role, response)
+    access, next_refresh, response_scopes = parse_response(role, response, profile)
     progress("response-shape-valid")
     expected_scopes = policy["effective_scopes"]
     if response_scopes != expected_scopes:
@@ -320,10 +353,15 @@ def rotate_role(
     progress("credential-store-complete")
 
 
-def validate_restart(role: str, service: str | None) -> None:
-    if (
-        role == "read" and service != "harness-slack-personal.service"
-    ) or (role == "write" and service is not None):
+def validate_restart(
+    role: str, service: str | None, profile: str = "personal"
+) -> None:
+    expected = (
+        f"harness-slack-{profile}.service"
+        if role == "read" and profile in {"personal", "swallow"}
+        else None
+    )
+    if service != expected:
         fail("rotation-restart-invalid")
 
 
@@ -331,10 +369,11 @@ def diagnose_scopes(
     role: str,
     credentials: Path,
     *,
+    profile: str = "personal",
     verify_scopes: Callable[[str], set[str]] = verify_access_scopes_once,
     read_credential: Callable[[str], str] = remote.read_credential,
 ) -> str:
-    policy = ROLE[role]
+    policy = role_policy(profile, role)
     access = read_credential(str(credentials / str(policy["access"])))
     actual = verify_scopes(access)
     missing = sorted(policy["effective_scopes"] - actual)
@@ -350,6 +389,7 @@ def diagnose_scopes(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--credentials", required=True)
+    parser.add_argument("--profile", choices=("personal", "swallow"), default="personal")
     parser.add_argument("--role", choices=tuple(ROLE), required=True)
     parser.add_argument("--store")
     parser.add_argument("--restart-service")
@@ -361,12 +401,14 @@ def main() -> int:
         if args.diagnose_scopes:
             if args.store is not None or args.restart_service is not None:
                 fail("rotation-diagnosis-arguments-invalid")
-            print(diagnose_scopes(args.role, Path(args.credentials)))
+            print(diagnose_scopes(args.role, Path(args.credentials), profile=args.profile))
             return 0
         if args.store is None:
             fail("rotation-store-required")
-        validate_restart(args.role, args.restart_service)
-        rotate_role(args.role, Path(args.credentials), Path(args.store))
+        validate_restart(args.role, args.restart_service, args.profile)
+        rotate_role(
+            args.role, Path(args.credentials), Path(args.store), profile=args.profile
+        )
         if args.restart_service:
             result = subprocess.run(
                 ["systemctl", "restart", args.restart_service],
@@ -391,7 +433,7 @@ def main() -> int:
     except Exception:
         print("SLACK_ROTATION status=failed reason=internal-error", file=sys.stderr)
         return 2
-    print(f"SLACK_ROTATION status=complete profile=personal role={args.role}")
+    print(f"SLACK_ROTATION status=complete profile={args.profile} role={args.role}")
     return 0
 
 

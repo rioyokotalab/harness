@@ -93,6 +93,26 @@ class SlackRotationTests(unittest.TestCase):
             with self.assertRaisesRegex(ROTATE.RotationError, "rotation-scope-drift"):
                 ROTATE.validate_response(role, response(role, scope="extra:read"))
 
+    def test_swallow_read_rotation_requires_exact_bot_scope_set(self) -> None:
+        value = {
+            "access_token": "xoxe.fixture-swallow-access",
+            "expires_in": 43200,
+            "ok": True,
+            "refresh_token": "xoxe.fixture-swallow-refresh",
+            "scope": ",".join(sorted(ROTATE.SWALLOW_READ["effective_scopes"])),
+            "token_type": "bot",
+        }
+        access, refresh = ROTATE.validate_response("read", value, "swallow")
+        self.assertIn("swallow", access)
+        self.assertIn("swallow", refresh)
+        with self.assertRaisesRegex(ROTATE.RotationError, "rotation-token-type-invalid"):
+            ROTATE.validate_response(
+                "read", dict(value, token_type="user"), "swallow"
+            )
+        ROTATE.validate_restart(
+            "read", "harness-slack-swallow.service", "swallow"
+        )
+
     def test_scope_mismatch_uses_effective_header_once_before_store(self) -> None:
         stored: list[tuple[str, str, str]] = []
         verified: list[str] = []

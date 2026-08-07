@@ -69,6 +69,8 @@
 ^libexec/harness[-_]slack[-_]rotate(\.py)?$|R3|tests/test-slack-broker.sh|Personal Slack single-use credential rotation
 ^libexec/harness[-_]slack[-_]install(\.py)?$|R3|tests/test-slack-broker.sh|Personal Slack privileged encrypted-credential installation
 ^libexec/harness[-_]slack[-_]personal[-_]enroll$|R3|tests/test-slack-broker.sh|Personal Slack remote-browser enrollment
+^libexec/harness[-_]slack[-_]swallow[-_]enroll$|R3|tests/test-slack-broker.sh|Swallow Slack remote-browser enrollment
+^libexec/harness[-_]slack[-_]swallow[-_]install(\.py)?$|R3|tests/test-slack-broker.sh|Swallow Slack privileged encrypted-credential installation
 ^libexec/harness[-_]slack[-_]mcp([_-].*)?(\.py)?$|R3|tests/test-slack-broker.sh|Slack Unix-socket MCP transport
 ^libexec/harness[-_]slack[-_]profile(\.py)?$|R3|tests/test-slack-broker.sh|Slack declaration to runtime profile boundary
 ^config/slack/.*-app-manifest\.json$|R3|tests/test-slack-broker.sh|least-privilege Slack application manifests
@@ -80,6 +82,7 @@
 ^tests/test_slack_oauth\.py$|R3|tests/test-slack-broker.sh|Personal Slack confidential OAuth tests
 ^tests/test_slack_rotate\.py$|R3|tests/test-slack-broker.sh|Personal Slack credential rotation tests
 ^tests/test_slack_install\.py$|R3|tests/test-slack-broker.sh|Personal Slack encrypted installation tests
+^tests/test_slack_swallow_install\.py$|R3|tests/test-slack-broker.sh|Swallow Slack encrypted installation tests
 ^tests/test_slack_mcp([_-].*)?\.py$|R3|tests/test-slack-broker.sh|Slack Unix-socket and remote transport tests
 ^tests/test_slack_profile\.py$|R3|tests/test-slack-broker.sh|Slack runtime profile boundary tests
 ^tests/test_slack_systemd\.py$|R3|tests/test-slack-broker.sh|fail-closed Slack profile service template tests

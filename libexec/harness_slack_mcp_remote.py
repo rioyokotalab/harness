@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import base64
 from dataclasses import dataclass
 import json
 import os
@@ -11,6 +12,7 @@ import stat
 import time
 from typing import Any, Callable, Mapping, Protocol
 import urllib.error
+import urllib.parse
 import urllib.request
 
 import harness_slack_broker as broker
@@ -19,6 +21,7 @@ import harness_slack_broker as broker
 ENDPOINT = "https://mcp.slack.com/mcp"
 PROTOCOL = "2025-06-18"
 MAX_CREDENTIAL_BYTES = 16 * 1024
+MAX_PROVIDER_CONTENT_BYTES = 48 * 1024
 REMOTE_TOOL = {
     "slack_read_channel": ("slack_read_channel", {"resource": "channel_id"}),
     "slack_read_thread": (
@@ -77,6 +80,14 @@ class Transport(Protocol):
         max_bytes: int,
     ) -> HTTPResponse: ...
 
+    def download(
+        self,
+        url: str,
+        token: str,
+        timeout: int,
+        max_bytes: int,
+    ) -> HTTPResponse: ...
+
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(
@@ -123,7 +134,12 @@ class URLTransport:
         timeout: int,
         max_bytes: int,
     ) -> HTTPResponse:
-        if method not in {"conversations.history", "users.info"}:
+        if method not in {
+            "conversations.history",
+            "conversations.replies",
+            "files.info",
+            "users.info",
+        }:
             raise RemoteMCPError("provider-web-method-denied")
         body = broker.canonical_json(arguments).encode("utf-8")
         headers = {
@@ -135,15 +151,44 @@ class URLTransport:
             f"https://slack.com/api/{method}", body, headers, timeout, max_bytes
         )
 
-    def _request(
+    def download(
         self,
-        endpoint: str,
-        body: bytes,
-        headers: dict[str, str],
+        url: str,
+        token: str,
         timeout: int,
         max_bytes: int,
     ) -> HTTPResponse:
-        request = urllib.request.Request(endpoint, data=body, headers=headers, method="POST")
+        try:
+            parsed = urllib.parse.urlsplit(url)
+            port = parsed.port
+        except ValueError:
+            raise RemoteMCPError("provider-file-url-invalid") from None
+        if (
+            parsed.scheme != "https"
+            or parsed.hostname != "files.slack.com"
+            or port not in {None, 443}
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.fragment
+            or not parsed.path.startswith("/files-pri/")
+        ):
+            raise RemoteMCPError("provider-file-url-invalid")
+        headers = {
+            "Accept": "*/*",
+            "Authorization": f"Bearer {token}",
+        }
+        return self._request(url, None, headers, timeout, max_bytes, method="GET")
+
+    def _request(
+        self,
+        endpoint: str,
+        body: bytes | None,
+        headers: dict[str, str],
+        timeout: int,
+        max_bytes: int,
+        method: str = "POST",
+    ) -> HTTPResponse:
+        request = urllib.request.Request(endpoint, data=body, headers=headers, method=method)
         try:
             with self.opener.open(request, timeout=timeout) as response:
                 payload = response.read(max_bytes + 1)
@@ -521,3 +566,100 @@ class SlackRemoteMCP:
         if not isinstance(result.get("content"), list):
             raise RemoteMCPError("provider-tool-result-invalid")
         return result
+
+
+class SlackWebAPI(SlackRemoteMCP):
+    """Bot-token Web API adapter for an exact-resource read-only profile."""
+
+    def _initialize(self) -> None:
+        if self._initialized:
+            return
+        local_tools = {
+            tool["name"] for tool in broker.tool_schema(self.profile, "absent")["tools"]
+        }
+        supported = {
+            "slack_broker_status",
+            "slack_read_channel",
+            "slack_read_linked_canvas",
+            "slack_read_linked_file",
+            "slack_read_thread",
+        }
+        if not local_tools <= supported:
+            raise RemoteMCPError("provider-tool-map-missing")
+        self._initialized = True
+
+    def _messages(
+        self, method: str, arguments: dict[str, Any]
+    ) -> dict[str, Any]:
+        value = self._web_api(method, arguments)
+        messages = value.get("messages")
+        if not isinstance(messages, list) or len(messages) > self.profile["limits"]["max_items"]:
+            raise RemoteMCPError("provider-messages-invalid")
+        if any(not isinstance(message, dict) for message in messages):
+            raise RemoteMCPError("provider-messages-invalid")
+        result: dict[str, Any] = {"messages": messages}
+        if isinstance(value.get("has_more"), bool):
+            result["has_more"] = value["has_more"]
+        return result
+
+    def _download_linked(self, linked_from: str, resource: str, kind: str) -> dict[str, Any]:
+        self._prove_link(linked_from, resource)
+        value = self._web_api("files.info", {"file": resource})
+        file_value = value.get("file")
+        if not isinstance(file_value, dict) or file_value.get("id") != resource:
+            raise RemoteMCPError("provider-file-invalid")
+        url = file_value.get("url_private_download", file_value.get("url_private"))
+        if not isinstance(url, str) or not 1 <= len(url) <= 4096:
+            raise RemoteMCPError("provider-file-url-invalid")
+        response = self._with_retry(
+            lambda timeout: self._transport.download(
+                url,
+                self._token,
+                timeout,
+                min(self.profile["limits"]["max_bytes"], MAX_PROVIDER_CONTENT_BYTES),
+            )
+        )
+        if response.status != 200:
+            raise RemoteMCPError("provider-http-failed")
+        content_type = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+        if not content_type or len(content_type) > 127:
+            raise RemoteMCPError("provider-content-type-invalid")
+        try:
+            content = response.body.decode("utf-8")
+            encoding = "utf-8"
+        except UnicodeError:
+            content = base64.b64encode(response.body).decode("ascii")
+            encoding = "base64"
+        return {
+            "content": content,
+            "encoding": encoding,
+            "kind": kind,
+            "media_type": content_type,
+        }
+
+    def __call__(self, name: str, arguments: dict[str, Any]) -> object:
+        self._initialize()
+        limit = min(self.profile["limits"]["max_items"], 100)
+        if name == "slack_read_channel":
+            return self._messages(
+                "conversations.history",
+                {"channel": arguments["resource"], "limit": limit},
+            )
+        if name == "slack_read_thread":
+            return self._messages(
+                "conversations.replies",
+                {
+                    "channel": arguments["resource"],
+                    "limit": limit,
+                    "ts": arguments["thread"],
+                },
+            )
+        if name == "slack_read_linked_file":
+            return self._download_linked(
+                arguments["linked_from"], arguments["resource"], "file"
+            )
+        if name == "slack_read_linked_canvas":
+            return self._download_linked(
+                arguments["linked_from"], arguments["resource"], "canvas"
+            )
+        raise RemoteMCPError("provider-tool-denied")
