@@ -350,7 +350,7 @@ class SlackRemoteMCPTests(unittest.TestCase):
         listed = {
             REMOTE.REMOTE_TOOL[name][0]
             for name in REMOTE.REMOTE_TOOL
-            if name not in {"slack_read_linked_file", "slack_read_profile"}
+            if name != "slack_read_linked_file"
         }
         transport = ScriptedTransport(
             [
@@ -363,9 +363,54 @@ class SlackRemoteMCPTests(unittest.TestCase):
             target_profile, "synthetic-token-value", transport=transport
         )
         with self.assertRaisesRegex(
-            REMOTE.RemoteMCPError, "provider-tools-missing-file-profile"
+            REMOTE.RemoteMCPError, "provider-tools-missing-file"
         ):
             provider.ready()
+
+    def test_profile_read_uses_least_scope_web_api_fallback(self) -> None:
+        target_profile = profile()
+        target_profile["capabilities"] = sorted(
+            set(target_profile["capabilities"]) | {"profile-read"}
+        )
+        target_profile["expected_scopes"] = sorted(
+            set(target_profile["expected_scopes"]) | {"users:read"}
+        )
+        target_profile = BROKER.validate_profile(target_profile)
+        transport = ScriptedTransport(
+            [
+                response(1, {"protocolVersion": REMOTE.PROTOCOL}),
+                REMOTE.HTTPResponse(202, {}, b""),
+                response(
+                    2,
+                    {
+                        "tools": [
+                            {"name": "slack_read_channel"},
+                            {"name": "slack_read_thread"},
+                        ]
+                    },
+                ),
+            ],
+            [
+                REMOTE.HTTPResponse(
+                    200,
+                    {"content-type": "application/json"},
+                    json.dumps(
+                        {"ok": True, "user": {"id": "synthetic-user"}}
+                    ).encode(),
+                )
+            ],
+        )
+        provider = REMOTE.SlackRemoteMCP(
+            target_profile, "synthetic-token-value", transport=transport
+        )
+        self.assertEqual(
+            provider("slack_read_profile", {"resource": "synthetic-user"}),
+            {"id": "synthetic-user"},
+        )
+        self.assertEqual(transport.web_calls[0]["method"], "users.info")
+        self.assertEqual(
+            transport.web_calls[0]["arguments"], {"user": "synthetic-user"}
+        )
 
     def test_credential_reader_rejects_symlink_and_permissive_mode(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
