@@ -17,8 +17,8 @@ mutable-state query is unknown, never absence.
 
 ### Har-424 — Establish the Local-outage failover environment
 
-**Phase:** interviewing whether one bounded failover transaction may use Home's
-existing login2 multiplexed master. **Record:**
+**Phase:** executing one owner-authorized, bounded failover transaction through
+Home's existing login2 multiplexed master. **Record:**
 `docs/tasks/Har-424.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
