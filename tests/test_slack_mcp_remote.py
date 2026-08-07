@@ -184,7 +184,9 @@ class SlackRemoteMCPTests(unittest.TestCase):
         provider = REMOTE.SlackRemoteMCP(
             profile(), "synthetic-token-value", transport=transport
         )
-        with self.assertRaisesRegex(REMOTE.RemoteMCPError, "provider-tool-drift"):
+        with self.assertRaisesRegex(
+            REMOTE.RemoteMCPError, "provider-tools-missing-thread"
+        ):
             provider("slack_read_channel", {"resource": "allowed-channel"})
 
     def test_linked_read_requires_structured_web_api_proof_before_mcp_call(self) -> None:
@@ -335,6 +337,35 @@ class SlackRemoteMCPTests(unittest.TestCase):
             REMOTE.HTTPResponse(200, {"content-type": "text/event-stream"}, payload), 7
         )
         self.assertEqual(parsed["result"], {})
+
+    def test_missing_remote_tools_report_only_stable_capability_classes(self) -> None:
+        target_profile = linked_profile()
+        target_profile["capabilities"] = sorted(
+            set(target_profile["capabilities"]) | {"profile-read"}
+        )
+        target_profile["expected_scopes"] = sorted(
+            set(target_profile["expected_scopes"]) | {"users:read"}
+        )
+        target_profile = BROKER.validate_profile(target_profile)
+        listed = {
+            REMOTE.REMOTE_TOOL[name][0]
+            for name in REMOTE.REMOTE_TOOL
+            if name not in {"slack_read_linked_file", "slack_read_profile"}
+        }
+        transport = ScriptedTransport(
+            [
+                response(1, {"protocolVersion": REMOTE.PROTOCOL}),
+                REMOTE.HTTPResponse(202, {}, b""),
+                response(2, {"tools": [{"name": name} for name in sorted(listed)]}),
+            ]
+        )
+        provider = REMOTE.SlackRemoteMCP(
+            target_profile, "synthetic-token-value", transport=transport
+        )
+        with self.assertRaisesRegex(
+            REMOTE.RemoteMCPError, "provider-tools-missing-file-profile"
+        ):
+            provider.ready()
 
     def test_credential_reader_rejects_symlink_and_permissive_mode(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

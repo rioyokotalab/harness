@@ -29,6 +29,13 @@ REMOTE_TOOL = {
     "slack_read_linked_file": ("slack_read_file", {"resource": "file_id"}),
     "slack_read_profile": ("slack_read_user_profile", {"resource": "user_id"}),
 }
+REMOTE_TOOL_CLASS = {
+    "slack_read_channel": "channel",
+    "slack_read_thread": "thread",
+    "slack_read_canvas": "canvas",
+    "slack_read_file": "file",
+    "slack_read_user_profile": "profile",
+}
 LINK_PROOF_REQUIRED = {"slack_read_linked_canvas", "slack_read_linked_file"}
 
 
@@ -389,8 +396,10 @@ class SlackRemoteMCP:
         if unmapped:
             raise RemoteMCPError("provider-tool-map-missing")
         required = {REMOTE_TOOL[name][0] for name in local_tools if name in REMOTE_TOOL}
-        if not required <= self._remote_tools:
-            raise RemoteMCPError("provider-tool-drift")
+        missing = required - self._remote_tools
+        if missing:
+            classes = sorted(REMOTE_TOOL_CLASS.get(name, "unknown") for name in missing)
+            raise RemoteMCPError("provider-tools-missing-" + "-".join(classes))
         self._initialized = True
 
     def ready(self) -> bool:
