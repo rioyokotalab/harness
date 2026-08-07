@@ -11,6 +11,7 @@ import pwd
 import socket
 import stat
 import sys
+import threading
 import time
 from typing import Any, BinaryIO, Callable
 
@@ -21,6 +22,7 @@ import harness_slack_mcp_remote as remote_mcp
 
 MCP_PROTOCOL = "2025-06-18"
 MAX_MESSAGE_BYTES = broker.MAX_JSON_BYTES
+MAX_CLIENTS = 8
 TOOL_OPERATION = {
     "slack_read_channel": "read_channel",
     "slack_read_thread": "read_thread",
@@ -259,7 +261,11 @@ def write_message(stream: BinaryIO, message: dict[str, object]) -> None:
     stream.flush()
 
 
-def serve_connection(server: MCPServer, stream: BinaryIO) -> None:
+def serve_connection(
+    server: MCPServer,
+    stream: BinaryIO,
+    request_lock: threading.Lock | None = None,
+) -> None:
     while True:
         try:
             message = read_message(stream)
@@ -268,23 +274,55 @@ def serve_connection(server: MCPServer, stream: BinaryIO) -> None:
             return
         if message is None:
             return
-        result = server.handle(message)
+        if request_lock is None:
+            result = server.handle(message)
+        else:
+            with request_lock:
+                result = server.handle(message)
         if result is not None:
             write_message(stream, result)
 
 
-def serve_listener(server: MCPServer, listener: socket.socket, expected_uid: int) -> None:
-    while True:
-        connection, _ = listener.accept()
+def serve_client(
+    server: MCPServer,
+    connection: socket.socket,
+    request_lock: threading.Lock,
+    client_slots: threading.BoundedSemaphore,
+) -> None:
+    try:
         with connection:
-            if hasattr(socket, "SO_PEERCRED"):
-                peer = connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)
-                peer_uid = int.from_bytes(peer[4:8], sys.byteorder)
-                if peer_uid != expected_uid:
-                    continue
             stream = connection.makefile("rwb", buffering=0)
             with stream:
-                serve_connection(server, stream)
+                serve_connection(server, stream, request_lock)
+    finally:
+        client_slots.release()
+
+
+def serve_listener(server: MCPServer, listener: socket.socket, expected_uid: int) -> None:
+    request_lock = threading.Lock()
+    client_slots = threading.BoundedSemaphore(MAX_CLIENTS)
+    while True:
+        connection, _ = listener.accept()
+        if hasattr(socket, "SO_PEERCRED"):
+            peer = connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)
+            peer_uid = int.from_bytes(peer[4:8], sys.byteorder)
+            if peer_uid != expected_uid:
+                connection.close()
+                continue
+        if not client_slots.acquire(blocking=False):
+            connection.close()
+            continue
+        worker = threading.Thread(
+            target=serve_client,
+            args=(server, connection, request_lock, client_slots),
+            daemon=True,
+            name="harness-slack-client",
+        )
+        try:
+            worker.start()
+        except RuntimeError:
+            connection.close()
+            client_slots.release()
 
 
 def validate_socket(path: str) -> None:

@@ -244,6 +244,41 @@ class SlackMCPTests(unittest.TestCase):
             self.assertFalse(thread.is_alive())
             self.assertEqual(json.loads(destination.getvalue()), {"id": 1, "jsonrpc": "2.0", "result": {}})
 
+    @unittest.skipUnless(hasattr(socket, "SO_PEERCRED"), "requires peer credentials")
+    def test_listener_serves_second_client_while_first_remains_open(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            socket_path = str(Path(directory) / "broker.sock")
+            listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            listener.bind(socket_path)
+            listener.listen(2)
+            server_thread = threading.Thread(
+                target=MCP.serve_listener,
+                args=(MCP.MCPServer(profile()), listener, os.getuid()),
+                daemon=True,
+            )
+            server_thread.start()
+
+            first = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            second = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            first.settimeout(2)
+            second.settimeout(2)
+            try:
+                first.connect(socket_path)
+                first_stream = first.makefile("rwb", buffering=0)
+                MCP.write_message(first_stream, request(1, "initialize", {}))
+                self.assertEqual(MCP.read_message(first_stream)["id"], 1)
+
+                second.connect(socket_path)
+                second_stream = second.makefile("rwb", buffering=0)
+                MCP.write_message(second_stream, request(2, "tools/list", {}))
+                listing = MCP.read_message(second_stream)
+                names = [item["name"] for item in listing["result"]["tools"]]
+                self.assertIn("slack_broker_status", names)
+            finally:
+                first.close()
+                second.close()
+                listener.close()
+
 
 if __name__ == "__main__":
     unittest.main()
