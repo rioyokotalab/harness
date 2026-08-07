@@ -8,6 +8,7 @@ import base64
 import json
 import os
 from pathlib import Path
+import re
 import stat
 import subprocess
 import sys
@@ -78,7 +79,9 @@ def _scopes(value: object) -> set[str]:
     if not isinstance(value, str):
         fail("rotation-response-invalid")
     result = {item for item in value.replace(",", " ").split() if item}
-    if not result:
+    if not result or any(
+        re.fullmatch(r"[a-z][a-z0-9._:-]{0,63}", item) is None for item in result
+    ):
         fail("rotation-response-invalid")
     return result
 
@@ -312,16 +315,44 @@ def validate_restart(role: str, service: str | None) -> None:
         fail("rotation-restart-invalid")
 
 
+def diagnose_scopes(
+    role: str,
+    credentials: Path,
+    *,
+    verify_scopes: Callable[[str], set[str]] = verify_access_scopes_once,
+    read_credential: Callable[[str], str] = remote.read_credential,
+) -> str:
+    policy = ROLE[role]
+    access = read_credential(str(credentials / str(policy["access"])))
+    actual = verify_scopes(access)
+    missing = sorted(policy["scopes"] - actual)
+    additional = sorted(actual - policy["scopes"])
+    status = "pass" if not missing and not additional else "drift"
+    return (
+        f"SLACK_SCOPE status={status} role={role} "
+        f"missing={','.join(missing) if missing else 'none'} "
+        f"additional={','.join(additional) if additional else 'none'}"
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--credentials", required=True)
     parser.add_argument("--role", choices=tuple(ROLE), required=True)
-    parser.add_argument("--store", required=True)
+    parser.add_argument("--store")
     parser.add_argument("--restart-service")
+    parser.add_argument("--diagnose-scopes", action="store_true")
     args = parser.parse_args()
     try:
         if os.geteuid() != 0:
             fail("rotation-root-required")
+        if args.diagnose_scopes:
+            if args.store is not None or args.restart_service is not None:
+                fail("rotation-diagnosis-arguments-invalid")
+            print(diagnose_scopes(args.role, Path(args.credentials)))
+            return 0
+        if args.store is None:
+            fail("rotation-store-required")
         validate_restart(args.role, args.restart_service)
         rotate_role(args.role, Path(args.credentials), Path(args.store))
         if args.restart_service:

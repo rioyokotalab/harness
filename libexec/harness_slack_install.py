@@ -493,6 +493,47 @@ def quarantine_personal(
     os.rename(CREDENTIAL_STORE, quarantine_store)
 
 
+def diagnose_personal_read_scopes(
+    run: Callable[..., subprocess.CompletedProcess[bytes]] = subprocess.run,
+) -> None:
+    revision = protected_revision()
+    release = install_release(revision)
+    unit = "harness-slack-personal-scope-doctor"
+    credential_directory = Path("/run/credentials") / f"{unit}.service"
+    try:
+        result = run(
+            [
+                "systemd-run",
+                "--wait",
+                "--pipe",
+                "--collect",
+                "--quiet",
+                f"--unit={unit}",
+                "--property=User=root",
+                "--property=Group=root",
+                "--property=NoNewPrivileges=yes",
+                "--property=PrivateTmp=yes",
+                "--property=ProtectHome=yes",
+                "--property=ProtectSystem=strict",
+                "--property=RestrictAddressFamilies=AF_INET AF_INET6",
+                "--property=LoadCredentialEncrypted="
+                f"slack-access-read:{CREDENTIAL_STORE / 'slack-access-read'}",
+                str(release / "libexec/harness-slack-rotate"),
+                "--credentials",
+                str(credential_directory),
+                "--role",
+                "read",
+                "--diagnose-scopes",
+            ],
+            timeout=60,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        fail("scope-doctor-failed")
+    if result.returncode != 0:
+        fail("scope-doctor-failed")
+
+
 def activate(prior_service: bytes) -> None:
     try:
         _systemctl("daemon-reload")
@@ -545,6 +586,7 @@ def main() -> int:
         arguments not in (
             ["preflight"],
             ["install-personal"],
+            ["diagnose-personal-read-scopes"],
             ["quarantine-personal"],
             ["refresh-personal-read-service"],
         )
@@ -569,6 +611,9 @@ def main() -> int:
         if arguments == ["quarantine-personal"]:
             quarantine_personal()
             print("SLACK_LIVE_INSTALL status=complete profile=personal action=quarantined")
+            return 0
+        if arguments == ["diagnose-personal-read-scopes"]:
+            diagnose_personal_read_scopes()
             return 0
         if arguments == ["refresh-personal-read-service"]:
             refresh_personal_read_service()

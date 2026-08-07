@@ -36,6 +36,20 @@ def response(role: str, **overrides: object) -> dict[str, object]:
 
 
 class SlackRotationTests(unittest.TestCase):
+    def test_scope_doctor_reports_only_public_capability_identifiers(self) -> None:
+        actual = set(ROTATE.ROLE["read"]["scopes"]) | {"channels:read"}
+        value = ROTATE.diagnose_scopes(
+            "read",
+            Path("/fixture/credentials"),
+            read_credential=lambda _path: "fixture-access-token",
+            verify_scopes=lambda _token: actual,
+        )
+        self.assertEqual(
+            value,
+            "SLACK_SCOPE status=drift role=read missing=none "
+            "additional=channels:read",
+        )
+
     def test_effective_scope_readback_uses_only_the_fixed_header(self) -> None:
         class Result:
             status = 200
