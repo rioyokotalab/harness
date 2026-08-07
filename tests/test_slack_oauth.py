@@ -179,18 +179,42 @@ raise SystemExit(0 if value == 'fixture-private-value' else 3)
             OAUTH.SWALLOW_BUNDLE_FIELDS,
         )
 
-    def test_swallow_rejects_user_token_and_scope_drift(self) -> None:
+    def test_swallow_rejects_user_token_and_classifies_scope_drift(self) -> None:
         with_user = response(scope=",".join(OAUTH.SWALLOW_BOT_SCOPES))
         with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-user-token-unexpected"):
             OAUTH.validate_token_response(
                 with_user, "fixture.client", "fixture-client-secret", "swallow"
             )
-        wrong_scope = response(scope="channels:history")
-        del wrong_scope["authed_user"]
-        with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-bot-scope-invalid"):
-            OAUTH.validate_token_response(
-                wrong_scope, "fixture.client", "fixture-client-secret", "swallow"
-            )
+        cases = (
+            ("channels:history", "oauth-bot-scope-missing", "missing=canvases:read,files:read,groups:history additional=none"),
+            (
+                ",".join(OAUTH.SWALLOW_BOT_SCOPES) + ",chat:write",
+                "oauth-bot-scope-additional",
+                "missing=none additional=chat:write",
+            ),
+            (
+                "channels:history,chat:write",
+                "oauth-bot-scope-drift",
+                "missing=canvases:read,files:read,groups:history additional=chat:write",
+            ),
+        )
+        for scope, reason, diagnostic in cases:
+            with self.subTest(reason=reason):
+                wrong_scope = response(scope=scope)
+                del wrong_scope["authed_user"]
+                output = io.StringIO()
+                with contextlib.redirect_stderr(output):
+                    with self.assertRaisesRegex(OAUTH.OAuthError, reason):
+                        OAUTH.validate_token_response(
+                            wrong_scope,
+                            "fixture.client",
+                            "fixture-client-secret",
+                            "swallow",
+                        )
+                self.assertIn(
+                    f"SLACK_OAUTH_SCOPE status=drift profile=swallow role=bot {diagnostic}",
+                    output.getvalue(),
+                )
 
     def test_combined_rotating_response_maps_to_isolated_credentials(self) -> None:
         bundle = OAUTH.validate_token_response(
@@ -201,18 +225,30 @@ raise SystemExit(0 if value == 'fixture-private-value' else 3)
         self.assertNotEqual(bundle["slack-refresh-read"], bundle["slack-refresh-write"])
 
     def test_scope_drift_fails_closed(self) -> None:
-        with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-bot-scope-invalid"):
-            OAUTH.validate_token_response(
-                response(scope="chat:write,files:read"),
-                "fixture.client",
-                "fixture-client-secret",
-            )
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-bot-scope-additional"):
+                OAUTH.validate_token_response(
+                    response(scope="chat:write,files:read"),
+                    "fixture.client",
+                    "fixture-client-secret",
+                )
         changed = response()
         changed["authed_user"] = dict(changed["authed_user"], scope="channels:history")
-        with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-user-scope-invalid"):
-            OAUTH.validate_token_response(
-                changed, "fixture.client", "fixture-client-secret"
-            )
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-user-scope-missing"):
+                OAUTH.validate_token_response(
+                    changed, "fixture.client", "fixture-client-secret"
+                )
+
+    def test_malformed_scope_is_not_echoed(self) -> None:
+        candidate = response(scope="chat:write,private/value")
+        output = io.StringIO()
+        with contextlib.redirect_stderr(output):
+            with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-bot-scope-invalid"):
+                OAUTH.validate_token_response(
+                    candidate, "fixture.client", "fixture-client-secret"
+                )
+        self.assertEqual(output.getvalue(), "")
 
     def test_missing_refresh_and_wrong_ttl_fail_closed(self) -> None:
         with self.assertRaisesRegex(OAUTH.OAuthError, "oauth-bot-expiry-invalid"):

@@ -14,6 +14,7 @@ import http.server
 import json
 import os
 from pathlib import Path
+import re
 import secrets
 import socket
 import stat
@@ -74,6 +75,8 @@ SWALLOW_BUNDLE_FIELDS = {
     "slack-client-secret",
     "slack-refresh-read",
 }
+SCOPE_NAME = re.compile(r"[a-z][a-z0-9_.:-]{0,63}\Z")
+MAX_SCOPE_COUNT = 64
 
 
 class OAuthError(ValueError):
@@ -102,9 +105,37 @@ def _scope_set(value: object, reason: str) -> set[str]:
     if not isinstance(value, str) or not value:
         fail(reason)
     scopes = {item for item in value.replace(",", " ").split() if item}
-    if not scopes:
+    if (
+        not scopes
+        or len(scopes) > MAX_SCOPE_COUNT
+        or any(SCOPE_NAME.fullmatch(item) is None for item in scopes)
+    ):
         fail(reason)
     return scopes
+
+
+def _enforce_scopes(
+    profile: str,
+    role: str,
+    expected: set[str],
+    actual: set[str],
+) -> None:
+    """Classify a provider scope mismatch without exposing credential data."""
+    missing = sorted(expected - actual)
+    additional = sorted(actual - expected)
+    if not missing and not additional:
+        return
+    print(
+        f"SLACK_OAUTH_SCOPE status=drift profile={profile} role={role} "
+        f"missing={','.join(missing) if missing else 'none'} "
+        f"additional={','.join(additional) if additional else 'none'}",
+        file=sys.stderr,
+    )
+    if missing and additional:
+        fail(f"oauth-{role}-scope-drift")
+    if missing:
+        fail(f"oauth-{role}-scope-missing")
+    fail(f"oauth-{role}-scope-additional")
 
 
 def _hidden_prompt(prompt: str) -> str:
@@ -172,8 +203,12 @@ def validate_token_response(
     ):
         fail("oauth-bot-expiry-invalid")
     expected_bot_scopes = BOT_SCOPES if profile == "personal" else SWALLOW_BOT_SCOPES
-    if _scope_set(response.get("scope"), "oauth-bot-scope-invalid") != set(expected_bot_scopes):
-        fail("oauth-bot-scope-invalid")
+    _enforce_scopes(
+        profile,
+        "bot",
+        set(expected_bot_scopes),
+        _scope_set(response.get("scope"), "oauth-bot-scope-invalid"),
+    )
     if profile == "swallow":
         user = response.get("authed_user")
         if user is not None and (
@@ -209,8 +244,12 @@ def validate_token_response(
         or not MIN_INITIAL_TTL_SECONDS <= user_ttl <= MAX_ROTATING_TTL_SECONDS
     ):
         fail("oauth-user-expiry-invalid")
-    if _scope_set(user.get("scope"), "oauth-user-scope-invalid") != set(USER_SCOPES):
-        fail("oauth-user-scope-invalid")
+    _enforce_scopes(
+        profile,
+        "user",
+        set(USER_SCOPES),
+        _scope_set(user.get("scope"), "oauth-user-scope-invalid"),
+    )
     return {
         "slack-access-read": _bounded_secret(
             user.get("access_token"), "oauth-user-token-invalid"
