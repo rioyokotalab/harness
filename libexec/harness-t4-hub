@@ -1,0 +1,303 @@
+#!/bin/sh
+set -eu
+umask 077
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+ROUTES=$HARNESS_ROOT/profiles/t4-hub-routes.tsv
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness t4-hub --host aist|home|office|riken --login-node login1|login2 --plan|--apply|--status|--rollback
+  harness t4-hub --connect TARGET --login-node login1|login2 [-- COMMAND...]
+  harness t4-hub --doctor --login-node login1|login2
+EOF
+}
+
+die() {
+    echo "harness t4-hub: $*" >&2
+    exit 2
+}
+
+mode=
+logical_host=
+connect_target=
+login_node=
+command_mode=no
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --connect) [ "$#" -ge 2 ] || { usage; exit 2; }; connect_target=$2; shift 2 ;;
+        --login-node) [ "$#" -ge 2 ] || { usage; exit 2; }; login_node=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --status) mode=status; shift ;;
+        --rollback) mode=rollback; shift ;;
+        --doctor) mode=doctor; shift ;;
+        --) command_mode=yes; shift; break ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ "$command_mode" = yes ] || [ "$#" -eq 0 ] || { usage; exit 2; }
+case "$login_node" in login1|login2) ;; *) usage; exit 2 ;; esac
+[ -f "$ROUTES" ] && [ ! -L "$ROUTES" ] || die "route declaration is unavailable"
+
+route_row() {
+    awk -F'|' -v wanted="$1" '
+        /^#/ || NF == 0 { next }
+        NF != 5 || seen[$1]++ { invalid=1; next }
+        $1 == wanted { print; found++ }
+        END { if (invalid || found != 1) exit 1 }
+    ' "$ROUTES"
+}
+
+socket_owner() {
+    case $(uname -s) in
+        Darwin) stat -f '%u' "$1" ;;
+        *) stat -c '%u' -- "$1" ;;
+    esac
+}
+
+path_mode() {
+    case $(uname -s) in
+        Darwin) stat -f '%Lp' "$1" ;;
+        *) stat -c '%a' -- "$1" ;;
+    esac
+}
+
+path_links() {
+    case $(uname -s) in
+        Darwin) stat -f '%l' "$1" ;;
+        *) stat -c '%h' -- "$1" ;;
+    esac
+}
+
+safe_agent_socket() {
+    [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "$SSH_AUTH_SOCK" ] &&
+        [ "$(socket_owner "$SSH_AUTH_SOCK")" = "$(id -u)" ]
+}
+
+require_t4_login() {
+    [ "${HARNESS_LOGICAL_HOST:-}" = t4 ] || die "connect and doctor require HARNESS_LOGICAL_HOST=t4"
+    if [ -n "${HARNESS_T4_HUB_HOSTNAME:-}" ]; then
+        [ "${HARNESS_TESTING:-0}" = 1 ] || die "hostname override requires HARNESS_TESTING=1"
+        observed=$HARNESS_T4_HUB_HOSTNAME
+    else
+        observed=$(hostname -s 2>/dev/null || hostname)
+    fi
+    case "$observed" in "$login_node"|"$login_node".*) ;; *) die "selected login node differs from the current t4 host" ;; esac
+    safe_agent_socket || die "a current-user-owned forwarded agent socket is required"
+}
+
+if [ -n "$connect_target" ]; then
+    [ -z "$logical_host" ] && [ -z "$mode" ] || { usage; exit 2; }
+    require_t4_login
+    row=$(route_row "$connect_target") || die "unknown or malformed route"
+    [ "$(printf '%s\n' "$row" | awk -F'|' '{print NF}')" -eq 5 ] ||
+        die "route declaration is malformed"
+    route_class=$(printf '%s\n' "$row" | awk -F'|' '{print $2}')
+    host_override=$(printf '%s\n' "$row" | awk -F'|' '{print $3}')
+    if [ "$login_node" = login1 ]; then
+        route_alias=$(printf '%s\n' "$row" | awk -F'|' '{print $4}')
+    else
+        route_alias=$(printf '%s\n' "$row" | awk -F'|' '{print $5}')
+    fi
+    case "$route_class" in
+        linux)
+            [ "$host_override" != - ] || die "Linux route has no global hostname"
+            set -- ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
+                -o ConnectionAttempts=1 -o "HostName=$host_override" "$route_alias" "$@"
+            ;;
+        mac)
+            [ "$host_override" = - ] || die "Mac route unexpectedly overrides its tunnel endpoint"
+            set -- ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
+                -o ConnectionAttempts=1 -o ControlMaster=no -o ControlPath=none \
+                "$route_alias" "$@"
+            ;;
+        *) die "selected target is not connectable through t4" ;;
+    esac
+    exec "$@"
+fi
+
+if [ "$mode" = doctor ]; then
+    [ -z "$logical_host" ] || { usage; exit 2; }
+    require_t4_login
+    for required in awk hostname id ssh stat uname; do
+        command -v "$required" >/dev/null 2>&1 || die "required command is unavailable"
+    done
+    echo "T4_HUB status=ready role=hub login_node=$login_node auth=forwarded routes=declared"
+    exit 0
+fi
+
+case "$mode:$logical_host" in
+    plan:aist|plan:home|plan:office|plan:riken|\
+    apply:aist|apply:home|apply:office|apply:riken|\
+    status:aist|status:home|status:office|status:riken|\
+    rollback:aist|rollback:home|rollback:office|rollback:riken) ;;
+    *) usage; exit 2 ;;
+esac
+platform=$(uname -s)
+if [ -n "${HARNESS_T4_HUB_PLATFORM:-}" ]; then
+    [ "${HARNESS_TESTING:-0}" = 1 ] || die "platform override requires HARNESS_TESTING=1"
+    platform=$HARNESS_T4_HUB_PLATFORM
+fi
+[ "$platform" = Darwin ] || die "Mac tunnel actions require Darwin"
+for required in awk date hostname id mktemp realpath sed ssh stat uname unlink; do
+    command -v "$required" >/dev/null 2>&1 || die "required command is unavailable"
+done
+
+case "$login_node" in
+    login1) source_alias=tunnel; login_fqdn=login1.t4.gsic.titech.ac.jp ;;
+    login2) source_alias=tunnel2; login_fqdn=login2.t4.gsic.titech.ac.jp ;;
+esac
+
+state_parent=${HARNESS_T4_HUB_STATE_PARENT:-$HOME/.local/state/harness}
+if [ -n "${HARNESS_T4_HUB_STATE_PARENT:-}" ]; then
+    [ "${HARNESS_TESTING:-0}" = 1 ] || die "state override requires HARNESS_TESTING=1"
+fi
+case "$state_parent" in /*) ;; *) die "state parent must be absolute" ;; esac
+[ -d "$state_parent" ] && [ ! -L "$state_parent" ] || die "state parent is unavailable or unsafe"
+[ "$(socket_owner "$state_parent")" = "$(id -u)" ] || die "state parent owner is unsafe"
+state_root=$state_parent/t4-hub
+if [ -e "$state_root" ] || [ -L "$state_root" ]; then
+    [ -d "$state_root" ] && [ ! -L "$state_root" ] &&
+        [ "$(socket_owner "$state_root")" = "$(id -u)" ] || die "state root is unsafe"
+elif [ "$mode" = apply ]; then
+    mkdir "$state_root"
+    chmod 700 "$state_root"
+fi
+
+receipt=$state_root/$logical_host-$login_node.receipt
+runtime_source=/tmp
+if [ -n "${HARNESS_T4_HUB_RUNTIME_PARENT:-}" ]; then
+    [ "${HARNESS_TESTING:-0}" = 1 ] || die "runtime override requires HARNESS_TESTING=1"
+    runtime_source=$HARNESS_T4_HUB_RUNTIME_PARENT
+fi
+runtime_parent=$(realpath "$runtime_source") || die "runtime parent is unavailable"
+case "$runtime_parent" in /*) ;; *) die "runtime parent is unsafe" ;; esac
+[ -d "$runtime_parent" ] && [ ! -L "$runtime_parent" ] || die "runtime parent is unsafe"
+socket_suffix=
+if [ -n "${HARNESS_T4_HUB_SOCKET_SUFFIX:-}" ]; then
+    [ "${HARNESS_TESTING:-0}" = 1 ] || die "socket suffix requires HARNESS_TESTING=1"
+    case "$HARNESS_T4_HUB_SOCKET_SUFFIX" in *[!A-Za-z0-9._-]*|'') die "socket suffix is unsafe" ;; esac
+    socket_suffix=-$HARNESS_T4_HUB_SOCKET_SUFFIX
+fi
+control_socket=$runtime_parent/harness-t4-hub-$(id -u)-$logical_host-$login_node$socket_suffix.sock
+
+live_control() {
+    [ -S "$control_socket" ] && [ "$(socket_owner "$control_socket")" = "$(id -u)" ] &&
+        ssh -S "$control_socket" -O check t4 >/dev/null 2>&1
+}
+
+if [ "$mode" = status ]; then
+    if live_control; then
+        echo "T4_HUB status=active host=$logical_host login_node=$login_node duration=bounded"
+        exit 0
+    fi
+    if [ -e "$receipt" ] || [ -L "$receipt" ]; then
+        echo "T4_HUB status=stale host=$logical_host login_node=$login_node action=rollback-required"
+        exit 1
+    fi
+    echo "T4_HUB status=inactive host=$logical_host login_node=$login_node"
+    exit 1
+fi
+
+if [ "$mode" = rollback ]; then
+    [ -e "$receipt" ] || [ -S "$control_socket" ] || {
+        echo "T4_HUB status=complete action=rollback host=$logical_host login_node=$login_node changed=no"
+        exit 0
+    }
+    if [ -S "$control_socket" ]; then
+        [ "$(socket_owner "$control_socket")" = "$(id -u)" ] || die "control socket owner is unsafe"
+        ssh -S "$control_socket" -O exit t4 >/dev/null 2>&1 || die "bounded tunnel stop failed"
+        attempt=0
+        while [ -S "$control_socket" ] && [ "$attempt" -lt 20 ]; do
+            sleep 0.1
+            attempt=$((attempt + 1))
+        done
+        [ ! -S "$control_socket" ] || die "bounded tunnel socket remained after stop"
+    fi
+    if [ -e "$receipt" ] || [ -L "$receipt" ]; then
+        [ -f "$receipt" ] && [ ! -L "$receipt" ] &&
+            [ "$(socket_owner "$receipt")" = "$(id -u)" ] &&
+            [ "$(path_mode "$receipt")" = 600 ] &&
+            [ "$(path_links "$receipt")" = 1 ] || die "receipt is unsafe"
+        unlink "$receipt"
+    fi
+    echo "T4_HUB status=complete action=rollback host=$logical_host login_node=$login_node changed=yes"
+    exit 0
+fi
+
+[ ! -e "$receipt" ] && [ ! -L "$receipt" ] && [ ! -e "$control_socket" ] ||
+    die "prior tunnel state requires rollback"
+forward=$(ssh -G "$source_alias" 2>/dev/null | awk '
+    $1 == "remoteforward" { count++; if (count == 1) print $2 "|" $3 }
+    END { if (count != 1) exit 1 }
+') || die "source tunnel does not declare exactly one remote forward"
+listen=${forward%%|*}; destination=${forward#*|}
+case "$listen" in ''|*' '*|*'|'*) die "source remote forward is malformed" ;; esac
+case "$destination" in ''|*' '*|*'|'*) die "source remote forward is malformed" ;; esac
+
+duration=540
+if [ -n "${HARNESS_T4_HUB_DURATION:-}" ]; then
+    [ "${HARNESS_TESTING:-0}" = 1 ] || die "duration override requires HARNESS_TESTING=1"
+    case "$HARNESS_T4_HUB_DURATION" in *[!0-9]*|'') die "duration override is malformed" ;; esac
+    [ "$HARNESS_T4_HUB_DURATION" -ge 1 ] && [ "$HARNESS_T4_HUB_DURATION" -le 540 ] ||
+        die "duration override is outside the bounded range"
+    duration=$HARNESS_T4_HUB_DURATION
+fi
+echo "T4_HUB mode=$mode host=$logical_host login_node=$login_node duration_seconds=$duration local_topology=preserved"
+[ "$mode" = apply ] || { echo 'END t4_hub applied=no'; exit 0; }
+
+log=$(mktemp "$state_root/.apply.XXXXXX") || die "cannot allocate private apply log"
+chmod 600 "$log"
+activated=no
+timer_pid=
+cleanup_apply() {
+    status=$?
+    trap - 0 HUP INT TERM
+    if [ "$status" -ne 0 ]; then
+        if [ -n "$timer_pid" ] && kill -0 "$timer_pid" 2>/dev/null; then
+            kill "$timer_pid" 2>/dev/null || true
+        fi
+        if [ "$activated" = yes ] && [ -S "$control_socket" ]; then
+            ssh -S "$control_socket" -O exit t4 >/dev/null 2>&1 || true
+        fi
+        if [ -e "$receipt" ] && [ ! -L "$receipt" ]; then unlink "$receipt"; fi
+    fi
+    [ ! -e "$log" ] || unlink "$log"
+    exit "$status"
+}
+trap cleanup_apply 0
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+remote_spec=$listen:$destination
+if ! ssh -x -fNT -M -S "$control_socket" -o BatchMode=yes \
+    -o ConnectTimeout=15 -o ConnectionAttempts=1 -o ControlPersist=no \
+    -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 \
+    -o ServerAliveCountMax=3 -o "HostName=$login_fqdn" \
+    -o HostKeyAlias=login.t4.gsic.titech.ac.jp -R "$remote_spec" t4 \
+    >/dev/null 2>"$log"; then
+    die "bounded tunnel activation failed"
+fi
+activated=yes
+live_control || die "bounded tunnel failed live control validation"
+started=$(date +%s)
+expires=$((started + duration))
+# shellcheck disable=SC2016
+nohup sh -c '
+    sleep "$1"
+    ssh -S "$2" -O exit t4 >/dev/null 2>&1 || true
+' sh "$duration" "$control_socket" >/dev/null 2>&1 &
+timer_pid=$!
+kill -0 "$timer_pid" 2>/dev/null || die "bounded stop timer failed to start"
+printf 'schema=1\nhost=%s\nlogin_node=%s\nstarted=%s\nexpires=%s\ntimer_pid=%s\n' \
+    "$logical_host" "$login_node" "$started" "$expires" "$timer_pid" >"$receipt"
+chmod 600 "$receipt"
+activated=no
+[ ! -e "$log" ] || unlink "$log"
+trap - 0 HUP INT TERM
+echo "T4_HUB status=active host=$logical_host login_node=$login_node duration=bounded rollback=available"

@@ -1,0 +1,13 @@
+# logical|class|host_override|primary_alias|secondary_alias
+local|excluded|-|-|-
+ab|linux|as.v3.abci.ai|ab|ab
+ab2|linux|as.v3.abci.ai|ab2|ab2
+ri|linux|login.rikyu.r-ccs.riken.jp|ri|ri
+al|linux|daint.alps.cscs.ch|al|al
+rc|linux|login.cloud.r-ccs.riken.jp|rc|rc
+t4|hub|-|-|-
+abq|linux|qas.q.abci.ai|abq|abq2
+aist|mac|-|aist|aist2
+home|mac|-|home|home2
+office|mac|-|office|office2
+riken|mac|-|riken|riken2

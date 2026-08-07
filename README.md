@@ -287,6 +287,36 @@ ssh HOST 'sh -s -- --host HOST' < libexec/harness-inventory
 harness fleet-health
 ```
 
+During a declared Local outage, t4 can act as a bounded on-demand bastion
+without installing a server or auto-restart process on its shared login nodes.
+From a remotely controlled Mac, preserve its existing Local tunnel and open one
+additional route to a pinned TSUBAME login node for at most nine minutes:
+
+```bash
+harness t4-hub --host riken --login-node login1 --plan
+harness t4-hub --host riken --login-node login1 --apply
+harness t4-hub --host riken --login-node login1 --status
+harness t4-hub --host riken --login-node login1 --rollback
+```
+
+Use `aist`, `home`, `office`, or `riken` as the exact Mac identity. The
+`login2` route derives only from that Mac's existing secondary tunnel and is a
+separate bounded transaction. On the matching pinned t4 node, keep the incoming
+current-user agent forwarding and use the declared global Linux routes or the
+active Mac reverse route:
+
+```bash
+harness t4-hub --doctor --login-node login1
+harness t4-hub --connect ri --login-node login1
+harness t4-hub --connect riken --login-node login1
+harness fleet-health --hub t4 --login-node login1
+```
+
+The hub command never copies keys or edits the existing SSH root. It preserves
+Local's routes, uses a private control socket, suppresses private SSH
+diagnostics, and schedules an unconditional bounded stop after 540 seconds.
+Run rollback after use; a stale receipt must be reconciled before another apply.
+
 Routine health reports cover the managed Linux nodes and both routes for every
 Mac. Transport-only `abci_login` and `alps_login` are omitted unless the
 transport itself is under investigation. Use `harness connection-monitor
