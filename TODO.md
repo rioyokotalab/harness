@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-418.
+Next free ID: Har-420.
 
 ## Resume contract
 
@@ -14,12 +14,6 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Deferred gates
-
-### Har-417 — Make Slack OAuth scope failures self-diagnosing
-
-**Phase:** executing under Har-403; classify missing and additional OAuth
-scopes without credential or content disclosure before another consent.
-**Record:** `docs/tasks/Har-417.md`.
 
 ### Har-414 — Contain shared legacy Slack surfaces
 

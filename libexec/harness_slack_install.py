@@ -12,6 +12,7 @@ import stat
 import struct
 import subprocess
 import sys
+import time
 from typing import Callable
 
 
@@ -395,7 +396,10 @@ def refresh_personal_read_service(
     try:
         systemctl_action("daemon-reload")
         systemctl_action("restart", service_path.name)
-        systemctl_action("is-active", "--quiet", service_path.name)
+        ensure_service_stable(
+            service_path.name,
+            systemctl_action=systemctl_action,
+        )
     except InstallError:
         _atomic_unit(service_path.name, prior)
         try:
@@ -419,6 +423,20 @@ def _systemctl(*arguments: str) -> None:
         fail("service-manager-failed")
     if result.returncode != 0:
         fail("service-manager-failed")
+
+
+def ensure_service_stable(
+    service: str,
+    *,
+    systemctl_action: Callable[..., None] | None = None,
+    sleeper: Callable[[float], None] = time.sleep,
+) -> None:
+    """Require a service to survive its bounded synchronous startup window."""
+    if systemctl_action is None:
+        systemctl_action = _systemctl
+    systemctl_action("is-active", "--quiet", service)
+    sleeper(1.0)
+    systemctl_action("is-active", "--quiet", service)
 
 
 def quarantine_personal(
@@ -541,7 +559,7 @@ def activate(prior_service: bytes) -> None:
         for role in ("read", "write"):
             _systemctl("enable", "--now", f"harness-slack-personal-rotate-{role}.timer")
         _systemctl("restart", "harness-slack-personal.service")
-        _systemctl("is-active", "--quiet", "harness-slack-personal.service")
+        ensure_service_stable("harness-slack-personal.service")
         for role in ("read", "write"):
             _systemctl("is-active", "--quiet", f"harness-slack-personal-rotate-{role}.timer")
     except InstallError:

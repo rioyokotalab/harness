@@ -69,6 +69,7 @@ class SlackInstallTests(unittest.TestCase):
                 mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
                 mock.patch.object(INSTALL, "install_release", return_value=Path("/release")),
                 mock.patch.object(INSTALL, "render", return_value=b"new-service"),
+                mock.patch.object(INSTALL.time, "sleep"),
             ):
                 INSTALL.refresh_personal_read_service(
                     owner_uid=os.geteuid(),
@@ -81,8 +82,26 @@ class SlackInstallTests(unittest.TestCase):
                     ("daemon-reload",),
                     ("restart", "harness-slack-personal.service"),
                     ("is-active", "--quiet", "harness-slack-personal.service"),
+                    ("is-active", "--quiet", "harness-slack-personal.service"),
                 ],
             )
+
+    def test_service_stability_requires_survival_after_settle_window(self) -> None:
+        actions: list[tuple[str, ...]] = []
+        sleeps: list[float] = []
+        INSTALL.ensure_service_stable(
+            "fixture.service",
+            systemctl_action=lambda *args: actions.append(args),
+            sleeper=sleeps.append,
+        )
+        self.assertEqual(
+            actions,
+            [
+                ("is-active", "--quiet", "fixture.service"),
+                ("is-active", "--quiet", "fixture.service"),
+            ],
+        )
+        self.assertEqual(sleeps, [1.0])
 
     def test_read_service_refresh_restores_prior_unit_on_failure(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
