@@ -15,18 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Deferred gates
 
-### Har-416 — Make remote-agent helper resolution self-contained
-
-**Phase:** executing under Har-403; resolve the helper from the selected skill
-root and skip the consumer-only precheck for Harness cross-client sends.
-**Record:** `docs/tasks/Har-416.md`.
-
-### Har-415 — Bound Slack provider results
-
-**Phase:** executing under Har-403; return a stable bounded tool error rather
-than terminating a client connection when provider output exceeds the wire
-envelope. **Record:** `docs/tasks/Har-415.md`.
-
 ### Har-414 — Contain shared legacy Slack surfaces
 
 **Phase:** pending; Codex and Claude still advertise broad global Slack
