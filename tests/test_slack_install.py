@@ -36,6 +36,27 @@ def bundle() -> dict[str, str]:
 
 
 class SlackInstallTests(unittest.TestCase):
+    def test_scope_doctor_is_revision_pinned_and_credential_projected(self) -> None:
+        calls: list[list[str]] = []
+
+        def run(arguments: list[str], **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+            calls.append(arguments)
+            return subprocess.CompletedProcess(arguments, 0)
+
+        with (
+            mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
+            mock.patch.object(INSTALL, "install_release", return_value=Path("/release")),
+        ):
+            INSTALL.diagnose_personal_read_scopes(run)
+        self.assertEqual(len(calls), 1)
+        command = calls[0]
+        self.assertIn(
+            "--property=LoadCredentialEncrypted=slack-access-read:"
+            "/etc/harness-slack-broker/credentials/personal/current/slack-access-read",
+            command,
+        )
+        self.assertEqual(command[-3:], ["--role", "read", "--diagnose-scopes"])
+
     def test_read_service_refresh_is_revision_pinned_and_bounded(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             unit_root = Path(temporary)
