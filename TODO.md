@@ -17,8 +17,8 @@ mutable-state query is unknown, never absence.
 
 ### Har-424 — Establish the Local-outage failover environment
 
-**Phase:** executing the authorized on-demand t4 bastion and temporary Riken
-development environment. **Record:**
+**Phase:** interviewing the authentication recovery after all four Mac
+acceptance attempts failed before fleet access. **Record:**
 `docs/tasks/Har-424.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
