@@ -36,6 +36,63 @@ def bundle() -> dict[str, str]:
 
 
 class SlackInstallTests(unittest.TestCase):
+    def test_read_service_refresh_is_revision_pinned_and_bounded(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            unit_root = Path(temporary)
+            service = unit_root / "harness-slack-personal.service"
+            service.write_bytes(b"prior-service")
+            service.chmod(0o644)
+            actions: list[tuple[str, ...]] = []
+            with (
+                mock.patch.object(INSTALL, "UNIT_ROOT", unit_root),
+                mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
+                mock.patch.object(INSTALL, "install_release", return_value=Path("/release")),
+                mock.patch.object(INSTALL, "render", return_value=b"new-service"),
+            ):
+                INSTALL.refresh_personal_read_service(
+                    owner_uid=os.geteuid(),
+                    systemctl_action=lambda *args: actions.append(args),
+                )
+            self.assertEqual(service.read_bytes(), b"new-service")
+            self.assertEqual(
+                actions,
+                [
+                    ("daemon-reload",),
+                    ("restart", "harness-slack-personal.service"),
+                    ("is-active", "--quiet", "harness-slack-personal.service"),
+                ],
+            )
+
+    def test_read_service_refresh_restores_prior_unit_on_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            unit_root = Path(temporary)
+            service = unit_root / "harness-slack-personal.service"
+            service.write_bytes(b"prior-service")
+            service.chmod(0o644)
+            restart_count = 0
+
+            def systemctl_action(*args: str) -> None:
+                nonlocal restart_count
+                if args == ("restart", "harness-slack-personal.service"):
+                    restart_count += 1
+                    if restart_count == 1:
+                        raise INSTALL.InstallError("service-manager-failed")
+
+            with (
+                mock.patch.object(INSTALL, "UNIT_ROOT", unit_root),
+                mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
+                mock.patch.object(INSTALL, "install_release", return_value=Path("/release")),
+                mock.patch.object(INSTALL, "render", return_value=b"new-service"),
+            ):
+                with self.assertRaisesRegex(
+                    INSTALL.InstallError, "service-manager-failed"
+                ):
+                    INSTALL.refresh_personal_read_service(
+                        owner_uid=os.geteuid(), systemctl_action=systemctl_action
+                    )
+            self.assertEqual(service.read_bytes(), b"prior-service")
+            self.assertEqual(restart_count, 2)
+
     def test_reenrollment_quarantine_is_exact_and_recoverable(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

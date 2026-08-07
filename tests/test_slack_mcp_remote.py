@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -349,6 +350,27 @@ class SlackRemoteMCPTests(unittest.TestCase):
             link.symlink_to(target)
             with self.assertRaisesRegex(REMOTE.RemoteMCPError, "credential-unavailable"):
                 REMOTE.read_credential(str(link))
+
+    def test_credential_reader_accepts_only_exact_systemd_projection(self) -> None:
+        directory = Path("/run/credentials/fixture.service")
+        path = directory / "token"
+        projected = mock.Mock(
+            st_gid=0,
+            st_mode=REMOTE.stat.S_IFREG | 0o440,
+            st_uid=0,
+        )
+        with mock.patch.dict(
+            REMOTE.os.environ, {"CREDENTIALS_DIRECTORY": str(directory)}, clear=False
+        ):
+            self.assertTrue(REMOTE.credential_metadata_safe(path, projected))
+            self.assertFalse(
+                REMOTE.credential_metadata_safe(Path("/tmp/token"), projected)
+            )
+            projected.st_gid = 1
+            self.assertFalse(REMOTE.credential_metadata_safe(path, projected))
+            projected.st_gid = 0
+            projected.st_mode = REMOTE.stat.S_IFREG | 0o444
+            self.assertFalse(REMOTE.credential_metadata_safe(path, projected))
 
     def test_remote_errors_never_preserve_provider_values(self) -> None:
         body = json.dumps(
