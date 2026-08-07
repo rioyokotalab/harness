@@ -17,8 +17,8 @@ mutable-state query is unknown, never absence.
 
 ### Har-424 — Establish the Local-outage failover environment
 
-**Phase:** interviewing the authentication recovery after all four Mac
-acceptance attempts failed before fleet access. **Record:**
+**Phase:** executing the owner-authorized, isolated temporary Home agent
+activation and bounded t4 acceptance. **Record:**
 `docs/tasks/Har-424.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
