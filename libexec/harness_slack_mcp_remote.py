@@ -160,6 +160,24 @@ def _retry_after(value: object) -> int | None:
     return parsed if 1 <= parsed <= 300 else None
 
 
+def credential_metadata_safe(path: Path, info: os.stat_result) -> bool:
+    mode = stat.S_IMODE(info.st_mode)
+    private_file = (
+        info.st_uid in {0, os.geteuid()}
+        and not mode & (stat.S_IRWXG | stat.S_IRWXO)
+    )
+    credentials_directory = os.environ.get("CREDENTIALS_DIRECTORY")
+    systemd_projected = (
+        credentials_directory is not None
+        and Path(credentials_directory).is_absolute()
+        and path.parent == Path(credentials_directory)
+        and info.st_uid == 0
+        and info.st_gid == 0
+        and mode == 0o440
+    )
+    return private_file or systemd_projected
+
+
 def read_credential(path_text: str) -> str:
     path = Path(path_text)
     if not path.is_absolute():
@@ -176,8 +194,7 @@ def read_credential(path_text: str) -> str:
         if (
             not stat.S_ISREG(info.st_mode)
             or info.st_nlink != 1
-            or info.st_uid not in {0, os.geteuid()}
-            or info.st_mode & (stat.S_IRWXG | stat.S_IRWXO)
+            or not credential_metadata_safe(path, info)
             or not 0 < info.st_size <= MAX_CREDENTIAL_BYTES
         ):
             raise RemoteMCPError("credential-metadata-unsafe")

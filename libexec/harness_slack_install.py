@@ -345,6 +345,59 @@ def install_units(release: Path) -> bytes:
     return prior_service
 
 
+def refresh_personal_read_service(
+    *,
+    owner_uid: int = 0,
+    systemctl_action: Callable[..., None] | None = None,
+) -> None:
+    revision = protected_revision()
+    release = install_release(revision)
+    if systemctl_action is None:
+        systemctl_action = _systemctl
+    service_path = UNIT_ROOT / "harness-slack-personal.service"
+    try:
+        info = service_path.lstat()
+    except OSError:
+        fail("fail-closed-service-missing")
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != owner_uid
+        or info.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+    ):
+        fail("fail-closed-service-invalid")
+    try:
+        prior = service_path.read_bytes()
+    except OSError:
+        fail("fail-closed-service-invalid")
+    common = {
+        "CLIENT_USER": "rioyokota",
+        "CREDENTIAL_STORE": str(CREDENTIAL_STORE),
+        "PROFILE": "personal",
+        "PROFILE_SOURCE": str(PROFILE_SOURCE),
+        "READ_CREDENTIAL_SOURCE": str(CREDENTIAL_STORE / "slack-access-read"),
+        "RELEASE": str(release),
+        "SERVICE_IDENTITY": "harness_slack_personal",
+    }
+    replacement = render(
+        SOURCE_ROOT / "config/slack/systemd/harness-slack-personal-read.service.in",
+        common,
+    )
+    _atomic_unit(service_path.name, replacement)
+    try:
+        systemctl_action("daemon-reload")
+        systemctl_action("restart", service_path.name)
+        systemctl_action("is-active", "--quiet", service_path.name)
+    except InstallError:
+        _atomic_unit(service_path.name, prior)
+        try:
+            systemctl_action("daemon-reload")
+            systemctl_action("restart", service_path.name)
+        except InstallError:
+            pass
+        raise
+
+
 def _systemctl(*arguments: str) -> None:
     try:
         result = subprocess.run(
@@ -479,7 +532,12 @@ def install_personal(bundle: dict[str, str], expected_revision: str | None = Non
 def main() -> int:
     arguments = sys.argv[1:]
     if (
-        arguments not in (["preflight"], ["install-personal"], ["quarantine-personal"])
+        arguments not in (
+            ["preflight"],
+            ["install-personal"],
+            ["quarantine-personal"],
+            ["refresh-personal-read-service"],
+        )
         and not (
             len(arguments) == 4
             and arguments[0] == "serve-personal"
@@ -501,6 +559,13 @@ def main() -> int:
         if arguments == ["quarantine-personal"]:
             quarantine_personal()
             print("SLACK_LIVE_INSTALL status=complete profile=personal action=quarantined")
+            return 0
+        if arguments == ["refresh-personal-read-service"]:
+            refresh_personal_read_service()
+            print(
+                "SLACK_LIVE_INSTALL status=complete profile=personal "
+                "action=read-service-refreshed"
+            )
             return 0
         if arguments[0] == "serve-personal":
             client_uid = int(arguments[1])
