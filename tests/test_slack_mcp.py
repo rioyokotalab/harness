@@ -201,6 +201,38 @@ class SlackMCPTests(unittest.TestCase):
         self.assertIn("provider-result-too-large", payload.decode("utf-8"))
         self.assertNotIn('"content":"xxx', payload.decode("utf-8"))
 
+    def test_oversize_message_list_returns_largest_whole_prefix(self) -> None:
+        messages = [
+            {"text": f"synthetic-{index}-" + "x" * 1000}
+            for index in range(200)
+        ]
+        server = MCP.MCPServer(
+            profile(),
+            "ready",
+            lambda _name, _arguments: {"has_more": False, "messages": messages},
+        )
+        result = server.handle(
+            request(
+                1,
+                "tools/call",
+                {"arguments": {}, "name": "slack_read_channel"},
+            )
+        )
+        payload = (BROKER.canonical_json(result) + "\n").encode("utf-8")
+        self.assertLessEqual(len(payload), MCP.MAX_MESSAGE_BYTES)
+        value = json.loads(result["result"]["content"][0]["text"])["value"]
+        self.assertGreater(len(value["messages"]), 0)
+        self.assertLess(len(value["messages"]), len(messages))
+        self.assertEqual(value["messages"], messages[: len(value["messages"])])
+        self.assertIs(value["has_more"], True)
+
+    def test_single_oversize_message_fails_without_provider_bytes(self) -> None:
+        private = "private-provider-value-" + "x" * MCP.MAX_MESSAGE_BYTES
+        result = MCP.bounded_tool_response(1, {"messages": [{"text": private}]})
+        serialized = json.dumps(result)
+        self.assertIn("provider-item-too-large", serialized)
+        self.assertNotIn("private-provider-value", serialized)
+
     def test_provider_exception_is_value_free(self) -> None:
         def provider(_name: str, _arguments: dict[str, object]) -> object:
             raise RuntimeError("synthetic-private-provider-value")
