@@ -360,6 +360,24 @@ house_remote() {
         "$HARNESS" housekeeping "$@"
 }
 
+# Exact hosted refs that disappear after planning are an idempotent success;
+# no new or changed ref is admitted by this exception.
+OUT=$(house_remote --plan --routine remotes --retire-all-nonmain)
+PLAN=$(receipt_from "$OUT")
+TOKEN=$(token_from "$OUT")
+git -C "$REMOTE_BARE" update-ref -d refs/heads/hosted-one \
+    "$(git -C "$REPO" rev-parse hosted-one)"
+git -C "$REMOTE_BARE" update-ref -d refs/heads/hosted-two \
+    "$(git -C "$REPO" rev-parse hosted-two)"
+OUT=$(house_remote --apply --routine remotes --retire-all-nonmain \
+    --receipt "$PLAN" --token "$TOKEN")
+printf '%s\n' "$OUT" | grep -Fq 'removed_hosted=0' ||
+    fail "already-absent hosted refs were not idempotent"
+[ "$(git -C "$REPO" ls-remote --heads origin | wc -l)" -eq 1 ] ||
+    fail "already-absent retirement changed protected remote state"
+git -C "$REPO" push -q origin hosted-one:refs/heads/hosted-one
+git -C "$REPO" push -q origin hosted-two:refs/heads/hosted-two
+
 OUT=$(house_remote --plan --routine remotes --retire-all-nonmain)
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")

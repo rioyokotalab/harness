@@ -3317,6 +3317,34 @@ def remote_records(repo: Path, retire_all_nonmain: bool = False) -> Tuple[List[D
     return records, hosted["main"]
 
 
+def reconcile_remote_retirement(
+    planned: List[Dict[str, Any]], current: List[Dict[str, Any]]
+) -> Dict[str, Dict[str, Any]]:
+    planned_by_name = {row["name"]: row for row in planned}
+    current_by_name = {row["name"]: row for row in current}
+    if len(planned_by_name) != len(planned) or len(current_by_name) != len(current):
+        die("remote branch metadata is duplicated")
+    for name, row in current_by_name.items():
+        expected = planned_by_name.get(name)
+        if expected is None:
+            die("remote branch mutable state changed; re-plan")
+        if row["source"] == "hosted":
+            if expected["source"] != "hosted" or row["tip"] != expected["tip"]:
+                die("remote branch mutable state changed; re-plan")
+            tracking_tip = row.get("tracking_tip")
+            if tracking_tip is not None and tracking_tip != expected.get("tracking_tip"):
+                die("remote branch mutable state changed; re-plan")
+        elif expected["source"] == "hosted":
+            if (
+                expected.get("tracking_tip") is None
+                or row["tip"] != expected["tracking_tip"]
+            ):
+                die("remote branch mutable state changed; re-plan")
+        elif row["tip"] != expected["tip"]:
+            die("remote branch mutable state changed; re-plan")
+    return current_by_name
+
+
 def plan_remotes(repo: Path, retire_all_nonmain: bool = False) -> None:
     records, main_oid = remote_records(repo, retire_all_nonmain)
     receipt, token = publish_plan(
@@ -3355,16 +3383,25 @@ def apply_remotes(
     if (
         plan.get("origin") != terminal_remote_identity(repo)
         or plan.get("origin_main") != main_oid
-        or plan.get("records") != current
     ):
         die("remote branch mutable state changed; re-plan")
-    candidates = [row for row in current if row["candidate"]]
+    planned = plan.get("records")
+    if not isinstance(planned, list):
+        die("remote retirement plan records are malformed")
+    current_by_name = reconcile_remote_retirement(planned, current)
+    candidates = [row for row in planned if row["candidate"]]
     if not candidates:
         print("HOUSEKEEPING routine=remotes mode=apply removed=0 reason=no-candidates")
         return
 
     transaction = transaction_id("remotes")
-    hosted = [row for row in candidates if row["source"] == "hosted"]
+    hosted = [
+        row
+        for row in candidates
+        if row["source"] == "hosted"
+        and row["name"] in current_by_name
+        and current_by_name[row["name"]]["source"] == "hosted"
+    ]
     staging: List[Tuple[str, str]] = []
     if hosted:
         refspecs = []
