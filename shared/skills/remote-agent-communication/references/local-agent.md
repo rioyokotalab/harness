@@ -1,17 +1,16 @@
 # Local agent routes
 
-Permit declared controller↔consumer and Harness cross-client routes. Use one
-mode-0600 file; no SSH/pane reads. Claude needs `--permission-mode
-bypassPermissions`. Set `SKILL_ROOT` to the directory containing the selected
-`SKILL.md`; every command below uses its repository-relative helper. Before a
-required reply to a consumer target, check:
+Use declared controller↔consumer/Harness cross-client routes via one mode-0600
+file; never SSH/read panes. Claude needs `--permission-mode
+bypassPermissions`. Set `SKILL_ROOT` to this skill's directory. Before a
+required consumer reply, check:
 
 ```text
 "$SKILL_ROOT/scripts/agent-message" check-local-agent-compatibility \
   --target personal --target-client claude
 ```
 
-Sync stale targets; record named verified owner-managed helpers.
+Sync stale targets; record verified helpers.
 
 ```text
 "$SKILL_ROOT/scripts/agent-message" send-local-agent --source local --source-client codex \
@@ -25,8 +24,7 @@ Local Claude→Harness Codex:
   --source-client claude --target harness < MESSAGE_FILE
 ```
 
-Omission defaults to Codex. Reply/read aliases accept
-`--source-client claude`; client-explicit commands are authoritative.
+Omission defaults to Codex; reply/read aliases accept `--source-client claude`.
 
 Request five lines with `LOCAL_REPLY_REQUIRED request_id=ID
 reply_target=harness max_replies=1`:
@@ -45,7 +43,7 @@ next_action: ACTION
   --request-id ID < REPORT_FILE
 ```
 
-Reports key source/client/ID; duplicates need exact bytes. Read:
+Reports key source/client/ID; duplicates require exact bytes. Read:
 
 ```text
 "$SKILL_ROOT/scripts/agent-message" read-local-agent-report --source personal \
@@ -62,15 +60,14 @@ After review, confirm once:
 ```
 
 Confirmation removes the report. `accepted` plus a fresh ID advances; without
-one it closes a terminal checkpoint. `changes-required` needs a fresh ID;
+one it closes a terminal checkpoint. `changes-required` needs a fresh ID and
 `rejected` forbids one.
 Confirmation never grants owner authority, source access, or writes.
 
-The Harness cross-client route is not a consumer-compatibility target. Skip
-`check-local-agent-compatibility` for `--target harness`; endpoint validation
-inside the selected send command remains authoritative.
+Skip compatibility checks for Harness cross-client targets; the send
+command validates endpoints.
 
-Time or unchanged tree is not failure. Check metadata; never replay ambiguous
-submissions. At a reversible owner-choice wait, publish safe work,
+Time or an unchanged tree is not failure. Check metadata; never replay
+ambiguous submissions. At a reversible owner-choice wait, publish safe work,
 create no receipt, report once, and gate only that task. A blocked receipt is
 terminal and never deleted or rewritten to resume work.

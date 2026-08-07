@@ -121,6 +121,29 @@ identity validation, Codex/Claude parity, rollback health, and a fresh mapping
 showing the old connector is unique and unused. An absent, shared, failed, or
 ambiguous readback stops without retry.
 
+## Legacy client containment
+
+The broad hosted Slack integrations are account-scoped, so their appearance in
+multiple repositories was shared state rather than evidence of multiple
+independent installations. Before account-level disconnect, Harness uses the
+clients' supported project controls as a reversible canary:
+
+- Codex sets the exact Slack app ID's `apps.<id>.enabled` to `false` in trusted
+  project configuration. The plugin package and its skill may remain installed;
+  only the hosted app tools are disabled.
+- Claude denies only the `claude.ai Slack` MCP server by exact name. It does not
+  set `disableClaudeAiConnectors`, which would also remove unrelated hosted
+  Gmail, Calendar, and other connectors.
+
+Codex documents project-scoped configuration and exact app enable controls in
+its [configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
+Claude documents project-local connector toggles and the exact Slack deny
+entry in its [MCP guide](https://code.claude.com/docs/en/mcp), with deny-list
+merge semantics in its [managed MCP reference](https://code.claude.com/docs/en/managed-mcp).
+These are client-side containment controls, not revocation of the underlying
+account authorization. Final revocation still requires authoritative account
+readback and disconnect in each hosted client.
+
 ## Provider evidence and implementation
 
 Slack's official MCP documentation specifies JSON-RPC 2.0 over Streamable HTTP
