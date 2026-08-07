@@ -20,7 +20,14 @@ RELEASE_ROOT = Path("/opt/harness-slack-broker/releases")
 PROFILE_SOURCE = Path("/etc/harness-slack-broker/profiles/personal.json")
 CREDENTIAL_ROOT = Path("/etc/harness-slack-broker/credentials/personal")
 CREDENTIAL_STORE = CREDENTIAL_ROOT / "current"
-QUARANTINE_STORE = CREDENTIAL_ROOT / "quarantine-before-reenroll"
+QUARANTINE_STORES = tuple(
+    CREDENTIAL_ROOT / (
+        "quarantine-before-reenroll"
+        if index == 1
+        else f"quarantine-before-reenroll-{index}"
+    )
+    for index in range(1, 5)
+)
 UNIT_ROOT = Path("/etc/systemd/system")
 EXPECTED_FIELDS = {
     "slack-access-read",
@@ -432,8 +439,11 @@ def quarantine_personal(
         or stat.S_IMODE(store.st_mode) != 0o700
     ):
         fail("credential-store-root-invalid")
-    if os.path.lexists(QUARANTINE_STORE):
-        fail("credential-quarantine-exists")
+    quarantine_store = next(
+        (path for path in QUARANTINE_STORES if not os.path.lexists(path)), None
+    )
+    if quarantine_store is None:
+        fail("credential-quarantine-full")
     entries = {path.name: path for path in CREDENTIAL_STORE.iterdir()}
     previous = set(entries) - EXPECTED_FIELDS
     if not EXPECTED_FIELDS <= set(entries) or not previous <= set(PREVIOUS_FIELDS):
@@ -480,7 +490,7 @@ def quarantine_personal(
             "disable", "--now", f"harness-slack-personal-rotate-{role}.timer"
         )
     systemctl_action("stop", "harness-slack-personal.service")
-    os.rename(CREDENTIAL_STORE, QUARANTINE_STORE)
+    os.rename(CREDENTIAL_STORE, quarantine_store)
 
 
 def activate(prior_service: bytes) -> None:

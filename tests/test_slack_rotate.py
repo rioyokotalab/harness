@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +36,28 @@ def response(role: str, **overrides: object) -> dict[str, object]:
 
 
 class SlackRotationTests(unittest.TestCase):
+    def test_effective_scope_readback_uses_only_the_fixed_header(self) -> None:
+        class Result:
+            status = 200
+            headers = {
+                "X-OAuth-Scopes": "channels:history,files:read,groups:history"
+            }
+
+            def __enter__(self) -> "Result":
+                return self
+
+            def __exit__(self, *_args: object) -> None:
+                return None
+
+        with mock.patch.object(ROTATE.SCOPE_OPENER, "open", return_value=Result()) as call:
+            scopes = ROTATE.verify_access_scopes_once("fixture-access-token")
+        self.assertEqual(
+            scopes, {"channels:history", "files:read", "groups:history"}
+        )
+        request = call.call_args.args[0]
+        self.assertEqual(request.full_url, ROTATE.SCOPE_ENDPOINT)
+        self.assertEqual(call.call_args.kwargs, {"timeout": 30})
+
     def test_each_role_requires_exact_kind_scope_and_bounded_ttl(self) -> None:
         for role in ROTATE.ROLE:
             for ttl in (
@@ -53,8 +76,54 @@ class SlackRotationTests(unittest.TestCase):
                     ROTATE.RotationError, "rotation-expiry-invalid"
                 ):
                     ROTATE.validate_response(role, response(role, expires_in=ttl))
-            with self.assertRaisesRegex(ROTATE.RotationError, "rotation-scope-invalid"):
+            with self.assertRaisesRegex(ROTATE.RotationError, "rotation-scope-drift"):
                 ROTATE.validate_response(role, response(role, scope="extra:read"))
+
+    def test_scope_mismatch_uses_effective_header_once_before_store(self) -> None:
+        stored: list[tuple[str, str, str]] = []
+        verified: list[str] = []
+
+        ROTATE.rotate_role(
+            "read",
+            Path("/fixture/credentials"),
+            Path("/fixture/store"),
+            exchange=lambda *_args: response("read", scope="extra:read"),
+            verify_scopes=lambda token: (
+                verified.append(token) or set(ROTATE.ROLE["read"]["scopes"])
+            ),
+            read_credential=lambda _path: "fixture-credential-value",
+            store_action=lambda _store, role, access, refresh: stored.append(
+                (role, access, refresh)
+            ),
+        )
+        self.assertEqual(len(verified), 1)
+        self.assertEqual(len(stored), 1)
+
+    def test_effective_scope_mismatch_is_classified_before_store(self) -> None:
+        stored: list[tuple[str, str, str]] = []
+        cases = (
+            ({"channels:history"}, "rotation-scope-missing"),
+            (
+                set(ROTATE.ROLE["read"]["scopes"]) | {"extra:read"},
+                "rotation-scope-additional",
+            ),
+            ({"channels:history", "extra:read"}, "rotation-scope-drift"),
+        )
+        for effective, reason in cases:
+            with self.subTest(reason=reason):
+                with self.assertRaisesRegex(ROTATE.RotationError, reason):
+                    ROTATE.rotate_role(
+                        "read",
+                        Path("/fixture/credentials"),
+                        Path("/fixture/store"),
+                        exchange=lambda *_args: response("read", scope="extra:read"),
+                        verify_scopes=lambda _token, value=effective: value,
+                        read_credential=lambda _path: "fixture-credential-value",
+                        store_action=lambda _store, role, access, refresh: stored.append(
+                            (role, access, refresh)
+                        ),
+                    )
+        self.assertEqual(stored, [])
 
     def test_rotation_shape_failures_are_precise_and_value_free(self) -> None:
         cases = (

@@ -106,7 +106,7 @@ class SlackInstallTests(unittest.TestCase):
             actions: list[tuple[str, ...]] = []
             with (
                 mock.patch.object(INSTALL, "CREDENTIAL_STORE", current),
-                mock.patch.object(INSTALL, "QUARANTINE_STORE", quarantine),
+                mock.patch.object(INSTALL, "QUARANTINE_STORES", (quarantine,)),
                 mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
             ):
                 INSTALL.quarantine_personal(
@@ -122,6 +122,32 @@ class SlackInstallTests(unittest.TestCase):
                     ("disable", "--now", "harness-slack-personal-rotate-write.timer"),
                     ("stop", "harness-slack-personal.service"),
                 ],
+            )
+
+    def test_reenrollment_quarantine_uses_next_bounded_slot(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            current = root / "current"
+            first = root / "quarantine-before-reenroll"
+            second = root / "quarantine-before-reenroll-2"
+            current.mkdir(mode=0o700)
+            first.mkdir(mode=0o700)
+            for name in INSTALL.EXPECTED_FIELDS:
+                path = current / name
+                path.write_bytes(b"encrypted-fixture")
+                path.chmod(0o600)
+            with (
+                mock.patch.object(INSTALL, "CREDENTIAL_STORE", current),
+                mock.patch.object(INSTALL, "QUARANTINE_STORES", (first, second)),
+                mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
+            ):
+                INSTALL.quarantine_personal(
+                    owner_uid=os.geteuid(), systemctl_action=lambda *_args: None
+                )
+            self.assertTrue(first.is_dir())
+            self.assertFalse(current.exists())
+            self.assertEqual(
+                set(path.name for path in second.iterdir()), INSTALL.EXPECTED_FIELDS
             )
 
     def test_reenrollment_quarantine_accepts_valid_previous_generations(self) -> None:
@@ -142,7 +168,7 @@ class SlackInstallTests(unittest.TestCase):
                 path.chmod(0o600)
             with (
                 mock.patch.object(INSTALL, "CREDENTIAL_STORE", current),
-                mock.patch.object(INSTALL, "QUARANTINE_STORE", quarantine),
+                mock.patch.object(INSTALL, "QUARANTINE_STORES", (quarantine,)),
                 mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
             ):
                 INSTALL.quarantine_personal(
@@ -171,7 +197,7 @@ class SlackInstallTests(unittest.TestCase):
                 path.chmod(0o600)
             with (
                 mock.patch.object(INSTALL, "CREDENTIAL_STORE", current),
-                mock.patch.object(INSTALL, "QUARANTINE_STORE", quarantine),
+                mock.patch.object(INSTALL, "QUARANTINE_STORES", (quarantine,)),
                 mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
             ):
                 with self.assertRaisesRegex(
@@ -198,7 +224,7 @@ class SlackInstallTests(unittest.TestCase):
             invalid.chmod(0o600)
             with (
                 mock.patch.object(INSTALL, "CREDENTIAL_STORE", current),
-                mock.patch.object(INSTALL, "QUARANTINE_STORE", quarantine),
+                mock.patch.object(INSTALL, "QUARANTINE_STORES", (quarantine,)),
                 mock.patch.object(INSTALL, "protected_revision", return_value="a" * 40),
             ):
                 with self.assertRaisesRegex(

@@ -20,6 +20,7 @@ import harness_slack_mcp_remote as remote
 
 
 TOKEN_ENDPOINT = "https://slack.com/api/oauth.v2.access"
+SCOPE_ENDPOINT = "https://slack.com/api/auth.test"
 MIN_ROTATING_TTL_SECONDS = 60 * 60
 MAX_ROTATING_TTL_SECONDS = 12 * 60 * 60 + 5 * 60
 ROLE = {
@@ -53,6 +54,26 @@ def fail(reason: str) -> None:
     raise RotationError(reason)
 
 
+def progress(phase: str) -> None:
+    print(f"SLACK_ROTATION status=progress phase={phase}", file=sys.stderr)
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(
+        self,
+        req: object,
+        fp: object,
+        code: int,
+        msg: str,
+        headers: object,
+        newurl: str,
+    ) -> None:
+        return None
+
+
+SCOPE_OPENER = urllib.request.build_opener(_NoRedirect())
+
+
 def _scopes(value: object) -> set[str]:
     if not isinstance(value, str):
         fail("rotation-response-invalid")
@@ -62,7 +83,7 @@ def _scopes(value: object) -> set[str]:
     return result
 
 
-def validate_response(role: str, value: object) -> tuple[str, str]:
+def parse_response(role: str, value: object) -> tuple[str, str, set[str]]:
     policy = ROLE.get(role)
     if policy is None:
         fail("rotation-role-invalid")
@@ -76,8 +97,7 @@ def validate_response(role: str, value: object) -> tuple[str, str]:
         or not MIN_ROTATING_TTL_SECONDS <= ttl <= MAX_ROTATING_TTL_SECONDS
     ):
         fail("rotation-expiry-invalid")
-    if _scopes(value.get("scope")) != policy["scopes"]:
-        fail("rotation-scope-invalid")
+    scopes = _scopes(value.get("scope"))
     access = value.get("access_token")
     refresh = value.get("refresh_token")
     for token, reason in (
@@ -90,7 +110,48 @@ def validate_response(role: str, value: object) -> tuple[str, str]:
             or any(character.isspace() for character in token)
         ):
             fail(reason)
+    return access, refresh, scopes
+
+
+def enforce_scopes(expected: set[str], actual: set[str]) -> None:
+    missing = expected - actual
+    additional = actual - expected
+    if missing and additional:
+        fail("rotation-scope-drift")
+    if missing:
+        fail("rotation-scope-missing")
+    if additional:
+        fail("rotation-scope-additional")
+
+
+def validate_response(role: str, value: object) -> tuple[str, str]:
+    access, refresh, scopes = parse_response(role, value)
+    enforce_scopes(ROLE[role]["scopes"], scopes)
     return access, refresh
+
+
+def verify_access_scopes_once(access_token: str) -> set[str]:
+    """Read only Slack's effective-scope response header for a fresh token."""
+    request = urllib.request.Request(
+        SCOPE_ENDPOINT,
+        data=b"",
+        headers={
+            "Accept": "application/json",
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method="POST",
+    )
+    try:
+        with SCOPE_OPENER.open(request, timeout=30) as result:
+            if int(result.status) != 200:
+                fail("rotation-scope-readback-rejected")
+            value = result.headers.get("X-OAuth-Scopes")
+    except urllib.error.HTTPError:
+        fail("rotation-scope-readback-rejected")
+    except (OSError, TimeoutError, urllib.error.URLError):
+        fail("rotation-scope-readback-unavailable")
+    return _scopes(value)
 
 
 def exchange_once(
@@ -219,14 +280,29 @@ def rotate_role(
     *,
     exchange: Callable[[str, str, str], dict[str, Any]] = exchange_once,
     store_action: Callable[[Path, str, str, str], None] = store_pair,
+    verify_scopes: Callable[[str], set[str]] = verify_access_scopes_once,
+    read_credential: Callable[[str], str] = remote.read_credential,
 ) -> None:
     policy = ROLE[role]
-    client_id = remote.read_credential(str(credentials / "slack-client-id"))
-    client_secret = remote.read_credential(str(credentials / "slack-client-secret"))
-    refresh = remote.read_credential(str(credentials / str(policy["refresh"])))
+    client_id = read_credential(str(credentials / "slack-client-id"))
+    client_secret = read_credential(str(credentials / "slack-client-secret"))
+    refresh = read_credential(str(credentials / str(policy["refresh"])))
+    progress("exchange-starting")
     response = exchange(client_id, client_secret, refresh)
-    access, next_refresh = validate_response(role, response)
+    progress("exchange-received")
+    access, next_refresh, response_scopes = parse_response(role, response)
+    progress("response-shape-valid")
+    expected_scopes = policy["scopes"]
+    if response_scopes != expected_scopes:
+        progress("scope-readback-starting")
+        effective_scopes = verify_scopes(access)
+        enforce_scopes(expected_scopes, effective_scopes)
+        progress("scope-readback-valid")
+    else:
+        progress("response-scope-valid")
+    progress("credential-store-starting")
     store_action(store, role, access, next_refresh)
+    progress("credential-store-complete")
 
 
 def validate_restart(role: str, service: str | None) -> None:
