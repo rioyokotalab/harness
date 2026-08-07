@@ -27,14 +27,15 @@ REMOTE_TOOL = {
     ),
     "slack_read_linked_canvas": ("slack_read_canvas", {"resource": "canvas_id"}),
     "slack_read_linked_file": ("slack_read_file", {"resource": "file_id"}),
-    "slack_read_profile": ("slack_read_user_profile", {"resource": "user_id"}),
+}
+WEB_API_TOOL = {
+    "slack_read_profile": ("users.info", {"resource": "user"}),
 }
 REMOTE_TOOL_CLASS = {
     "slack_read_channel": "channel",
     "slack_read_thread": "thread",
     "slack_read_canvas": "canvas",
     "slack_read_file": "file",
-    "slack_read_user_profile": "profile",
 }
 LINK_PROOF_REQUIRED = {"slack_read_linked_canvas", "slack_read_linked_file"}
 
@@ -122,7 +123,7 @@ class URLTransport:
         timeout: int,
         max_bytes: int,
     ) -> HTTPResponse:
-        if method != "conversations.history":
+        if method not in {"conversations.history", "users.info"}:
             raise RemoteMCPError("provider-web-method-denied")
         body = broker.canonical_json(arguments).encode("utf-8")
         headers = {
@@ -392,7 +393,12 @@ class SlackRemoteMCP:
             raise RemoteMCPError("provider-pages-exceeded")
         local_schema = broker.tool_schema(self.profile, "absent")
         local_tools = {tool["name"] for tool in local_schema["tools"]}
-        unmapped = local_tools - {"slack_broker_status"} - set(REMOTE_TOOL)
+        unmapped = (
+            local_tools
+            - {"slack_broker_status"}
+            - set(REMOTE_TOOL)
+            - set(WEB_API_TOOL)
+        )
         if unmapped:
             raise RemoteMCPError("provider-tool-map-missing")
         required = {REMOTE_TOOL[name][0] for name in local_tools if name in REMOTE_TOOL}
@@ -479,9 +485,22 @@ class SlackRemoteMCP:
 
     def __call__(self, name: str, arguments: dict[str, Any]) -> object:
         mapping = REMOTE_TOOL.get(name)
-        if mapping is None:
+        web_mapping = WEB_API_TOOL.get(name)
+        if mapping is None and web_mapping is None:
             raise RemoteMCPError("provider-tool-denied")
         self._initialize()
+        if web_mapping is not None:
+            method, argument_names = web_mapping
+            remote_arguments = {
+                remote_key: arguments[local_key]
+                for local_key, remote_key in argument_names.items()
+            }
+            value = self._web_api(method, remote_arguments)
+            user = value.get("user")
+            if not isinstance(user, dict):
+                raise RemoteMCPError("provider-profile-invalid")
+            return user
+        assert mapping is not None
         remote_name, argument_names = mapping
         if remote_name not in self._remote_tools:
             raise RemoteMCPError("provider-tool-drift")
