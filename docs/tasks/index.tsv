@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-420	complete	Keep exact Slack targets inside the broker	docs/tasks/Har-420.md
 Har-419	complete	Require Slack services to survive startup settling	docs/tasks/Har-419.md
 Har-418	complete	Bind the exact Swallow Slack resource privately	docs/tasks/Har-418.md
 Har-417	complete	Make Slack OAuth scope failures self-diagnosing	docs/tasks/Har-417.md

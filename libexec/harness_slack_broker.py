@@ -250,24 +250,28 @@ def tool_schema(profile: dict[str, Any], grant_state: str) -> dict[str, Any]:
     if profile["writes"] == "single-transaction" and grant_state == "ready":
         tools.add("slack_send_once")
     definitions = []
+    internal_exact = (
+        profile["resource_policy"] == "exact" and len(profile["resources"]) == 1
+    )
     for name in sorted(tools):
         properties: dict[str, Any] = {}
         required: list[str] = []
         if name in {"slack_read_channel", "slack_read_profile"}:
-            properties["resource"] = {"type": "string", "maxLength": 128}
-            required.append("resource")
+            if not internal_exact:
+                properties["resource"] = {"type": "string", "maxLength": 128}
+                required.append("resource")
         elif name == "slack_read_thread":
-            properties = {
-                "resource": {"type": "string", "maxLength": 128},
-                "thread": {"type": "string", "maxLength": 32},
-            }
-            required = ["resource", "thread"]
+            properties = {"thread": {"type": "string", "maxLength": 32}}
+            required = ["thread"]
+            if not internal_exact:
+                properties["resource"] = {"type": "string", "maxLength": 128}
+                required.insert(0, "resource")
         elif name in {"slack_read_linked_canvas", "slack_read_linked_file"}:
-            properties = {
-                "linked_from": {"type": "string", "maxLength": 128},
-                "resource": {"type": "string", "maxLength": 128},
-            }
-            required = ["linked_from", "resource"]
+            properties = {"resource": {"type": "string", "maxLength": 128}}
+            required = ["resource"]
+            if not internal_exact:
+                properties["linked_from"] = {"type": "string", "maxLength": 128}
+                required.insert(0, "linked_from")
         elif name == "slack_send_once":
             properties = {
                 "payload": {"type": "string", "maxLength": 4000},

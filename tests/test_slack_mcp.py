@@ -136,7 +136,7 @@ class SlackMCPTests(unittest.TestCase):
             request(
                 2,
                 "tools/call",
-                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+                {"arguments": {}, "name": "slack_read_channel"},
             )
         )
         self.assertTrue(denied["result"]["isError"])
@@ -153,12 +153,12 @@ class SlackMCPTests(unittest.TestCase):
             request(
                 1,
                 "tools/call",
-                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+                {"arguments": {}, "name": "slack_read_channel"},
             )
         )
         accepted_value = json.loads(accepted["result"]["content"][0]["text"])
         self.assertEqual(accepted_value["trust"], "untrusted-context")
-        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls, [("slack_read_channel", {"resource": "allowed-channel"})])
         denied = server.handle(
             request(
                 2,
@@ -168,6 +168,20 @@ class SlackMCPTests(unittest.TestCase):
         )
         self.assertTrue(denied["result"]["isError"])
         self.assertEqual(len(calls), 1)
+
+    def test_workspace_visible_request_keeps_explicit_resource(self) -> None:
+        visible = dict(profile())
+        visible["resource_policy"] = "workspace-visible"
+        visible["resources"] = []
+        visible = BROKER.validate_profile(visible)
+        self.assertEqual(
+            MCP.request_for_tool(
+                visible,
+                "slack_read_channel",
+                {"resource": "visible-channel"},
+            )["resource"],
+            "visible-channel",
+        )
 
     def test_oversize_provider_result_returns_stable_bounded_error(self) -> None:
         server = MCP.MCPServer(
@@ -179,7 +193,7 @@ class SlackMCPTests(unittest.TestCase):
             request(
                 1,
                 "tools/call",
-                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+                {"arguments": {}, "name": "slack_read_channel"},
             )
         )
         payload = (BROKER.canonical_json(result) + "\n").encode("utf-8")
@@ -196,7 +210,7 @@ class SlackMCPTests(unittest.TestCase):
             request(
                 1,
                 "tools/call",
-                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+                {"arguments": {}, "name": "slack_read_channel"},
             )
         )
         serialized = json.dumps(result)
@@ -211,7 +225,7 @@ class SlackMCPTests(unittest.TestCase):
             request(
                 1,
                 "tools/call",
-                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+                {"arguments": {}, "name": "slack_read_channel"},
             )
         )
         self.assertIn("provider-tool-failed", json.dumps(stable))
@@ -223,7 +237,7 @@ class SlackMCPTests(unittest.TestCase):
             request(
                 2,
                 "tools/call",
-                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+                {"arguments": {}, "name": "slack_read_channel"},
             )
         )
         serialized = json.dumps(private)
@@ -245,7 +259,7 @@ class SlackMCPTests(unittest.TestCase):
             request(
                 1,
                 "tools/call",
-                {"arguments": {"resource": "allowed-channel"}, "name": "slack_read_channel"},
+                {"arguments": {}, "name": "slack_read_channel"},
             )
         )
         serialized = json.dumps(result)
