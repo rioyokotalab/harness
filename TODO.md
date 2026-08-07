@@ -17,8 +17,8 @@ mutable-state query is unknown, never absence.
 
 ### Har-424 — Establish the Local-outage failover environment
 
-**Phase:** executing the owner-authorized, isolated temporary Home agent
-activation and bounded t4 acceptance. **Record:**
+**Phase:** interviewing whether one bounded failover transaction may use Home's
+existing login2 multiplexed master. **Record:**
 `docs/tasks/Har-424.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
