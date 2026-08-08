@@ -12,7 +12,11 @@ python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.
 python3 "$RUNNER" validate |
     grep -F 'VALID experiment=t336-harness-development-v2-20260729-r7 scenarios=16 decision_types=8' \
         >/dev/null
-if [ "${HARNESS_PORTABLE_CI:-0}" = 1 ]; then
+portable_ci=${HARNESS_PORTABLE_CI:-0}
+if [ "$(uname -s)" != Linux ]; then
+    portable_ci=1
+fi
+if [ "$portable_ci" = 1 ]; then
     for declaration in \
         '"--unshare-net"' \
         '"--tmpfs"' \

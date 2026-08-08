@@ -4,8 +4,10 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
-TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
-TEST_ROOT=$(mktemp -d "$TEMP_BASE/harness-final-pane-layout-test.XXXXXX")
+# tmux Unix socket paths have a small platform limit; Darwin's TMPDIR alone
+# can consume most of it.
+TEMP_BASE=$(CDPATH='' cd -- /tmp && pwd -P)
+TEST_ROOT=$(mktemp -d "$TEMP_BASE/hpl.XXXXXX")
 SOCKET_DIR=$TEST_ROOT/socket
 SOCKET_PATH=$SOCKET_DIR/tmux.sock
 mkdir -m 700 "$SOCKET_DIR"

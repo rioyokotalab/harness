@@ -4,8 +4,10 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 MONITOR=$ROOT/libexec/harness-connection-monitor
-TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
-TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-connection-monitor-test.XXXXXX")
+# Darwin's per-user TMPDIR is too long for an ssh-agent Unix socket. Keep the
+# whole guarded fixture under the canonical short system temporary root.
+TEMP_BASE=$(CDPATH='' cd -- /tmp && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/hcm.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 AGENT_PID=
 
@@ -102,9 +104,13 @@ if [ -n "${HARNESS_MONITOR_INSTRUMENT:-}" ]; then
         printf '%s\n' "$instrument_active" >"$HARNESS_MONITOR_INSTRUMENT/max"
     fi
     : >"$HARNESS_MONITOR_INSTRUMENT/$route.active"
-    if [ "$route" = riken ] &&
-        [ -e "$HARNESS_MONITOR_INSTRUMENT/aist.active" ]; then
-        : >"$HARNESS_MONITOR_INSTRUMENT/work-conserving-overlap"
+    if [ "$route" = riken ]; then
+        for earlier in aist aist2 office office2; do
+            if [ -e "$HARNESS_MONITOR_INSTRUMENT/$earlier.active" ]; then
+                : >"$HARNESS_MONITOR_INSTRUMENT/work-conserving-overlap"
+                break
+            fi
+        done
     fi
     rmdir "$HARNESS_MONITOR_INSTRUMENT/lock"
 
@@ -138,7 +144,7 @@ for auth_host in aist office riken home; do
 done
 
 now_ms() {
-    python3 -c 'import time; print(time.monotonic_ns() // 1000000)'
+    python3 -c 'import time; print(time.time_ns() // 1000000)'
 }
 
 INSTRUMENT=$TEMP_DIR/instrument

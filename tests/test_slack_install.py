@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import os
 from pathlib import Path
+import socket
 import subprocess
 import sys
 import tempfile
@@ -377,6 +378,7 @@ class SlackInstallTests(unittest.TestCase):
                 "SLACK_ENROLL status=failed reason=root-required\n",
             )
 
+    @unittest.skipUnless(hasattr(socket, "SO_PEERCRED"), "requires peer credentials")
     def test_one_shot_sink_authenticates_both_local_peers(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "sink.sock"

@@ -137,11 +137,11 @@ printf '%s\n' 0.3 >"$STATE/ri.delay"
 printf '%s\n' 0.3 >"$STATE/al.delay"
 printf '%s\n' 1.5 >"$STATE/rc.delay"
 printf '%s\n' 1.5 >"$STATE/aist.delay"
-queue_start_ns=$(python3 -c 'import time; print(time.monotonic_ns())')
+queue_start_ns=$(python3 -c 'import time; print(time.time_ns())')
 PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
     HARNESS_FLEET_HEALTH_NOW_EPOCH=1785312000 \
     HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" >"$TEMP_DIR/healthy.out"
-queue_end_ns=$(python3 -c 'import time; print(time.monotonic_ns())')
+queue_end_ns=$(python3 -c 'import time; print(time.time_ns())')
 queue_elapsed_ms=$(((queue_end_ns - queue_start_ns) / 1000000))
 max_active=$(sed -n '1p' "$STATE/max-active")
 [ "$max_active" -le 4 ] || fail "probe queue exceeded concurrency cap"

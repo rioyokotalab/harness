@@ -9,19 +9,26 @@ bash -n "$JOB"
 python3 - "$PROJECT/pyproject.toml" "$PROJECT/uv.lock" <<'PY'
 import pathlib
 import sys
-import tomllib
 
-project = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())
-lock = tomllib.loads(pathlib.Path(sys.argv[2]).read_text())
-assert project["project"]["name"] == "harness-offline-lock-probe"
-assert project["project"]["dependencies"] == []
-assert lock["version"] == 1
-assert lock["requires-python"] == project["project"]["requires-python"]
-assert lock["package"] == [{
-    "name": project["project"]["name"],
-    "version": project["project"]["version"],
-    "source": {"virtual": "."},
-}]
+project = pathlib.Path(sys.argv[1]).read_text().splitlines()
+lock = pathlib.Path(sys.argv[2]).read_text().splitlines()
+assert project == [
+    "[project]",
+    'name = "harness-offline-lock-probe"',
+    'version = "0.0.0"',
+    'requires-python = ">=3.12"',
+    "dependencies = []",
+]
+assert lock == [
+    "version = 1",
+    "revision = 3",
+    'requires-python = ">=3.12"',
+    "",
+    "[[package]]",
+    'name = "harness-offline-lock-probe"',
+    'version = "0.0.0"',
+    'source = { virtual = "." }',
+]
 PY
 for token in \
     'UV_PROJECT_ENVIRONMENT=$build/venv' \

@@ -85,8 +85,16 @@ case $account_shell_path in
 esac
 unset account_output account_candidate
 account_shell_registry=unknown
-if [ "$homebrew" = present ] && [ -f /etc/shells ] && [ ! -L /etc/shells ]; then
-    shell_entry_count=$(grep -F -x -c "$brew_prefix/bin/bash" /etc/shells 2>/dev/null || true)
+shells_file=/etc/shells
+if [ -n "${HARNESS_TEST_SHELLS_FILE:-}" ]; then
+    [ "${HARNESS_TEST_MODE:-0}" = 1 ] || die "test shells override is unsafe"
+    case $HARNESS_TEST_SHELLS_FILE in /*) ;; *) die "test shells override is unsafe" ;; esac
+    [ -f "$HARNESS_TEST_SHELLS_FILE" ] && [ ! -L "$HARNESS_TEST_SHELLS_FILE" ] ||
+        die "test shells override is unsafe"
+    shells_file=$HARNESS_TEST_SHELLS_FILE
+fi
+if [ "$homebrew" = present ] && [ -f "$shells_file" ] && [ ! -L "$shells_file" ]; then
+    shell_entry_count=$(grep -F -x -c "$brew_prefix/bin/bash" "$shells_file" 2>/dev/null || true)
     case "$shell_entry_count" in
         0) account_shell_registry=absent ;;
         1) account_shell_registry=present ;;

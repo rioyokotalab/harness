@@ -73,6 +73,11 @@ interactive_output=$(HOME="$home" UV_VENV_ROOT="$home/.venv" \
         printf "%s|%s\n" "$HARNESS_TEST_COMPLETION" "$HARNESS_TEST_ACTIVATE"
         if activate ../escape >/dev/null 2>&1; then exit 1; fi
     ' bash "$ROOT/shell/interactive.sh") || fail "Darwin interactive behavior"
-[ "$interactive_output" = 'loaded|research' ] || fail "completion or activate behavior"
+if PATH="$fake_bin:/usr/bin:/bin" bash -c '[ "${BASH_VERSINFO[0]}" -gt 4 ] || { [ "${BASH_VERSINFO[0]}" -eq 4 ] && [ "${BASH_VERSINFO[1]}" -ge 2 ]; }'; then
+    expected_interactive='loaded|research'
+else
+    expected_interactive='|research'
+fi
+[ "$interactive_output" = "$expected_interactive" ] || fail "completion or activate behavior"
 
 echo 'personal macOS shell tests: PASS'

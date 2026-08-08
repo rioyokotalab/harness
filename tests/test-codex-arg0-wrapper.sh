@@ -27,13 +27,45 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
+touch_10_minutes_ago() {
+    python3 -B - "$@" <<'PY'
+import os
+import sys
+import time
+
+timestamp = time.time() - 600
+for name in sys.argv[1:]:
+    os.utime(name, (timestamp, timestamp))
+PY
+}
+
 make_expected() {
     directory=$1
     mkdir "$directory"
     : >"$directory/.lock"
-    for helper in apply_patch applypatch codex-execve-wrapper codex-linux-sandbox; do
+    helpers='apply_patch applypatch codex-execve-wrapper'
+    if [ "$(uname -s)" = Linux ]; then
+        helpers="$helpers codex-linux-sandbox"
+    fi
+    for helper in $helpers; do
         ln -s /bin/true "$directory/$helper"
     done
+}
+
+hold_lock() {
+    lock_file=$1
+    ready_file=$2
+    # Perl's flock maps to the same advisory lock used by both the Linux
+    # flock(1) and Darwin Perl implementations in the production helper.
+    perl -MFcntl=:flock -e '
+        open(my $lock, "<", $ARGV[0]) or die "open lock: $!";
+        flock($lock, LOCK_EX) or die "flock: $!";
+        open(my $ready, ">", $ARGV[1]) or die "open ready: $!";
+        print {$ready} "ready";
+        close($ready) or die "close ready: $!";
+        sleep 30;
+    ' "$lock_file" "$ready_file" &
+    locker=$!
 }
 
 codex_home=$TEMP_DIR/codex-home
@@ -49,12 +81,10 @@ make_expected "$live"
 make_expected "$stale"
 mkdir "$empty" "$young" "$unexpected"
 printf '%s\n' unexpected >"$unexpected/foreign"
-touch -d '10 minutes ago' "$stale" "$empty" "$unexpected"
+touch_10_minutes_ago "$stale" "$empty" "$unexpected"
 
 ready=$TEMP_DIR/live-lock-ready
-# shellcheck disable=SC2016
-flock "$live/.lock" sh -c 'printf ready >"$1"; sleep 30' sh "$ready" &
-locker=$!
+hold_lock "$live/.lock" "$ready"
 attempt=0
 while [ ! -f "$ready" ] && [ "$attempt" -lt 50 ]; do
     sleep 0.1
@@ -78,7 +108,7 @@ grep -F 'live=1 eligible=2 young=1 unexpected=1 removed=2' \
 [ ! -e "$stale" ] && [ ! -e "$empty" ] || fail "housekeeping left eligible state"
 
 baseline=$TEMP_DIR/baseline
-find "$arg_root" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' >"$baseline"
+find "$arg_root" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; >"$baseline"
 chmod 600 "$baseline"
 observed=$arg_root/codex-arg0NEW001
 make_expected "$observed"
@@ -104,6 +134,7 @@ EOF
 cat >"$darwin_bin/stat" <<'EOF'
 #!/bin/sh
 if [ "${1:-}" != -f ]; then exec /usr/bin/stat "$@"; fi
+if [ "$(/usr/bin/uname -s)" = Darwin ]; then exec /usr/bin/stat "$@"; fi
 case "$2" in
     %u) format=%u ;;
     %Lp) format=%a ;;
@@ -128,13 +159,11 @@ darwin_live=$darwin_root/codex-arg0LIVE02
 darwin_stale=$darwin_root/codex-arg0OLD002
 make_darwin_expected "$darwin_live"
 make_darwin_expected "$darwin_stale"
-touch -d '10 minutes ago' "$darwin_stale"
+touch_10_minutes_ago "$darwin_stale"
 darwin_ready=$TEMP_DIR/darwin-lock-ready
-# A lock held by Linux flock must also be visible to Darwin's Perl flock path.
-# shellcheck disable=SC2016
-flock "$darwin_live/.lock" sh -c 'printf ready >"$1"; sleep 30' sh \
-    "$darwin_ready" &
-locker=$!
+# The synthetic Darwin path must observe a lock acquired through the same
+# cross-platform advisory-lock interface used above.
+hold_lock "$darwin_live/.lock" "$darwin_ready"
 attempt=0
 while [ ! -f "$darwin_ready" ] && [ "$attempt" -lt 50 ]; do
     sleep 0.1
@@ -150,6 +179,11 @@ grep -F 'live=1 eligible=1 young=0 unexpected=0 removed=0' \
 kill "$locker"
 wait "$locker" 2>/dev/null || true
 locker=
+
+if [ "$(uname -s)" != Linux ]; then
+    echo 'Codex arg0 wrapper tests: PASS (Linux wrapper deployment skipped)'
+    exit 0
+fi
 
 fake_home=$TEMP_DIR/fake-home
 release=$fake_home/.codex/packages/standalone/releases/0.145.0-test/bin

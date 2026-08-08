@@ -49,6 +49,9 @@ case "${1:-}" in -s) echo Darwin ;; -m) echo arm64 ;; *) echo Darwin ;; esac
 EOF
 cat >"$FAKE_BIN/stat" <<'EOF'
 #!/bin/sh
+if [ "$(/usr/bin/uname -s)" = Darwin ]; then
+    exec /usr/bin/stat "$@"
+fi
 case "${1:-}:${2:-}" in
     -f:%u) format=%u ;; -f:%Lp) format=%a ;; -f:%l) format=%h ;;
     -f:%z) format=%s ;; -f:%d:%i) format=%d:%i ;;

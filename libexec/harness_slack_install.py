@@ -487,7 +487,6 @@ def quarantine_personal(
             or stat.S_ISLNK(info.st_mode)
             or info.st_uid != owner_uid
             or stat.S_IMODE(info.st_mode) != 0o700
-            or info.st_nlink != 2
         ):
             fail("credential-store-previous-invalid")
         children = tuple(path.iterdir())

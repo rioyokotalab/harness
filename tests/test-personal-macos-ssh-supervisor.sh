@@ -69,7 +69,7 @@ esac
 shift 2; [ "${1:-}" = -- ] && shift
 case $(/usr/bin/uname -s) in
     Darwin)
-        [ "$native_format" != %a ] || native_format=%Lp
+        case "$native_format" in %a) native_format=%Lp ;; %h) native_format=%l ;; esac
         exec /usr/bin/stat -f "$native_format" "$@"
         ;;
     *) exec /usr/bin/stat -c "$native_format" -- "$@" ;;
@@ -473,7 +473,11 @@ grep -F 'action=none reason=route-running' "$TEMP_DIR/watchdog-healthy.out" >/de
 watchdog_receipt=$watchdog_home/.local/state/harness/macos-tunnel-watchdog/last-run
 [ -f "$watchdog_receipt" ] && [ ! -L "$watchdog_receipt" ] ||
     fail "watchdog healthy run created no receipt"
-[ "$(stat -c %a -- "$watchdog_receipt")" = 600 ] ||
+case $(/usr/bin/uname -s) in
+    Darwin) watchdog_receipt_mode=$(stat -f %Lp "$watchdog_receipt") ;;
+    *) watchdog_receipt_mode=$(stat -c %a -- "$watchdog_receipt") ;;
+esac
+[ "$watchdog_receipt_mode" = 600 ] ||
     fail "watchdog receipt mode"
 grep -F 'outcome=success' "$watchdog_receipt" >/dev/null ||
     fail "watchdog healthy receipt outcome"
@@ -615,8 +619,9 @@ unlink "$watchdog_home/.fake-bind-probed-tunnel"
 
 touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
     "$watchdog_home/.fake-bind-fail-tunnel" "$watchdog_home/.fake-bind-fail-tunnel2"
-if HARNESS_TEST_RECOVERY_ATTEMPTS=1 run_tunnel_watchdog "$watchdog_home" \
-    --host mac-test-pilot --run-once >"$TEMP_DIR/watchdog-timeout.out" 2>&1; then
+if ( HARNESS_TEST_RECOVERY_ATTEMPTS=1 \
+    run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-timeout.out" 2>&1 ); then
     fail "watchdog accepted stale-listener timeout"
 fi
 grep -F 'stale-listener drain timed out' "$TEMP_DIR/watchdog-timeout.out" >/dev/null ||
@@ -632,9 +637,9 @@ unlink "$watchdog_home/.fake-bind-fail-tunnel2"
 
 touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
     "$watchdog_home/.fake-bind-fail-tunnel" "$watchdog_home/.fake-bind-fail-tunnel2"
-if HARNESS_TEST_RECOVERY_ATTEMPTS=999 HARNESS_TEST_RECOVERY_TIMEOUT_SECONDS=0 \
+if ( HARNESS_TEST_RECOVERY_ATTEMPTS=999 HARNESS_TEST_RECOVERY_TIMEOUT_SECONDS=0 \
     run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
-    >"$TEMP_DIR/watchdog-deadline.out" 2>&1; then
+    >"$TEMP_DIR/watchdog-deadline.out" 2>&1 ); then
     fail "watchdog accepted elapsed recovery deadline"
 fi
 grep -F 'action=drain scope=dual status=started timeout=0' \

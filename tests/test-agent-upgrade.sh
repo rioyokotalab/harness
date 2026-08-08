@@ -1,6 +1,11 @@
 #!/bin/sh
 set -eu
 
+if [ "$(uname -s)" != Linux ]; then
+    echo 'agent upgrade tests: SKIP (Linux-only deployment contract)'
+    exit 0
+fi
+
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-agent-upgrade-test.XXXXXX")
@@ -63,7 +68,21 @@ case "$url" in
     *) cp "$FIXTURE_AGENT_LAUNCHER" "$out" ;;
 esac
 EOF
-chmod 755 "$FAKE_BIN/node" "$FAKE_BIN/curl"
+cat >"$FAKE_BIN/sha256sum" <<'EOF'
+#!/bin/sh
+case $(/usr/bin/uname -s) in
+    Darwin) exec /usr/bin/shasum -a 256 "$@" ;;
+    *) exec /usr/bin/sha256sum "$@" ;;
+esac
+EOF
+chmod 755 "$FAKE_BIN/node" "$FAKE_BIN/curl" "$FAKE_BIN/sha256sum"
+
+file_sha256() {
+    case $(/usr/bin/uname -s) in
+        Darwin) shasum -a 256 "$1" | awk '{print $1}' ;;
+        *) sha256sum "$1" | awk '{print $1}' ;;
+    esac
+}
 
 write_version() {
     version=$1
@@ -85,8 +104,8 @@ write_version() {
         "$version" >"$native_root/package.json"
     tar -czf "$launcher_archive" -C "$fixture/launcher" package
     tar -czf "$native_archive" -C "$fixture/native" package
-    launcher_hash=$(sha256sum "$launcher_archive" | awk '{print $1}')
-    native_hash=$(sha256sum "$native_archive" | awk '{print $1}')
+    launcher_hash=$(file_sha256 "$launcher_archive")
+    native_hash=$(file_sha256 "$native_archive")
     printf '%s\n' \
         '# name|version|os|arch|node-version|launcher-url|launcher-sha256|native-directory|native-url|native-sha256|command-relative|version-line' \
         "codex|$version|linux|x86_64|24.16.0|https://fixtures.invalid/codex-$version.tgz|$launcher_hash|@openai/codex-linux-x64|https://fixtures.invalid/codex-$version-linux-x64.tgz|$native_hash|node_modules/@openai/codex/bin/codex.js|codex-cli $version" \

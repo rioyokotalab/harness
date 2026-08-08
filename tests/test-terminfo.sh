@@ -2,6 +2,10 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+if [ "$(uname -s)" != Linux ]; then
+    echo "terminfo tests: SKIP (Linux-only deployment)"
+    exit 0
+fi
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)

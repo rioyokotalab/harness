@@ -147,6 +147,19 @@ def verify_target_pane(snapshot, arguments, repository):
         fail("pane working directory drifted")
 
 
+def process_exists(pid):
+    if os.environ.get("HARNESS_TEST_SKIP_PROC_VERIFY") == "1":
+        if os.environ.get("HARNESS_TESTING") != "1":
+            fail("test process verification override is unsafe")
+        return True
+    try:
+        with open("/proc/{}/stat".format(pid), "r") as stream:
+            stream.read()
+        return True
+    except (IOError, OSError):
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(prog="harness-claude-pane-recovery")
     parser.add_argument("--target", required=True)
@@ -207,15 +220,9 @@ def main():
         after = pane_snapshot(tmux, arguments.pane_id)
         verify_target_pane(after, arguments, repository)
         if not after["dead"] and after["pane_pid"] != before["pane_pid"]:
-            try:
-                with open(
-                    "/proc/{}/stat".format(after["pane_pid"]), "r"
-                ) as stream:
-                    stream.read()
+            if process_exists(after["pane_pid"]):
                 verified = True
                 break
-            except (IOError, OSError):
-                pass
         time.sleep(0.5)
     if not verified:
         print(

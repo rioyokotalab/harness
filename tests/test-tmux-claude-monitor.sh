@@ -405,6 +405,7 @@ OUTPUT=$(HARNESS_TESTING=1 \
     HARNESS_TEST_CLAUDE_TARGETS_FILE="$PROFILE" \
     HARNESS_TEST_TMUX="$FAKE_TMUX" \
     HARNESS_TEST_CLAUDE="$FAKE_CLAUDE" \
+    HARNESS_TEST_SKIP_PROC_VERIFY=1 \
     "$HARNESS" claude-pane-recovery --target harness --window-id @9 \
     --window-index 0 --pane-id %10 --pane-index 1 --pane-pid 4000 \
     --pane-start 12345 --relaunch exact \
@@ -425,6 +426,7 @@ if OUTPUT=$(HARNESS_TESTING=1 \
     HARNESS_TEST_CLAUDE_TARGETS_FILE="$PROFILE" \
     HARNESS_TEST_TMUX="$FAKE_TMUX" \
     HARNESS_TEST_CLAUDE="$FAKE_CLAUDE" \
+    HARNESS_TEST_SKIP_PROC_VERIFY=1 \
     "$HARNESS" claude-pane-recovery --target harness --window-id @9 \
     --window-index 0 --pane-id %10 --pane-index 1 --pane-pid 4000 \
     --pane-start 12345 --relaunch exact \

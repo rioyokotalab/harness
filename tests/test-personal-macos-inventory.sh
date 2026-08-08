@@ -54,6 +54,10 @@ ln -s "$ROOT/.claude/CLAUDE.md" "$home/.claude/CLAUDE.md"
 
 fake_bin=$TEMP_DIR/fake-bin
 mkdir -p "$fake_bin"
+cat >"$fake_bin/dscl" <<'EOF'
+#!/bin/sh
+printf 'UserShell: %s\n' "$SHELL"
+EOF
 cat >"$fake_bin/uname" <<'EOF'
 #!/bin/sh
 case "$1" in
@@ -161,11 +165,13 @@ case "$1" in
     *) exit 2 ;;
 esac
 EOF
-chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/xcode-select" \
+chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/dscl" "$fake_bin/xcode-select" \
     "$fake_bin/brew" "$fake_bin/socketfilterfw"
 HARNESS_TEST_MODE=1
 HARNESS_TEST_SOCKETFILTERFW=$fake_bin/socketfilterfw
-export HARNESS_TEST_MODE HARNESS_TEST_SOCKETFILTERFW
+HARNESS_TEST_SHELLS_FILE=$TEMP_DIR/shells
+: >"$HARNESS_TEST_SHELLS_FILE"
+export HARNESS_TEST_MODE HARNESS_TEST_SOCKETFILTERFW HARNESS_TEST_SHELLS_FILE
 
 brew_log=$TEMP_DIR/brew.log
 output=$(HOME="$home" SHELL=/bin/zsh BREW_LOG="$brew_log" \

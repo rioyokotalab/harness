@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import socket
 import subprocess
 import sys
 import tempfile
@@ -232,6 +233,7 @@ class SlackSwallowInstallTests(unittest.TestCase):
             command,
         )
 
+    @unittest.skipUnless(hasattr(socket, "SO_PEERCRED"), "requires peer credentials")
     def test_one_shot_sink_accepts_only_exact_swallow_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "swallow.sock"

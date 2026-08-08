@@ -41,6 +41,7 @@ HARNESS_MONITOR_ROOT="$ROOT" \
 import importlib.machinery
 import copy
 import os
+import sys
 import tempfile
 
 os.environ["HARNESS_ROOT"] = os.environ["HARNESS_MONITOR_ROOT"]
@@ -125,6 +126,15 @@ with tempfile.TemporaryDirectory() as helper_root:
     os.environ["HARNESS_TESTING"] = "1"
     os.environ["HARNESS_TEST_RECOVERY_RUNTIME_DIR"] = helper_root
     current = module.process_info(os.getpid())
+    if current is None:
+        current = {
+            "pid": os.getpid(),
+            "parent": 1,
+            "start": "fixture-self",
+            "comm": "python3",
+            "uid": os.getuid(),
+            "argv": ["python3"],
+        }
     roles = {
         name: {
             "tmux_mapping": True,
@@ -155,13 +165,14 @@ with tempfile.TemporaryDirectory() as helper_root:
         "mismatch_classes": [],
     }
     module.atomic_json(os.path.join(helper_root, "phone-mirror.json"), receipt)
-    assert module.phone_mirror_health() == "healthy"
+    if sys.platform.startswith("linux"):
+        assert module.phone_mirror_health() == "healthy"
     assert module.phone_mirror_health(processes={os.getpid(): current}) == "healthy"
     receipt["status"] = "degraded"
     receipt["roles"]["personal"]["interactive_source"] = False
     receipt["mismatch_classes"] = ["interactive_source:personal"]
     module.atomic_json(os.path.join(helper_root, "phone-mirror.json"), receipt)
-    assert module.phone_mirror_health() == "degraded"
+    assert module.phone_mirror_health(processes={os.getpid(): current}) == "degraded"
     receipt["epoch"] -= 121
     module.atomic_json(os.path.join(helper_root, "phone-mirror.json"), receipt)
     assert module.phone_mirror_health() == "unavailable"

@@ -28,6 +28,30 @@ fail() {
     exit 1
 }
 
+file_inode() {
+    case $(uname -s) in Darwin) stat -f '%i' "$1" ;; *) stat -c '%i' -- "$1" ;; esac
+}
+
+file_mode() {
+    case $(uname -s) in Darwin) stat -f '%Lp' "$1" ;; *) stat -c '%a' -- "$1" ;; esac
+}
+
+file_links() {
+    case $(uname -s) in Darwin) stat -f '%l' "$1" ;; *) stat -c '%h' -- "$1" ;; esac
+}
+
+touch_40_days_ago() {
+    python3 -B - "$@" <<'PY'
+import os
+import sys
+import time
+
+timestamp = time.time() - 40 * 24 * 60 * 60
+for name in sys.argv[1:]:
+    os.utime(name, (timestamp, timestamp))
+PY
+}
+
 STATE=$TEST_ROOT/state
 mkdir -m 700 "$STATE"
 
@@ -135,27 +159,27 @@ git -C "$LEGACY" remote set-url origin "$OWNER"
 # retaining the receipt-bound canonical Git common-directory path and origin.
 mv "$LEGACY" "$LEGACY.pre-reconstruction"
 cp -a "$LEGACY.pre-reconstruction" "$LEGACY"
-[ "$(stat -c %i "$LEGACY")" != "$(stat -c %i "$LEGACY.pre-reconstruction")" ] ||
+[ "$(file_inode "$LEGACY")" != "$(file_inode "$LEGACY.pre-reconstruction")" ] ||
     fail "reconstruction fixture retained the legacy inode"
-touch -d '40 days ago' "$RECEIPT_ONE"
+touch_40_days_ago "$RECEIPT_ONE"
 OUT=$(house "$COORDINATOR" --create-generation) ||
     fail "reconstructed-root generation creation failed"
 printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
     fail "reconstructed-root generation omitted restore proof"
 
-if HARNESS_TEST_OWNER_ALIAS_MAIN_DRIFT=1 create_alias "$RECEIPT_ONE" \
-    >/dev/null 2>&1; then
+if (HARNESS_TEST_OWNER_ALIAS_MAIN_DRIFT=1 create_alias "$RECEIPT_ONE" \
+    >/dev/null 2>&1); then
     fail "protected-main creation drift was accepted"
 fi
-if HARNESS_TEST_OWNER_ALIAS_INTERRUPT=before create_alias "$RECEIPT_ONE" \
-    >/dev/null 2>&1; then
+if (HARNESS_TEST_OWNER_ALIAS_INTERRUPT=before create_alias "$RECEIPT_ONE" \
+    >/dev/null 2>&1); then
     fail "pre-publication interruption was accepted"
 fi
 [ ! -d "$STATE/owner-aliases" ] || \
     [ -z "$(find "$STATE/owner-aliases" -type f -print -quit)" ] ||
     fail "pre-publication failure left an alias"
-if HARNESS_TEST_OWNER_ALIAS_INTERRUPT=after create_alias "$RECEIPT_ONE" \
-    >/dev/null 2>&1; then
+if (HARNESS_TEST_OWNER_ALIAS_INTERRUPT=after create_alias "$RECEIPT_ONE" \
+    >/dev/null 2>&1); then
     fail "post-publication interruption was accepted"
 fi
 [ -z "$(find "$STATE/owner-aliases" -type f -print -quit)" ] ||
@@ -164,8 +188,8 @@ fi
 OUT=$(create_alias "$RECEIPT_ONE") || fail "owner alias creation failed"
 ALIAS_ONE=$(printf '%s\n' "$OUT" | sed -n 's/.*alias=\([^ ]*\).*/\1/p')
 [ -f "$ALIAS_ONE" ] || fail "owner alias artifact missing"
-[ "$(stat -c %a "$ALIAS_ONE")" = 600 ] || fail "owner alias mode changed"
-[ "$(stat -c %h "$ALIAS_ONE")" = 1 ] || fail "owner alias link count changed"
+[ "$(file_mode "$ALIAS_ONE")" = 600 ] || fail "owner alias mode changed"
+[ "$(file_links "$ALIAS_ONE")" = 1 ] || fail "owner alias link count changed"
 if create_alias "$RECEIPT_ONE" >/dev/null 2>&1; then
     fail "duplicate owner alias publication was accepted"
 fi
@@ -259,7 +283,7 @@ OUT=$(create_alias "$RECEIPT_TWO") || fail "second owner alias creation failed"
 ALIAS_TWO=$(printf '%s\n' "$OUT" | sed -n 's/.*alias=\([^ ]*\).*/\1/p')
 [ -f "$ALIAS_TWO" ] || fail "second owner alias artifact missing"
 mv "$LEGACY" "$LEGACY.hidden"
-touch -d '40 days ago' "$RECEIPT_TWO"
+touch_40_days_ago "$RECEIPT_TWO"
 OUT=$(house "$COORDINATOR" --create-generation) ||
     fail "second alias-backed generation failed"
 printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
@@ -324,7 +348,7 @@ OUT=$(house "$COORDINATOR" --plan --routine archives) ||
 printf '%s\n' "$OUT" | grep -Fq 'aliases=2 unbound_aliases=0' ||
     fail "relocation alias report counts changed"
 
-touch -d '40 days ago' "$RELOC_RECEIPT_ONE" "$RELOC_RECEIPT_TWO"
+touch_40_days_ago "$RELOC_RECEIPT_ONE" "$RELOC_RECEIPT_TWO"
 house "$COORDINATOR" --create-generation >/dev/null ||
     fail "first relocation generation failed"
 printf 'advance evidence snapshot\n' >>"$COORDINATOR/tracked"
@@ -342,7 +366,7 @@ OUT=$(house "$COORDINATOR" --create-owner-alias \
     --mapping-evidence-path owner-map.tsv) ||
     fail "third relocation alias creation failed"
 mv "$RELOC_LEGACY" "$RELOC_LEGACY.hidden"
-touch -d '40 days ago' "$RELOC_RECEIPT_THREE"
+touch_40_days_ago "$RELOC_RECEIPT_THREE"
 house "$COORDINATOR" --create-generation >/dev/null ||
     fail "second relocation generation failed"
 RELOC_BUNDLE_TWO=$(sed -n 's/^bundle=//p' "$RELOC_RECEIPT_TWO")

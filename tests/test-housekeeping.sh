@@ -30,6 +30,29 @@ fail() {
     exit 1
 }
 
+file_mode() {
+    case $(uname -s) in Darwin) stat -f '%Lp' "$1" ;; *) stat -c '%a' -- "$1" ;; esac
+}
+
+file_links() {
+    case $(uname -s) in Darwin) stat -f '%l' "$1" ;; *) stat -c '%h' -- "$1" ;; esac
+}
+
+path_device() {
+    case $(uname -s) in Darwin) stat -f '%d' "$1" ;; *) stat -c '%d' -- "$1" ;; esac
+}
+
+path_inode() {
+    case $(uname -s) in Darwin) stat -f '%i' "$1" ;; *) stat -c '%i' -- "$1" ;; esac
+}
+
+file_sha256() {
+    case $(uname -s) in
+        Darwin) shasum -a 256 "$1" | awk '{print $1}' ;;
+        *) sha256sum "$1" | awk '{print $1}' ;;
+    esac
+}
+
 TOOL=$ROOT/libexec/harness_housekeeping.py
 WRAPPER=$ROOT/libexec/harness-housekeeping
 python3 -B - "$TOOL" "$WRAPPER" <<'PY'
@@ -232,7 +255,7 @@ printf '%s\n' "$OUT" | grep -Fq 'CANDIDATE branch=squash' || fail "exact squash 
 printf '%s\n' "$OUT" | grep -Fq 'REPORT branch=reused' || fail "reused branch was accepted"
 printf '%s\n' "$OUT" | grep -Fq 'reason=merged-pr-head-mismatch' || fail "reused reason missing"
 printf '%s\n' "$OUT" | grep -Fq 'REPORT branch=held' || fail "held branch was accepted"
-HARNESS_TEST_EXPECT_GH_CWD=$REPO house --plan --routine branches >/dev/null ||
+(HARNESS_TEST_EXPECT_GH_CWD=$REPO house --plan --routine branches >/dev/null) ||
     fail "repository-explicit PR query did not run from the selected root"
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
@@ -241,10 +264,10 @@ printf '%s\n' "$OUT" | grep -Fq 'removed=3' || fail "branch apply count changed"
 ARCHIVE=$(printf '%s\n' "$OUT" | sed -n 's/.*archive_receipt=\([^ ]*\).*/\1/p')
 [ -f "$ARCHIVE" ] || fail "branch archive receipt missing"
 BRANCH_BUNDLE=$(sed -n 's/^bundle=//p' "$ARCHIVE")
-[ "$(stat -c %a "$ARCHIVE")" = 600 ] || fail "archive receipt mode changed"
-[ "$(stat -c %h "$ARCHIVE")" = 1 ] || fail "archive receipt link count changed"
-[ "$(stat -c %a "$BRANCH_BUNDLE")" = 600 ] || fail "archive bundle mode changed"
-[ "$(stat -c %h "$BRANCH_BUNDLE")" = 1 ] || fail "archive bundle link count changed"
+[ "$(file_mode "$ARCHIVE")" = 600 ] || fail "archive receipt mode changed"
+[ "$(file_links "$ARCHIVE")" = 1 ] || fail "archive receipt link count changed"
+[ "$(file_mode "$BRANCH_BUNDLE")" = 600 ] || fail "archive bundle mode changed"
+[ "$(file_links "$BRANCH_BUNDLE")" = 1 ] || fail "archive bundle link count changed"
 grep -Fq 'classification=merged-pr-exact-head pr=1' "$ARCHIVE" ||
     fail "archive receipt omitted PR classification"
 grep -Fq "item branch=ancestor tip=$BASE " "$ARCHIVE" ||
@@ -476,7 +499,7 @@ GEN_RECEIPT=$GENERATION_DIR/$GENERATION_ID.json
 ARCHIVE_NAME=$(basename "$ARCHIVE")
 GC_NAME=$(basename "$GC_RECEIPT")
 cat >"$GEN_RECEIPT" <<EOF
-{"schema":"harness-housekeeping-generation-v1","generation":"$GENERATION_ID","created_utc":"2026-07-31T00:00:00Z","source_receipts":[{"name":"$ARCHIVE_NAME","sha256":"$(sha256sum "$ARCHIVE" | awk '{print $1}')"},{"name":"$GC_NAME","sha256":"$(sha256sum "$GC_RECEIPT" | awk '{print $1}')"}],"repositories":[{"repository_canonical":"$REPO","repository_id":[$(stat -c %d "$REPO"),$(stat -c %i "$REPO")],"protected_main":{"ref":"refs/remotes/origin/main","tip":"$BASE"},"bundle":"$GEN_BUNDLE","bundle_sha256":"$(sha256sum "$GEN_BUNDLE" | awk '{print $1}')","heads":[{"ref":"$GEN_MAIN_REF","tip":"$BASE"},{"ref":"$GEN_TIP_REF","tip":"$DRIFT"}],"restore_drill":{"method":"independent-bare-fetch-exact-heads-v1","verified_utc":"2026-07-31T00:01:00Z","headset_sha256":"$GEN_HEADSET"}}]}
+{"schema":"harness-housekeeping-generation-v1","generation":"$GENERATION_ID","created_utc":"2026-07-31T00:00:00Z","source_receipts":[{"name":"$ARCHIVE_NAME","sha256":"$(file_sha256 "$ARCHIVE")"},{"name":"$GC_NAME","sha256":"$(file_sha256 "$GC_RECEIPT")"}],"repositories":[{"repository_canonical":"$REPO","repository_id":[$(path_device "$REPO"),$(path_inode "$REPO")],"protected_main":{"ref":"refs/remotes/origin/main","tip":"$BASE"},"bundle":"$GEN_BUNDLE","bundle_sha256":"$(file_sha256 "$GEN_BUNDLE")","heads":[{"ref":"$GEN_MAIN_REF","tip":"$BASE"},{"ref":"$GEN_TIP_REF","tip":"$DRIFT"}],"restore_drill":{"method":"independent-bare-fetch-exact-heads-v1","verified_utc":"2026-07-31T00:01:00Z","headset_sha256":"$GEN_HEADSET"}}]}
 EOF
 chmod 600 "$GEN_RECEIPT"
 printf 'archived tip %s\n' "$SQUASH" >>"$REPO/TODO.md"
@@ -710,8 +733,8 @@ git -C "$REPO" update-ref -d refs/heads/task/other-open "$BASE"
 # Worktree planning rejects every residue and liveness class.
 REPO=$TEST_ROOT/worktrees
 init_repo "$REPO"
-if HARNESS_TEST_ENFORCE_DURABLE_ARCHIVE_OWNER=1 \
-    house --plan --routine worktrees >/dev/null 2>&1; then
+if (HARNESS_TEST_ENFORCE_DURABLE_ARCHIVE_OWNER=1 \
+    house --plan --routine worktrees >/dev/null 2>&1); then
     fail "scratch-root repository was accepted as a durable archive owner"
 fi
 BASE=$(git -C "$REPO" rev-parse main)
@@ -725,9 +748,9 @@ printf 'ignored\n' >"$TEST_ROOT/wt-ignored/data.ignored"
 mkdir -p "$TEST_ROOT/wt-nested/child/.git"
 printf '[submodule "x"]\n' >"$TEST_ROOT/wt-submodule/.gitmodules"
 git -C "$REPO" worktree lock "$TEST_ROOT/wt-locked"
-(cd "$TEST_ROOT/wt-live" && exec sleep 30) &
+(cd "$TEST_ROOT/wt-live" && exec sleep 300) &
 LIVE_PID=$!
-sh -c 'exec 3<"$1"; sleep 30' sh "$TEST_ROOT/wt-openfile/tracked" &
+sh -c 'exec 3<"$1"; sleep 300' sh "$TEST_ROOT/wt-openfile/tracked" &
 OPEN_PID=$!
 printf '[]\n' >"$PR_DATA"
 OUT=$(house --plan --routine worktrees) || fail "worktree plan failed"
@@ -737,9 +760,9 @@ for reason in tracked-residue untracked-residue ignored-residue nested-repositor
 done
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
-if HARNESS_TEST_ENFORCE_DURABLE_ARCHIVE_OWNER=1 \
+if (HARNESS_TEST_ENFORCE_DURABLE_ARCHIVE_OWNER=1 \
     house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN" \
-    >/dev/null 2>&1; then
+    >/dev/null 2>&1); then
     fail "scratch-root repository applied a worktree archive plan"
 fi
 OUT=$(house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN") || fail "guarded worktree apply failed"
@@ -757,10 +780,14 @@ git -C "$REPO" worktree add -q "$TEST_ROOT/wt-interrupted" interrupted
 OUT=$(house --plan --routine worktrees)
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
-if HARNESS_TEST_INTERRUPT_AFTER_WORKTREE=1 house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1; then
+INTERRUPT_OUTPUT=$TEST_ROOT/worktree-interrupt.out
+if (HARNESS_TEST_INTERRUPT_AFTER_WORKTREE=1 house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN" >"$INTERRUPT_OUTPUT" 2>&1); then
     fail "synthetic interruption unexpectedly succeeded"
 fi
-[ ! -e "$TEST_ROOT/wt-interrupted" ] || fail "interruption did not follow directory stage"
+if [ -e "$TEST_ROOT/wt-interrupted" ]; then
+    sed -n '1,80p' "$INTERRUPT_OUTPUT" >&2
+    fail "interruption did not follow directory stage"
+fi
 git -C "$REPO" show-ref --verify --quiet refs/heads/interrupted ||
     fail "interruption removed the task branch before admin cleanup"
 ADMIN=$(git -C "$REPO" worktree list --porcelain | awk -v path="$TEST_ROOT/wt-interrupted" '
@@ -793,8 +820,8 @@ git -C "$REPO" worktree add -q "$TEST_ROOT/wt-admin-interrupted" admin-interrupt
 OUT=$(house --plan --routine worktrees)
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
-if HARNESS_TEST_INTERRUPT_AFTER_ADMIN=1 house --apply --routine worktrees \
-    --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1; then
+if (HARNESS_TEST_INTERRUPT_AFTER_ADMIN=1 house --apply --routine worktrees \
+    --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1); then
     fail "admin-stage synthetic interruption unexpectedly succeeded"
 fi
 [ ! -e "$TEST_ROOT/wt-admin-interrupted" ] ||
@@ -822,8 +849,8 @@ git -C "$REPO" worktree add -q "$TEST_ROOT/wt-changed-interrupted" \
 OUT=$(house --plan --routine worktrees)
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
-if HARNESS_TEST_INTERRUPT_AFTER_WORKTREE=1 house --apply --routine worktrees \
-    --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1; then
+if (HARNESS_TEST_INTERRUPT_AFTER_WORKTREE=1 house --apply --routine worktrees \
+    --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1); then
     fail "changed-tip interruption unexpectedly succeeded"
 fi
 RECOVERY=$(grep -l '"current":"'$TEST_ROOT'/wt-changed-interrupted"' \
@@ -863,8 +890,8 @@ printf '[]\n' >"$PR_DATA"
 OUT=$(house --plan --routine worktrees)
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
-if HARNESS_TEST_INTERRUPT_AFTER_WORKTREE=1 house --apply --routine worktrees \
-    --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1; then
+if (HARNESS_TEST_INTERRUPT_AFTER_WORKTREE=1 house --apply --routine worktrees \
+    --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1); then
     fail "multi-candidate interruption unexpectedly succeeded"
 fi
 RECOVERY=$(grep -l '"current":"'$TEST_ROOT'/wt-multi-' \

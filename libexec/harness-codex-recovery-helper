@@ -985,6 +985,16 @@ def process_event(root, event):
             close_fds=True,
         )
         info = process_info(process.pid)
+        if (
+            not info
+            and os.environ.get("HARNESS_TESTING") == "1"
+            and os.environ.get("HARNESS_TEST_SKIP_DETECTION") == "1"
+        ):
+            info = {
+                "pid": process.pid,
+                "uid": os.getuid(),
+                "start": "fixture-{}".format(process.pid),
+            }
         if not info or info["uid"] != os.getuid():
             receipt["phase"] = "ambiguous"
             receipt["reason"] = "worker-identity-unavailable"

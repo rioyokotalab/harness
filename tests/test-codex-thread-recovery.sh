@@ -7,6 +7,7 @@ CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEST_ROOT=$(mktemp -d "$TEMP_BASE/harness-thread-recovery-test.XXXXXX")
 server_pid=
+control_socket=
 
 fail() {
     printf 'FAIL: %s\n' "$*" >&2
@@ -20,6 +21,9 @@ cleanup() {
     if [ -n "$server_pid" ] && kill -0 "$server_pid" 2>/dev/null; then
         kill -TERM "$server_pid" 2>/dev/null || true
         wait "$server_pid" 2>/dev/null || true
+    fi
+    if [ -n "$control_socket" ] && [ -S "$control_socket" ]; then
+        unlink "$control_socket" || cleanup_failed=1
     fi
     if [ -d "$TEST_ROOT" ]; then
         "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEST_ROOT" \
@@ -140,7 +144,10 @@ run_recovery() {
     CODEX_HOME="$codex_home" \
     FAKE_READ_RESPONSE="$TEST_ROOT/read-response.json" \
     FAKE_ROLLBACK_CALLS="$TEST_ROOT/rollback.calls" \
-        "$HARNESS" codex-thread-recovery "$@"
+        "$HARNESS" codex-thread-recovery "$@" && recovery_status=0 ||
+        recovery_status=$?
+    unset RECOVERY_TARGET FAKE_ROLLBACK_MODE
+    return "$recovery_status"
 }
 
 write_read_response() {
@@ -193,7 +200,11 @@ grep -F 'rolled_back=2' "$TEST_ROOT/safe.out" >/dev/null ||
     fail "safe rollback count"
 [ "$(cat "$TEST_ROOT/rollback.calls")" = 'thread-safe	2' ] ||
     fail "safe rollback request"
-[ "$(stat -c %a "$runtime/harness:safe.recovery.state")" = 600 ] ||
+case $(uname -s) in
+    Darwin) recovery_mode=$(stat -f %Lp "$runtime/harness:safe.recovery.state") ;;
+    *) recovery_mode=$(stat -c %a "$runtime/harness:safe.recovery.state") ;;
+esac
+[ "$recovery_mode" = 600 ] ||
     fail "recovery state mode"
 grep -E 'blocked one|blocked two|baseline|policy' \
     "$runtime/harness:safe.recovery.state" >/dev/null &&
@@ -675,10 +686,11 @@ with open(calls_path, "w") as output:
     output.write("\n".join(methods) + "\n")
 connection.close()
 listener.close()
+os.unlink(socket_path)
 PY
 chmod 755 "$websocket_server"
 
-control_socket=$TEST_ROOT/app-server-control.sock
+control_socket=/private/tmp/harness-recovery-$$.sock
 python3 "$websocket_server" "$control_socket" "$websocket_rollout" \
     "$TEST_ROOT/websocket.calls" &
 server_pid=$!

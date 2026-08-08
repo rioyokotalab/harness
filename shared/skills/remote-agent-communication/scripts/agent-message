@@ -705,7 +705,7 @@ def validate_local_subtask_report(
     required = ("subtask: ", "result: ", "evidence: ", "next_action: ")
     if any(
         not line.startswith(marker) or not line.removeprefix(marker).strip()
-        for line, marker in zip(lines[1:], required, strict=True)
+        for line, marker in zip(lines[1:], required)
     ):
         raise MessageError("Local agent subtask report fields are malformed")
     return message

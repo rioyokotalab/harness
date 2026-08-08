@@ -287,18 +287,18 @@ later_transaction=$(printf '%s\n' "$later_apply" |
 [ -n "$later_transaction" ] || fail "missing existing-state transaction"
 cp "$state_file" "$TEMP_DIR/later-state.saved"
 printf '%s\n' 'changed=after-apply' >>"$state_file"
-if HOME="$primary_home" HARNESS_ROOT="$primary_public" \
+if ( HOME="$primary_home" HARNESS_ROOT="$primary_public" \
     run_update "$primary_public/libexec/harness-macos-update" \
-    --rollback "$later_transaction" >"$TEMP_DIR/changed-state.out" 2>&1; then
+    --rollback "$later_transaction" >"$TEMP_DIR/changed-state.out" 2>&1 ); then
     fail "rollback accepted changed local state"
 fi
 grep -F 'Mac update rollback blocked by changed state' \
     "$TEMP_DIR/changed-state.out" >/dev/null || fail "changed-state refusal"
 mv "$TEMP_DIR/later-state.saved" "$state_file"
 chmod 600 "$state_file"
-HOME="$primary_home" HARNESS_ROOT="$primary_public" \
+( HOME="$primary_home" HARNESS_ROOT="$primary_public" \
     run_update "$primary_public/libexec/harness-macos-update" \
-    --rollback "$later_transaction" >/dev/null
+    --rollback "$later_transaction" >/dev/null )
 if ! grep -F "public_revision=$primary_public_target" \
     "$state_file" >/dev/null ||
     ! grep -F "private_revision=$primary_private_target" \
@@ -328,13 +328,13 @@ exec "$REAL_GIT" "$@"
 EOF
 chmod 755 "$fake_bin/git"
 real_git=$(command -v git)
-if HOME="$partial_home" HARNESS_ROOT="$partial_public" \
+if ( HOME="$partial_home" HARNESS_ROOT="$partial_public" \
     FAIL_PRIVATE_CHECKOUT="$partial_private" REAL_GIT="$real_git" \
     PATH="$fake_bin:/usr/bin:/bin" run_update "$UPDATE" \
     --host mac-test-pilot \
     --public-target "$partial_public_target" \
     --private-target "$partial_private_target" --apply \
-    >"$TEMP_DIR/partial-failure.out" 2>&1; then
+    >"$TEMP_DIR/partial-failure.out" 2>&1 ); then
     fail "injected private fast-forward failure succeeded"
 fi
 grep -F 'private checkout fast-forward failed after public update; retry is safe' \
@@ -378,11 +378,11 @@ git -C "$incompatible_source" push -q origin main
 git -C "$incompatible_private" fetch -q origin
 incompatible_private_target=$(git -C "$incompatible_private" \
     rev-parse refs/remotes/origin/main)
-if HOME="$incompatible_home" HARNESS_ROOT="$incompatible_public" \
+if ( HOME="$incompatible_home" HARNESS_ROOT="$incompatible_public" \
     run_update "$UPDATE" --host mac-test-pilot \
     --public-target "$incompatible_public_target" \
     --private-target "$incompatible_private_target" --plan \
-    >"$TEMP_DIR/incompatible.out" 2>&1; then
+    >"$TEMP_DIR/incompatible.out" 2>&1 ); then
     fail "incompatible target schema accepted"
 fi
 grep -F 'private companion schema is incompatible' \
@@ -408,11 +408,11 @@ git -C "$layout_source" push -q origin main
 git -C "$layout_private" fetch -q origin
 layout_private_target=$(git -C "$layout_private" \
     rev-parse refs/remotes/origin/main)
-if HOME="$layout_home" HARNESS_ROOT="$layout_public" \
+if ( HOME="$layout_home" HARNESS_ROOT="$layout_public" \
     run_update "$UPDATE" --host mac-test-pilot \
     --public-target "$layout_public_target" \
     --private-target "$layout_private_target" --plan \
-    >"$TEMP_DIR/target-layout.out" 2>&1; then
+    >"$TEMP_DIR/target-layout.out" 2>&1 ); then
     fail "prohibited private target layout accepted"
 fi
 grep -F 'private target tracked layout is invalid' \
@@ -473,11 +473,11 @@ git -C "$incomplete_source" push -q origin main
 git -C "$incomplete_private" fetch -q origin
 incomplete_private_target=$(git -C "$incomplete_private" \
     rev-parse refs/remotes/origin/main)
-if HOME="$incomplete_home" HARNESS_ROOT="$incomplete_public" \
+if ( HOME="$incomplete_home" HARNESS_ROOT="$incomplete_public" \
     run_update "$UPDATE" --host mac-test-pilot \
     --public-target "$incomplete_public_target" \
     --private-target "$incomplete_private_target" --plan \
-    >"$TEMP_DIR/incomplete-target.out" 2>&1; then
+    >"$TEMP_DIR/incomplete-target.out" 2>&1 ); then
     fail "incomplete engine-2 target accepted"
 fi
 grep -F 'payload set is incomplete or incompatible' \
