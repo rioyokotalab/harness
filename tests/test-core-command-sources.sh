@@ -28,7 +28,11 @@ changed = {
     for path in os.environ.get("HARNESS_CHANGED_PATHS", "").splitlines()
 }
 selected = sorted(commands & changed)
-if not changed or "test-core-command-sources.sh" in changed:
+if (
+    os.environ.get("HARNESS_VALIDATION_FULL", "1") == "1"
+    or not changed
+    or "test-core-command-sources.sh" in changed
+):
     selected = sorted(commands)
 if not selected:
     print("CORE_COMMAND_SOURCES status=not-applicable commands=0")
