@@ -387,9 +387,7 @@ case $(uname -s) in
     Darwin)
         lock_dir=$runtime/harness-personal-agent/operation.lock.d
         mkdir -m 700 "$lock_dir"
-        sleep 5 &
-        lock_pid=$!
-        printf '%s\n' "$lock_pid" >"$lock_dir/pid"
+        printf '%s\n' "$$" >"$lock_dir/pid"
         chmod 600 "$lock_dir/pid"
         ;;
     *)
@@ -404,10 +402,11 @@ if printf '%s\n' blocked |
         >"$TEST_ROOT/locked.out" 2>&1; then
     fail 'concurrent operation executed'
 fi
-wait "$lock_pid"
 if [ "$(uname -s)" = Darwin ]; then
     unlink "$lock_dir/pid"
     rmdir "$lock_dir"
+else
+    wait "$lock_pid"
 fi
 grep -F 'reason=operation-locked' "$TEST_ROOT/locked.out" >/dev/null ||
     fail 'lock classification'

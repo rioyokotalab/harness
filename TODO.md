@@ -17,9 +17,9 @@ mutable-state query is unknown, never absence.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 
-**Phase:** Office and Home independently fast-forward their clean managed
-Harness checkouts to protected main and run the complete macOS-compatible
-phase-one suite. **Record:** `docs/tasks/Har-428.md`.
+**Phase:** Office and Home gates plus Riken's clean 104-suite integration gate
+pass; publish the protected PR, then fast-forward both clean Mac checkouts.
+**Record:** `docs/tasks/Har-428.md`.
 
 ## Deferred gates
 
