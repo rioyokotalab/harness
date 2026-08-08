@@ -15,12 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Active
 
-### Har-430 — Accelerate macOS test feedback
-
-**Phase:** executing deterministic interrupt fixtures, complete timing
-receipts, cleanup-safe fail-fast, Darwin resource scheduling, and a fast
-development preflight. **Record:** `docs/tasks/Har-430.md`.
-
 ### Har-428 — Roll out Har-427 to Office and Home
 
 **Phase:** Office and Home independently fast-forward their clean managed
