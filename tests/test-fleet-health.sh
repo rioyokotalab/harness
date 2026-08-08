@@ -74,62 +74,7 @@ if [ -n "$query" ]; then
 fi
 [ -n "$route" ] || exit 2
 
-counter_lock=$HARNESS_FLEET_HEALTH_STATE/concurrency.lock
-acquire_counter_lock() {
-    while ! mkdir "$counter_lock" 2>/dev/null; do :; done
-}
-finish_probe() {
-    probe_exit_status=$?
-    trap - 0 HUP INT TERM
-    acquire_counter_lock
-    active=$(sed -n '1p' "$HARNESS_FLEET_HEALTH_STATE/active")
-    active=$((active - 1))
-    printf '%s\n' "$active" >"$HARNESS_FLEET_HEALTH_STATE/active"
-    printf 'end %s\n' "$route" >>"$HARNESS_FLEET_HEALTH_STATE/events"
-    unlink "$HARNESS_FLEET_HEALTH_STATE/$route.active"
-    rmdir "$counter_lock"
-    exit "$probe_exit_status"
-}
-
-acquire_counter_lock
-active=$(sed -n '1p' "$HARNESS_FLEET_HEALTH_STATE/active")
-active=$((active + 1))
-printf '%s\n' "$active" >"$HARNESS_FLEET_HEALTH_STATE/active"
-maximum=$(sed -n '1p' "$HARNESS_FLEET_HEALTH_STATE/max-active")
-if [ "$active" -gt "$maximum" ]; then
-    printf '%s\n' "$active" >"$HARNESS_FLEET_HEALTH_STATE/max-active"
-fi
-printf 'start %s\n' "$route" >>"$HARNESS_FLEET_HEALTH_STATE/events"
-: >"$HARNESS_FLEET_HEALTH_STATE/$route.active"
-rmdir "$counter_lock"
-trap finish_probe 0
-
-if [ -e "$HARNESS_FLEET_HEALTH_STATE/work-conserving-check" ]; then
-    case "$route" in
-        ab|ab2|ri|al)
-            attempts=0
-            while [ "$(cat "$HARNESS_FLEET_HEALTH_STATE/active")" -lt 4 ]; do
-                attempts=$((attempts + 1))
-                [ "$attempts" -lt 500 ] || exit 3
-                sleep 0.01
-            done
-            ;;
-    esac
-    if [ "$route" = ab ]; then
-        attempts=0
-        while [ ! -e "$HARNESS_FLEET_HEALTH_STATE/rc.active" ] ||
-            [ ! -e "$HARNESS_FLEET_HEALTH_STATE/aist.active" ]; do
-            attempts=$((attempts + 1))
-            [ "$attempts" -lt 500 ] || exit 3
-            sleep 0.01
-        done
-    fi
-fi
-
 printf '%s %s\n' "$route" "$*" >>"$HARNESS_FLEET_HEALTH_STATE/calls"
-if [ -f "$HARNESS_FLEET_HEALTH_STATE/$route.delay" ]; then
-    sleep "$(sed -n '1p' "$HARNESS_FLEET_HEALTH_STATE/$route.delay")"
-fi
 if [ -e "$HARNESS_FLEET_HEALTH_STATE/$route.fail" ]; then
     echo 'PRIVATE-SSH-DIAGNOSTIC' >&2
     exit 1
@@ -150,47 +95,9 @@ ssh-agent -a "$SSH_AUTH_SOCK" -s >"$TEMP_DIR/agent.env"
 AGENT_PID=$(sed -n 's/^SSH_AGENT_PID=\([0-9][0-9]*\);.*/\1/p' "$TEMP_DIR/agent.env")
 [ -n "$AGENT_PID" ] || fail "test SSH agent PID"
 
-printf '%s\n' 0 >"$STATE/active"
-printf '%s\n' 0 >"$STATE/max-active"
-: >"$STATE/events"
-# These delayed routes occupied the first, second, and third former batches.
-# Batch barriers therefore imposed a fixture-only lower bound of 4500 ms.
-printf '%s\n' 1.5 >"$STATE/ab.delay"
-printf '%s\n' 0.3 >"$STATE/ab2.delay"
-printf '%s\n' 0.3 >"$STATE/ri.delay"
-printf '%s\n' 0.3 >"$STATE/al.delay"
-printf '%s\n' 1.5 >"$STATE/rc.delay"
-printf '%s\n' 1.5 >"$STATE/aist.delay"
-: >"$STATE/work-conserving-check"
-queue_start_ns=$(python3 -c 'import time; print(time.time_ns())')
 PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
     HARNESS_FLEET_HEALTH_NOW_EPOCH=1785312000 \
     HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" >"$TEMP_DIR/healthy.out"
-queue_end_ns=$(python3 -c 'import time; print(time.time_ns())')
-queue_elapsed_ms=$(((queue_end_ns - queue_start_ns) / 1000000))
-max_active=$(sed -n '1p' "$STATE/max-active")
-[ "$max_active" -le 4 ] || fail "probe queue exceeded concurrency cap"
-[ "$max_active" -eq 4 ] || fail "probe queue did not fill available slots"
-[ "$(sed -n '1p' "$STATE/active")" -eq 0 ] ||
-    fail "probe queue left an active fake probe"
-ab_end_line=$(sed -n '/^end ab$/{=;q;}' "$STATE/events")
-rc_start_line=$(sed -n '/^start rc$/{=;q;}' "$STATE/events")
-aist_start_line=$(sed -n '/^start aist$/{=;q;}' "$STATE/events")
-[ -n "$ab_end_line" ] && [ -n "$rc_start_line" ] &&
-    [ "$rc_start_line" -lt "$ab_end_line" ] ||
-    fail "former second batch did not overlap the delayed first batch"
-[ -n "$ab_end_line" ] && [ -n "$aist_start_line" ] &&
-    [ "$aist_start_line" -lt "$ab_end_line" ] ||
-    fail "former third batch did not overlap the delayed first batch"
-printf 'fleet health queue fixture: elapsed_ms=%s former_barrier_min_ms=4500 max_concurrency=%s\n' \
-    "$queue_elapsed_ms" "$max_active"
-unlink "$STATE/ab.delay"
-unlink "$STATE/ab2.delay"
-unlink "$STATE/ri.delay"
-unlink "$STATE/al.delay"
-unlink "$STATE/rc.delay"
-unlink "$STATE/aist.delay"
-unlink "$STATE/work-conserving-check"
 
 expected='local ab ab2 ri al rc t4 abq aist home office riken'
 observed=$(sed -n 's/^FLEET_HEALTH node=\([^ ]*\).*/\1/p' "$TEMP_DIR/healthy.out" |

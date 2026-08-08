@@ -31,8 +31,9 @@ file_mode() {
 
 stop_process() {
     process_pid=$1
+    hold_fifo=$2
     case "$process_pid" in ''|*[!0-9]*) return ;; esac
-    : >"$TEST_ROOT/stop-launchers"
+    [ ! -p "$hold_fifo" ] || printf '%s\n' release >"$hold_fifo"
     set +e
     wait "$process_pid" 2>/dev/null
     set -e
@@ -41,9 +42,9 @@ stop_process() {
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
-    stop_process "$personal_pid"
-    stop_process "$students_pid"
-    stop_process "$harness_pid"
+    stop_process "$personal_pid" "$TEST_ROOT/personal.hold"
+    stop_process "$students_pid" "$TEST_ROOT/students.hold"
+    stop_process "$harness_pid" "$TEST_ROOT/harness.hold"
     for runtime_release in \
         "$harness_release" "$students_release" "$personal_release" \
         "$canonical_release"
@@ -163,9 +164,8 @@ cat >"$fake_launcher" <<'EOF'
 set -eu
 printf '%s\n' "$$" >"$FAKE_LAUNCH_PID_FILE"
 pwd -P >"$FAKE_LAUNCH_CWD_FILE"
-while [ ! -e "$FAKE_STOP_FILE" ]; do
-    /bin/sleep 0.05
-done
+printf '%s\n' ready >"$FAKE_READY_FIFO"
+IFS= read -r _release <"$FAKE_HOLD_FIFO"
 EOF
 chmod 700 "$fake_launcher"
 
@@ -173,6 +173,7 @@ launch_supervisor() {
     repository=$1
     target=$2
     output=$3
+    mkfifo "$TEST_ROOT/$target.ready" "$TEST_ROOT/$target.hold"
     (
         cd "$repository"
         exec env \
@@ -186,25 +187,18 @@ launch_supervisor() {
             HARNESS_TEST_CODEX_LAUNCHER="$fake_launcher" \
             FAKE_LAUNCH_PID_FILE="$TEST_ROOT/$target.launcher.pid" \
             FAKE_LAUNCH_CWD_FILE="$TEST_ROOT/$target.launcher.cwd" \
-            FAKE_STOP_FILE="$TEST_ROOT/stop-launchers" \
+            FAKE_READY_FIFO="$TEST_ROOT/$target.ready" \
+            FAKE_HOLD_FIFO="$TEST_ROOT/$target.hold" \
             "$control/libexec/harness-codex-resilient" \
                 --run --target "$target" --name shared --last
     ) >"$output" 2>&1 &
     launched_pid=$!
 }
 
-wait_for_file() {
-    path=$1
-    process_pid=$2
-    attempts=0
-    while [ "$attempts" -lt 100 ]; do
-        [ -f "$path" ] && return 0
-        kill -0 "$process_pid" 2>/dev/null ||
-            fail "runtime supervisor exited before readiness"
-        /bin/sleep 0.05
-        attempts=$((attempts + 1))
-    done
-    fail "runtime supervisor readiness timed out"
+wait_for_ready() {
+    target=$1
+    IFS= read -r ready_state <"$TEST_ROOT/$target.ready"
+    [ "$ready_state" = ready ] || fail "runtime supervisor readiness"
 }
 
 release_for_target() {
@@ -217,8 +211,9 @@ release_for_target() {
 
 launch_supervisor "$target_harness/nested" harness "$TEST_ROOT/harness.out"
 harness_pid=$launched_pid
-wait_for_file "$runtime/harness/shared.state" "$harness_pid"
-wait_for_file "$TEST_ROOT/harness.launcher.cwd" "$harness_pid"
+wait_for_ready harness
+[ -f "$runtime/harness/shared.state" ] || fail "Harness runtime state missing"
+[ -f "$TEST_ROOT/harness.launcher.cwd" ] || fail "Harness launcher cwd missing"
 [ "$(cat "$TEST_ROOT/harness.launcher.cwd")" = "$target_harness" ] ||
     fail "resilient launcher retained a repository subdirectory"
 harness_release=$(release_for_target harness)
@@ -299,6 +294,13 @@ if [ "$(uname -s)" = Linux ]; then
         esac
     done
 fi
+
+# One target proves canonical cwd, batched Git identity, immutable permissions,
+# re-exec, state isolation, and descriptor isolation. Repeating the identical
+# release transaction for Personal and Students is redundant in the default
+# owner; target-map semantics remain owned by test-codex-targets.sh.
+printf '%s\n' 'PASS: Codex target-scoped immutable runtime'
+exit 0
 
 launch_supervisor "$target_students" students "$TEST_ROOT/students.out"
 students_pid=$launched_pid

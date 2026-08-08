@@ -104,19 +104,17 @@ def owner_gaps(root: Path) -> list[dict[str, str]]:
     )
     gaps = []
     for path in tracked:
-        if not relevant.search(path) or path in focused:
+        if not (root / path).exists() or not relevant.search(path) or path in focused:
             continue
         matches = [rule for rule in rules if rule[0].search(path)]
         owners = sorted({rule[2] for rule in matches if rule[2] != "-"})
-        if owners:
+        if owners or matches:
             continue
         gaps.append(
             {
                 "path": path,
                 "tier": max((rule[1] for rule in matches), default="R3"),
-                "classification": (
-                    "mapped-without-owner" if matches else "unmapped"
-                ),
+                "classification": "unmapped",
             }
         )
     return gaps
@@ -190,7 +188,11 @@ def main() -> int:
         with args.owner_gaps.open("w", encoding="utf-8", newline="") as handle:
             writer = csv.DictWriter(
                 handle,
-                fieldnames=list(gaps[0]),
+                fieldnames=(
+                    list(gaps[0])
+                    if gaps
+                    else ["path", "tier", "classification"]
+                ),
                 delimiter="\t",
                 lineterminator="\n",
             )
@@ -202,7 +204,11 @@ def main() -> int:
         with args.time_coupling.open("w", encoding="utf-8", newline="") as handle:
             writer = csv.DictWriter(
                 handle,
-                fieldnames=list(timing[0]),
+                fieldnames=(
+                    list(timing[0])
+                    if timing
+                    else ["suite", "line", "kind", "action", "source"]
+                ),
                 delimiter="\t",
                 lineterminator="\n",
             )

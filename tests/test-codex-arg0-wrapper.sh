@@ -54,17 +54,18 @@ make_expected() {
 
 hold_lock() {
     lock_file=$1
-    ready_file=$2
+    ready_fifo=$2
+    hold_fifo=$3
     # Perl's flock maps to the same advisory lock used by both the Linux
     # flock(1) and Darwin Perl implementations in the production helper.
     perl -MFcntl=:flock -e '
         open(my $lock, "<", $ARGV[0]) or die "open lock: $!";
         flock($lock, LOCK_EX) or die "flock: $!";
         open(my $ready, ">", $ARGV[1]) or die "open ready: $!";
-        print {$ready} "ready";
+        print {$ready} "ready\n";
         close($ready) or die "close ready: $!";
-        sleep 30;
-    ' "$lock_file" "$ready_file" &
+        open(my $hold, "<", $ARGV[2]) or die "open hold: $!";
+    ' "$lock_file" "$ready_fifo" "$hold_fifo" &
     locker=$!
 }
 
@@ -84,13 +85,11 @@ printf '%s\n' unexpected >"$unexpected/foreign"
 touch_10_minutes_ago "$stale" "$empty" "$unexpected"
 
 ready=$TEMP_DIR/live-lock-ready
-hold_lock "$live/.lock" "$ready"
-attempt=0
-while [ ! -f "$ready" ] && [ "$attempt" -lt 50 ]; do
-    sleep 0.1
-    attempt=$((attempt + 1))
-done
-[ -f "$ready" ] || fail "live lock did not start"
+hold=$TEMP_DIR/live-lock-hold
+mkfifo "$ready" "$hold"
+hold_lock "$live/.lock" "$ready" "$hold"
+IFS= read -r ready_state <"$ready"
+[ "$ready_state" = ready ] || fail "live lock did not start"
 
 HARNESS_TESTING=1 CODEX_HOME="$codex_home" \
     "$HARNESS" codex-arg0-housekeeping --plan --root "$arg_root" \
@@ -161,15 +160,13 @@ make_darwin_expected "$darwin_live"
 make_darwin_expected "$darwin_stale"
 touch_10_minutes_ago "$darwin_stale"
 darwin_ready=$TEMP_DIR/darwin-lock-ready
+darwin_hold=$TEMP_DIR/darwin-lock-hold
+mkfifo "$darwin_ready" "$darwin_hold"
 # The synthetic Darwin path must observe a lock acquired through the same
 # cross-platform advisory-lock interface used above.
-hold_lock "$darwin_live/.lock" "$darwin_ready"
-attempt=0
-while [ ! -f "$darwin_ready" ] && [ "$attempt" -lt 50 ]; do
-    sleep 0.1
-    attempt=$((attempt + 1))
-done
-[ -f "$darwin_ready" ] || fail "Darwin synthetic lock did not start"
+hold_lock "$darwin_live/.lock" "$darwin_ready" "$darwin_hold"
+IFS= read -r darwin_ready_state <"$darwin_ready"
+[ "$darwin_ready_state" = ready ] || fail "Darwin synthetic lock did not start"
 HARNESS_TESTING=1 CODEX_HOME="$TEMP_DIR/darwin-codex" \
     PATH="$darwin_bin:/usr/bin:/bin" \
     "$HARNESS" codex-arg0-housekeeping --plan --root "$darwin_root" \

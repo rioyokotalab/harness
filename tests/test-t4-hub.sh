@@ -177,5 +177,4 @@ fi
 grep -F 'selected login node differs from the current t4 host' \
     "$TEST_ROOT/mismatch.err" >/dev/null || fail "node mismatch class"
 
-sleep 3
 echo 't4 hub focused suite: pass'

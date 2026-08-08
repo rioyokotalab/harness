@@ -68,6 +68,7 @@ class FocusedSuite:
     estimate: int
     resource: str
     group: str
+    platforms: frozenset[str] = frozenset({"Darwin", "Linux"})
 
 
 def parse_args() -> argparse.Namespace:
@@ -105,6 +106,18 @@ def run_git(root: Path, *args: str, check: bool = True) -> subprocess.CompletedP
         stderr=subprocess.PIPE,
         check=check,
     )
+
+
+def test_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    try:
+        count = int(environment.get("GIT_CONFIG_COUNT", "0"))
+    except ValueError as error:
+        raise ValueError("invalid inherited GIT_CONFIG_COUNT") from error
+    environment["GIT_CONFIG_COUNT"] = str(count + 1)
+    environment[f"GIT_CONFIG_KEY_{count}"] = "maintenance.auto"
+    environment[f"GIT_CONFIG_VALUE_{count}"] = "false"
+    return environment
 
 
 def load_rules(root: Path) -> list[Rule]:
@@ -162,10 +175,18 @@ def load_focused_suites(root: Path, groups: list[GroupRule]) -> dict[str, Focuse
         if not raw or raw.startswith("#"):
             continue
         fields = raw.split("|")
-        if len(fields) not in (3, 4):
+        if len(fields) not in (3, 4, 5):
             raise ValueError(f"invalid focused-suite line {number}")
         suite, label, estimate_text = fields[:3]
         resource = fields[3] if len(fields) == 4 else "light"
+        if len(fields) == 5:
+            resource = fields[3]
+        platform_text = fields[4] if len(fields) == 5 else "all"
+        platforms = (
+            frozenset({"Darwin", "Linux"})
+            if platform_text == "all"
+            else frozenset({platform_text})
+        )
         try:
             estimate = int(estimate_text)
         except ValueError as error:
@@ -175,10 +196,15 @@ def load_focused_suites(root: Path, groups: list[GroupRule]) -> dict[str, Focuse
             raise ValueError(
                 f"focused suite must match exactly one validation group: {suite}"
             )
-        if suite in suites or resource not in {"light", "heavy"} or estimate < 1:
+        if (
+            suite in suites
+            or resource not in {"light", "heavy"}
+            or platform_text not in {"all", "Darwin", "Linux"}
+            or estimate < 1
+        ):
             raise ValueError(f"invalid focused-suite line {number}")
         suites[suite] = FocusedSuite(
-            len(suites) + 1, suite, label, estimate, resource, matches[0]
+            len(suites) + 1, suite, label, estimate, resource, matches[0], platforms
         )
     if not suites:
         raise ValueError("empty focused-suite manifest")
@@ -307,6 +333,12 @@ def classify(
             )
 
     selected = sorted(suites)
+    current_platform = platform.system()
+    applicable = [
+        suite for suite in selected
+        if current_platform in focused[suite].platforms
+    ]
+    not_applicable = sorted(set(selected) - set(applicable))
     owner_gaps = sorted(
         {
             item["path"]
@@ -339,6 +371,8 @@ def classify(
         "tier": tier,
         "paths": paths,
         "suites": selected,
+        "applicable_suites": applicable,
+        "not_applicable_suites": not_applicable,
         "groups": groups,
         "estimated_seconds": sum(focused[suite].estimate for suite in selected),
         "matches": matches,
@@ -607,7 +641,7 @@ def suites_for_stage(
     execute: bool,
     full: bool = False,
 ) -> list[str]:
-    owners = decision["suites"]
+    owners = decision.get("applicable_suites", decision["suites"])
     if execute and decision.get("owner_gaps"):
         raise ValueError(
             "changed paths have owner gaps; add impact-map owners for: "
@@ -674,7 +708,7 @@ def run_validation(root: Path, base: str, decision: dict, jobs: str) -> list[dic
     if untracked_status != 0:
         return results
 
-    env = os.environ.copy()
+    env = test_environment()
     env.pop("HARNESS_ROOT", None)
     env["HARNESS_TEST_JOBS"] = jobs
     env["HARNESS_CHANGED_PATHS"] = "\n".join(decision["paths"])
@@ -729,6 +763,7 @@ def run_discovery(
                 "results": checks,
                 "failure_suites": [],
                 "not_run": decision["suites"],
+                "not_applicable": decision.get("not_applicable_suites", []),
             },
         )
         return checks, inventory
@@ -744,6 +779,7 @@ def run_discovery(
                 "results": checks,
                 "failure_suites": [],
                 "not_run": [],
+                "not_applicable": decision.get("not_applicable_suites", []),
             },
         )
         return checks, inventory
@@ -766,7 +802,7 @@ def run_discovery(
     ]
     for suite in decision["suites"]:
         command.extend(("--suite", suite))
-    env = os.environ.copy()
+    env = test_environment()
     env.pop("HARNESS_ROOT", None)
     env["HARNESS_CHANGED_PATHS"] = "\n".join(decision["paths"])
     env["HARNESS_VALIDATION_BASE"] = base
@@ -816,6 +852,7 @@ def run_discovery(
             "results": steps,
             "failure_suites": failure_suites,
             "not_run": payload["not_run"],
+            "not_applicable": decision.get("not_applicable_suites", []),
             "failure_log_dir": str(log_dir) if failure_suites else None,
         },
     )
@@ -883,6 +920,7 @@ def main() -> int:
         "groups": decision["groups"],
         "matches": decision["matches"],
         "owner_suites": decision["suites"],
+        "not_applicable_suites": decision.get("not_applicable_suites", []),
         "owner_gaps": decision["owner_gaps"],
         "paths": decision["paths"],
         "schema": 1,

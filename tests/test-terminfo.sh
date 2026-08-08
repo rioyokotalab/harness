@@ -3,8 +3,8 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 if [ "$(uname -s)" != Linux ]; then
-    echo "terminfo tests: SKIP (Linux-only deployment)"
-    exit 0
+    echo 'FAIL: terminfo owner is Linux-only; selector admitted wrong platform' >&2
+    exit 2
 fi
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh

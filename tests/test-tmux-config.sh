@@ -34,8 +34,10 @@ file_mode() {
 command -v tmux >/dev/null 2>&1 || fail "tmux unavailable"
 grep -F -x 'bind-key z resize-pane -Z' "$ROOT/config/tmux/tmux.conf" \
     >/dev/null || fail "managed pane zoom binding"
+mkfifo "$TEMP_DIR/tmux-hold"
 NO_COLOR=1 COLORTERM='' tmux -L "$TMUX_TEST_SOCKET" \
-    -f "$ROOT/config/tmux/tmux.conf" new-session -d -s color-test 'sleep 30'
+    -f "$ROOT/config/tmux/tmux.conf" new-session -d -s color-test \
+    "exec cat '$TEMP_DIR/tmux-hold'"
 if tmux -L "$TMUX_TEST_SOCKET" show-environment -g NO_COLOR >/dev/null 2>&1; then
     fail "managed tmux retained NO_COLOR"
 fi

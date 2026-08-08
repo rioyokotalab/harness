@@ -2,8 +2,8 @@
 set -eu
 
 if [ "$(uname -s)" != Linux ]; then
-    echo "SKIP: AL session helper requires Linux"
-    exit 0
+    echo 'FAIL: AL-session owner is Linux-only; selector admitted wrong platform' >&2
+    exit 2
 fi
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)

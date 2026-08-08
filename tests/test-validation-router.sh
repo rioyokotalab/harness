@@ -15,6 +15,7 @@ import io
 import json
 import os
 from pathlib import Path
+import platform
 import runpy
 import shutil
 import subprocess
@@ -32,6 +33,10 @@ rules = module["load_rules"](root)
 group_rules = module["load_group_rules"](root)
 focused = module["load_focused_suites"](root, group_rules)
 classify = module["classify"]
+configured_git = module["test_environment"]()
+configured_index = int(configured_git["GIT_CONFIG_COUNT"]) - 1
+assert configured_git[f"GIT_CONFIG_KEY_{configured_index}"] == "maintenance.auto"
+assert configured_git[f"GIT_CONFIG_VALUE_{configured_index}"] == "false"
 
 cases = [
     (
@@ -553,14 +558,12 @@ else:
     raise AssertionError("multi-owner repair was accepted without --suite")
 assert module["suites_for_stage"](
     multi, "discovery", None, execute=True
-) == [
-    "tests/test-debugger-readiness.sh",
-    "tests/test-terminfo.sh",
-]
+) == (["tests/test-debugger-readiness.sh", "tests/test-terminfo.sh"]
+      if platform.system() == "Linux"
+      else ["tests/test-debugger-readiness.sh"])
 assert module["suites_for_stage"](multi, "final", None, execute=True) == [
     "tests/test-debugger-readiness.sh",
-    "tests/test-terminfo.sh",
-]
+] + (["tests/test-terminfo.sh"] if platform.system() == "Linux" else [])
 assert module["suites_for_stage"](
     multi, "final", None, execute=True, full=True
 ) == [
@@ -727,9 +730,16 @@ assert unknown["owner_gaps"] == ["unknown/path"]
 assert unknown["final_required"] is True
 assert discovery["stage"] == "discovery"
 assert discovery["groups"][0]["name"] == "macos-terminal"
-assert discovery["execution_suites"] == ["tests/test-terminfo.sh"]
+assert discovery["execution_suites"] == (
+    ["tests/test-terminfo.sh"] if platform.system() == "Linux" else []
+)
 assert final["stage"] == "final"
-assert final["execution_suites"] == ["tests/test-terminfo.sh"]
+assert final["execution_suites"] == (
+    ["tests/test-terminfo.sh"] if platform.system() == "Linux" else []
+)
+assert final["not_applicable_suites"] == (
+    [] if platform.system() == "Linux" else ["tests/test-terminfo.sh"]
+)
 assert final["full_requested"] is False
 assert full["execution_suites"] == ["tests/test-phase1.sh"]
 assert full["full_requested"] is True

@@ -60,6 +60,7 @@
 ^tests/test-context-routing-benchmark\.sh$|R3|-|context benchmark validator
 ^tools/refresh-context-benchmark\.py$|R3|tests/test-context-routing-benchmark.sh|context benchmark generator
 ^\.github/workflows/|R3|tests/test-actions-sustainability.sh|hosted workflow
+^\.github/dependabot\.yml$|R1|tests/test-actions-sustainability.sh|dependency update policy
 ^tests/test-actions-sustainability\.sh$|R3|-|hosted workflow trigger contract
 ^libexec/harness[-_]slack[-_]broker(\.py)?$|R2|tests/test-slack-broker.sh|client-neutral Slack broker policy contract
 ^libexec/harness[-_]slack[-_]audit(\.py)?$|R3|tests/test-slack-broker.sh|bounded value-free Slack audit runtime
@@ -90,6 +91,11 @@
 ^docs/ci-and-merge-controls\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow documentation
 ^docs/audits/t351-autonomy-efficiency/actions-transition\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow evidence
 ^bin/|R3|tests/test-source-contract.sh|public command dispatcher
+^install\.sh$|R3|tests/test-claude-takeover.sh|top-level installation lifecycle
+^presentation/scripts/.*\.py$|R1|tests/test-presentation-tools.sh|presentation build and verification tools
+^tests/test-presentation-tools\.sh$|R3|-|presentation tool owner
+^tools/(agents|python|runtimes|source-dependencies|sources)\.tsv$|R2|tests/test-tool-manifests.sh|tool and runtime manifest schema
+^tests/test-tool-manifests\.sh$|R3|-|tool manifest owner
 ^libexec/harness-validate$|R3|tests/test-validation-router.sh|validation selector
 ^tests/validation-impact\.tsv$|R3|tests/test-validation-router.sh|validation impact map
 ^tests/validation-groups\.tsv$|R3|tests/test-validation-router.sh|validation group map
@@ -118,6 +124,7 @@
 ^libexec/harness-fleet-sync$|R3|tests/test-fleet-sync.sh|fleet synchronization runtime
 ^libexec/harness-hardening-audit$|R3|tests/test-hardening-audit.sh|repository hardening runtime
 ^libexec/harness[-_]housekeeping(\.py)?$|R3|tests/test-housekeeping.sh|housekeeping runtime
+^libexec/harness_housekeeping\.py$|R3|tests/test-housekeeping-owner-alias.sh|archive owner alias identity contracts
 ^libexec/harness-macos-agent-session$|R3|tests/test-macos-agent-session.sh|macOS agent session
 ^libexec/harness-macos-(bash|bash-hooks)$|R3|tests/test-personal-macos-bash.sh|macOS Bash lifecycle
 ^libexec/harness-macos-bash-hooks$|R3|tests/test-personal-macos-bash-hooks.sh|macOS Bash hook lifecycle
@@ -186,6 +193,17 @@
 ^config/terminfo/tmux-256color\.src$|R2|tests/test-terminfo.sh|mapped ordinary terminfo source
 ^tests/test-terminfo\.sh$|R3|-|mapped ordinary component validator
 ^tests/smoke/debugger\.c$|R2|tests/test-debugger-readiness.sh|mapped ordinary debugger source fixture
+^tests/smoke/(CMakeLists\.txt|cpu\.(c|cpp|f90)|cpp20\.cpp|cuda\.cu|numerical\.cpp|python\.py|sanitizer\.c)$|R2|tests/test-hpc-readiness.sh|portable HPC smoke source
+^tests/smoke/affinity\.cpp$|R2|tests/test-affinity-readiness.sh|affinity smoke source
+^tests/smoke/checkpoint_restart\.cpp$|R2|tests/test-checkpoint-restart.sh|checkpoint smoke source
+^tests/smoke/mpi\.c$|R2|tests/test-hpc-readiness.sh|single-node MPI smoke source
+^tests/smoke/mpi-multinode\.c$|R2|tests/test-multinode-mpi-readiness.sh|multi-node MPI smoke source
+^tests/smoke/llm_torch\.py$|R2|tests/test-pytorch-readiness.sh|PyTorch smoke source
+^tests/smoke/debugger-readiness\.sh$|R2|tests/test-debugger-readiness.sh|debugger readiness probe
+^tests/smoke/locked-venv-readiness\.sh$|R2|tests/test-locked-venv-readiness.sh|locked environment probe
+^tests/smoke/scientific-library-readiness\.sh$|R2|tests/test-scientific-library-readiness.sh|scientific library probe
+^tests/smoke/venv-readiness\.sh$|R2|tests/test-venv-readiness.sh|virtual environment probe
+^tests/smoke/README\.md$|R0|-|smoke documentation
 ^tests/fixtures/scientific-library-bin/(h5cc|nc-config|pkg-config)$|R2|tests/test-scientific-library-readiness.sh|mapped ordinary scientific-library fixture
 ^(\.gitmodules|profiles/tools\.tsv|tools/artifacts\.tsv|libexec/harness-(tool|inventory))$|R1|tests/test-repository-independence.sh|repository independence boundary
 ^docs/|R0|-|documentation

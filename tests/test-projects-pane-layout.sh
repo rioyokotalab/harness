@@ -82,12 +82,14 @@ command -v tmux >/dev/null 2>&1 || fail "tmux unavailable"
 grep -F -x 'bind-key z resize-pane -Z' "$ROOT/config/tmux/tmux.conf" \
     >/dev/null || fail "managed pane zoom binding"
 
-tmux_test -f /dev/null new-session -d -s harness -n cowork 'exec sleep 600'
-tmux_test split-window -d -h -t harness:cowork 'exec sleep 600'
-tmux_test new-window -d -t harness:1 -n codex 'exec sleep 600'
-tmux_test split-window -d -h -t harness:codex 'exec sleep 600'
-tmux_test new-window -d -t harness:2 -n claude 'exec sleep 600'
-tmux_test split-window -d -h -t harness:claude 'exec sleep 600'
+mkfifo "$TEST_ROOT/pane-hold"
+hold="exec cat '$TEST_ROOT/pane-hold'"
+tmux_test -f /dev/null new-session -d -s harness -n cowork "$hold"
+tmux_test split-window -d -h -t harness:cowork "$hold"
+tmux_test new-window -d -t harness:1 -n codex "$hold"
+tmux_test split-window -d -h -t harness:codex "$hold"
+tmux_test new-window -d -t harness:2 -n claude "$hold"
+tmux_test split-window -d -h -t harness:claude "$hold"
 
 set_codex_role harness:cowork.0 harness
 set_claude_role harness:cowork.1 harness 00000000-0000-4000-8000-000000000001

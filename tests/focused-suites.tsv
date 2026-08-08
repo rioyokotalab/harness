@@ -1,10 +1,9 @@
-# path|failure label|estimated seconds (admission only)|resource class (optional)
+# path|failure label|estimated seconds|resource class (optional)|platform (optional)
 tests/test-startup-normalize.sh|startup normalization focused suite|6
-tests/test-bash-startup-unify.sh|canonical Bash startup transaction|12
+tests/test-bash-startup-unify.sh|canonical Bash startup transaction|4
 tests/test-focused-runner.sh|parallel focused-suite runner|7
 tests/test-validation-router.sh|risk-tier validation selector|2
-tests/test-shellcheck.sh|repository ShellCheck gate|40|heavy
-tests/test-phase1-integration.sh|phase-one integration transactions|150|heavy
+tests/test-shellcheck.sh|changed-shell ShellCheck gate|1
 tests/test-harness-ledgers.sh|independent ordinary and nightly ledger contract|2
 tests/test-agent-policy-routing.sh|conditional agent-policy routing|1
 tests/test-context-routing-benchmark.sh|mandatory context benchmark|2
@@ -13,20 +12,20 @@ tests/test-skill-context-gates.sh|selected skill safety gates|2
 tests/test-skill-catalog-budget.sh|always-visible skill catalog budget|1
 tests/test-ssh-agent-profile.sh|SSH agent profile focused suite|2
 tests/test-remote-session.sh|remote-session focused suite|2|heavy
-tests/test-remote-agent-communication.sh|remote agent communication focused suite|29
-tests/test-reboot-recovery-skill.sh|managed Mac reboot recovery skill|14
-tests/test-fleet-health.sh|canonical fleet health focused suite|15
+tests/test-remote-agent-communication.sh|remote agent communication focused suite|8
+tests/test-reboot-recovery-skill.sh|managed Mac reboot recovery skill|3
+tests/test-fleet-health.sh|canonical fleet health focused suite|6
 tests/test-t4-hub.sh|bounded on-demand t4 bastion focused suite|9
-tests/test-connection-monitor.sh|managed Mac connection monitor focused suite|11
+tests/test-connection-monitor.sh|managed Mac connection monitor focused suite|4
 tests/test-tmux-codex-monitor.sh|Local tmux Codex monitor focused suite|5
 tests/test-tmux-claude-monitor.sh|Local tmux Claude monitor focused suite|6
-tests/test-macos-agent-session.sh|unified managed-Mac agent session suite|30|heavy
-tests/test-housekeeping.sh|routine repository housekeeping suite|49|heavy
-tests/test-housekeeping-owner-alias.sh|immutable archive owner alias suite|58
+tests/test-macos-agent-session.sh|unified managed-Mac agent session suite|6
+tests/test-housekeeping.sh|routine repository housekeeping suite|6
+tests/test-housekeeping-owner-alias.sh|archive owner alias identity contracts|1
 tests/test-guarded-delete.sh|guarded deletion safety suite|5|heavy
 tests/test-projects-pane-layout.sh|isolated final Harness six-pane topology|4
 tests/test-codex-recovery-helper.sh|dedicated Local Codex recovery helper|4
-tests/test-al-session.sh|personal AL session focused suite|7
+tests/test-al-session.sh|personal AL session focused suite|7|light|Linux
 tests/test-fleet-inventory.sh|cold-start fleet inventory focused suite|2
 tests/test-safety-guards.sh|interactive safety-guard focused suite|10
 tests/test-github-rulesets.sh|GitHub ruleset payload focused suite|1
@@ -35,12 +34,12 @@ tests/test-repository-independence.sh|repository independence focused suite|2
 tests/test-claude-takeover.sh|Claude takeover focused suite|8
 tests/test-claude-handoff.sh|task-bound Claude handoff focused suite|8
 tests/test-slack-broker.sh|client-neutral Slack broker policy contract|8
-tests/test-personal-agent.sh|bounded non-managed Personal agent|27
+tests/test-personal-agent.sh|bounded non-managed Personal agent|8
 tests/test-codex-arg0-wrapper.sh|Codex arg0 NFS wrapper focused suite|8
 tests/test-codex-login.sh|Codex login-node launcher focused suite|6
 tests/test-codex-targets.sh|repository-native Codex target map focused suite|6
-tests/test-codex-resilient.sh|Codex transient-service supervisor|23|heavy
-tests/test-codex-runtime-isolation.sh|Codex target-scoped immutable runtime|15|heavy
+tests/test-codex-resilient.sh|Codex transient-service supervisor|6
+tests/test-codex-runtime-isolation.sh|Codex target-scoped immutable runtime|9
 tests/test-codex-thread-recovery.sh|Codex thread systemError recovery|5|heavy
 tests/test-recover-codex-unsafe-tail-skill.sh|Codex unsafe-tail recovery skill|2
 tests/test-fleet-repository-hardening-skill.sh|fleet and repository hardening skill|1
@@ -57,7 +56,7 @@ tests/test-personal-macos-shell.sh|personal macOS shell focused suite|3
 tests/test-personal-macos-login-shell.sh|personal macOS login-shell focused suite|12
 tests/test-tmux-config.sh|shared tmux configuration focused suite|8
 tests/test-agent-config.sh|agent configuration focused suite|16
-tests/test-agent-upgrade.sh|agent replacement and recovery|4
+tests/test-agent-upgrade.sh|agent replacement and recovery|4|light|Linux
 tests/test-agent-config-fleet.sh|agent configuration fleet focused suite|5
 tests/test-personal-macos-update.sh|personal macOS long-gap update focused suite|22|heavy
 tests/test-personal-macos-ssh-supervisor.sh|personal macOS SSH supervisor focused suite|133|heavy
@@ -66,7 +65,7 @@ tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync focused suite|140|
 tests/test-personal-macos-config-sync.sh|personal macOS config-sync focused suite|58|heavy
 tests/test-personal-macos-config-migrate.sh|personal macOS config-migration focused suite|25
 tests/test-ssh-config-mirror.sh|fixed SSH-config mirror focused suite|23
-tests/test-terminfo.sh|AL user-local terminfo focused suite|1
+tests/test-terminfo.sh|AL user-local terminfo focused suite|1|light|Linux
 tests/test-ssh-config-layout.sh|transactional shared SSH layout migration|11
 tests/test-restic-schedule.sh|Restic schedule focused suite|31|heavy
 tests/test-onboard-mirrored-node.sh|onboarding focused suite|5
@@ -98,3 +97,5 @@ tests/test-fleet-sync.sh|fleet sync focused suite|7|heavy
 tests/test-checkpoint-restart.sh|checkpoint restart focused suite|2|heavy
 tests/test-hpc-cpu-routes.sh|bounded CPU route focused suite|2
 tests/test-source-contract.sh|source contract focused suite|5
+tests/test-presentation-tools.sh|presentation tool syntax and entry points|1
+tests/test-tool-manifests.sh|tool and runtime manifest schemas|1

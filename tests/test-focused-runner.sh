@@ -4,7 +4,6 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 PHASE1=$ROOT/tests/test-phase1.sh
 ORCHESTRATOR=$ROOT/tests/test-phase1-orchestrator.sh
-INTEGRATION=$ROOT/tests/test-phase1-integration.sh
 SHELLCHECK=$ROOT/tests/test-shellcheck.sh
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-focused-runner-test.XXXXXX")
@@ -26,8 +25,6 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
 grep -F 'exec "$ROOT/tests/test-phase1-orchestrator.sh"' "$PHASE1" >/dev/null ||
     fail 'phase-1 does not delegate final orchestration'
-grep -F 'HARNESS_PHASE1_COMPONENT=integration exec' "$INTEGRATION" >/dev/null ||
-    fail 'phase-1 integration wrapper does not select its bounded component'
 grep -F 'tools/run-focused-tests.py' "$ORCHESTRATOR" >/dev/null &&
     grep -F -- '--timings-file "$TIMINGS"' "$ORCHESTRATOR" >/dev/null &&
     grep -F -- '--manifest "$ROOT/tests/focused-suites.tsv"' \
@@ -35,8 +32,7 @@ grep -F 'tools/run-focused-tests.py' "$ORCHESTRATOR" >/dev/null &&
     fail 'phase-1 orchestrator does not retain one attributed runner'
 grep -F 'shellcheck --severity=warning' "$SHELLCHECK" >/dev/null ||
     fail 'phase-1 ShellCheck gate is not independently runnable'
-for suite in tests/test-phase1-integration.sh tests/test-shellcheck.sh \
-    tests/test-guarded-delete.sh; do
+for suite in tests/test-shellcheck.sh tests/test-guarded-delete.sh; do
     grep -F "$suite|" "$ROOT/tests/focused-suites.tsv" >/dev/null ||
         fail "phase-1 component is outside the complete manifest: $suite"
 done
@@ -51,18 +47,17 @@ set -eu
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 name=${0##*/}
 : >"$root/$name.started"
-other=one.sh
-[ "$name" = one.sh ] && other=two.sh
-attempt=0
-while [ ! -f "$root/$other.started" ]; do
-    attempt=$((attempt + 1))
-    [ "$attempt" -lt 100 ] || exit 9
-    sleep 0.02
-done
+if [ "$name" = one.sh ]; then
+    IFS= read -r signal <"$root/parallel.gate"
+    [ "$signal" = ready ]
+else
+    printf '%s\n' ready >"$root/parallel.gate"
+fi
 printf 'parallel=%s\n' "$name"
 EOF
     chmod 755 "$fake/tests/$name.sh"
 done
+mkfifo "$fake/parallel.gate"
 printf '%s\n' 'tests/one.sh|one' 'tests/two.sh|two' >"$fake/pass.tsv"
 python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/pass-logs" --jobs 2 \
@@ -143,6 +138,7 @@ grep -F 'focused-tests: suite is outside the manifest: tests/missing.sh' \
 
 PYTHONDONTWRITEBYTECODE=1 python3 - "$ROOT/tools/run-focused-tests.py" <<'PY'
 import importlib.util
+import os
 import pathlib
 import sys
 
@@ -166,6 +162,18 @@ assert module.resolve_heavy_jobs("auto", 4, "Darwin") == 2
 assert module.resolve_heavy_jobs("auto", 7, "Darwin") == 3
 assert module.resolve_heavy_jobs("auto", 8, "Darwin") == 4
 assert module.resolve_heavy_jobs("auto", 4, "Linux") == 4
+original_count = os.environ.get("GIT_CONFIG_COUNT")
+try:
+    os.environ["GIT_CONFIG_COUNT"] = "1"
+    configured = module.test_environment()
+    assert configured["GIT_CONFIG_COUNT"] == "2"
+    assert configured["GIT_CONFIG_KEY_1"] == "maintenance.auto"
+    assert configured["GIT_CONFIG_VALUE_1"] == "false"
+finally:
+    if original_count is None:
+        os.environ.pop("GIT_CONFIG_COUNT", None)
+    else:
+        os.environ["GIT_CONFIG_COUNT"] = original_count
 PY
 python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/auto-logs" --jobs auto \
@@ -199,12 +207,8 @@ cat >"$fake/tests/fail-fast-fail.sh" <<'EOF'
 set -eu
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 : >"$root/fail-fast-fail.started"
-attempt=0
-while [ ! -f "$root/fail-fast-slow.started" ]; do
-    attempt=$((attempt + 1))
-    [ "$attempt" -lt 100 ] || exit 8
-    sleep 0.02
-done
+IFS= read -r signal <"$root/fail-fast-ready.gate"
+[ "$signal" = ready ]
 printf '%s\n' 'intentional fail-fast failure'
 exit 7
 EOF
@@ -215,7 +219,8 @@ root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 cleanup() { : >"$root/fail-fast-slow.cleaned"; }
 trap cleanup EXIT HUP INT TERM
 : >"$root/fail-fast-slow.started"
-sleep 30
+printf '%s\n' ready >"$root/fail-fast-ready.gate"
+IFS= read -r _signal <"$root/fail-fast-hold.gate"
 EOF
 cat >"$fake/tests/fail-fast-never.sh" <<'EOF'
 #!/bin/sh
@@ -223,6 +228,7 @@ root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 : >"$root/fail-fast-never.started"
 EOF
 chmod 755 "$fake/tests/fail-fast-"*.sh
+mkfifo "$fake/fail-fast-ready.gate" "$fake/fail-fast-hold.gate"
 printf '%s\n' \
     'tests/fail-fast-fail.sh|fail fast|9' \
     'tests/fail-fast-slow.sh|slow cleanup|8' \
@@ -279,19 +285,29 @@ lock=$root/heavy.lock
 mkdir "$lock" || exit 12
 cleanup() { rmdir "$lock"; }
 trap cleanup EXIT HUP INT TERM
-sleep 0.2
+if [ "${0##*/}" = heavy-one.sh ]; then
+    IFS= read -r signal <"$root/heavy.gate"
+    [ "$signal" = ready ]
+fi
 EOF
     chmod 755 "$fake/tests/$name.sh"
 done
 cat >"$fake/tests/heavy-light.sh" <<'EOF'
 #!/bin/sh
-sleep 0.05
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+printf '%s\n' ready >"$root/heavy.gate"
 EOF
-chmod 755 "$fake/tests/heavy-light.sh"
+cat >"$fake/tests/linux-only.sh" <<'EOF'
+#!/bin/sh
+exit 9
+EOF
+chmod 755 "$fake/tests/heavy-light.sh" "$fake/tests/linux-only.sh"
+mkfifo "$fake/heavy.gate"
 printf '%s\n' \
     'tests/heavy-one.sh|heavy one|3|heavy' \
     'tests/heavy-two.sh|heavy two|2|heavy' \
-    'tests/heavy-light.sh|light|1|light' >"$fake/heavy.tsv"
+    'tests/heavy-light.sh|light|1|light' \
+    'tests/linux-only.sh|not on Darwin|1|light|Linux' >"$fake/heavy.tsv"
 python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/heavy.tsv" --log-dir "$fake/heavy-logs" --jobs 3 \
     --platform Darwin --heavy-jobs 1 \
@@ -307,6 +323,7 @@ receipt = json.loads(pathlib.Path(sys.argv[1]).read_text())
 assert receipt["platform"] == "Darwin"
 assert receipt["heavy_jobs"] == 1
 assert [row["resource"] for row in receipt["results"]] == ["heavy", "heavy", "light"]
+assert receipt["not_applicable"] == ["tests/linux-only.sh"]
 PY
 
 if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \

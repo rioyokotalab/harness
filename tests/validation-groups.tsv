@@ -1,7 +1,8 @@
 # group|label|focused-suite regex (each focused suite must match exactly one)
 validation-core|validation, policy, and repository contracts|^tests/test-(focused-runner|validation-router|harness-ledgers|agent-policy-routing|context-routing-benchmark|skill-context-budgets|skill-context-gates|skill-catalog-budget|github-rulesets|actions-sustainability|repository-independence|public-repo-audit)\.sh$
 portable-shell|portable shell and source contracts|^tests/test-(startup-normalize|bash-startup-unify|shellcheck|source-contract)\.sh$
-final-integration|complete portable integration transactions|^tests/test-phase1-integration\.sh$
+presentation|presentation build and verification tools|^tests/test-presentation-tools\.sh$
+tool-manifests|tool, runtime, Python, and agent declarations|^tests/test-tool-manifests\.sh$
 fleet-control|fleet routing and node control|^tests/test-(ssh-agent-profile|remote-session|remote-agent-communication|reboot-recovery-skill|fleet-health|t4-hub|connection-monitor|fleet-inventory|agent-config-fleet|fleet-sync|fleet-readiness-audit|onboard-mirrored-node|onboard-external-user|onboard-project-repository)\.sh$
 agent-sessions|agent, tmux, and recovery lifecycle|^tests/test-(tmux-codex-monitor|tmux-claude-monitor|macos-agent-session|projects-pane-layout|codex-recovery-helper|al-session|claude-takeover|claude-handoff|personal-agent|codex-arg0-wrapper|codex-login|codex-targets|codex-resilient|codex-runtime-isolation|codex-thread-recovery|recover-codex-unsafe-tail-skill|fleet-repository-hardening-skill|hardening-audit|onboard-personal-mac-skill|macos-codex-bootstrap)\.sh$
 housekeeping-safety|housekeeping and local safety transactions|^tests/test-(housekeeping|housekeeping-owner-alias|guarded-delete|safety-guards)\.sh$

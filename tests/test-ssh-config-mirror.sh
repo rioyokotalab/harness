@@ -109,17 +109,17 @@ chmod 600 "$local_home/.ssh/config" "$remote_home/.ssh/config"
 cp "$remote_home/.ssh/config" "$TEMP_DIR/original-remote"
 
 agent_socket=$TEMP_DIR/agent.sock
-python3 -c 'import socket,sys,time
+agent_ready=$TEMP_DIR/agent-ready
+mkfifo "$agent_ready"
+python3 -c 'import socket,sys
 s=socket.socket(socket.AF_UNIX)
 s.bind(sys.argv[1])
 s.listen(1)
-time.sleep(300)' "$agent_socket" &
+with open(sys.argv[2], "w") as ready: ready.write("ready\n")
+s.accept()' "$agent_socket" "$agent_ready" &
 socket_pid=$!
-socket_wait=0
-while [ ! -S "$agent_socket" ] && [ "$socket_wait" -lt 50 ]; do
-    socket_wait=$((socket_wait + 1))
-    sleep 0.02
-done
+IFS= read -r socket_state <"$agent_ready"
+[ "$socket_state" = ready ] || fail "synthetic agent readiness"
 [ -S "$agent_socket" ] || fail "synthetic agent socket"
 
 cat >"$fake_bin/ssh" <<'EOF'
