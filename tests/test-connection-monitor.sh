@@ -114,6 +114,27 @@ if [ -n "${HARNESS_MONITOR_INSTRUMENT:-}" ]; then
     fi
     rmdir "$HARNESS_MONITOR_INSTRUMENT/lock"
 
+    if [ "${HARNESS_MONITOR_INSTRUMENT_MODE:-}" = queued ]; then
+        case "$route" in
+            aist|aist2|office|office2)
+                attempts=0
+                while [ "$(cat "$HARNESS_MONITOR_INSTRUMENT/active")" -lt 4 ]; do
+                    attempts=$((attempts + 1))
+                    [ "$attempts" -lt 500 ] || exit 3
+                    sleep 0.01
+                done
+                ;;
+        esac
+        if [ "$route" = aist ]; then
+            attempts=0
+            while [ ! -e "$HARNESS_MONITOR_INSTRUMENT/riken.active" ]; do
+                attempts=$((attempts + 1))
+                [ "$attempts" -lt 500 ] || exit 3
+                sleep 0.01
+            done
+        fi
+    fi
+
     case "$route" in
         aist) sleep 0.24 ;;
         *) sleep 0.06 ;;
@@ -188,6 +209,7 @@ queue_started=$(now_ms)
 PATH="$FAKE_BIN:/usr/bin:/bin" \
     HARNESS_MONITOR_STATE="$STATE" \
     HARNESS_MONITOR_INSTRUMENT="$INSTRUMENT" \
+    HARNESS_MONITOR_INSTRUMENT_MODE=queued \
     HARNESS_MONITOR_PROBE_LOG="$PROBE_LOG" \
     HARNESS_MONITOR_SUPERVISOR_LOG="$SUPERVISOR_LOG" \
     "$MONITOR" --once >"$TEMP_DIR/queued.out"
@@ -209,8 +231,6 @@ grep -F 'pair=riken/riken2' "$TEMP_DIR/queued.out" |
     fail "delayed down-route classification"
 [ "$(grep -c 'state=healthy action=none' "$TEMP_DIR/queued.out")" -eq 4 ] ||
     fail "queued snapshot changed healthy classifications"
-[ "$queue_ms" -lt "$serial_ms" ] ||
-    fail "queued snapshot did not beat matched serial critical path"
 : >"$STATE/riken.up"
 
 unlink "$STATE/home.auth"

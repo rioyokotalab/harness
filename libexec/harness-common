@@ -64,11 +64,15 @@ managed_tree_sha256() (
     case $(uname -s) in
         Darwin)
             if [ "$mts_kind" = python ]; then
-                COPYFILE_DISABLE=1 tar --exclude='*/__pycache__' \
+                COPYFILE_DISABLE=1 tar --format=mtree \
+                    --options='!all,type,mode,link,size,sha256' \
+                    --exclude='*/__pycache__' \
                     --exclude='*.pyc' --exclude='*.pyo' \
                     -cf "$mts_archive" -C "$mts_tree" .
             else
-                COPYFILE_DISABLE=1 tar -cf "$mts_archive" -C "$mts_tree" .
+                COPYFILE_DISABLE=1 tar --format=mtree \
+                    --options='!all,type,mode,link,size,sha256' \
+                    -cf "$mts_archive" -C "$mts_tree" .
             fi
             ;;
         *)
