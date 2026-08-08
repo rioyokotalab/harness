@@ -57,7 +57,7 @@ a deterministic clock or event.
 - Final validation ignores the changed-path decision and always selects
   `tests/test-phase1.sh`. Discovery expands every selected owner to its entire
   group. Thus both stages deliberately admit unrelated work.
-- Hosted CI still schedules an unconditional weekly full suite. That is not an
+- Hosted CI scheduled an unconditional weekly full suite. That was not an
   explicit request and conflicts with the frozen objective. Pull requests use
   exact final selection; `workflow_dispatch` is the only full-suite hosted
   entry because choosing that action is itself explicit.
@@ -500,3 +500,13 @@ A final all-tracked-path simulation classified all 1,290 current paths with
 zero gaps. Evaluation corpus inputs now select evaluation, skill interface YAML
 selects the existing catalog owner, and presentation artifacts plus ignore
 metadata are explicitly no-test inputs rather than accidental unknowns.
+
+## Closing efficiency evidence
+
+The final one-path simulation covered 725 owned paths: mean 1.20 owners,
+median one, mean 4.49 declared seconds, median four, and maximum nineteen for
+two related split owners. The final branch-wide Darwin context ran 83 owners in
+45.730 seconds; protected Linux ran the current head successfully. Including
+failed inventories, repair owners, superseded hosted gates, and closing checks,
+validation consumed conservatively less than 900 seconds of the 15,660-second
+nightly (5.75%). No full suite ran.

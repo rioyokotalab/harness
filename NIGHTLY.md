@@ -40,7 +40,7 @@ credential, private-source, compute, or destructive authority by itself.
 
 | Task | State | Priority | Record |
 | --- | --- | ---: | --- |
-| Nit-002 | active | 20 | `docs/nightly/tasks/Nit-002.md` |
+| Nit-002 | blocked | 20 | `docs/nightly/tasks/Nit-002.md` |
 | Nit-001 | ready | 10 | `docs/nightly/tasks/Nit-001.md` |
 
 ## Completed lookup
