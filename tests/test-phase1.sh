@@ -1597,7 +1597,8 @@ grep 'REPLACE file=.*\.vimrc reason=owner-approved-canonical-version' \
     "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "canonical Vim plan"
 grep -F 'SSH_CONFIG_LAYOUT mode=plan host=local state=migrate' \
     "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "SSH layout plan"
-HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$dotfile_home" \
+HARNESS_TEST_ALLOW_NONMAIN=1 HARNESS_TESTING=1 \
+    HARNESS_TEST_FACTS_FILE="$control_facts" HOME="$dotfile_home" \
     "$test_repo/bin/harness" dotfiles --host local --apply \
     >"$TEMP_DIR/dotfile-apply.out"
 dotfile_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
