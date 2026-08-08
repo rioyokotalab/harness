@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-428.
+Next free ID: Har-429.
 
 ## Resume contract
 
@@ -14,6 +14,12 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Active
+
+### Har-428 — Roll out Har-427 to Office and Home
+
+**Phase:** Office and Home independently fast-forward their clean managed
+Harness checkouts to protected main and run the complete macOS-compatible
+phase-one suite. **Record:** `docs/tasks/Har-428.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
 
