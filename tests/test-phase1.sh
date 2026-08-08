@@ -135,6 +135,7 @@ for script in \
     "$ROOT/tests/test-bash-startup-unify.sh" \
     "$ROOT/tests/test-focused-runner.sh" \
     "$ROOT/tests/darwin-preflight.sh" \
+    "$ROOT/tests/test-housekeeping-interrupt.sh" \
     "$ROOT/tests/test-codex-runtime-isolation.sh" \
     "$ROOT/tests/test-personal-agent.sh" \
     "$ROOT/tests/test-local-mpi-profile.sh" \
