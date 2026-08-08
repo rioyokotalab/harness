@@ -1664,6 +1664,7 @@ printf '%s\n' \
     '[ "$1" = --fsys-tarfile ]' \
     'cat "$2"' >"$fake_bin/dpkg-deb"
 chmod 755 "$fake_bin/dpkg-deb"
+ln -s "$(command -v sha256sum)" "$fake_bin/sha256sum"
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" FIXTURE_ARCHIVE="$zip_fixture_archive" \
     HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name rclone --apply \
