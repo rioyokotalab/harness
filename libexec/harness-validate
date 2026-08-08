@@ -871,7 +871,9 @@ def run_discovery(
     env.pop("HARNESS_ROOT", None)
     env["HARNESS_CHANGED_PATHS"] = "\n".join(decision["paths"])
     env["HARNESS_VALIDATION_BASE"] = base
-    env["HARNESS_VALIDATION_FULL"] = "0"
+    env["HARNESS_VALIDATION_FULL"] = (
+        "1" if decision.get("full_requested", False) else "0"
+    )
     result = subprocess.run(
         command,
         cwd=root,

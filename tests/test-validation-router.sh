@@ -680,7 +680,13 @@ with tempfile.TemporaryDirectory() as raw_discovery:
     )
     for name, body in (
         ("fail", "#!/bin/sh\nprintf 'known failure\\n'\nexit 7\n"),
-        ("pass", "#!/bin/sh\nprintf 'later pass\\n'\n"),
+        (
+            "pass",
+            "#!/bin/sh\n"
+            "printf 'later pass\\n'\n"
+            "[ -z \"${HARNESS_FULL_CAPTURE:-}\" ] || "
+            "printf '%s\\n' \"$HARNESS_VALIDATION_FULL\" >\"$HARNESS_FULL_CAPTURE\"\n",
+        ),
     ):
         path = discovery_root / f"tests/{name}.sh"
         path.write_text(body, encoding="utf-8")
@@ -707,6 +713,9 @@ with tempfile.TemporaryDirectory() as raw_discovery:
     module["run_discovery"].__globals__["run_validation"] = (
         lambda *_args: [{"path": "diff", "seconds": 0.0, "status": 0}]
     )
+    full_capture = discovery_root / "full.env"
+    original_capture = os.environ.get("HARNESS_FULL_CAPTURE")
+    os.environ["HARNESS_FULL_CAPTURE"] = str(full_capture)
     try:
         results, inventory_path = module["run_discovery"](
             discovery_root,
@@ -737,7 +746,25 @@ with tempfile.TemporaryDirectory() as raw_discovery:
             discovery_root,
             discovery_focused,
         )
+        module["run_discovery"](
+            discovery_root,
+            "HEAD^",
+            {
+                "full_requested": True,
+                "groups": [],
+                "paths": ["fixture"],
+                "stage": "final",
+                "suites": ["tests/pass.sh"],
+            },
+            "1",
+            discovery_root,
+            discovery_focused,
+        )
     finally:
+        if original_capture is None:
+            os.environ.pop("HARNESS_FULL_CAPTURE", None)
+        else:
+            os.environ["HARNESS_FULL_CAPTURE"] = original_capture
         module["run_discovery"].__globals__["run_validation"] = (
             original_run_validation
         )
@@ -749,6 +776,7 @@ with tempfile.TemporaryDirectory() as raw_discovery:
     assert structural["failure_suites"] == []
     assert structural["not_run"] == []
     assert final_inventory["schema"] == "harness-validation-final-v1"
+    assert full_capture.read_text(encoding="utf-8") == "1\n"
     assert inventory["schema"] == "harness-validation-discovery-v1"
     assert inventory["status"] == "fail"
     assert inventory["failure_suites"] == ["tests/fail.sh"]

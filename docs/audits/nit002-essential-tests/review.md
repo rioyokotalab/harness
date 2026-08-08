@@ -22,7 +22,7 @@ This keeps the wait-removal pass reviewable without
 mistaking policy prose containing “wait” for an executed command.
 `matched-darwin-timings.tsv` records the serial, one-job final pass for every
 supplied Home over-ten candidate and each owner introduced by decomposition.
-The 116 manifest entry scripts currently contain 17,700 lines. The audit also
+The 116 manifest entry scripts currently contain 17,728 lines. The audit also
 descends into thirteen directly discovered Python test modules (3,373 lines)
 and the four intentional non-manifest shell scripts; wrapper brevity is never
 treated as evidence that the underlying test is small or wait-free.
@@ -177,6 +177,10 @@ wrong-platform case assumed that Linux-only Terminfo was always inapplicable.
 The fixture now assigns the opposite of the current platform explicitly, so it
 exercises the same rejection on Linux and Darwin. The current protected Linux
 gate then passed all 87 applicable owners in 17.164 seconds.
+A final direct validator trace found that explicit full mode selected its full
+dispatcher but passed the incremental flag to nested checks. The environment
+now preserves `full_requested`, and the router owner proves the nested value is
+one; this repair required no full-suite execution.
 
 The literal `wait` audit separately classifies child-process joins. Checkpoint
 race workers and simultaneous message receivers, for
@@ -453,7 +457,7 @@ selectable entries. Nine redundant owners left; separately selectable Mac,
 onboarding, guarded-delete, Python, HPC, host-declaration, and core-command
 contracts replaced their monoliths or ownership gaps. The increased row count
 is decomposition, not broader admission: a changed path selects only its exact
-owner. Source volume fell from 25,714 to 17,700 lines and declared serial cost
+owner. Source volume fell from 25,714 to 17,728 lines and declared serial cost
 from 1,529 to 498 seconds. No entry is estimated above ten seconds,
 no suite is reachable only through a group/full expansion, and no source-like
 path is ownerless. Static timing review now finds zero elapsed sleeps, polling
