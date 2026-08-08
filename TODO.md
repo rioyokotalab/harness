@@ -15,12 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Active
 
-### Har-424 — Establish the Local-outage failover environment
-
-**Phase:** validating the existing passwordless t4-to-Home login2 route after
-the material-setup cutoff; no new forwards may be added. **Record:**
-`docs/tasks/Har-424.md`.
-
 ### Har-423 — Reconcile five repositories across the fleet
 
 **Phase:** inventory and guarded housekeeping; then synchronize clean managed
