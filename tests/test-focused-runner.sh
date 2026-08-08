@@ -3,6 +3,8 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 PHASE1=$ROOT/tests/test-phase1.sh
+PREFLIGHT=$ROOT/tests/darwin-preflight.sh
+PREFLIGHT_MANIFEST=$ROOT/tests/darwin-preflight.tsv
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-focused-runner-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
@@ -38,6 +40,20 @@ grep -F '[ "$focused_status" -eq 0 ] || fail "focused suites"' \
     "$PHASE1" >/dev/null || fail "phase-1 loses focused-suite failure"
 grep -F '[ "$shellcheck_status" -eq 0 ] || fail "ShellCheck warning/error gate"' \
     "$PHASE1" >/dev/null || fail "phase-1 loses ShellCheck failure"
+grep -F 'kill -TERM "$focused_pid"' "$PHASE1" >/dev/null ||
+    fail 'phase-1 failure does not stop the focused pool'
+grep -F -- '--timings-file "$focused_timings"' "$PHASE1" >/dev/null ||
+    fail 'phase-1 omits the focused timing receipt'
+grep -F 'full tests/test-phase1.sh still required' "$PREFLIGHT" >/dev/null ||
+    fail 'Darwin preflight weakens the final gate contract'
+grep -F 'tests/test-housekeeping.sh|' "$PREFLIGHT_MANIFEST" >/dev/null &&
+    grep -F 'tests/test-evaluation.sh|' "$PREFLIGHT_MANIFEST" >/dev/null ||
+    fail 'Darwin preflight omits interrupt lifecycle coverage'
+while IFS='|' read -r suite _rest; do
+    case $suite in ''|'#'*) continue ;; esac
+    grep -F "$suite|" "$ROOT/tests/focused-suites.tsv" >/dev/null ||
+        fail "Darwin preflight suite is outside the full gate: $suite"
+done <"$PREFLIGHT_MANIFEST"
 
 python3 - "$PHASE1" <<'PY'
 import pathlib
@@ -80,6 +96,7 @@ done
 printf '%s\n' 'tests/one.sh|one' 'tests/two.sh|two' >"$fake/pass.tsv"
 python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/pass-logs" --jobs 2 \
+    --timings-file "$TEMP_DIR/pass-timings.json" \
     >"$TEMP_DIR/pass.out" 2>"$TEMP_DIR/pass.err" || fail 'parallel pass'
 [ ! -s "$TEMP_DIR/pass.err" ] || fail 'parallel pass emitted stderr'
 if grep -q '^PASS suite=' "$TEMP_DIR/pass.out"; then
@@ -87,6 +104,20 @@ if grep -q '^PASS suite=' "$TEMP_DIR/pass.out"; then
 fi
 grep -E '^focused-tests: status=pass suites=2 seconds=[0-9]+\.[0-9]{3}$' \
     "$TEMP_DIR/pass.out" >/dev/null || fail 'compact pass summary'
+python3 - "$TEMP_DIR/pass-timings.json" <<'PY'
+import json
+import pathlib
+import sys
+
+receipt = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert receipt["schema"] == "harness-focused-timings-v1"
+assert receipt["platform"] in {"Darwin", "Linux"}
+assert receipt["status"] == "pass"
+assert receipt["suites_total"] == 2
+assert len(receipt["results"]) == 2
+assert receipt["not_run"] == []
+assert all(row["state"] == "pass" and row["seconds"] >= 0 for row in receipt["results"])
+PY
 
 for name in early priority late; do
     cat >"$fake/tests/$name.sh" <<'EOF'
@@ -162,6 +193,121 @@ grep -F 'FAIL: expected label; log=' "$TEMP_DIR/fail.err" >/dev/null ||
 grep -F 'intentional focused failure' "$TEMP_DIR/fail.err" >/dev/null ||
     fail 'failure log attribution'
 
+cat >"$fake/tests/fail-fast-fail.sh" <<'EOF'
+#!/bin/sh
+set -eu
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+: >"$root/fail-fast-fail.started"
+attempt=0
+while [ ! -f "$root/fail-fast-slow.started" ]; do
+    attempt=$((attempt + 1))
+    [ "$attempt" -lt 100 ] || exit 8
+    sleep 0.02
+done
+printf '%s\n' 'intentional fail-fast failure'
+exit 7
+EOF
+cat >"$fake/tests/fail-fast-slow.sh" <<'EOF'
+#!/bin/sh
+set -eu
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+cleanup() { : >"$root/fail-fast-slow.cleaned"; }
+trap cleanup EXIT HUP INT TERM
+: >"$root/fail-fast-slow.started"
+sleep 30
+EOF
+cat >"$fake/tests/fail-fast-never.sh" <<'EOF'
+#!/bin/sh
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+: >"$root/fail-fast-never.started"
+EOF
+chmod 755 "$fake/tests/fail-fast-"*.sh
+printf '%s\n' \
+    'tests/fail-fast-fail.sh|fail fast|9' \
+    'tests/fail-fast-slow.sh|slow cleanup|8' \
+    'tests/fail-fast-never.sh|must not start|1' >"$fake/fail-fast.tsv"
+if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
+    --manifest "$fake/fail-fast.tsv" --log-dir "$fake/fail-fast-logs" \
+    --jobs 2 --timings-file "$TEMP_DIR/fail-fast-timings.json" \
+    >"$TEMP_DIR/fail-fast.out" 2>"$TEMP_DIR/fail-fast.err"; then
+    fail 'fail-fast runner accepted failure'
+fi
+[ -f "$fake/fail-fast-slow.cleaned" ] || fail 'fail-fast skipped suite cleanup'
+[ ! -e "$fake/fail-fast-never.started" ] || fail 'fail-fast admitted later suite'
+grep -E '^focused-tests: status=fail suites=2/3 cancelled=1 not_run=1 seconds=' \
+    "$TEMP_DIR/fail-fast.out" >/dev/null || fail 'fail-fast summary changed'
+python3 - "$TEMP_DIR/fail-fast-timings.json" <<'PY'
+import json
+import pathlib
+import sys
+
+receipt = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert receipt["mode"] == "fail-fast"
+assert receipt["status"] == "fail"
+assert [row["state"] for row in receipt["results"]] == ["fail", "cancelled"]
+assert receipt["not_run"] == ["tests/fail-fast-never.sh"]
+PY
+
+cat >"$fake/tests/keep-fail.sh" <<'EOF'
+#!/bin/sh
+exit 7
+EOF
+cat >"$fake/tests/keep-pass.sh" <<'EOF'
+#!/bin/sh
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+: >"$root/keep-pass.started"
+EOF
+chmod 755 "$fake/tests/keep-"*.sh
+printf '%s\n' 'tests/keep-fail.sh|keep failure|2' \
+    'tests/keep-pass.sh|keep pass|1' >"$fake/keep.tsv"
+if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
+    --manifest "$fake/keep.tsv" --log-dir "$fake/keep-logs" --jobs 1 \
+    --keep-going >"$TEMP_DIR/keep.out" 2>"$TEMP_DIR/keep.err"; then
+    fail 'keep-going runner accepted failure'
+fi
+[ -f "$fake/keep-pass.started" ] || fail 'keep-going stopped later admission'
+grep -E '^focused-tests: status=fail suites=2/2 cancelled=0 not_run=0 seconds=' \
+    "$TEMP_DIR/keep.out" >/dev/null || fail 'keep-going summary changed'
+
+for name in heavy-one heavy-two; do
+    cat >"$fake/tests/$name.sh" <<'EOF'
+#!/bin/sh
+set -eu
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+lock=$root/heavy.lock
+mkdir "$lock" || exit 12
+cleanup() { rmdir "$lock"; }
+trap cleanup EXIT HUP INT TERM
+sleep 0.2
+EOF
+    chmod 755 "$fake/tests/$name.sh"
+done
+cat >"$fake/tests/heavy-light.sh" <<'EOF'
+#!/bin/sh
+sleep 0.05
+EOF
+chmod 755 "$fake/tests/heavy-light.sh"
+printf '%s\n' \
+    'tests/heavy-one.sh|heavy one|3|heavy' \
+    'tests/heavy-two.sh|heavy two|2|heavy' \
+    'tests/heavy-light.sh|light|1|light' >"$fake/heavy.tsv"
+python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
+    --manifest "$fake/heavy.tsv" --log-dir "$fake/heavy-logs" --jobs 3 \
+    --platform Darwin --heavy-jobs 1 \
+    --timings-file "$TEMP_DIR/heavy-timings.json" \
+    >"$TEMP_DIR/heavy.out" 2>"$TEMP_DIR/heavy.err" ||
+    fail 'Darwin heavy-resource admission'
+python3 - "$TEMP_DIR/heavy-timings.json" <<'PY'
+import json
+import pathlib
+import sys
+
+receipt = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert receipt["platform"] == "Darwin"
+assert receipt["heavy_jobs"] == 1
+assert [row["resource"] for row in receipt["results"]] == ["heavy", "heavy", "light"]
+PY
+
 if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/invalid-logs" --jobs 0 \
     >"$TEMP_DIR/invalid.out" 2>&1; then
@@ -178,6 +324,17 @@ fi
 grep -F 'focused-tests: invalid manifest line 1' \
     "$TEMP_DIR/invalid-priority.out" >/dev/null ||
     fail 'missing invalid admission estimate diagnostic'
+
+printf '%s\n' 'tests/one.sh|one|1|unbounded' >"$fake/invalid-resource.tsv"
+if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
+    --manifest "$fake/invalid-resource.tsv" \
+    --log-dir "$fake/invalid-resource-logs" --jobs 1 \
+    >"$TEMP_DIR/invalid-resource.out" 2>&1; then
+    fail 'runner accepted an invalid resource class'
+fi
+grep -F 'focused-tests: invalid manifest line 1' \
+    "$TEMP_DIR/invalid-resource.out" >/dev/null ||
+    fail 'missing invalid resource diagnostic'
 
 if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/pass-logs" --jobs 2 \

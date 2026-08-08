@@ -1,15 +1,50 @@
 #!/usr/bin/env python3
-"""Run isolated focused suites with bounded concurrency and attributable logs."""
+"""Run isolated focused suites with bounded, cleanup-aware concurrency."""
 
 from __future__ import annotations
 
 import argparse
-import concurrent.futures
+import json
 import os
 from pathlib import Path
+import platform
+import re
+import signal
 import subprocess
 import sys
 import time
+from typing import Any, NamedTuple
+
+
+class Suite(NamedTuple):
+    index: int
+    relative: str
+    path: Path
+    label: str
+    estimate: int
+    resource: str
+
+
+class Running(NamedTuple):
+    suite: Suite
+    process: Any
+    stream: Any
+    log: Path
+    started: float
+
+
+class Result(NamedTuple):
+    suite: Suite
+    status: int
+    elapsed: float
+    log: Path
+    state: str
+
+
+class RunnerSignal(Exception):
+    def __init__(self, signum: int):
+        super().__init__(signum)
+        self.signum = signum
 
 
 def parse_args() -> argparse.Namespace:
@@ -19,6 +54,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log-dir", required=True)
     parser.add_argument("--jobs", required=True)
     parser.add_argument("--reserve-cpus", type=int, default=0)
+    parser.add_argument("--heavy-jobs", default="auto")
+    parser.add_argument("--platform", default=platform.system())
+    parser.add_argument("--timings-file")
+    parser.add_argument("--keep-going", action="store_true")
     parser.add_argument("--verbose", action="store_true")
     return parser.parse_args()
 
@@ -50,57 +89,210 @@ def resolve_jobs(raw: str, reserve_cpus: int = 0) -> tuple[int, int | None]:
         return 0, None
 
 
-def load_manifest(root: Path, manifest: Path) -> list[tuple[int, Path, str, int]]:
-    suites: list[tuple[int, Path, str, int]] = []
+def resolve_heavy_jobs(raw: str, jobs: int, system: str) -> int:
+    if system != "Darwin":
+        return jobs
+    if raw == "auto":
+        return min(2, jobs)
+    try:
+        return int(raw)
+    except ValueError:
+        return 0
+
+
+def load_manifest(root: Path, manifest: Path) -> list[Suite]:
+    suites: list[Suite] = []
     for number, raw in enumerate(manifest.read_text(encoding="utf-8").splitlines(), 1):
         if not raw or raw.startswith("#"):
             continue
         fields = raw.split("|")
-        if len(fields) not in (2, 3) or not fields[0] or not fields[1]:
+        if len(fields) not in (2, 3, 4) or not fields[0] or not fields[1]:
             raise ValueError(f"invalid manifest line {number}")
         estimate = 0
-        if len(fields) == 3:
+        if len(fields) >= 3 and fields[2]:
             try:
                 estimate = int(fields[2])
             except ValueError as error:
                 raise ValueError(f"invalid manifest line {number}") from error
             if estimate < 1 or estimate > 3600:
                 raise ValueError(f"invalid manifest line {number}")
+        resource = fields[3] if len(fields) == 4 else "light"
+        if resource not in {"light", "heavy"}:
+            raise ValueError(f"invalid manifest line {number}")
         path = root / fields[0]
         if not path.is_file() or path.is_symlink():
             raise ValueError(f"unsafe or absent suite: {fields[0]}")
-        suites.append((len(suites) + 1, path, fields[1], estimate))
+        suites.append(
+            Suite(len(suites) + 1, fields[0], path, fields[1], estimate, resource)
+        )
     if not suites:
         raise ValueError("empty focused-suite manifest")
     return suites
 
 
-def run_one(index: int, path: Path, label: str, root: Path, log_dir: Path) -> tuple:
-    log = log_dir / f"{index:03d}-{path.stem}.log"
-    started = time.monotonic()
-    with log.open("wb") as stream:
-        result = subprocess.run(
-            [str(path)], cwd=root, stdin=subprocess.DEVNULL,
-            stdout=stream, stderr=subprocess.STDOUT, check=False,
+def prepare_timings_file(raw: str | None) -> Path | None:
+    if raw is None:
+        return None
+    target = Path(raw).absolute()
+    if target.exists() or target.is_symlink():
+        raise ValueError(f"--timings-file already exists: {target}")
+    try:
+        parent = target.parent.resolve(strict=True)
+    except FileNotFoundError as error:
+        raise ValueError(f"--timings-file parent is absent: {target.parent}") from error
+    if not parent.is_dir() or parent.is_symlink():
+        raise ValueError(f"--timings-file parent is unsafe: {target.parent}")
+    return parent / target.name
+
+
+def start_one(suite: Suite, root: Path, log_dir: Path) -> Running:
+    log = log_dir / f"{suite.index:03d}-{suite.path.stem}.log"
+    stream = log.open("xb")
+    try:
+        process = subprocess.Popen(
+            [str(suite.path)],
+            cwd=root,
+            stdin=subprocess.DEVNULL,
+            stdout=stream,
+            stderr=subprocess.STDOUT,
             env=os.environ.copy(),
+            start_new_session=True,
         )
-    return index, path, label, result.returncode, time.monotonic() - started, log
+    except BaseException:
+        stream.close()
+        raise
+    return Running(suite, process, stream, log, time.monotonic())
+
+
+def finish_one(running: Running, cancelled: bool) -> Result:
+    status = running.process.wait()
+    running.stream.flush()
+    os.fsync(running.stream.fileno())
+    running.stream.close()
+    state = "cancelled" if cancelled else ("pass" if status == 0 else "fail")
+    return Result(
+        running.suite,
+        status,
+        time.monotonic() - running.started,
+        running.log,
+        state,
+    )
+
+
+def signal_groups(running: dict[int, Running], signum: int) -> None:
+    for item in running.values():
+        if item.process.poll() is not None:
+            continue
+        try:
+            os.killpg(item.process.pid, signum)
+        except ProcessLookupError:
+            pass
+
+
+def stop_running(running: dict[int, Running], grace: float = 10.0) -> None:
+    signal_groups(running, signal.SIGTERM)
+    deadline = time.monotonic() + grace
+    while any(item.process.poll() is None for item in running.values()):
+        if time.monotonic() >= deadline:
+            signal_groups(running, signal.SIGKILL)
+            break
+        time.sleep(0.02)
+    for item in running.values():
+        try:
+            item.process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(item.process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            item.process.wait(timeout=5)
+
+
+def eligible_position(
+    pending: list[Suite], running: dict[int, Running], heavy_jobs: int
+) -> int | None:
+    heavy_running = sum(item.suite.resource == "heavy" for item in running.values())
+    for position, suite in enumerate(pending):
+        if suite.resource != "heavy" or heavy_running < heavy_jobs:
+            return position
+    return None
+
+
+def write_timings(
+    target: Path,
+    *,
+    system: str,
+    jobs: int,
+    heavy_jobs: int,
+    keep_going: bool,
+    status: str,
+    elapsed: float,
+    suites: list[Suite],
+    results: list[Result],
+) -> None:
+    completed = {result.suite.index for result in results}
+    payload = {
+        "schema": "harness-focused-timings-v1",
+        "platform": system,
+        "jobs": jobs,
+        "heavy_jobs": heavy_jobs,
+        "mode": "keep-going" if keep_going else "fail-fast",
+        "status": status,
+        "seconds": round(elapsed, 3),
+        "suites_total": len(suites),
+        "results": [
+            {
+                "suite": result.suite.relative,
+                "resource": result.suite.resource,
+                "estimate_seconds": result.suite.estimate or None,
+                "state": result.state,
+                "exit_code": result.status,
+                "seconds": round(result.elapsed, 3),
+            }
+            for result in sorted(results, key=lambda result: result.suite.index)
+        ],
+        "not_run": [suite.relative for suite in suites if suite.index not in completed],
+    }
+    descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+        json.dump(payload, stream, sort_keys=True, separators=(",", ":"))
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
 
 
 def main() -> int:
     run_started = time.monotonic()
     args = parse_args()
     jobs, visible_cpus = resolve_jobs(args.jobs, args.reserve_cpus)
-    if args.reserve_cpus < 0 or args.reserve_cpus > 15 or jobs < 1 or jobs > 16:
+    if (
+        args.reserve_cpus < 0
+        or args.reserve_cpus > 15
+        or jobs < 1
+        or jobs > 16
+        or not re.fullmatch(r"[A-Za-z0-9_.-]{1,32}", args.platform)
+    ):
         print(
             "focused-tests: --jobs must be auto or an integer between 1 and 16; "
             "--reserve-cpus 0..15 is valid only with auto",
             file=sys.stderr,
         )
         return 2
+    heavy_jobs = resolve_heavy_jobs(args.heavy_jobs, jobs, args.platform)
+    if heavy_jobs < 1 or heavy_jobs > jobs:
+        print(
+            "focused-tests: --heavy-jobs must be auto or an integer between 1 and --jobs",
+            file=sys.stderr,
+        )
+        return 2
     root = Path(args.root).resolve(strict=True)
     manifest = Path(args.manifest).resolve(strict=True)
     log_dir = Path(args.log_dir)
+    try:
+        timings_file = prepare_timings_file(args.timings_file)
+    except ValueError as error:
+        print(f"focused-tests: {error}", file=sys.stderr)
+        return 2
     try:
         log_dir.mkdir(mode=0o700, parents=False, exist_ok=False)
     except FileExistsError:
@@ -117,31 +309,106 @@ def main() -> int:
             f"focused-tests: jobs={jobs} visible_cpus={visible_cpus} mode=auto "
             f"reserve_cpus={args.reserve_cpus}"
         )
+    print(
+        f"focused-tests: platform={args.platform} heavy_jobs={heavy_jobs} "
+        f"mode={'keep-going' if args.keep_going else 'fail-fast'}"
+    )
 
-    results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
-        admission_order = sorted(suites, key=lambda suite: (-suite[3], suite[0]))
-        futures = [
-            executor.submit(run_one, index, path, label, root, log_dir)
-            for index, path, label, _ in admission_order
-        ]
-        for future in concurrent.futures.as_completed(futures):
-            results.append(future.result())
+    admission_order = sorted(suites, key=lambda suite: (-suite.estimate, suite.index))
+    pending = list(admission_order)
+    running: dict[int, Running] = {}
+    results: list[Result] = []
+    cancelled: set[int] = set()
+    failure_seen = False
+    prior_handlers: dict[int, Any] = {}
+
+    def interrupt(signum: int, _frame: Any) -> None:
+        raise RunnerSignal(signum)
+
+    for signum in (signal.SIGHUP, signal.SIGINT, signal.SIGTERM):
+        prior_handlers[signum] = signal.getsignal(signum)
+        signal.signal(signum, interrupt)
+    interrupted = 0
+    try:
+        while pending or running:
+            while pending and len(running) < jobs and (args.keep_going or not failure_seen):
+                position = eligible_position(pending, running, heavy_jobs)
+                if position is None:
+                    break
+                suite = pending.pop(position)
+                running[suite.index] = start_one(suite, root, log_dir)
+            completed = [
+                index for index, item in running.items() if item.process.poll() is not None
+            ]
+            if not completed:
+                if not running:
+                    break
+                time.sleep(0.02)
+                continue
+            for index in sorted(completed):
+                result = finish_one(running.pop(index), index in cancelled)
+                results.append(result)
+                if result.state == "fail" and not failure_seen:
+                    failure_seen = True
+            if failure_seen and not args.keep_going and running and not cancelled:
+                cancelled.update(running)
+                stop_running(running)
+    except RunnerSignal as error:
+        interrupted = error.signum
+        cancelled.update(running)
+        stop_running(running)
+    except BaseException:
+        cancelled.update(running)
+        stop_running(running)
+        for index in sorted(list(running)):
+            results.append(finish_one(running.pop(index), index in cancelled))
+        raise
+    finally:
+        for signum, handler in prior_handlers.items():
+            signal.signal(signum, handler)
+    for index in sorted(list(running)):
+        results.append(finish_one(running.pop(index), index in cancelled))
 
     failed = False
-    for _, path, label, status, elapsed, log in sorted(results):
-        state = "PASS" if status == 0 else "FAIL"
-        if args.verbose or status != 0:
-            print(f"{state} suite={path.name} seconds={elapsed:.3f}")
-        if status != 0:
+    for result in sorted(results, key=lambda item: item.suite.index):
+        if args.verbose or result.state == "fail":
+            print(
+                f"{result.state.upper()} suite={result.suite.path.name} "
+                f"seconds={result.elapsed:.3f}"
+            )
+        if result.state == "fail":
             failed = True
-            print(f"FAIL: {label}; log={log}", file=sys.stderr)
-            sys.stderr.buffer.write(log.read_bytes())
-    state = "fail" if failed else "pass"
-    print(
-        f"focused-tests: status={state} suites={len(results)} "
-        f"seconds={time.monotonic() - run_started:.3f}"
-    )
+            print(f"FAIL: {result.suite.label}; log={result.log}", file=sys.stderr)
+            sys.stderr.buffer.write(result.log.read_bytes())
+    elapsed = time.monotonic() - run_started
+    if timings_file is not None:
+        receipt_status = "interrupted" if interrupted else ("fail" if failed else "pass")
+        write_timings(
+            timings_file,
+            system=args.platform,
+            jobs=jobs,
+            heavy_jobs=heavy_jobs,
+            keep_going=args.keep_going,
+            status=receipt_status,
+            elapsed=elapsed,
+            suites=suites,
+            results=results,
+        )
+        print(f"focused-tests: timings={timings_file} platform={args.platform}")
+    not_run = len(suites) - len(results)
+    state = "interrupted" if interrupted else ("fail" if failed else "pass")
+    if failed or interrupted:
+        print(
+            f"focused-tests: status={state} suites={len(results)}/{len(suites)} "
+            f"cancelled={sum(result.state == 'cancelled' for result in results)} "
+            f"not_run={not_run} seconds={elapsed:.3f}"
+        )
+    else:
+        print(
+            f"focused-tests: status=pass suites={len(results)} seconds={elapsed:.3f}"
+        )
+    if interrupted:
+        return 128 + interrupted
     return 1 if failed else 0
 
 

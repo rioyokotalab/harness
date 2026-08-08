@@ -11,7 +11,7 @@ tests/test-skill-context-budgets.sh|selected skill context budgets
 tests/test-skill-context-gates.sh|selected skill safety gates
 tests/test-skill-catalog-budget.sh|always-visible skill catalog budget
 tests/test-ssh-agent-profile.sh|SSH agent profile focused suite
-tests/test-remote-session.sh|remote-session focused suite
+tests/test-remote-session.sh|remote-session focused suite||heavy
 tests/test-remote-agent-communication.sh|remote agent communication focused suite|4
 tests/test-reboot-recovery-skill.sh|managed Mac reboot recovery skill
 tests/test-fleet-health.sh|canonical fleet health focused suite
@@ -19,8 +19,8 @@ tests/test-t4-hub.sh|bounded on-demand t4 bastion focused suite
 tests/test-connection-monitor.sh|managed Mac connection monitor focused suite
 tests/test-tmux-codex-monitor.sh|Local tmux Codex monitor focused suite
 tests/test-tmux-claude-monitor.sh|Local tmux Claude monitor focused suite
-tests/test-macos-agent-session.sh|unified managed-Mac agent session suite|19
-tests/test-housekeeping.sh|routine repository housekeeping suite|37
+tests/test-macos-agent-session.sh|unified managed-Mac agent session suite|19|heavy
+tests/test-housekeeping.sh|routine repository housekeeping suite|37|heavy
 tests/test-housekeeping-owner-alias.sh|immutable archive owner alias suite|15
 tests/test-projects-pane-layout.sh|isolated final Harness six-pane topology
 tests/test-codex-recovery-helper.sh|dedicated Local Codex recovery helper
@@ -37,9 +37,9 @@ tests/test-personal-agent.sh|bounded non-managed Personal agent
 tests/test-codex-arg0-wrapper.sh|Codex arg0 NFS wrapper focused suite
 tests/test-codex-login.sh|Codex login-node launcher focused suite
 tests/test-codex-targets.sh|repository-native Codex target map focused suite
-tests/test-codex-resilient.sh|Codex transient-service supervisor|15
-tests/test-codex-runtime-isolation.sh|Codex target-scoped immutable runtime
-tests/test-codex-thread-recovery.sh|Codex thread systemError recovery
+tests/test-codex-resilient.sh|Codex transient-service supervisor|15|heavy
+tests/test-codex-runtime-isolation.sh|Codex target-scoped immutable runtime||heavy
+tests/test-codex-thread-recovery.sh|Codex thread systemError recovery||heavy
 tests/test-recover-codex-unsafe-tail-skill.sh|Codex unsafe-tail recovery skill
 tests/test-fleet-repository-hardening-skill.sh|fleet and repository hardening skill
 tests/test-hardening-audit.sh|value-free repository hardening preflight
@@ -48,7 +48,7 @@ tests/test-personal-macos-profile.sh|personal macOS private-profile focused suit
 tests/test-personal-macos-inventory.sh|personal macOS inventory focused suite|8
 tests/test-personal-macos-plan-doctor.sh|personal macOS plan/doctor focused suite|39
 tests/test-personal-macos-control.sh|personal macOS control-plane focused suite|6
-tests/test-personal-macos-homebrew.sh|personal macOS Homebrew focused suite|34
+tests/test-personal-macos-homebrew.sh|personal macOS Homebrew focused suite|34|heavy
 tests/test-personal-macos-bash.sh|personal macOS Bash focused suite|5
 tests/test-personal-macos-bash-hooks.sh|personal macOS Bash-hook focused suite|2
 tests/test-personal-macos-shell.sh|personal macOS shell focused suite
@@ -57,24 +57,24 @@ tests/test-tmux-config.sh|shared tmux configuration focused suite
 tests/test-agent-config.sh|agent configuration focused suite
 tests/test-agent-upgrade.sh|agent replacement and recovery|4
 tests/test-agent-config-fleet.sh|agent configuration fleet focused suite
-tests/test-personal-macos-update.sh|personal macOS long-gap update focused suite|15
-tests/test-personal-macos-ssh-supervisor.sh|personal macOS SSH supervisor focused suite|40
+tests/test-personal-macos-update.sh|personal macOS long-gap update focused suite|15|heavy
+tests/test-personal-macos-ssh-supervisor.sh|personal macOS SSH supervisor focused suite|40|heavy
 tests/test-personal-macos-python.sh|personal macOS Python focused suite
-tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync focused suite|43
-tests/test-personal-macos-config-sync.sh|personal macOS config-sync focused suite|30
+tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync focused suite|43|heavy
+tests/test-personal-macos-config-sync.sh|personal macOS config-sync focused suite|30|heavy
 tests/test-personal-macos-config-migrate.sh|personal macOS config-migration focused suite|8
 tests/test-ssh-config-mirror.sh|fixed SSH-config mirror focused suite
 tests/test-terminfo.sh|AL user-local terminfo focused suite
 tests/test-ssh-config-layout.sh|transactional shared SSH layout migration
-tests/test-restic-schedule.sh|Restic schedule focused suite|16
+tests/test-restic-schedule.sh|Restic schedule focused suite|16|heavy
 tests/test-onboard-mirrored-node.sh|onboarding focused suite
 tests/test-onboard-external-user.sh|external user onboarding focused suite
 tests/test-client-comparison.sh|matched Codex and Claude comparison declaration
-tests/test-development-evaluation.sh|current Harness development benchmark focused suite|19
+tests/test-development-evaluation.sh|current Harness development benchmark focused suite|19|heavy
 tests/test-t343-fable-retest.sh|frozen T-336 Claude Fable failure retest
 tests/test-onboard-personal-mac-skill.sh|personal Mac onboarding skill
 tests/test-macos-codex-bootstrap.sh|personal Mac Codex bootstrap
-tests/test-evaluation.sh|evaluation focused suite|4
+tests/test-evaluation.sh|evaluation focused suite|4|heavy
 tests/test-public-repo-audit.sh|public repository audit focused suite
 tests/test-fleet-readiness-audit.sh|fleet readiness audit focused suite
 tests/test-hpc-readiness.sh|HPC readiness job focused suite
@@ -94,7 +94,7 @@ tests/test-debugger-readiness.sh|debugger readiness focused suite
 tests/test-venv-readiness.sh|venv readiness focused suite
 tests/test-locked-venv-readiness.sh|locked venv readiness focused suite
 tests/test-scientific-library-readiness.sh|scientific library readiness focused suite
-tests/test-fleet-sync.sh|fleet sync focused suite
-tests/test-checkpoint-restart.sh|checkpoint restart focused suite
+tests/test-fleet-sync.sh|fleet sync focused suite||heavy
+tests/test-checkpoint-restart.sh|checkpoint restart focused suite||heavy
 tests/test-hpc-cpu-routes.sh|bounded CPU route focused suite
 tests/test-source-contract.sh|source contract focused suite

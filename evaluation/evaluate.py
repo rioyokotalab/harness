@@ -1627,6 +1627,8 @@ def selftest(root: Path) -> None:
     interrupt_private.mkdir(mode=0o700)
     child_pid_path = interrupt_private / "child.pid"
     previous_alarm = signal.getsignal(signal.SIGALRM)
+    previous_ready = signal.getsignal(signal.SIGUSR1)
+    interrupt_ready = False
 
     class SelftestInterrupt(Exception):
         pass
@@ -1634,14 +1636,22 @@ def selftest(root: Path) -> None:
     def interrupt_handler(_signum: int, _frame: Any) -> None:
         raise SelftestInterrupt("bounded-process selftest")
 
+    def ready_handler(_signum: int, _frame: Any) -> None:
+        nonlocal interrupt_ready
+        interrupt_ready = True
+        signal.setitimer(signal.ITIMER_REAL, 0.2)
+
     signal.signal(signal.SIGALRM, interrupt_handler)
-    signal.setitimer(signal.ITIMER_REAL, 0.2)
+    signal.signal(signal.SIGUSR1, ready_handler)
     try:
         bounded_process(
             [
                 sys.executable,
                 "-c",
-                "import os,sys,time; open(sys.argv[1], 'w').write(str(os.getpid())); time.sleep(10)",
+                "import os,signal,sys,time; "
+                "handle=open(sys.argv[1], 'w'); handle.write(str(os.getpid())); "
+                "handle.flush(); os.fsync(handle.fileno()); handle.close(); "
+                "os.kill(os.getppid(), signal.SIGUSR1); time.sleep(10)",
                 str(child_pid_path),
             ],
             ROOT,
@@ -1658,6 +1668,9 @@ def selftest(root: Path) -> None:
     finally:
         signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, previous_alarm)
+        signal.signal(signal.SIGUSR1, previous_ready)
+    if not interrupt_ready:
+        fail("interrupt selftest child did not report readiness")
     child_pid = int(child_pid_path.read_text(encoding="ascii"))
     try:
         os.kill(child_pid, 0)

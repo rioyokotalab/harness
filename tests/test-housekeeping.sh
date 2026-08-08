@@ -773,6 +773,17 @@ git -C "$REPO" show-ref --verify --quiet refs/heads/clean &&
 for name in dirty untracked ignored nested submodule locked live openfile; do
     [ -d "$TEST_ROOT/wt-$name" ] || fail "blocked worktree was removed: $name"
 done
+# The long-lived helpers are needed only for the liveness classification above.
+# Convert their worktrees to deterministic residue before retiring the helpers
+# so later plans still exclude them without carrying idle processes through the
+# interruption fixtures.
+printf 'post-liveness residue\n' >"$TEST_ROOT/wt-live/post-liveness"
+printf 'post-liveness residue\n' >"$TEST_ROOT/wt-openfile/post-liveness"
+kill "$LIVE_PID" "$OPEN_PID" 2>/dev/null || true
+wait "$LIVE_PID" 2>/dev/null || true
+wait "$OPEN_PID" 2>/dev/null || true
+LIVE_PID=
+OPEN_PID=
 
 # Interruption after directory deletion leaves a durable recoverable admin record.
 git -C "$REPO" branch interrupted "$BASE"
@@ -796,8 +807,8 @@ ADMIN=$(git -C "$REPO" worktree list --porcelain | awk -v path="$TEST_ROOT/wt-in
 ')
 [ -n "$ADMIN" ] || fail "interruption did not retain stale admin metadata"
 grep -R '"phase":"directory-deleted"' "$STATE" >/dev/null || fail "interruption checkpoint missing"
-RECOVERY=$(grep -l '"phase":"directory-deleted"' \
-    "$STATE"/worktree-apply-*.json | grep -v 'worktree-apply-unsafe.json$' | tail -1)
+RECOVERY=$(grep -l '"current":"'$TEST_ROOT'/wt-interrupted"' \
+    "$STATE"/worktree-apply-*.json | tail -1)
 OUT=$(house --recover-worktree --receipt "$RECOVERY") ||
     fail "directory-stage recovery failed"
 printf '%s\n' "$OUT" | grep -Fq 'status=recovered' ||
@@ -830,7 +841,7 @@ git -C "$REPO" show-ref --verify --quiet refs/heads/admin-interrupted ||
     fail "admin-stage interruption removed the branch"
 grep -R '"phase":"admin-deleted"' "$STATE" >/dev/null ||
     fail "admin-stage interruption checkpoint missing"
-RECOVERY=$(grep -l '"phase":"admin-deleted"' \
+RECOVERY=$(grep -l '"current":"'$TEST_ROOT'/wt-admin-interrupted"' \
     "$STATE"/worktree-apply-*.json | tail -1)
 OUT=$(house --recover-worktree --receipt "$RECOVERY") ||
     fail "admin-stage recovery failed"

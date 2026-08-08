@@ -4152,6 +4152,9 @@ def apply_worktrees(repo: Path, receipt_path: Path, token: str) -> None:
         )
         execution_state(state_path, progress)
         guarded_apply(repo, record["directory_manifest"], record["directory_token"])
+        worktree_path = Path(record["path"])
+        if worktree_path.exists() or worktree_path.is_symlink():
+            die("worktree directory survived guarded deletion")
         progress["phase"] = "directory-deleted"
         execution_state(state_path, progress)
         if os.environ.get("HARNESS_TEST_INTERRUPT_AFTER_WORKTREE") == "1":
@@ -4162,6 +4165,9 @@ def apply_worktrees(repo: Path, receipt_path: Path, token: str) -> None:
             die("primary repository changed after worktree deletion")
         archive_audit(repo, Path(archived["receipt"]))
         guarded_apply(repo, record["admin_manifest"], record["admin_token"])
+        admin_path = Path(record["admin"])
+        if admin_path.exists() or admin_path.is_symlink():
+            die("worktree administration survived guarded deletion")
         progress["phase"] = "admin-deleted"
         execution_state(state_path, progress)
         if os.environ.get("HARNESS_TEST_INTERRUPT_AFTER_ADMIN") == "1":
