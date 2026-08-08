@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-429	active	Enforce one Codex owner per saved thread	TODO.md;docs/tasks/Har-429.md
 Har-428	active	Roll out Har-427 to Office and Home	TODO.md;docs/tasks/Har-428.md
 Har-427	complete	Make the complete Harness suite portable on macOS	docs/tasks/Har-427.md
 Har-426	complete	Run bounded Personal work from Riken Harness	docs/tasks/Har-426.md

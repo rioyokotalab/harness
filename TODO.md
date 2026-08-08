@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-429.
+Next free ID: Har-430.
 
 ## Resume contract
 
@@ -14,6 +14,12 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Active
+
+### Har-429 — Enforce one Codex owner per saved thread
+
+**Phase:** phone branch accepted as canonical; after this competing client
+stops, replace the standalone Harness TUI with an exact remote-backed view and
+add split-brain detection. **Record:** `docs/tasks/Har-429.md`.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 
