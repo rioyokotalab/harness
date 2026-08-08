@@ -114,4 +114,4 @@ tests/test-hpc-cpu-routes.sh	hpc-runtime	bounded CPU route focused suite	2	28	dc
 tests/test-source-contract.sh	portable-shell	source contract focused suite	5	84	e4bf730bcbb3313daec93f53be9b1946f7439271bb65b96dbaab2ca453c4220f	9	bin/harness,tests/guarded-test-cleanup.sh,tests/smoke/jobs/source-contract.sh	4	direct-owner	0	0	0	0	retain-focused-owner
 tests/test-presentation-tools.sh	presentation	presentation tool syntax and entry points	1	19	cf099961f177dd29b78ff8d3d5ddea7d7202e03becf243c4c68ea995a5fc6a67	3		1	direct-owner	0	0	0	0	retain-focused-owner
 tests/test-tool-manifests.sh	tool-manifests	tool and runtime manifest schemas	1	39	20f2c83e7ce5004e2d66a7bb0133c31ce9bea369a41ab854fe5f23f18e061eef	8		1	direct-owner	0	0	0	0	retain-focused-owner
-tests/test-core-command-sources.sh	tool-manifests	changed core command source contract	1	39	67d1d812733b7b45b29fc719416de7f7d292b759ed76107a6598eab9e9f2cc91	3		1	direct-owner	0	0	0	0	retain-focused-owner
+tests/test-core-command-sources.sh	tool-manifests	changed core command source contract	1	42	0a5013d2413b0b19d0fd3414be6e4ceabf6537cb23d52defb9941cd818d0d1b0	2		1	direct-owner	0	0	0	0	retain-focused-owner

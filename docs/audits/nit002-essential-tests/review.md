@@ -22,7 +22,7 @@ This keeps the wait-removal pass reviewable without
 mistaking policy prose containing “wait” for an executed command.
 `matched-darwin-timings.tsv` records the serial, one-job final pass for every
 supplied Home over-ten candidate and each owner introduced by decomposition.
-The 116 manifest entry scripts currently contain 17,689 lines. The audit also
+The 116 manifest entry scripts currently contain 17,692 lines. The audit also
 descends into thirteen directly discovered Python test modules (3,373 lines)
 and the four intentional non-manifest shell scripts; wrapper brevity is never
 treated as evidence that the underlying test is small or wait-free.
@@ -160,6 +160,17 @@ owners serially and stopped at its first failure. The policy was compressed
 without raising its budget. Exact final now uses the same bounded parallel,
 keep-going runner as discovery and writes a stage-specific durable inventory,
 so a future final failure exposes the complete repair set in one pass.
+
+The first exhaustive final launched all 82 applicable Darwin owners in 47.084
+seconds and froze two failures together: the hardening closeout exceeded its
+existing 350-word budget by six words, and the new core-source owner treated a
+self-change without a core-command change as an impossible selection. Their
+owners passed after one repair batch. The next exhaustive inventory again ran
+all 82 owners in 41.673 seconds and isolated two assertions coupled to the
+compressed duration sentence. The three affected skill owners passed after the
+sentence was restored without raising its word budget. The final exact-context
+inventory passed all 82 owners in 42.436 seconds. These inventories demonstrate
+the keep-going repair boundary; none requested or launched the full suite.
 
 The literal `wait` audit separately classifies child-process joins. Checkpoint
 race workers and simultaneous message receivers, for
