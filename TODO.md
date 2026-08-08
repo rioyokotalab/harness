@@ -17,9 +17,9 @@ mutable-state query is unknown, never absence.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 
-**Phase:** Office and Home independently fast-forward their clean managed
-Harness checkouts to protected main and run the complete macOS-compatible
-phase-one suite. **Record:** `docs/tasks/Har-428.md`.
+**Phase:** both Macs are clean at the earlier protected checkpoint; retry the
+two fixed interrupt owners through Har-432 discovery, then one final gate.
+**Record:** `docs/tasks/Har-428.md`.
 
 ## Deferred gates
 
