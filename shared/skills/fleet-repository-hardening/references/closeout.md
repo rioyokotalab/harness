@@ -1,11 +1,11 @@
 # Validation, cleanup, and handoff
 
-For each repository:
+Per repository:
 
 1. Run only the repository's exact changed-context owners, dependency and lock
    checks, secret checks, and `git diff --check`; run its complete suite only
    on an explicit owner request.
-2. Push a small reviewed commit series and open the repository-owned pull
+2. Push a reviewed commit series and open the pull
    request.
 3. Require exact current-head checks. After any hosting change, read back live
    Actions, security, environment, and ruleset settings.
@@ -15,7 +15,7 @@ For each repository:
    state, residue, and remaining stack items in that repository's ledger and
    the umbrella handoff.
 
-Independently recheck applicable logical nodes, redundant routes, managed
+Independently recheck logical nodes, redundant routes, managed
 service ownership, backups, and changed configuration. Never report an
 unverified route pair as healthy.
 
@@ -41,7 +41,7 @@ classification, missing directory, administration identity, and exact-old
 branch; it creates a fresh guarded administration manifest instead of reusing
 an expired token. Unstarted bulk candidates remain for a fresh normal plan.
 
-For duration work, stop changes at cutoff. Use the final window for
+For duration work, stop starting material changes at the frozen cutoff. Use the final window for
 exact-context validation, settings readback, health, residue,
 clean-tree, branch/worktree, and ledger checks.
 At the deadline, stop execution and leave the exact next executable action,
