@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-433.
+Next free ID: Har-434.
 
 ## Resume contract
 
@@ -14,6 +14,11 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Active
+
+### Har-433 — Rebind the Riken phone and tmux Codex surfaces
+
+**Phase:** preflight identities frozen; stage a distinct remote-backed bridge
+without touching Office or Home. **Record:** `docs/tasks/Har-433.md`.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 
