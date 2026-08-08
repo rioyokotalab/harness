@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-425.
+Next free ID: Har-426.
 
 ## Resume contract
 
@@ -14,6 +14,12 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Active
+
+### Har-425 — Align the Riken phone Codex with the owner session
+
+**Phase:** bridge-first replacement of only the canonical Harness Codex TUI;
+the existing phone TUI and saved root remain preserved until exact-thread
+acceptance. **Record:** `docs/tasks/Har-425.md`.
 
 ### Har-424 — Establish the Local-outage failover environment
 

@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-425	active	Align the Riken phone Codex with the owner session	TODO.md;docs/tasks/Har-425.md
 Har-424	active	Establish the Local-outage failover environment	TODO.md;docs/tasks/Har-424.md
 Har-423	active	Reconcile five repositories across the fleet	TODO.md;docs/tasks/Har-423.md
 Har-422	complete	Restore the remote-agent skill context budget	docs/tasks/Har-422.md
