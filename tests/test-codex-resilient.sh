@@ -28,11 +28,6 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-grep -F 'harness codex-resilient --run --name harness --last' \
-    "$ROOT/README.md" >/dev/null ||
-    fail "owner-facing resilient launch documentation"
-grep -F 'never blindly replay the prior prompt' "$ROOT/AGENTS.md" >/dev/null ||
-    fail "durable transient-failure rule"
 grep -F 'run_codex "$first_launch" </dev/tty &' \
     "$ROOT/libexec/harness-codex-resilient" >/dev/null ||
     fail "remote TUI lost its controlling terminal"

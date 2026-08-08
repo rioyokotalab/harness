@@ -83,10 +83,6 @@ PY
 "$HARNESS" help | grep -F \
     'claude-handoff  validate task-bound Claude handoff packets and evidence' \
     >/dev/null || fail "harness help declaration"
-grep -F '`harness claude-handoff` validates a bounded, expiring packet' \
-    "$ROOT/docs/agent-client-config.md" >/dev/null ||
-    fail "handoff documentation"
-
 sha_file() {
     python3 -c \
         'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' \

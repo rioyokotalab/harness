@@ -1,6 +1,7 @@
 # regex|tier|suite-or--|reason
-^(shell/.*\.(sh|bash)$|tools/.*\.sh$|tests/smoke/jobs/.*\.(sh|slurm|pbs)$)|R2|tests/test-shellcheck.sh|incremental shell syntax and deletion policy
+^(shell/.*\.(sh|bash)$|tools/.*\.sh$)|R2|tests/test-shellcheck.sh|incremental shell syntax and deletion policy
 ^TODO\.md$|R0|tests/test-harness-ledgers.sh|direct ordinary ledger contract
+^TODO\.md$|R1|tests/test-context-routing-benchmark.sh|active-board context budget
 ^NIGHTLY\.md$|R1|tests/test-harness-ledgers.sh|nightly active ledger contract
 ^docs/tasks/config\.json$|R1|tests/test-harness-ledgers.sh|ordinary task namespace config
 ^docs/tasks/(Har|T)-[0-9]+\.md$|R0|tests/test-harness-ledgers.sh|ordinary task record
@@ -12,10 +13,12 @@
 ^tests/test_harness_ledgers\.py$|R3|tests/test-harness-ledgers.sh|ordinary and nightly synthetic tests
 ^tests/test-(client-comparison|development-evaluation|llm-hpc-next-actions|t343-fable-retest|task-ledger-routing)\.sh$|R0|-|retired historical replay
 ^tests/test-(phase1-integration|projects-pane-layout)\.sh$|R1|-|retired redundant integration or layout passenger
+^tests/test-fleet-inventory\.sh$|R1|-|retired documentation-only fleet inventory replay
 ^tools/local_skill_discovery\.py$|R1|-|retired duplicate of repository-scaffold discovery
 ^tests/test-housekeeping-interrupt\.sh$|R3|tests/test-housekeeping.sh|housekeeping interruption fixture
 ^tests/test-native-mpi\.sh$|R3|-|explicit native MPI environment gate
-^libexec/harness-(apply|build-tool|cache-bootstrap|common|doctor|dotfiles|plan|python|remediate|repository-fingerprint|rollback|runtime|shell)$|R2|tests/test-tool-manifests.sh|core command source contract
+^tests/smoke/jobs/local\.slurm$|R1|-|retired redundant broad native smoke
+^libexec/harness-(apply|build-tool|cache-bootstrap|common|doctor|dotfiles|plan|python|remediate|repository-fingerprint|rollback|runtime|shell)$|R2|tests/test-core-command-sources.sh|changed core command source contract
 ^shell/bash_profile\.canonical$|R2|tests/test-bash-startup-unify.sh|canonical Bash profile
 ^docs/github-rulesets/|R1|tests/test-github-rulesets.sh|ruleset fixture
 ^tests/test-github-rulesets\.sh$|R3|-|ruleset fixture validator
@@ -55,6 +58,7 @@
 ^shared/skills/recover-codex-unsafe-tail/|R3|tests/test-recover-codex-unsafe-tail-skill.sh|managed lifecycle recovery
 ^tests/test-recover-codex-unsafe-tail-skill\.sh$|R3|-|managed lifecycle recovery validator
 ^shared/skills/remote-agent-communication/(SKILL\.md|references/.*\.md)$|R1|tests/test-remote-agent-communication.sh|routed message policy
+^shared/skills/remote-agent-communication/references/.*\.protocol$|R2|tests/test-remote-agent-communication.sh|message transport protocol
 ^shared/skills/remote-agent-communication/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-budgets.sh|message context budget
 ^shared/skills/remote-agent-communication/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-gates.sh|message safety gates
 ^shared/skills/remote-agent-communication/(scripts|agents)/|R3|tests/test-remote-agent-communication.sh|cross-client message transport
@@ -64,9 +68,13 @@
 ^shared/skills/guarded-bulk-delete/|R3|tests/test-guarded-delete.sh|recursive deletion safety
 ^shared/skills/guarded-bulk-delete/|R3|tests/test-guarded-delete-boundaries.sh|recursive deletion identity boundaries
 ^\.codex/rules/default\.rules$|R3|tests/test-guarded-delete.sh|recursive deletion exec policy
+^\.(codex/(AGENTS\.md|config\.toml)|claude/settings\.json)$|R3|tests/test-agent-config.sh|project agent client configuration
+^\.(agents|claude)/skills/|R3|tests/test-claude-takeover.sh|project skill link topology
 ^AGENTS\.md$|R3|tests/test-agent-policy-routing.sh|root authorization and validation policy
 ^CLAUDE\.md$|R3|tests/test-agent-policy-routing.sh|root client policy import
 ^docs/agent-policy/|R3|tests/test-agent-policy-routing.sh|conditional authorization and safety policy
+^docs/agent-policy/managed-codex\.md$|R3|tests/test-remote-agent-communication.sh|managed message policy consistency
+^docs/agent-policy/managed-codex\.md$|R3|tests/test-recover-codex-unsafe-tail-skill.sh|managed recovery policy consistency
 ^tests/test-agent-policy-routing\.sh$|R3|-|policy routing validator
 ^docs/audits/t351-autonomy-efficiency/context-(benchmark\.md|scenarios\.tsv)$|R1|tests/test-context-routing-benchmark.sh|context routing benchmark
 ^docs/audits/t373-archive-retention-inventory\.md$|R1|tests/test-housekeeping.sh|archive retention evidence
@@ -141,7 +149,7 @@
 ^libexec/harness[-_]housekeeping(\.py)?$|R3|tests/test-housekeeping.sh|housekeeping runtime
 ^libexec/harness_housekeeping\.py$|R3|tests/test-housekeeping-owner-alias.sh|archive owner alias identity contracts
 ^libexec/harness-macos-agent-session$|R3|tests/test-macos-agent-session.sh|macOS agent session
-^libexec/harness-macos-(bash|bash-hooks)$|R3|tests/test-personal-macos-bash.sh|macOS Bash lifecycle
+^libexec/harness-macos-bash$|R3|tests/test-personal-macos-bash.sh|macOS Bash lifecycle
 ^libexec/harness-macos-bash-hooks$|R3|tests/test-personal-macos-bash-hooks.sh|macOS Bash hook lifecycle
 ^libexec/harness-macos-codex-bootstrap$|R3|tests/test-macos-codex-bootstrap.sh|macOS Codex bootstrap
 ^libexec/harness-macos-(common|pilot-plan|plan)$|R3|tests/test-personal-macos-plan-doctor.sh|macOS plan primitives
@@ -190,9 +198,10 @@
 ^shell/profile\.sh$|R2|tests/test-ssh-agent-profile.sh|local versus forwarded SSH agent selection
 ^shell/(profile|remote-session)\.sh$|R2|tests/test-remote-session.sh|interactive remote shell lifecycle
 ^shell/hosts/local\.sh$|R2|tests/test-local-mpi-profile.sh|local interactive MPI policy
+^shell/hosts/al\.sh$|R2|tests/test-al-session.sh|AL interactive environment policy
 ^shell/personal-macos|R3|tests/test-personal-macos-shell.sh|personal macOS shell integration
 ^shell/safety-guards\.sh$|R3|tests/test-safety-guards.sh|interactive safety guards
-^shell/(environments|hosts)/|R2|tests/test-hpc-readiness.sh|host and environment shell declarations
+^shell/environments/|R2|tests/test-startup-normalize.sh|host environment shell declarations
 ^config/agent-clients/|R3|tests/test-agent-config.sh|agent client configuration
 ^config/codex-standalone-installer\.conf$|R3|tests/test-codex-runtime-isolation.sh|Codex installer declaration
 ^config/ssh/|R3|tests/test-ssh-config-layout.sh|shared SSH configuration
@@ -201,27 +210,48 @@
 ^profiles/(agent|claude|codex)-session-targets\.tsv$|R3|tests/test-codex-targets.sh|managed session target maps
 ^profiles/codex-runtime-release\.tsv$|R3|tests/test-codex-runtime-isolation.sh|Codex runtime release declaration
 ^profiles/fleet-|R3|tests/test-fleet-health.sh|fleet declarations
-^profiles/home-layout\.tsv$|R3|tests/test-fleet-inventory.sh|home layout declaration
-^profiles/hosts/|R2|tests/test-hpc-readiness.sh|host capability declarations
+^profiles/home-layout\.tsv$|R3|tests/test-home-layout.sh|home layout declaration
+^profiles/hosts/|R2|tests/test-host-declarations.sh|host capability declarations
 ^profiles/hpc-affinity-routes\.tsv$|R2|tests/test-affinity-readiness.sh|HPC affinity routes
 ^profiles/hpc-cpu-routes\.tsv$|R2|tests/test-hpc-cpu-routes.sh|HPC CPU routes
 ^profiles/hpc-multinode-mpi-routes\.tsv$|R2|tests/test-hpc-multinode-mpi-routes.sh|HPC MPI routes
 ^profiles/personal-macos/|R3|tests/test-personal-macos-profile.sh|personal macOS declarations
 ^profiles/pytorch-|R2|tests/test-pytorch-lock.sh|PyTorch declarations
+^tools/build-pytorch-wheelhouse\.sh$|R2|tests/test-pytorch-lock.sh|PyTorch wheelhouse construction
 ^profiles/restic-|R3|tests/test-restic-schedule.sh|Restic declarations
 ^profiles/t4-hub-routes\.tsv$|R3|tests/test-t4-hub.sh|t4 hub routes
 ^profiles/tools\.tsv$|R2|tests/test-source-contract.sh|tool declarations
-^tests/fixtures/(ab|ab2|abq|al|local|rc|ri|t4)\.facts$|R2|tests/test-hpc-readiness.sh|host fact fixtures
+^tests/fixtures/(ab|ab2|abq|al|local|rc|ri|t4)\.facts$|R2|tests/test-host-declarations.sh|host fact fixtures
 ^tests/fixtures/offline-project/|R2|tests/test-locked-venv-readiness.sh|offline environment fixture
 ^tests/fixtures/personal-macos/|R3|tests/test-personal-macos-config-sync.sh|personal macOS private fixtures
 ^tests/fixtures/personal-macos/|R3|tests/test-personal-macos-config-sync-apply.sh|personal macOS private fixture apply
 ^config/terminfo/tmux-256color\.src$|R2|tests/test-terminfo.sh|mapped ordinary terminfo source
 ^tests/test-terminfo\.sh$|R3|-|mapped ordinary component validator
 ^tests/smoke/debugger\.c$|R2|tests/test-debugger-readiness.sh|mapped ordinary debugger source fixture
-^tests/smoke/(CMakeLists\.txt|cpu\.(c|cpp|f90)|cpp20\.cpp|cuda\.cu|numerical\.cpp|python\.py|sanitizer\.c)$|R2|tests/test-hpc-readiness.sh|portable HPC smoke source
+^tests/smoke/(CMakeLists\.txt|cpu\.(c|cpp|f90)|cpp20\.cpp|python\.py|sanitizer\.c)$|R2|tests/test-hpc-readiness.sh|portable CPU smoke source
+^tests/smoke/cuda\.cu$|R2|tests/test-hpc-accelerator-readiness.sh|accelerator smoke source
+^tests/smoke/numerical\.cpp$|R2|tests/test-hpc-numerical-readiness.sh|numerical smoke source
 ^tests/smoke/affinity\.cpp$|R2|tests/test-affinity-readiness.sh|affinity smoke source
 ^tests/smoke/checkpoint_restart\.cpp$|R2|tests/test-checkpoint-restart.sh|checkpoint smoke source
-^tests/smoke/mpi\.c$|R2|tests/test-hpc-readiness.sh|single-node MPI smoke source
+^tests/smoke/mpi\.c$|R2|tests/test-hpc-mpi-readiness.sh|single-node MPI smoke source
+^tests/smoke/jobs/(cpu-readiness\.sh|local-cpu\.slurm)$|R2|tests/test-hpc-readiness.sh|CPU readiness job
+^tests/smoke/jobs/(cache-startup-readiness\.sh|local-cache-startup\.slurm)$|R2|tests/test-hpc-cache-readiness.sh|cache-startup readiness job
+^tests/smoke/jobs/(accelerator-readiness\.sh|local-accelerator\.slurm)$|R2|tests/test-hpc-accelerator-readiness.sh|accelerator readiness job
+^tests/smoke/jobs/(mpi-readiness\.sh|local-mpi\.slurm)$|R2|tests/test-hpc-mpi-readiness.sh|single-node MPI readiness job
+^tests/smoke/jobs/(numerical-readiness\.sh|local-numerical(-epyc)?\.slurm)$|R2|tests/test-hpc-numerical-readiness.sh|numerical readiness job
+^tests/smoke/jobs/compute-debugger-readiness\.sh$|R2|tests/test-hpc-compute-debugger-readiness.sh|compute debugger readiness job
+^shared/skills/operate-native-hpc/references/sites\.md$|R2|tests/test-hpc-pbs-policy.sh|PBS notification policy
+^tests/smoke/jobs/.*\.pbs$|R2|tests/test-hpc-pbs-policy.sh|PBS notification policy
+^tests/smoke/jobs/(affinity-readiness\.sh|local-affinity(-epyc)?\.slurm)$|R2|tests/test-affinity-readiness.sh|affinity readiness job
+^tests/smoke/jobs/(checkpoint-restart-readiness\.sh|local-checkpoint-restart(-epyc)?\.slurm)$|R2|tests/test-checkpoint-restart.sh|checkpoint restart job
+^tests/smoke/jobs/(multinode-mpi-readiness\.sh|(ab|ab2)-multinode-mpi\.pbs|local-multinode-mpi\.slurm|t4-multinode-mpi\.sh)$|R2|tests/test-multinode-mpi-readiness.sh|multi-node MPI readiness job
+^tests/smoke/jobs/((ab|ab2|al|local|rc|ri|t4)-pytorch\.(pbs|slurm|sh)|pytorch-readiness\.sh)$|R2|tests/test-pytorch-readiness.sh|PyTorch readiness job
+^tests/smoke/jobs/source-contract\.sh$|R2|tests/test-source-contract.sh|queued-job source contract
+^tests/test-hpc-readiness\.sh$|R2|tests/test-hpc-cache-readiness.sh|shared HPC readiness case driver
+^tests/test-hpc-readiness\.sh$|R2|tests/test-hpc-accelerator-readiness.sh|shared HPC readiness case driver
+^tests/test-hpc-readiness\.sh$|R2|tests/test-hpc-mpi-readiness.sh|shared HPC readiness case driver
+^tests/test-hpc-readiness\.sh$|R2|tests/test-hpc-numerical-readiness.sh|shared HPC readiness case driver
+^tests/test-hpc-readiness\.sh$|R2|tests/test-hpc-compute-debugger-readiness.sh|shared HPC readiness case driver
 ^tests/smoke/mpi-multinode\.c$|R2|tests/test-multinode-mpi-readiness.sh|multi-node MPI smoke source
 ^tests/smoke/llm_torch\.py$|R2|tests/test-pytorch-readiness.sh|PyTorch smoke source
 ^tests/smoke/jobs/shared-executable-visibility\.sh$|R2|tests/test-shared-executable-visibility.sh|shared executable boundary probe
@@ -232,6 +262,7 @@
 ^tests/smoke/README\.md$|R0|-|smoke documentation
 ^docs/(hpc-project-intake\.md|schemas/hpc-project-intake\.schema\.json)$|R1|tests/test-hpc-project-intake.sh|HPC project intake contract
 ^tests/fixtures/scientific-library-bin/(h5cc|nc-config|pkg-config)$|R2|tests/test-scientific-library-readiness.sh|mapped ordinary scientific-library fixture
-^(\.gitmodules|profiles/tools\.tsv|tools/artifacts\.tsv|libexec/harness-(tool|inventory))$|R1|tests/test-repository-independence.sh|repository independence boundary
+^(\.gitmodules|profiles/tools\.tsv|tools/artifacts\.tsv|libexec/harness-(tool|inventory))$|R1|-|integrated repository independence boundary
+^tests/test-repository-independence\.sh$|R1|-|retired integrated repository independence replay
 ^docs/|R0|-|documentation
 ^README\.md$|R0|-|owner documentation

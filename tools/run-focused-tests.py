@@ -8,7 +8,6 @@ import json
 import os
 from pathlib import Path
 import platform
-import re
 import signal
 import subprocess
 import sys
@@ -323,11 +322,12 @@ def main() -> int:
         or args.reserve_cpus > 15
         or jobs < 1
         or jobs > 16
-        or not re.fullmatch(r"[A-Za-z0-9_.-]{1,32}", args.platform)
+        or args.platform not in {"Darwin", "Linux"}
     ):
         print(
             "focused-tests: --jobs must be auto or an integer between 1 and 16; "
-            "--reserve-cpus 0..15 is valid only with auto",
+            "--reserve-cpus 0..15 is valid only with auto; platform must be "
+            "Darwin or Linux",
             file=sys.stderr,
         )
         return 2

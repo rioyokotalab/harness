@@ -86,8 +86,9 @@ source. Make shared, non-secret changes through this workflow:
    `config/ssh/harness.conf`.
 2. Update the structural expectations in `harness-ssh-config-layout` and its
    focused test when adding or changing a managed exception.
-3. Run `tests/test-ssh-config-layout.sh`, `git diff --check`, and
-   `tests/test-phase1.sh`; publish through the protected `main` workflow.
+3. Run the SSH-layout owner, `git diff --check`, and the exact-context final
+   gate; publish through the protected `main` workflow. Run the complete suite
+   only when the owner explicitly requests it.
 4. Synchronize only clean managed checkouts, then run
    `harness ssh-config-layout --host LOGICAL_ID --plan` on each target.
 5. Apply only a clean plan with

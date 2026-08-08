@@ -222,12 +222,6 @@ for sentinel in "$home/.codex/AGENTS.md" "$home/.claude/CLAUDE.md"; do
     grep -F 'Personal and Website are non-managed bounded' "$sentinel" \
         >/dev/null || fail 'Website non-managed classification'
 done
-grep -F 'Personal and Website are non-managed bounded' \
-    "$home/.codex/AGENTS.md" >/dev/null ||
-    fail 'Codex bounded-root classification'
-grep -F 'Personal and Website are non-managed bounded' \
-    "$home/.claude/CLAUDE.md" >/dev/null ||
-    fail 'Claude bounded-root classification'
 [ -L "$home/.local/bin/harness-codex" ] || fail 'launcher retained'
 for removed in "$home/.claude/settings.json" \
     "$home/.codex/rules/default.rules" "$home/.codex/skills/example" \

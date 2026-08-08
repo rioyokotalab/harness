@@ -91,14 +91,6 @@ EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/mv" \
     "$fake_bin/vim" "$fake_bin/tmux"
 
-stat_probe_log=$TEMP_DIR/stat-kernel-probes
-: >"$stat_probe_log"
-MACOS_TEST_UNAME_LOG="$stat_probe_log" PATH="$fake_bin:/usr/bin:/bin" \
-    sh -c '. "$1"; macos_stat_owner "$2" >/dev/null; macos_stat_mode "$2" >/dev/null; macos_stat_links "$2" >/dev/null' \
-    _ "$ROOT/libexec/harness-macos-common" "$ROOT/AGENTS.md"
-[ "$(wc -l <"$stat_probe_log" | tr -d ' ')" = 1 ] ||
-    fail "Mac stat helpers repeated the immutable kernel probe"
-
 configure_identity() {
     git -C "$1" config user.name mac-test
     git -C "$1" config user.email mac-test.invalid

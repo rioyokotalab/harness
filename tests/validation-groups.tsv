@@ -1,9 +1,9 @@
 # group|label|focused-suite regex (each focused suite must match exactly one)
-validation-core|validation, policy, and repository contracts|^tests/test-(focused-runner|validation-router|harness-ledgers|agent-policy-routing|context-routing-benchmark|skill-context-budgets|skill-context-gates|skill-catalog-budget|github-rulesets|actions-sustainability|repository-independence|public-repo-audit)\.sh$
+validation-core|validation, policy, and repository contracts|^tests/test-(focused-runner|validation-router|harness-ledgers|agent-policy-routing|context-routing-benchmark|skill-context-budgets|skill-context-gates|skill-catalog-budget|github-rulesets|actions-sustainability|public-repo-audit)\.sh$
 portable-shell|portable shell and source contracts|^tests/test-(startup-normalize|bash-startup-unify|shellcheck|source-contract)\.sh$
 presentation|presentation build and verification tools|^tests/test-presentation-tools\.sh$
-tool-manifests|tool, runtime, Python, and agent declarations|^tests/test-tool-manifests\.sh$
-fleet-control|fleet routing and node control|^tests/test-(ssh-agent-profile|remote-session|remote-agent-communication|reboot-recovery-skill|fleet-health|t4-hub|connection-monitor|fleet-inventory|agent-config-fleet|fleet-sync|fleet-readiness-audit|onboard-mirrored-node|onboard-external-user|onboard-project-(repository|producer-ledger|consumer-protocol|consumer-validation))\.sh$
+tool-manifests|tool, runtime, Python, agent, and core declarations|^tests/test-(tool-manifests|core-command-sources)\.sh$
+fleet-control|fleet routing and node control|^tests/test-(ssh-agent-profile|remote-session|remote-agent-communication|reboot-recovery-skill|fleet-health|t4-hub|connection-monitor|agent-config-fleet|fleet-sync|fleet-readiness-audit|home-layout|onboard-mirrored-node|onboard-external-user|onboard-project-(repository|producer-ledger|consumer-protocol|consumer-validation))\.sh$
 agent-sessions|agent, tmux, and recovery lifecycle|^tests/test-(tmux-codex-monitor|tmux-claude-monitor|macos-agent-session|codex-recovery-helper|al-session|claude-takeover|claude-handoff|personal-agent|codex-arg0-wrapper|codex-login|codex-targets|codex-resilient|codex-runtime-isolation|codex-thread-recovery|recover-codex-unsafe-tail-skill|fleet-repository-hardening-skill|hardening-audit|onboard-personal-mac-skill|macos-codex-bootstrap)\.sh$
 housekeeping-safety|housekeeping and local safety transactions|^tests/test-(housekeeping|housekeeping-owner-alias|guarded-delete(-boundaries)?|safety-guards)\.sh$
 slack|Slack broker and transport policy|^tests/test-slack-broker\.sh$
@@ -22,5 +22,5 @@ macos-ssh-sync|macOS SSH synchronization lifecycle|^tests/test-personal-macos-ss
 shared-ssh|shared SSH configuration lifecycle|^tests/test-ssh-config-(mirror|layout)\.sh$
 backup-schedule|Restic schedule lifecycle|^tests/test-restic-schedule\.sh$
 evaluation|current evaluation runtime|^tests/test-evaluation\.sh$
-hpc-runtime|HPC job, route, scheduler, and storage contracts|^tests/test-(local-mpi-profile|hpc-readiness|affinity-readiness|hpc-multinode-mpi-routes|multinode-mpi-readiness|shared-executable-visibility|hpc-result-hygiene|hpc-job-preflight|hpc-topology-surface|hpc-project-intake|hpc-project-intake-validator|checkpoint-restart|hpc-cpu-routes|storage-readiness)\.sh$
-hpc-environment|scientific environment and tool readiness|^tests/test-(pytorch-lock|pytorch-readiness|debugger-readiness|venv-readiness|locked-venv-readiness|scientific-library-readiness)\.sh$
+hpc-runtime|HPC job, route, scheduler, and storage contracts|^tests/test-(local-mpi-profile|hpc-(readiness|cache-readiness|accelerator-readiness|mpi-readiness|numerical-readiness|compute-debugger-readiness|pbs-policy)|affinity-readiness|hpc-multinode-mpi-routes|multinode-mpi-readiness|shared-executable-visibility|hpc-result-hygiene|hpc-job-preflight|hpc-topology-surface|hpc-project-intake|hpc-project-intake-validator|checkpoint-restart|hpc-cpu-routes|storage-readiness)\.sh$
+hpc-environment|scientific environment and tool readiness|^tests/test-(pytorch-lock|pytorch-readiness|debugger-readiness|venv-readiness|locked-venv-readiness|scientific-library-readiness|host-declarations)\.sh$

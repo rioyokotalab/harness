@@ -673,6 +673,10 @@ those exact changed-context owners once on the integrated tree. A complete
 portable suite is never inferred from risk or stage; it requires the explicit
 `--full` command shown above.
 
+Closeout reports actual validation/testing wall time as a percentage of task
+wall time. Meet the under-ten-percent target by reducing admission and owner
+cost, never by delaying completion to improve the denominator.
+
 The retired fixed Darwin preflight is no longer part of the workflow: affected
 selection is smaller and cannot drift from the complete manifest. Validation
 plans report owning suites, groups, and estimated serial cost. Timing receipts

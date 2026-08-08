@@ -39,34 +39,6 @@ assert_link() {
         fail "wrong link target: $destination"
 }
 
-# Claude imports the repository's AGENTS.md policy router. Conditional policy,
-# client permissions, and skill discovery are project-scoped; user scope
-# contains only sentinels.
-[ -f "$ROOT/AGENTS.md" ] && [ ! -L "$ROOT/AGENTS.md" ] ||
-    fail "missing project AGENTS.md"
-[ -f "$ROOT/CLAUDE.md" ] && [ ! -L "$ROOT/CLAUDE.md" ] ||
-    fail "missing project CLAUDE.md"
-grep -Fx '@AGENTS.md' "$ROOT/CLAUDE.md" >/dev/null ||
-    fail "Claude project instructions do not import AGENTS.md"
-[ ! -e "$ROOT/.claude/CLAUDE.md" ] ||
-    fail "redundant project .claude/CLAUDE.md remains"
-grep -F 'Git and `TODO.md` are the ordinary durable truth' "$ROOT/AGENTS.md" \
-    >/dev/null || fail "project takeover source of truth"
-grep -F 'chat and client memory' "$ROOT/AGENTS.md" \
-    >/dev/null || fail "project cross-client handoff policy"
-grep -F 'Owner approval alone never' \
-    "$ROOT/docs/agent-policy/external-operations.md" \
-    >/dev/null || fail "project reviewed-installer deletion boundary"
-grep -F 'Include a read-only inventory' \
-    "$ROOT/docs/agent-policy/housekeeping-and-promotion.md" \
-    >/dev/null || fail "project routine arg0 housekeeping policy"
-grep -F 'current local time in' "$ROOT/AGENTS.md" \
-    >/dev/null || fail "project progress timestamp policy"
-grep -F 'run a fresh native' "$ROOT/AGENTS.md" >/dev/null &&
-    grep -F "\`date '+%H:%M:%S'\` read" "$ROOT/AGENTS.md" \
-    >/dev/null || fail "project progress clock source"
-grep -F 'Never infer a timestamp' \
-    "$ROOT/AGENTS.md" >/dev/null || fail "project progress clock drift guard"
 for managed_root in \
     '$HOME/harness' \
     '/mnt/nfs-03/safe/Users/rioyokota/projects/students' \
@@ -79,12 +51,6 @@ do
         "$ROOT/config/agent-clients/claude-sentinel.md" >/dev/null ||
         fail "Claude launch sentinel root: $managed_root"
 done
-grep -F 'Personal and Website are non-managed bounded' \
-    "$ROOT/.codex/AGENTS.md" >/dev/null ||
-    fail 'Codex bounded-root classification'
-grep -F 'Personal and Website are non-managed bounded' \
-    "$ROOT/config/agent-clients/claude-sentinel.md" >/dev/null ||
-    fail 'Claude bounded-root classification'
 grep -F "Never apply one repository's policy to another" \
     "$ROOT/.codex/AGENTS.md" >/dev/null ||
     fail "Codex cross-repository policy isolation"

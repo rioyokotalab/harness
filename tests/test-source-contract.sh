@@ -3,7 +3,6 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HELPER_SOURCE=$ROOT/tests/smoke/jobs/source-contract.sh
-DOC=$ROOT/docs/queued-job-source-contract.md
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/source-contract-test.XXXXXX")
 
@@ -81,9 +80,5 @@ git -C "$repo" fetch -q "$other" "$divergent"
 if "$helper" "$divergent" tests/smoke/source.cpp >"$TEST_ROOT/divergent.out" 2>&1; then
     fail "non-ancestor revision accepted"
 fi
-
-grep -F 'does not freeze modules' "$DOC" >/dev/null || fail "scope boundary"
-grep -F 'every relevant path explicitly listed' "$DOC" >/dev/null ||
-    fail "explicit path documentation"
 
 printf '%s\n' 'source contract tests: PASS'

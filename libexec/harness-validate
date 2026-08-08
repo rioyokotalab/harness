@@ -633,6 +633,56 @@ def untracked_whitespace_check(
     return 0
 
 
+def repository_independence_check(root: Path, paths: list[str] | None) -> int:
+    git_args = () if paths is None else ("--", *paths)
+    tracked = set(
+        run_git(root, "ls-files", *git_args).stdout.splitlines()
+    )
+    peer = "web" "site"
+    forbidden = re.compile(
+        rf"/home/[^/]+/{peer}|\$HOME/{peer}|github\.com/[^/]+/{peer}|"
+        rf"{peer}-main\.json|{peer}-public-history",
+        re.IGNORECASE,
+    )
+    excluded = re.compile(
+        r"^(?:TODO\.md|docs/audits/.*|evaluation/results/.*|"
+        r"docs/llm-hpc-readiness-handoff-2026-07-17\.md)$"
+    )
+    for relative in sorted(tracked):
+        candidate = root / relative
+        try:
+            info = candidate.lstat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISLNK(info.st_mode):
+            resolved = (candidate.parent / os.readlink(candidate)).resolve()
+            if not resolved.exists():
+                return 1
+            try:
+                resolved.relative_to(root)
+            except ValueError:
+                return 1
+            continue
+        if not stat.S_ISREG(info.st_mode) or excluded.search(relative):
+            continue
+        try:
+            source = candidate.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        if forbidden.search(source):
+            return 1
+        if relative in {
+            "profiles/tools.tsv",
+            "tools/artifacts.tsv",
+            "libexec/harness-tool",
+            "libexec/harness-inventory",
+        } and re.search(r"\blftp\b", source, re.IGNORECASE):
+            return 1
+    if ".gitmodules" in tracked and (root / ".gitmodules").exists():
+        return 1
+    return 0
+
+
 def suites_for_stage(
     decision: dict,
     stage: str,
@@ -706,6 +756,20 @@ def run_validation(root: Path, base: str, decision: dict, jobs: str) -> list[dic
         }
     )
     if untracked_status != 0:
+        return results
+
+    independence_started = time.monotonic()
+    independence_status = repository_independence_check(
+        root, None if decision.get("full_requested", False) else decision["paths"]
+    )
+    results.append(
+        {
+            "path": "changed repository independence",
+            "seconds": round(time.monotonic() - independence_started, 6),
+            "status": independence_status,
+        }
+    )
+    if independence_status != 0:
         return results
 
     env = test_environment()

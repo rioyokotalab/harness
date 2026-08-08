@@ -9,7 +9,6 @@ import subprocess
 import sys
 import tempfile
 import threading
-import time
 import unittest
 from unittest import mock
 
@@ -242,6 +241,7 @@ class SlackSwallowInstallTests(unittest.TestCase):
             }
             captured: list[dict[str, str]] = []
             failures: list[BaseException] = []
+            ready = threading.Event()
 
             def serve() -> None:
                 try:
@@ -252,16 +252,15 @@ class SlackSwallowInstallTests(unittest.TestCase):
                         captured.append,
                         socket_uid=os.getuid(),
                         validator=INSTALL.validate_bundle,
+                        ready=ready.set,
                     )
                 except BaseException as exc:  # pragma: no cover - surfaced below
                     failures.append(exc)
 
             thread = threading.Thread(target=serve)
             thread.start()
-            for _attempt in range(100):
-                if path.exists() and path.stat().st_mode & 0o777 == 0o660:
-                    break
-                time.sleep(0.01)
+            ready.wait()
+            self.assertEqual(path.stat().st_mode & 0o777, 0o660)
             OAUTH._sink_socket(
                 bundle,
                 path,
@@ -269,8 +268,7 @@ class SlackSwallowInstallTests(unittest.TestCase):
                 server_uid=os.getuid(),
                 client_gid=os.getgid(),
             )
-            thread.join(timeout=5)
-            self.assertFalse(thread.is_alive())
+            thread.join()
             self.assertEqual(failures, [])
             self.assertEqual(captured, [bundle])
 

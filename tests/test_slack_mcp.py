@@ -353,9 +353,8 @@ class SlackMCPTests(unittest.TestCase):
             source = io.BytesIO((json.dumps(request(1, "ping")) + "\n").encode())
             destination = io.BytesIO()
             MCP.relay_stdio(socket_path, source, destination)
-            thread.join(timeout=2)
+            thread.join()
             listener.close()
-            self.assertFalse(thread.is_alive())
             self.assertEqual(json.loads(destination.getvalue()), {"id": 1, "jsonrpc": "2.0", "result": {}})
 
     @unittest.skipUnless(hasattr(socket, "SO_PEERCRED"), "requires peer credentials")
@@ -374,8 +373,6 @@ class SlackMCPTests(unittest.TestCase):
 
             first = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             second = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            first.settimeout(2)
-            second.settimeout(2)
             try:
                 first.connect(socket_path)
                 first_stream = first.makefile("rwb", buffering=0)

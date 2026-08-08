@@ -34,4 +34,12 @@ tests/test-personal-macos-config-sync.sh	7.980	Darwin	1	frozen candidate invento
 tests/test-personal-macos-config-sync-apply.sh	9.949	Darwin	1	frozen candidate inventory pass
 tests/test-personal-macos-config-migrate.sh	6.968	Darwin	1	repaired-owner pass
 tests/test-personal-macos-config-migrate-apply.sh	0.061	Darwin	1	repaired-owner pass
-tests/test-tool-manifests.sh	0.074	Darwin	1	repaired-owner pass
+tests/test-tool-manifests.sh	0.090	Darwin	1	repaired-owner pass
+tests/test-core-command-sources.sh	0.470	Darwin	1	changed-path incremental owner pass
+tests/test-hpc-readiness.sh	0.648	Darwin	1	repaired split-owner pass
+tests/test-hpc-cache-readiness.sh	0.416	Darwin	1	repaired split-owner pass
+tests/test-hpc-accelerator-readiness.sh	0.429	Darwin	1	repaired split-owner pass
+tests/test-hpc-mpi-readiness.sh	0.436	Darwin	1	repaired split-owner pass
+tests/test-hpc-numerical-readiness.sh	0.467	Darwin	1	repaired split-owner pass
+tests/test-hpc-compute-debugger-readiness.sh	0.510	Darwin	1	repaired split-owner pass
+tests/test-host-declarations.sh	0.530	Darwin	1	changed-path incremental owner pass

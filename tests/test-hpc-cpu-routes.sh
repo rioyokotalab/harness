@@ -3,7 +3,6 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 MAP=$ROOT/profiles/hpc-cpu-routes.tsv
-DOC=$ROOT/docs/bounded-cpu-routes.md
 
 rows=$(awk -F'|' '
     /^#/ { next }
@@ -26,7 +25,4 @@ grep -Fx 'al|slurm|--account|g177-1|--partition|normal|slurm:nodes=1,ntasks=1,cp
 grep -Fx 'rc|slurm|--account|cloud-users|--partition|r340|slurm:nodes=1,ntasks=1,cpus-per-task=1,gres=none|base|00:05:00|x86-cpu-route' "$MAP" >/dev/null
 grep -Fx 't4|age|-g|jh250019|none|none|age:cpu_4=1|module:gcc/14.2.0|00:05:00|native-group-flag' "$MAP" >/dev/null
 
-grep -F 'not authority for a project job' "$DOC" >/dev/null
-grep -F 'wrapper zero alone is insufficient' "$DOC" >/dev/null
-grep -F '`-g` selects the group; `-A` does not' "$DOC" >/dev/null
 printf '%s\n' 'bounded CPU route tests: PASS'

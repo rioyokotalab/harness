@@ -2,8 +2,9 @@
 
 For each repository:
 
-1. Run focused tests, its declared full suite, dependency and lock checks,
-   secret checks, and `git diff --check`.
+1. Run only the repository's exact changed-context owners, dependency and lock
+   checks, secret checks, and `git diff --check`; run its complete suite only
+   on an explicit owner request.
 2. Push a small reviewed commit series and open the repository-owned pull
    request.
 3. Require exact current-head checks. After any hosting change, read back live
@@ -41,7 +42,7 @@ branch; it creates a fresh guarded administration manifest instead of reusing
 an expired token. Unstarted bulk candidates remain for a fresh normal plan.
 
 For duration work, stop starting material changes at the frozen cutoff. Use
-the final window for full regression, live-settings readback, fleet health,
+the final window for exact-context final validation, live-settings readback, fleet health,
 residue, clean-tree, branch/worktree, and ledger checks.
 At the deadline, stop execution and leave the exact next executable action,
 retry safety, and authority requirement in every unfinished repository.

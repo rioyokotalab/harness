@@ -16,11 +16,16 @@ python3 docs/audits/nit002-essential-tests/generate-inventory.py \
 ```
 
 `owner-gaps.tsv` is the source-like path inventory, and `time-coupling.tsv`
-records each elapsed sleep, poll loop, and deterministic child join with its
-line and disposition. This keeps the wait-removal pass reviewable without
+records each elapsed sleep, poll loop, and deterministic child join in retained
+entry scripts and their Python test modules, with its line and disposition.
+This keeps the wait-removal pass reviewable without
 mistaking policy prose containing “wait” for an executed command.
 `matched-darwin-timings.tsv` records the serial, one-job final pass for every
 supplied Home over-ten candidate and each owner introduced by decomposition.
+The 116 manifest entry scripts currently contain 17,703 lines. The audit also
+descends into thirteen directly discovered Python test modules (3,373 lines)
+and the four intentional non-manifest shell scripts; wrapper brevity is never
+treated as evidence that the underlying test is small or wait-free.
 
 The review treats a test as essential when it is the narrow owner of an
 observable contract that can fail because of the changed bytes. A passing
@@ -72,6 +77,10 @@ a deterministic clock or event.
   Those sixteen owners alone consumed 1,460.492 Home suite-seconds in the
   supplied run; phase-one integration, full-repository ShellCheck, and
   housekeeping accounted for 1,172.630 seconds (80.3%) of that occupancy.
+  Replaying the same frozen paths through the reduced selector still chooses
+  sixteen distinct contracts, but their declared serial cost is now 59 seconds
+  rather than 290 exact-owner or 678 group-expanded seconds. No unrelated
+  replacement owner was introduced to make the number smaller.
 - `tests/test-phase1-integration.sh` is only a five-line wrapper around the
   2,045-line integration body in `tests/test-phase1.sh`. The body repeats shell
   and Python syntax checks plus many transactions already owned by focused
@@ -224,7 +233,7 @@ owners; groups remain descriptive metadata only.
 | `test-remote-session.sh` | exact owner | Unique direct/tmux/nested shell lifecycle contract. |
 | `test-housekeeping-owner-alias.sh` | split and exact owner | Unique immutable archive-owner fallback, but its single 447-line transaction suite is too coarse. |
 | `test-projects-pane-layout.sh` | retire duplicate | Its role/label topology is already asserted by the target-map, tmux-config, and managed-session owners. |
-| `test-repository-independence.sh` | incremental | Scan changed publishable files and changed symlinks; reserve repository scan for explicit full. |
+| `test-repository-independence.sh` | integrate, then retire | Run its changed-file and symlink checks as a millisecond structural validator step instead of a separate process. |
 | `test-claude-takeover.sh` | exact owner | Unique Codex/Claude installation collision and project-scope boundary. |
 | `test-local-mpi-profile.sh` | exact owner | Unique local MPI module activation/failure behavior. |
 | `test-agent-upgrade.sh` | exact owner | Unique agent replacement, rollback, and unmanaged-state refusal. |
@@ -302,6 +311,58 @@ native affinity owner remains.
   Dispatcher behavior remains owned by `test-source-contract.sh`; component
   suites should avoid reasserting generic routing unless their command surface
   is the changed contract.
+- Repository independence is a cross-cutting changed-file invariant, not a
+  two-second component process. Its peer-dependency, tracked-symlink,
+  `.gitmodules`, and retired-client checks now run directly beside `git diff
+  --check` in milliseconds; its standalone replay left the manifest.
+- A normalized four-line cross-suite scan found 364 repeated blocks. The
+  dominant blocks were cleanup traps, guarded fixture teardown, fake Darwin
+  adapters, and Git fixture construction rather than repeated decisions. The
+  behavioral duplicates it did expose were removed: seven component deletion
+  scans, the umbrella affinity matrix, and repeated bounded-root assertions.
+- The broad HPC job owner mixed six unrelated scheduler contracts. It is now
+  six independently selectable CPU, cache-startup, accelerator, MPI, numerical,
+  and debugger owners, each measured below one second. The unused 52-line
+  `local.slurm` example was retired because no contract or documentation entry
+  consumed it. Host declarations and generic core commands gained dynamic
+  changed-path owners instead of being smuggled through unrelated suites.
+- The CPU case also scanned every PBS job plus the HPC site policy, even though
+  changing either did not select that case. That cross-contract assertion is
+  now a sub-second PBS-policy owner selected by the policy document and each PBS
+  job; each job's behavioral owner remains separate.
+- Several runtime owners asserted prose or frozen evidence: fleet inventory,
+  CPU-route guidance, queued-source guidance, the PyTorch roadmap, checkpoint
+  prose, and a dated topology audit. Those assertions could not fail when their
+  mapped executable changed, and documentation changes should not launch
+  unrelated runtime work. They were removed. The fleet documentation-only
+  suite was replaced by a one-second owner of the actual home-layout schema;
+  the topology behavior owner is now Linux-only rather than a Darwin no-op.
+- A control-flow pass found 185 unreachable lines after the canonical Bash
+  startup owner's success exit. Those partial-state and symlink permutations
+  were neither runnable nor additional evidence, so they were physically
+  removed rather than retained as misleading source volume.
+- Descending through shell entry points into their Python test modules exposed
+  two 100-attempt socket-readiness polls, two 10 ms sleeps, three timeout joins,
+  and a five-second PTY deadline that the manifest-only pass could not see.
+  Socket readiness now uses an explicit server event; protocol completion and
+  PTY output use exact blocking events and child reaps with no elapsed deadline.
+- No two retained manifest entries have identical bytes or duplicate contract
+  labels. Every retained entry is directly reachable from at least one changed
+  path. The four executable test scripts outside the manifest are intentional:
+  the explicit full dispatcher and orchestrator, the explicitly requested
+  native-MPI environment gate, and a sourced housekeeping interruption fixture.
+- A reverse dependency trace compared every tracked file named by an entry
+  script with the selector owner for that file. Generic dispatcher/helper and
+  fixture dependencies remain primitive-owned rather than multiplying all
+  consumers. Actual selector defects were repaired: TODO context size, the
+  remote local-agent protocol, managed recovery/message policy, and project
+  agent-client configuration now select the tests that assert them. Policy and
+  documentation assertions misplaced in fleet, Claude, Codex, and HPC runtime
+  owners moved to their policy owner or were retired.
+- Extending source-gap discovery beyond executables to tracked `.agents`,
+  `.claude`, and `.codex` client configuration exposed 34 previously invisible
+  skill-link paths. They now select the live link-topology and repository
+  symlink-boundary owners; client configuration files select agent-config.
 
 ## Long-owner decomposition matrix
 
@@ -352,16 +413,18 @@ static skill/scaffold checks form a fourth sub-ten-second contract.
 ## Reduction checkpoint
 
 After exact ownership, historical retirement, representative-contract
-narrowing, and lifecycle splitting, the manifest has 109 independently
-selectable entries: seven redundant owners left, ten narrow owner entries were
-split out of long Mac, onboarding, Python, and guarded-delete contracts, and two
-previously untested source families gained owners. Source volume fell from
-25,714 to 18,016 lines and declared serial cost from 1,529 to 496 seconds. No entry is estimated above ten seconds,
+narrowing, and lifecycle splitting, the manifest has 116 independently
+selectable entries. Nine redundant owners left; separately selectable Mac,
+onboarding, guarded-delete, Python, HPC, host-declaration, and core-command
+contracts replaced their monoliths or ownership gaps. The increased row count
+is decomposition, not broader admission: a changed path selects only its exact
+owner. Source volume fell from 25,714 to 17,703 lines and declared serial cost
+from 1,529 to 498 seconds. No entry is estimated above ten seconds,
 no suite is reachable only through a group/full expansion, and no source-like
 path is ownerless. Static timing review now finds zero elapsed sleeps, polling
-loops, or test retries in retained execution. Its thirteen remaining `wait`
-tokens are deterministic child reaps after an exact signal, FIFO, process exit,
-or concurrent result—not elapsed readiness checks. The serial Darwin inventory
+loops, timeout joins, or test retries in retained execution. Its twenty remaining
+blocking joins are deterministic child reaps after an exact event, signal, FIFO,
+process exit, or concurrent result—not elapsed readiness checks. The serial Darwin inventory
 in `matched-darwin-timings.tsv` measured every supplied Mac-slow candidate and
 new split independently; all final rows pass between 0.061 and 9.949 seconds.
 

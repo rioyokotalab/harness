@@ -356,6 +356,37 @@ with tempfile.TemporaryDirectory() as raw_repo:
     assert module["untracked_whitespace_check"](
         fixture, ["deleted.txt"]
     ) == 1
+    peer_candidate = fixture / "peer.txt"
+    peer_candidate.write_text("$HOME/" + "web" + "site\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "add", "peer.txt"], cwd=fixture, check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    assert module["repository_independence_check"](
+        fixture, ["peer.txt"]
+    ) == 1
+    peer_candidate.write_text("independent\n", encoding="utf-8")
+    assert module["repository_independence_check"](
+        fixture, ["peer.txt"]
+    ) == 0
+    link = fixture / "outside-link"
+    link.symlink_to(fixture.parent, target_is_directory=True)
+    subprocess.run(
+        ["git", "add", "outside-link"], cwd=fixture, check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    assert module["repository_independence_check"](
+        fixture, ["outside-link"]
+    ) == 1
+    broken = fixture / "broken-link"
+    broken.symlink_to("missing")
+    subprocess.run(
+        ["git", "add", "broken-link"], cwd=fixture, check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    assert module["repository_independence_check"](
+        fixture, ["broken-link"]
+    ) == 1
     (fixture / ".gitignore").write_text(
         "*\n!.gitignore\n", encoding="utf-8"
     )

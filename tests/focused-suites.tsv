@@ -26,11 +26,9 @@ tests/test-guarded-delete.sh|guarded deletion core contract|9|heavy
 tests/test-guarded-delete-boundaries.sh|guarded deletion identity boundaries|10|heavy
 tests/test-codex-recovery-helper.sh|dedicated Local Codex recovery helper|4
 tests/test-al-session.sh|personal AL session contract|1|light|Linux
-tests/test-fleet-inventory.sh|cold-start fleet inventory focused suite|2
 tests/test-safety-guards.sh|interactive safety-guard focused suite|6
 tests/test-github-rulesets.sh|GitHub ruleset payload focused suite|1
 tests/test-actions-sustainability.sh|GitHub Actions sustainability focused suite|2
-tests/test-repository-independence.sh|repository independence focused suite|2
 tests/test-claude-takeover.sh|Claude takeover focused suite|8
 tests/test-claude-handoff.sh|task-bound Claude handoff focused suite|8
 tests/test-slack-broker.sh|client-neutral Slack broker policy contract|8
@@ -85,14 +83,20 @@ tests/test-macos-codex-bootstrap.sh|personal Mac Codex bootstrap|5
 tests/test-evaluation.sh|evaluation focused suite|8|heavy
 tests/test-public-repo-audit.sh|public repository audit focused suite|3
 tests/test-fleet-readiness-audit.sh|fleet readiness audit focused suite|3
-tests/test-hpc-readiness.sh|HPC readiness job focused suite|2
-tests/test-affinity-readiness.sh|CPU affinity readiness focused suite|1
+tests/test-hpc-readiness.sh|HPC CPU readiness contract|1
+tests/test-hpc-cache-readiness.sh|HPC cache-startup readiness contract|1
+tests/test-hpc-accelerator-readiness.sh|HPC accelerator readiness contract|1
+tests/test-hpc-mpi-readiness.sh|HPC single-node MPI readiness contract|1
+tests/test-hpc-numerical-readiness.sh|HPC numerical readiness contract|1
+tests/test-hpc-compute-debugger-readiness.sh|HPC compute-debugger readiness contract|1
+tests/test-hpc-pbs-policy.sh|HPC PBS notification policy|1
+tests/test-affinity-readiness.sh|CPU affinity readiness focused suite|1|light|Linux
 tests/test-hpc-multinode-mpi-routes.sh|multi-node MPI route focused suite|1
 tests/test-multinode-mpi-readiness.sh|multi-node MPI readiness focused suite|2
 tests/test-shared-executable-visibility.sh|shared executable visibility focused suite|2
 tests/test-hpc-result-hygiene.sh|HPC result hygiene focused suite|3
 tests/test-hpc-job-preflight.sh|HPC job preflight focused suite|5
-tests/test-hpc-topology-surface.sh|HPC topology surface focused suite|3
+tests/test-hpc-topology-surface.sh|HPC topology surface focused suite|1|light|Linux
 tests/test-hpc-project-intake.sh|HPC project intake focused suite|1
 tests/test-hpc-project-intake-validator.sh|HPC project intake validator focused suite|3
 tests/test-pytorch-lock.sh|PyTorch dual-architecture lock focused suite|1
@@ -102,9 +106,12 @@ tests/test-debugger-readiness.sh|debugger readiness focused suite|2
 tests/test-venv-readiness.sh|venv readiness focused suite|2
 tests/test-locked-venv-readiness.sh|locked venv readiness focused suite|2
 tests/test-scientific-library-readiness.sh|scientific library readiness focused suite|4
+tests/test-host-declarations.sh|changed host and fact declaration schema|1
+tests/test-home-layout.sh|home layout declaration schema|1
 tests/test-fleet-sync.sh|fleet sync focused suite|7|heavy
 tests/test-checkpoint-restart.sh|checkpoint restart focused suite|2|heavy
 tests/test-hpc-cpu-routes.sh|bounded CPU route focused suite|2
 tests/test-source-contract.sh|source contract focused suite|5
 tests/test-presentation-tools.sh|presentation tool syntax and entry points|1
-tests/test-tool-manifests.sh|core command and tool manifest schemas|1
+tests/test-tool-manifests.sh|tool and runtime manifest schemas|1
+tests/test-core-command-sources.sh|changed core command source contract|1

@@ -16,6 +16,7 @@ SLEEP = re.compile(r"(?m)\bsleep(?:\s|$)")
 POLL = re.compile(r"(?i)poll|deadline|until .*\[|while .*\[")
 RETRY = re.compile(r"(?i)retry|attempts?|backoff")
 WAIT = re.compile(r"(?m)^\s*(?:if\s+)?wait(?:\s|$)")
+PYTHON_JOIN = re.compile(r"\.(?:join|wait)\(\s*\)")
 ASSERTION = re.compile(r"(?m)\b(?:assert|fail)\b|\|\|\s*exit\s+1")
 ROOT_REFERENCE = re.compile(r'(?:\$ROOT|\$root)/([A-Za-z0-9_./*{}-]+)')
 RETIRE_FROM_DEFAULT = {
@@ -27,7 +28,6 @@ RETIRE_FROM_DEFAULT = {
 }
 EXTRACT_THEN_RETIRE = {"tests/test-phase1-integration.sh"}
 MAKE_INCREMENTAL = {
-    "tests/test-repository-independence.sh",
     "tests/test-shellcheck.sh",
 }
 
@@ -99,7 +99,7 @@ def owner_gaps(root: Path) -> list[dict[str, str]]:
         stdout=subprocess.PIPE,
     ).stdout.splitlines()
     relevant = re.compile(
-        r"^(?:\.github/|bin/|config/|install\.sh$|libexec/|presentation/scripts/|"
+        r"^(?:\.(?:agents|claude|codex)/|\.github/|bin/|config/|install\.sh$|libexec/|presentation/scripts/|"
         r"profiles/|shell/|tests/(?:fixtures|smoke)/|tests/test[^/]*\.(?:py|sh)$|"
         r"tools/)"
     )
@@ -123,14 +123,34 @@ def owner_gaps(root: Path) -> list[dict[str, str]]:
 
 def time_coupling(root: Path, inventory: list[dict[str, object]]) -> list[dict[str, object]]:
     findings = []
-    for item in inventory:
-        suite = str(item["suite"])
+    sources = {str(item["suite"]) for item in inventory}
+    tracked_python_tests = subprocess.run(
+        ["git", "ls-files", "*test*.py"],
+        cwd=root,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        text=True,
+        stdout=subprocess.PIPE,
+    ).stdout.splitlines()
+    sources.update(
+        path
+        for path in tracked_python_tests
+        if Path(path).name.startswith("test")
+        and (
+            path.startswith("tests/")
+            or path.startswith(
+                "shared/skills/onboard-project-repository/assets/scaffold/tests/"
+            )
+        )
+        and (root / path).is_file()
+    )
+    for suite in sorted(sources):
         for number, raw in enumerate((root / suite).read_text().splitlines(), 1):
             stripped = raw.strip()
             if (SLEEP.search(raw) and ".sleep =" not in raw) or "time.sleep(" in raw:
                 kind = "elapsed-sleep"
                 action = "remove-or-replace-with-event"
-            elif WAIT.search(raw):
+            elif WAIT.search(raw) or PYTHON_JOIN.search(raw):
                 kind = "child-join"
                 action = "retain-only-after-exact-event-or-signal"
             elif re.search(r"\bwhile\b.*(?:attempt|\.active| -[eSf] )", raw):
