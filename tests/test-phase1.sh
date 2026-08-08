@@ -1257,7 +1257,8 @@ cp "$test_home/.bash_profile" "$TEMP_DIR/original-bash-profile"
 HOME="$test_home" "$test_repo/bin/harness" shell --host local --plan \
     >"$TEMP_DIR/shell-plan.out"
 grep 'APPEND file=.bashrc' "$TEMP_DIR/shell-plan.out" >/dev/null || fail "shell plan"
-HOME="$test_home" "$test_repo/bin/harness" shell --host local --apply \
+HOME="$test_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" shell --host local --apply \
     >"$TEMP_DIR/shell-apply.out"
 shell_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' "$TEMP_DIR/shell-apply.out")
 [ -n "$shell_transaction" ] || fail "missing shell transaction"
@@ -1290,14 +1291,16 @@ printf '%s\n' \
 printf '%s\n' \
     'printf "%s\\n" "${XDG_CACHE_HOME:-unset}" >"$HOME/login-observed"' \
     >"$cache_home/.bash_profile"
-HOME="$cache_home" "$test_repo/bin/harness" shell --host local --apply \
+HOME="$cache_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" shell --host local --apply \
     >"$TEMP_DIR/cache-shell-apply.out"
 ln -s "$test_repo" "$cache_home/harness"
 HOME="$cache_home" "$test_repo/bin/harness" cache-bootstrap --host local --plan \
     >"$TEMP_DIR/cache-bootstrap-plan.out"
 [ "$(grep -c '^PREPEND file=' "$TEMP_DIR/cache-bootstrap-plan.out")" -eq 2 ] ||
     fail "cache bootstrap plan did not cover both startup files"
-HOME="$cache_home" "$test_repo/bin/harness" cache-bootstrap --host local --apply \
+HOME="$cache_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" cache-bootstrap --host local --apply \
     >"$TEMP_DIR/cache-bootstrap-apply.out"
 cache_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/cache-bootstrap-apply.out")
@@ -1541,7 +1544,8 @@ if grep 'file=.bash_profile' "$TEMP_DIR/profile-shell-plan.out" >/dev/null; then
 fi
 cp "$profile_home/.bashrc" "$TEMP_DIR/original-profile-bashrc"
 cp "$profile_home/.profile" "$TEMP_DIR/original-profile-login"
-HOME="$profile_home" "$test_repo/bin/harness" shell --host local --apply \
+HOME="$profile_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" shell --host local --apply \
     >"$TEMP_DIR/profile-shell-apply.out"
 profile_shell_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/profile-shell-apply.out")
@@ -1565,7 +1569,8 @@ grep 'CREATE file=.bashrc' "$TEMP_DIR/new-shell-plan.out" >/dev/null ||
     fail "absent bashrc creation plan"
 grep 'CREATE file=.profile' "$TEMP_DIR/new-shell-plan.out" >/dev/null ||
     fail "absent profile creation plan"
-HOME="$new_shell_home" "$test_repo/bin/harness" shell --host local --apply \
+HOME="$new_shell_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" shell --host local --apply \
     >"$TEMP_DIR/new-shell-apply.out"
 new_shell_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/new-shell-apply.out")
@@ -1584,7 +1589,8 @@ printf '%s\n' 'Host node-only' '    HostName node.invalid' \
 chmod 600 "$dotfile_home/.ssh/config"
 cp "$dotfile_home/.vimrc" "$TEMP_DIR/original-vimrc"
 cp "$dotfile_home/.ssh/config" "$TEMP_DIR/original-ssh-config"
-HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$dotfile_home" \
+HARNESS_TEST_ALLOW_NONMAIN=1 HARNESS_TESTING=1 \
+    HARNESS_TEST_FACTS_FILE="$control_facts" HOME="$dotfile_home" \
     "$test_repo/bin/harness" dotfiles --host local --plan \
     >"$TEMP_DIR/dotfile-plan.out"
 grep 'REPLACE file=.*\.vimrc reason=owner-approved-canonical-version' \

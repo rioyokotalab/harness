@@ -22,6 +22,13 @@ profile_for "$logical_host" >/dev/null
 for required in cmp ex head stat wc; do
     command -v "$required" >/dev/null 2>&1 || die "cache bootstrap requires command: $required"
 done
+platform=$(uname -s)
+file_owner() {
+    case $platform in Darwin) stat -f '%u' "$1" ;; *) stat -c '%u' -- "$1" ;; esac
+}
+file_mode() {
+    case $platform in Darwin) stat -f '%Lp' "$1" ;; *) stat -c '%a' -- "$1" ;; esac
+}
 
 temp_parent=${TMPDIR:-/tmp}
 payload=$(mktemp "$temp_parent/harness-cache-bootstrap.XXXXXX")
@@ -85,7 +92,7 @@ for name in $entries; do
     if [ ! -f "$destination" ] || [ -L "$destination" ]; then
         echo "BLOCK file=.$name reason=not-strict-regular"
         blocked=1
-    elif [ "$(stat -c %u "$destination")" != "$uid" ]; then
+    elif [ "$(file_owner "$destination")" != "$uid" ]; then
         echo "BLOCK file=.$name reason=not-owned-by-current-user"
         blocked=1
     elif [ "$(wc -c <"$destination" | tr -d ' ')" -lt "$suffix_bytes" ] ||
@@ -162,7 +169,7 @@ for name in $entries; do
     prepare_suffix "$name"
     suffix_bytes=$(wc -c <"$suffix" | tr -d ' ')
     [ -f "$destination" ] && [ ! -L "$destination" ] || die "cache bootstrap destination changed type"
-    [ "$(stat -c %u "$destination")" = "$uid" ] || die "cache bootstrap destination changed owner"
+    [ "$(file_owner "$destination")" = "$uid" ] || die "cache bootstrap destination changed owner"
     [ "$(wc -c <"$destination" | tr -d ' ')" -ge "$suffix_bytes" ] &&
         tail -c "$suffix_bytes" "$destination" | cmp -s - "$suffix" || die "cache bootstrap managed suffix changed"
     if head -c "$payload_bytes" "$destination" | cmp -s - "$payload"; then
@@ -172,7 +179,7 @@ for name in $entries; do
         die "cache bootstrap early marker changed before apply"
     fi
     original=$(wc -c <"$destination" | tr -d ' ')
-    original_mode=$(stat -c %a "$destination")
+    original_mode=$(file_mode "$destination")
     stored=$state_root/$transaction_id.$name.early.payload
     cp "$payload" "$stored"; chmod 600 "$stored"
     printf 'shell-prefix|%s|%s|%s|%s|%s|%s\n' \
@@ -183,7 +190,7 @@ set nobackup nowritebackup noswapfile
 write
 quit
 EOF
-    [ "$(stat -c %a "$destination")" = "$original_mode" ] || die "cache bootstrap changed file mode"
+    [ "$(file_mode "$destination")" = "$original_mode" ] || die "cache bootstrap changed file mode"
     [ "$(wc -c <"$destination" | tr -d ' ')" -eq $((original + payload_bytes)) ] || die "cache bootstrap size verification failed"
     head -c "$payload_bytes" "$destination" | cmp -s - "$stored" || die "cache bootstrap prefix verification failed"
 done
