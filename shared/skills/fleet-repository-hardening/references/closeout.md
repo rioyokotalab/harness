@@ -41,8 +41,8 @@ classification, missing directory, administration identity, and exact-old
 branch; it creates a fresh guarded administration manifest instead of reusing
 an expired token. Unstarted bulk candidates remain for a fresh normal plan.
 
-For duration work, stop starting material changes at the frozen cutoff. Use
-the final window for exact-context final validation, live-settings readback, fleet health,
-residue, clean-tree, branch/worktree, and ledger checks.
+For duration work, stop changes at cutoff. Use the final window for
+exact-context validation, settings readback, health, residue,
+clean-tree, branch/worktree, and ledger checks.
 At the deadline, stop execution and leave the exact next executable action,
 retry safety, and authority requirement in every unfinished repository.

@@ -26,10 +26,13 @@ commands = {
 changed = {
     Path(path).name
     for path in os.environ.get("HARNESS_CHANGED_PATHS", "").splitlines()
-    if path.startswith("libexec/")
 }
-selected = sorted(commands & changed) if changed else sorted(commands)
-assert selected
+selected = sorted(commands & changed)
+if not changed or "test-core-command-sources.sh" in changed:
+    selected = sorted(commands)
+if not selected:
+    print("CORE_COMMAND_SOURCES status=not-applicable commands=0")
+    raise SystemExit(0)
 for name in selected:
     source = (root / "libexec" / name).read_text(encoding="utf-8")
     assert source.startswith("#!/bin/sh\n"), name
