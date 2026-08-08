@@ -138,7 +138,8 @@ stays only in the private live regular file and never dirties public Git.
 
 `harness personal-agent` is a non-managed bridge from Harness to the exact
 private repository at
-`/mnt/nfs-03/safe/Users/rioyokota/projects/personal`. It never adds a Codex
+`/mnt/nfs-03/safe/Users/rioyokota/projects/personal` on Linux or
+`$HOME/projects/personal` on macOS. It never adds a Codex
 target, tmux pane, phone thread, app-server root, monitor role, saved root, or
 recovery identity. The user launch sentinels admit that one exact path while
 labeling it non-managed.

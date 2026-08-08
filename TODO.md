@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-426.
+Next free ID: Har-427.
 
 ## Resume contract
 
@@ -14,6 +14,12 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Active
+
+### Har-426 — Run bounded Personal work from Riken Harness
+
+**Phase:** make the existing non-managed Personal bridge portable to Riken,
+validate the exact macOS root and runtime, then complete protected publication. **Record:**
+`docs/tasks/Har-426.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
 
