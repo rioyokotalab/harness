@@ -15,12 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Active
 
-### Har-426 — Run bounded Personal work from Riken Harness
-
-**Phase:** make the existing non-managed Personal bridge portable to Riken,
-validate the exact macOS root and runtime, then complete protected publication. **Record:**
-`docs/tasks/Har-426.md`.
-
 ### Har-423 — Reconcile five repositories across the fleet
 
 **Phase:** inventory and guarded housekeeping; then synchronize clean managed
