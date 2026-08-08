@@ -1633,11 +1633,14 @@ cmp -s "$dotfile_home/.ssh/config" "$TEMP_DIR/original-ssh-config" ||
 # managed bin. The portable profile must move its directory to the front and
 # remove duplicates without losing the remaining order.
 profile_path_home=$TEMP_DIR/profile-path-home
-mkdir -p "$profile_path_home/.local/bin"
+profile_path_bin=$TEMP_DIR/profile-path-bin
+mkdir -p "$profile_path_home/.local/bin" "$profile_path_bin"
+printf '%s\n' '#!/bin/sh' 'printf "Linux\\n"' >"$profile_path_bin/uname"
+chmod 755 "$profile_path_bin/uname"
 HOME="$profile_path_home" \
-    PATH="/site/project/bin:$profile_path_home/.local/bin:/usr/bin:$profile_path_home/.local/bin:/bin" \
+    PATH="$profile_path_bin:/site/project/bin:$profile_path_home/.local/bin:/usr/bin:$profile_path_home/.local/bin:/bin" \
     HARNESS_PROFILE="$test_repo/shell/profile.sh" \
-    EXPECTED_PATH="$profile_path_home/.local/bin:/site/project/bin:/usr/bin:/bin" \
+    EXPECTED_PATH="$profile_path_home/.local/bin:$profile_path_bin:/site/project/bin:/usr/bin:/bin" \
     sh -c '. "$HARNESS_PROFILE"; [ "$PATH" = "$EXPECTED_PATH" ]' ||
     fail "managed bin path precedence"
 
