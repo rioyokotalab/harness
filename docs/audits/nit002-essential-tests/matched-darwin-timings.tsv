@@ -1,7 +1,7 @@
 suite	seconds	platform	jobs	evidence
-tests/test-focused-runner.sh	6.760	Darwin	1	direct repaired-owner pass
+tests/test-focused-runner.sh	5.478	Darwin	1	repaired standalone pass
 tests/test-startup-normalize.sh	5.065	Darwin	1	frozen candidate inventory pass
-tests/test-validation-router.sh	1.640	Darwin	1	repaired-owner pass
+tests/test-validation-router.sh	1.945	Darwin	1	repaired standalone pass
 tests/test-harness-ledgers.sh	0.622	Darwin	1	frozen candidate inventory pass
 tests/test-t4-hub.sh	4.410	Darwin	1	frozen candidate inventory pass
 tests/test-tmux-codex-monitor.sh	1.939	Darwin	1	frozen candidate inventory pass
@@ -43,3 +43,28 @@ tests/test-hpc-mpi-readiness.sh	0.436	Darwin	1	repaired split-owner pass
 tests/test-hpc-numerical-readiness.sh	0.467	Darwin	1	repaired split-owner pass
 tests/test-hpc-compute-debugger-readiness.sh	0.510	Darwin	1	repaired split-owner pass
 tests/test-host-declarations.sh	0.530	Darwin	1	changed-path incremental owner pass
+tests/test-bash-startup-unify.sh	2.657	Darwin	1	slice-four standalone pass
+tests/test-remote-agent-communication.sh	7.789	Darwin	1	slice-four standalone pass
+tests/test-reboot-recovery-skill.sh	2.810	Darwin	1	slice-four standalone pass
+tests/test-fleet-health.sh	5.600	Darwin	1	slice-four standalone pass
+tests/test-connection-monitor.sh	3.387	Darwin	1	slice-four standalone pass
+tests/test-macos-agent-session.sh	6.060	Darwin	1	slice-four standalone pass
+tests/test-housekeeping.sh	4.300	Darwin	1	slice-four standalone pass
+tests/test-claude-takeover.sh	4.065	Darwin	1	slice-four standalone pass
+tests/test-slack-broker.sh	4.685	Darwin	1	slice-four standalone pass
+tests/test-personal-agent.sh	6.678	Darwin	1	slice-four standalone pass
+tests/test-codex-resilient.sh	4.117	Darwin	1	slice-four standalone pass
+tests/test-codex-runtime-isolation.sh	7.973	Darwin	1	slice-four standalone pass
+tests/test-personal-macos-inventory.sh	8.618	Darwin	1	slice-four standalone pass
+tests/test-personal-macos-control.sh	9.198	Darwin	1	slice-four standalone pass
+tests/test-personal-macos-bash.sh	9.152	Darwin	1	slice-four standalone pass
+tests/test-personal-macos-login-shell.sh	7.810	Darwin	1	slice-four standalone pass
+tests/test-tmux-config.sh	8.286	Darwin	1	slice-four standalone pass
+tests/test-personal-macos-ssh-supervisor.sh	9.992	Darwin	1	slice-four standalone pass
+tests/test-ssh-config-mirror.sh	9.053	Darwin	1	slice-four standalone pass
+tests/test-restic-schedule.sh	9.537	Darwin	1	slice-four standalone pass
+tests/test-hpc-pbs-policy.sh	0.425	Darwin	1	slice-four standalone pass
+tests/test-storage-readiness.sh	8.489	Darwin	1	slice-four standalone pass
+tests/test-home-layout.sh	0.431	Darwin	1	slice-four standalone pass
+tests/test-shellcheck.sh	2.199	Darwin	1	repaired standalone pass
+tests/test-personal-macos-update.sh	9.235	Darwin	1	repaired standalone pass

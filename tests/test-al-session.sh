@@ -8,7 +8,6 @@ fi
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
-RUNNER=$ROOT/libexec/harness-al-session-runner
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 # Linux AF_UNIX names include the complete pathname in a 108-byte field.

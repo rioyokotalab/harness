@@ -2,7 +2,6 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-INVENTORY=$ROOT/libexec/harness-macos-inventory
 PLAN=$ROOT/libexec/harness-macos-plan
 DOCTOR=$ROOT/libexec/harness-macos-doctor
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)

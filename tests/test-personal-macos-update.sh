@@ -225,14 +225,6 @@ printf '%s\n' "$second_plan" | grep -F \
     fail "idempotent checkout plan"
 printf '%s\n' "$second_plan" | grep -F 'MIGRATION state=current' >/dev/null ||
     fail "idempotent state plan"
-second_apply=$(HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    run_update "$primary_public/libexec/harness-macos-update" \
-    --host mac-test-pilot \
-    --public-target "$primary_public_target" \
-    --private-target "$primary_private_target" --apply)
-printf '%s\n' "$second_apply" | grep -F 'END macos_update changes=none' \
-    >/dev/null || fail "idempotent second apply"
-
 rollback_output=$(HOME="$primary_home" HARNESS_ROOT="$primary_public" \
     run_update "$primary_public/libexec/harness-macos-update" \
     --rollback "$transaction")

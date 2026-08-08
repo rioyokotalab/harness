@@ -4,7 +4,7 @@ tests/test-checkpoint-restart.sh	93	child-join	retain-only-after-exact-event-or-
 tests/test-codex-arg0-wrapper.sh	16	child-join	retain-only-after-exact-event-or-signal	"wait ""$locker"" 2>/dev/null || true"
 tests/test-codex-arg0-wrapper.sh	122	child-join	retain-only-after-exact-event-or-signal	"wait ""$locker"" 2>/dev/null || true"
 tests/test-codex-arg0-wrapper.sh	177	child-join	retain-only-after-exact-event-or-signal	"wait ""$locker"" 2>/dev/null || true"
-tests/test-codex-runtime-isolation.sh	38	child-join	retain-only-after-exact-event-or-signal	"wait ""$process_pid"" 2>/dev/null"
+tests/test-codex-runtime-isolation.sh	36	child-join	retain-only-after-exact-event-or-signal	"wait ""$process_pid"" 2>/dev/null"
 tests/test-codex-thread-recovery.sh	23	child-join	retain-only-after-exact-event-or-signal	"wait ""$server_pid"" 2>/dev/null || true"
 tests/test-codex-thread-recovery.sh	717	child-join	retain-only-after-exact-event-or-signal	"wait ""$server_pid"""
 tests/test-connection-monitor.sh	19	child-join	retain-only-after-exact-event-or-signal	"wait ""$AGENT_PID"" 2>/dev/null || true"

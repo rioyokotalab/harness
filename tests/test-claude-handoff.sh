@@ -10,8 +10,6 @@ STAGE_DIR=$TEST_ROOT/stage
 PACKET=$STAGE_DIR/handoff.json
 STAGE=$STAGE_DIR/stage.json
 EVIDENCE=$TEST_ROOT/evidence.json
-REPRODUCTION=$TEST_ROOT/reproduction.json
-RETRY=$TEST_ROOT/retry.json
 
 cleanup() {
     status=$?
@@ -101,13 +99,8 @@ printf '%s\n' '{"required_approvals":0,"owner_selected":true}' \
 git -C "$repo" add AGENTS.md TODO.md policy.json
 git -C "$repo" commit -qm baseline
 baseline=$(git -C "$repo" rev-parse HEAD)
-baseline_output_digest=$(python3 -c \
-    'import hashlib, sys; print(hashlib.sha256((sys.argv[1] + "\n").encode()).hexdigest())' \
-    "$baseline")
-policy_digest=$(sha_file "$repo/policy.json")
 printf '%s\n' 'owner draft: preserve this unrelated dirty file' \
     >"$repo/owner-note.txt"
-owner_digest=$(sha_file "$repo/owner-note.txt")
 
 write_packet() {
     task_id=$1

@@ -41,8 +41,11 @@ assert configured_git[f"GIT_CONFIG_VALUE_{configured_index}"] == "false"
 cases = [
     (
         ["TODO.md", "docs/tasks/index.tsv"],
-        "R0",
-        ["tests/test-harness-ledgers.sh"],
+        "R1",
+        [
+            "tests/test-context-routing-benchmark.sh",
+            "tests/test-harness-ledgers.sh",
+        ],
         True,
     ),
     (
@@ -764,8 +767,9 @@ if not __debug__:
 docs, skill, ordinary, unknown, discovery, final, full = (
     json.loads(value) for value in sys.argv[1:]
 )
-assert docs["tier"] == "R0"
+assert docs["tier"] == "R1"
 assert docs["owner_suites"] == [
+    "tests/test-context-routing-benchmark.sh",
     "tests/test-harness-ledgers.sh",
 ]
 assert skill["tier"] == "R1"

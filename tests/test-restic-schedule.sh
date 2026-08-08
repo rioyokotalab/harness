@@ -326,10 +326,8 @@ run_schedule() {
         "$HARNESS" restic-schedule "$@" --host "$host"
 }
 
-for declaration in 'ri slurm'; do
-    set -- $declaration
-    host=$1
-    family=$2
+    host=ri
+    family=slurm
     home=$TEST_ROOT/home-$host
     mkdir -p "$home"
     : >"$fake_sched/jobs"
@@ -337,19 +335,10 @@ for declaration in 'ri slurm'; do
         { sed -n '1,80p' "$TEST_ROOT/$host.seed" >&2; fail "$host seed"; }
     grep "RESTIC_SCHEDULE_SEED host=$host" "$TEST_ROOT/$host.seed" >/dev/null ||
         fail "$host seed output"
-    if [ "$host" = ri ]; then
-        grep -- '--account=rkp00015' "$TEST_ROOT/$host.seed" >/dev/null ||
-            fail "RI native account request"
-        grep -- '--gres=none' "$TEST_ROOT/$host.seed" >/dev/null ||
-            fail "Slurm explicit no-GRES request"
-    elif [ "$host" = ab ]; then
-        grep -F 'NATIVE ab: qsub -m n ' "$TEST_ROOT/$host.seed" >/dev/null ||
-            fail "PBS no-mail default"
-    elif [ "$host" = abq ]; then
-        grep -F 'NATIVE abq: qsub -W group_list=qgai50157 -l rt_QC=1 ' \
-            "$TEST_ROOT/$host.seed" >/dev/null ||
-            fail "ABCI-Q native group and CPU resource request"
-    fi
+    grep -- '--account=rkp00015' "$TEST_ROOT/$host.seed" >/dev/null ||
+        fail "RI native account request"
+    grep -- '--gres=none' "$TEST_ROOT/$host.seed" >/dev/null ||
+        fail "Slurm explicit no-GRES request"
     [ "$(wc -l <"$fake_sched/jobs" | tr -d ' ')" -eq 1 ] || fail "$host singleton"
     run_schedule "$host" "$family" "$home" status >"$TEST_ROOT/$host.status" ||
         fail "$host status"
@@ -372,7 +361,5 @@ for declaration in 'ri slurm'; do
     run_schedule "$host" "$family" "$home" disable >"$TEST_ROOT/$host.disable" 2>&1 ||
         fail "$host exact disable"
     [ ! -s "$fake_sched/jobs" ] || fail "$host disable left job"
-done
-
 echo 'Restic scheduling essential contract: PASS'
 exit 0

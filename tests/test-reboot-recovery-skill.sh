@@ -163,7 +163,6 @@ if grep -E '(rm|unlink).*[.]DS_Store|[.]DS_Store.*(rm|unlink)' \
     fail "recovery contains DS_Store removal"
 fi
 
-BASELINE_AGGREGATE=599
 BASELINE_LARGEST_ROUTE=599
 entry_words=$(words "$SKILL")
 status_words=$(words "$STATUS_REFERENCE")

@@ -334,7 +334,7 @@ fi
 
 if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/invalid-platform-logs" \
-    --platform synthetic >"$TEMP_DIR/invalid-platform.out" 2>&1; then
+    --jobs 1 --platform synthetic >"$TEMP_DIR/invalid-platform.out" 2>&1; then
     fail 'runner accepted a platform that defers every owner'
 fi
 grep -F 'platform must be Darwin or Linux' "$TEMP_DIR/invalid-platform.out" \

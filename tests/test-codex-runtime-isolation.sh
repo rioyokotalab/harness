@@ -14,8 +14,6 @@ students_release=
 personal_release=
 canonical_release=
 harness_payload=
-students_payload=
-personal_payload=
 
 fail() {
     printf 'FAIL: %s\n' "$*" >&2
