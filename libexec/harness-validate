@@ -21,7 +21,6 @@ from typing import Iterable
 
 
 TIERS = {"R0": 0, "R1": 1, "R2": 2, "R3": 3}
-FULL_SUITE = "tests/test-phase1.sh"
 IMPACT_MAP = "tests/validation-impact.tsv"
 GROUP_MAP = "tests/validation-groups.tsv"
 FOCUSED_MANIFEST = "tests/focused-suites.tsv"
@@ -279,6 +278,11 @@ def classify(
         group_rules = load_group_rules(root)
     if focused is None:
         focused = load_focused_suites(root, group_rules)
+    current_platform = platform.system()
+    full_applicable = [
+        suite for suite in focused if current_platform in focused[suite].platforms
+    ]
+    full_not_applicable = sorted(set(focused) - set(full_applicable))
     tier = "R0"
     suites: set[str] = set()
     matches: list[dict[str, str]] = []
@@ -292,6 +296,8 @@ def classify(
             "matches": [{"path": "-", "pattern": "-", "reason": "no changed paths"}],
             "owner_gaps": [],
             "final_required": False,
+            "full_applicable_suites": full_applicable,
+            "full_not_applicable_suites": full_not_applicable,
             "cacheable": True,
         }
 
@@ -333,7 +339,6 @@ def classify(
             )
 
     selected = sorted(suites)
-    current_platform = platform.system()
     applicable = [
         suite for suite in selected
         if current_platform in focused[suite].platforms
@@ -378,6 +383,8 @@ def classify(
         "matches": matches,
         "owner_gaps": owner_gaps,
         "final_required": bool(paths),
+        "full_applicable_suites": full_applicable,
+        "full_not_applicable_suites": full_not_applicable,
         "cacheable": cacheable,
     }
 
@@ -702,7 +709,7 @@ def suites_for_stage(
             raise ValueError("--full is valid only with --stage final")
         if requested:
             raise ValueError("--full and --suite are mutually exclusive")
-        return [FULL_SUITE]
+        return decision["full_applicable_suites"]
     if stage == "final":
         if requested:
             raise ValueError("--suite is valid only for repair stage")
@@ -977,9 +984,7 @@ def main() -> int:
         "cacheable": decision["cacheable"] and args.stage == "repair",
         "estimated_seconds": decision["estimated_seconds"],
         "execution_estimated_seconds": (
-            sum(suite.estimate for suite in focused.values())
-            if args.full
-            else sum(focused[path].estimate for path in execution_suites)
+            sum(focused[path].estimate for path in execution_suites)
         ),
         "execution_suites": execution_suites,
         "final_required": decision["final_required"],
@@ -987,7 +992,11 @@ def main() -> int:
         "groups": decision["groups"],
         "matches": decision["matches"],
         "owner_suites": decision["suites"],
-        "not_applicable_suites": decision.get("not_applicable_suites", []),
+        "not_applicable_suites": (
+            decision["full_not_applicable_suites"]
+            if args.full
+            else decision.get("not_applicable_suites", [])
+        ),
         "owner_gaps": decision["owner_gaps"],
         "paths": decision["paths"],
         "schema": 1,
@@ -1006,6 +1015,10 @@ def main() -> int:
         "stage": args.stage,
         "suites": execution_suites,
     }
+    if args.full:
+        execution["not_applicable_suites"] = decision[
+            "full_not_applicable_suites"
+        ]
     identity = clean_tree_identity(root, args.base, execution, args.jobs)
     receipt_dir: Path | None = None
     if args.stage in {"discovery", "final"} and args.no_receipt:

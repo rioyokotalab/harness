@@ -629,11 +629,15 @@ assert module["suites_for_stage"](multi, "final", None, execute=True) == [
     "tests/test-debugger-readiness.sh",
     "tests/test-scientific-library-readiness.sh",
 ]
-assert module["suites_for_stage"](
+full_suites = module["suites_for_stage"](
     multi, "final", None, execute=True, full=True
-) == [
-    "tests/test-phase1.sh"
+)
+assert full_suites == [
+    suite
+    for suite, metadata in focused.items()
+    if platform.system() in metadata.platforms
 ]
+assert "tests/test-phase1.sh" not in full_suites
 owner_gap = classify(root, ["unmapped/new-file"], rules, focused, group_rules)
 try:
     module["suites_for_stage"](owner_gap, "final", None, execute=True)
@@ -852,7 +856,9 @@ assert final["not_applicable_suites"] == (
     [] if platform.system() == "Linux" else ["tests/test-terminfo.sh"]
 )
 assert final["full_requested"] is False
-assert full["execution_suites"] == ["tests/test-phase1.sh"]
+assert "tests/test-phase1.sh" not in full["execution_suites"]
+all_full = full["execution_suites"] + full["not_applicable_suites"]
+assert len(all_full) == len(set(all_full)) == 116
 assert full["full_requested"] is True
 PY
 
