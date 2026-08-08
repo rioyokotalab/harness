@@ -74,10 +74,10 @@ def validate(text: str) -> None:
 
     step_contracts = (
         (
-            "      - name: Run risk-routed portable pull-request gate",
+            "      - name: Discover all affected-group failures for pull requests",
             [
                 "        if: github.event_name == 'pull_request'",
-                '        run: bin/harness validate --base "${{ github.event.pull_request.base.sha }}" --no-receipt',
+                '        run: bin/harness validate --stage discovery --base "${{ github.event.pull_request.base.sha }}"',
             ],
         ),
         (
@@ -89,13 +89,6 @@ def validate(text: str) -> None:
         ),
     )
 
-    owner_skip = "    if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'rioyokota' || github.event.sender.login != 'rioyokota'"
-    if semantic.count(owner_skip) != 1:
-        raise ValueError("trusted-owner pull-request skip changed")
-    job_start = semantic.index("  portable-phase1:")
-    job_header = semantic[job_start + 1 : job_start + 5]
-    if owner_skip not in job_header:
-        raise ValueError("trusted-owner skip is not on the portable job")
     for heading, expected in step_contracts:
         if semantic.count(heading) != 1:
             raise ValueError(f"workflow step is not unique: {heading.strip()}")
@@ -142,11 +135,7 @@ mutations = (
         "always()",
         1,
     ),
-    workflow.replace(
-        "    if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'rioyokota' || github.event.sender.login != 'rioyokota'\n",
-        "",
-        1,
-    ),
+    workflow.replace("--stage discovery", "--stage repair", 1),
 )
 for mutation in mutations:
     try:
@@ -162,14 +151,12 @@ grep -F -x '  cancel-in-progress: true' "$WORKFLOW" >/dev/null ||
     fail 'superseded-run cancellation missing'
 grep -F 'portable-phase1' "$WORKFLOW" >/dev/null ||
     fail 'required check missing'
-grep -F -x "    if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'rioyokota' || github.event.sender.login != 'rioyokota'" "$WORKFLOW" >/dev/null ||
-    fail 'trusted-owner pull-request skip missing'
 grep -F 'HARNESS_PORTABLE_CI: "1"' "$WORKFLOW" >/dev/null ||
     fail 'portable gate contract missing'
 grep -F -x "        if: github.event_name == 'pull_request'" "$WORKFLOW" >/dev/null ||
     fail 'pull-request selector condition missing'
-grep -F -x '        run: bin/harness validate --base "${{ github.event.pull_request.base.sha }}" --no-receipt' "$WORKFLOW" >/dev/null ||
-    fail 'pull-request risk selector changed'
+grep -F -x '        run: bin/harness validate --stage discovery --base "${{ github.event.pull_request.base.sha }}"' "$WORKFLOW" >/dev/null ||
+    fail 'pull-request discovery selector changed'
 grep -F -x "        if: github.event_name != 'pull_request'" "$WORKFLOW" >/dev/null ||
     fail 'weekly/manual full-backstop condition missing'
 grep -F -x '        run: tests/test-phase1.sh' "$WORKFLOW" >/dev/null ||

@@ -3,6 +3,8 @@ tests/test-startup-normalize.sh|startup normalization focused suite|6
 tests/test-bash-startup-unify.sh|canonical Bash startup transaction|12
 tests/test-focused-runner.sh|parallel focused-suite runner|7
 tests/test-validation-router.sh|risk-tier validation selector|2
+tests/test-shellcheck.sh|repository ShellCheck gate|40|heavy
+tests/test-phase1-integration.sh|phase-one integration transactions|150|heavy
 tests/test-task-ledger-routing.sh|compact active-task ledger routing|1
 tests/test-harness-ledgers.sh|independent ordinary and nightly ledger contract|2
 tests/test-agent-policy-routing.sh|conditional agent-policy routing|1
@@ -22,6 +24,7 @@ tests/test-tmux-claude-monitor.sh|Local tmux Claude monitor focused suite|6
 tests/test-macos-agent-session.sh|unified managed-Mac agent session suite|30|heavy
 tests/test-housekeeping.sh|routine repository housekeeping suite|49|heavy
 tests/test-housekeeping-owner-alias.sh|immutable archive owner alias suite|58
+tests/test-guarded-delete.sh|guarded deletion safety suite|5|heavy
 tests/test-projects-pane-layout.sh|isolated final Harness six-pane topology|4
 tests/test-codex-recovery-helper.sh|dedicated Local Codex recovery helper|4
 tests/test-al-session.sh|personal AL session focused suite|7
@@ -69,6 +72,7 @@ tests/test-ssh-config-layout.sh|transactional shared SSH layout migration|11
 tests/test-restic-schedule.sh|Restic schedule focused suite|31|heavy
 tests/test-onboard-mirrored-node.sh|onboarding focused suite|5
 tests/test-onboard-external-user.sh|external user onboarding focused suite|4
+tests/test-onboard-project-repository.sh|project repository onboarding focused suite|4
 tests/test-client-comparison.sh|matched Codex and Claude comparison declaration|2
 tests/test-development-evaluation.sh|current Harness development benchmark focused suite|19|heavy
 tests/test-t343-fable-retest.sh|frozen T-336 Claude Fable failure retest|2
@@ -78,6 +82,7 @@ tests/test-evaluation.sh|evaluation focused suite|6|heavy
 tests/test-public-repo-audit.sh|public repository audit focused suite|3
 tests/test-fleet-readiness-audit.sh|fleet readiness audit focused suite|3
 tests/test-hpc-readiness.sh|HPC readiness job focused suite|2
+tests/test-affinity-readiness.sh|CPU affinity readiness focused suite|1
 tests/test-hpc-multinode-mpi-routes.sh|multi-node MPI route focused suite|1
 tests/test-multinode-mpi-readiness.sh|multi-node MPI readiness focused suite|2
 tests/test-shared-executable-visibility.sh|shared executable visibility focused suite|2

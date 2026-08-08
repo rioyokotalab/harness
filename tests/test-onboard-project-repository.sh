@@ -5,7 +5,23 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 SKILL=$ROOT/shared/skills/onboard-project-repository
 SCAFFOLD=$SKILL/assets/scaffold
 
-python3 /home/rioyokota/.codex/skills/.system/skill-creator/scripts/quick_validate.py "$SKILL"
+python3 - "$SKILL/SKILL.md" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+lines = text.splitlines()
+assert lines[0] == "---"
+end = lines.index("---", 1)
+fields = dict(line.split(": ", 1) for line in lines[1:end])
+assert fields == {
+    "name": "onboard-project-repository",
+    "description": fields["description"],
+}
+assert fields["description"].strip()
+assert any(line.strip() for line in lines[end + 1 :])
+PY
 test -f "$SKILL/references/protocol.md"
 test -f "$SCAFFOLD/PRODUCER.md.tmpl"
 test -f "$SCAFFOLD/docs/producer/config.json.tmpl"

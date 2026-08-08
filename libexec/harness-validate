@@ -23,6 +23,9 @@ from typing import Iterable
 TIERS = {"R0": 0, "R1": 1, "R2": 2, "R3": 3}
 FULL_SUITE = "tests/test-phase1.sh"
 IMPACT_MAP = "tests/validation-impact.tsv"
+GROUP_MAP = "tests/validation-groups.tsv"
+FOCUSED_MANIFEST = "tests/focused-suites.tsv"
+FOCUSED_RUNNER = "tools/run-focused-tests.py"
 NONCACHE_TOKENS = (
     "auth",
     "codex",
@@ -50,12 +53,33 @@ class Rule:
     regex: re.Pattern[str]
 
 
+@dataclass(frozen=True)
+class GroupRule:
+    name: str
+    label: str
+    regex: re.Pattern[str]
+
+
+@dataclass(frozen=True)
+class FocusedSuite:
+    index: int
+    path: str
+    label: str
+    estimate: int
+    resource: str
+    group: str
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run risk-tiered local validation and emit a self-attested receipt."
     )
     parser.add_argument("--base", default="HEAD^")
     parser.add_argument("--jobs", default=os.environ.get("HARNESS_TEST_JOBS", "auto"))
+    parser.add_argument(
+        "--stage", choices=("repair", "discovery", "final"), default="repair"
+    )
+    parser.add_argument("--suite")
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--path", action="append", default=[])
     parser.add_argument("--receipt-dir")
@@ -99,6 +123,61 @@ def load_rules(root: Path) -> list[Rule]:
     if not rules:
         raise ValueError("empty impact map")
     return rules
+
+
+def load_group_rules(root: Path) -> list[GroupRule]:
+    path = root / GROUP_MAP
+    rules: list[GroupRule] = []
+    names: set[str] = set()
+    for number, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not raw or raw.startswith("#"):
+            continue
+        fields = raw.split("|", 2)
+        if len(fields) != 3:
+            raise ValueError(f"invalid validation-group line {number}")
+        name, label, pattern = fields
+        if (
+            not re.fullmatch(r"[a-z][a-z0-9-]{0,31}", name)
+            or name in names
+            or not label
+            or not pattern
+        ):
+            raise ValueError(f"invalid validation-group line {number}")
+        names.add(name)
+        rules.append(GroupRule(name, label, re.compile(pattern)))
+    if not rules:
+        raise ValueError("empty validation group map")
+    return rules
+
+
+def load_focused_suites(root: Path, groups: list[GroupRule]) -> dict[str, FocusedSuite]:
+    path = root / FOCUSED_MANIFEST
+    suites: dict[str, FocusedSuite] = {}
+    for number, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not raw or raw.startswith("#"):
+            continue
+        fields = raw.split("|")
+        if len(fields) not in (3, 4):
+            raise ValueError(f"invalid focused-suite line {number}")
+        suite, label, estimate_text = fields[:3]
+        resource = fields[3] if len(fields) == 4 else "light"
+        try:
+            estimate = int(estimate_text)
+        except ValueError as error:
+            raise ValueError(f"invalid focused-suite line {number}") from error
+        matches = [rule.name for rule in groups if rule.regex.search(suite)]
+        if len(matches) != 1:
+            raise ValueError(
+                f"focused suite must match exactly one validation group: {suite}"
+            )
+        if suite in suites or resource not in {"light", "heavy"} or estimate < 1:
+            raise ValueError(f"invalid focused-suite line {number}")
+        suites[suite] = FocusedSuite(
+            len(suites) + 1, suite, label, estimate, resource, matches[0]
+        )
+    if not suites:
+        raise ValueError("empty focused-suite manifest")
+    return suites
 
 
 def normalize_paths(paths: Iterable[str]) -> list[str]:
@@ -158,7 +237,17 @@ def changed_paths(root: Path, base: str) -> list[str]:
     return normalize_paths([*tracked, *untracked, *ignored_top_level])
 
 
-def classify(root: Path, paths: list[str], rules: list[Rule]) -> dict:
+def classify(
+    root: Path,
+    paths: list[str],
+    rules: list[Rule],
+    focused: dict[str, FocusedSuite] | None = None,
+    group_rules: list[GroupRule] | None = None,
+) -> dict:
+    if group_rules is None:
+        group_rules = load_group_rules(root)
+    if focused is None:
+        focused = load_focused_suites(root, group_rules)
     tier = "R0"
     suites: set[str] = set()
     matches: list[dict[str, str]] = []
@@ -167,6 +256,10 @@ def classify(root: Path, paths: list[str], rules: list[Rule]) -> dict:
             "tier": tier,
             "paths": [],
             "suites": [],
+            "groups": [],
+            "discovery_suites": [],
+            "estimated_seconds": 0,
+            "discovery_estimated_seconds": 0,
             "matches": [{"path": "-", "pattern": "-", "reason": "no changed paths"}],
             "full": False,
             "cacheable": True,
@@ -174,7 +267,19 @@ def classify(root: Path, paths: list[str], rules: list[Rule]) -> dict:
 
     for path in paths:
         path_matches = [rule for rule in rules if rule.regex.search(path)]
-        if not path_matches:
+        implicit = path if path in focused else None
+        if implicit:
+            if TIERS["R2"] > TIERS[tier]:
+                tier = "R2"
+            suites.add(implicit)
+            matches.append(
+                {
+                    "path": path,
+                    "pattern": "registered-focused-suite",
+                    "reason": "focused suite owns its own contract",
+                }
+            )
+        if not path_matches and not implicit:
             tier = "R3"
             matches.append(
                 {
@@ -188,13 +293,35 @@ def classify(root: Path, paths: list[str], rules: list[Rule]) -> dict:
             if TIERS[rule.tier] > TIERS[tier]:
                 tier = rule.tier
             if rule.suite:
+                if rule.suite not in focused:
+                    raise ValueError(
+                        f"mapped suite is outside the focused manifest: {rule.suite}"
+                    )
                 suites.add(rule.suite)
             matches.append(
                 {"path": path, "pattern": rule.pattern, "reason": rule.reason}
             )
 
-    full = tier == "R3"
-    selected = [FULL_SUITE] if full else sorted(suites)
+    selected = sorted(suites)
+    selected_groups = sorted({focused[suite].group for suite in selected})
+    if paths and not selected_groups:
+        selected_groups = ["validation-core"]
+    labels = {rule.name: rule.label for rule in group_rules}
+    groups = []
+    discovery_suites: list[str] = []
+    for name in selected_groups:
+        members = [
+            suite.path for suite in focused.values() if suite.group == name
+        ]
+        discovery_suites.extend(members)
+        groups.append(
+            {
+                "name": name,
+                "label": labels[name],
+                "suites": members,
+                "estimated_seconds": sum(focused[path].estimate for path in members),
+            }
+        )
     cache_text = " ".join([*paths, *selected, *(item["reason"] for item in matches)])
     cacheable = tier in {"R0", "R1"} and not any(
         token in cache_text.lower() for token in NONCACHE_TOKENS
@@ -203,8 +330,14 @@ def classify(root: Path, paths: list[str], rules: list[Rule]) -> dict:
         "tier": tier,
         "paths": paths,
         "suites": selected,
+        "groups": groups,
+        "discovery_suites": discovery_suites,
+        "estimated_seconds": sum(focused[suite].estimate for suite in selected),
+        "discovery_estimated_seconds": sum(
+            focused[suite].estimate for suite in discovery_suites
+        ),
         "matches": matches,
-        "full": full,
+        "full": bool(paths),
         "cacheable": cacheable,
     }
 
@@ -257,7 +390,14 @@ def validate_python_mode() -> None:
 
 
 def validator_contract(root: Path, suites: list[str]) -> dict:
-    paths = ["libexec/harness-validate", IMPACT_MAP, *suites]
+    paths = [
+        "libexec/harness-validate",
+        IMPACT_MAP,
+        GROUP_MAP,
+        FOCUSED_MANIFEST,
+        FOCUSED_RUNNER,
+        *suites,
+    ]
     return {
         path: file_sha256(root / path)
         for path in sorted(set(paths))
@@ -328,6 +468,20 @@ def canonical_json(value: object) -> bytes:
     ).encode("utf-8")
 
 
+def write_private_json(path: Path, payload: object) -> None:
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(path, flags, 0o600)
+    try:
+        with os.fdopen(descriptor, "wb", closefd=False) as handle:
+            handle.write(canonical_json(payload))
+            handle.flush()
+            os.fsync(handle.fileno())
+    finally:
+        os.close(descriptor)
+
+
 def clean_tree_identity(root: Path, base: str, decision: dict, jobs: str) -> dict | None:
     if run_git(root, "status", "--porcelain", "--untracked-files=all").stdout:
         return None
@@ -342,6 +496,7 @@ def clean_tree_identity(root: Path, base: str, decision: dict, jobs: str) -> dic
         "head": head,
         "kind": "owner-self-attested-local-validation",
         "schema": 1,
+        "stage": decision.get("stage", "repair"),
         "suites": decision["suites"],
         "tier": decision["tier"],
         "tree": tree,
@@ -438,6 +593,38 @@ def untracked_whitespace_check(
     return 0
 
 
+def suites_for_stage(
+    decision: dict, stage: str, requested: str | None, *, execute: bool
+) -> list[str]:
+    owners = decision["suites"]
+    if stage == "final":
+        if requested:
+            raise ValueError("--suite is valid only for repair stage")
+        return [FULL_SUITE]
+    if stage == "discovery":
+        if requested:
+            raise ValueError("--suite is valid only for repair stage")
+        if not decision["paths"]:
+            raise ValueError("no changed paths to discover")
+        if not decision["discovery_suites"] and decision["paths"]:
+            raise ValueError("changed paths lack an owning discovery group")
+        return decision["discovery_suites"]
+    if requested:
+        if requested not in owners:
+            raise ValueError("--suite is not an owner selected by the changed paths")
+        return [requested]
+    if execute:
+        if not owners and decision["paths"]:
+            raise ValueError(
+                "repair stage has no owner; add an impact-map owner before repair"
+            )
+        if len(owners) > 1:
+            raise ValueError(
+                "repair stage selected multiple owners; run each --suite from the plan"
+            )
+    return owners
+
+
 def run_validation(root: Path, base: str, decision: dict, jobs: str) -> list[dict]:
     started = time.monotonic()
     diff = subprocess.run(
@@ -495,6 +682,105 @@ def run_validation(root: Path, base: str, decision: dict, jobs: str) -> list[dic
     return results
 
 
+def run_discovery(
+    root: Path,
+    base: str,
+    decision: dict,
+    jobs: str,
+    receipt_dir: Path,
+    focused: dict[str, FocusedSuite],
+) -> tuple[list[dict], Path]:
+    nonce = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{os.getpid()}"
+    inventory = receipt_dir / f"discovery-{nonce}.json"
+    log_dir = receipt_dir / f"discovery-{nonce}.logs"
+    checks = run_validation(root, base, {**decision, "suites": []}, jobs)
+    if not all(item["status"] == 0 for item in checks):
+        write_private_json(
+            inventory,
+            {
+                "schema": "harness-validation-discovery-v1",
+                "status": "fail",
+                "paths": decision["paths"],
+                "groups": [group["name"] for group in decision["groups"]],
+                "results": checks,
+                "failure_suites": [],
+                "not_run": decision["suites"],
+            },
+        )
+        return checks, inventory
+
+    runner_inventory = receipt_dir / f"discovery-{nonce}-runner.json"
+    command = [
+        sys.executable,
+        str(root / FOCUSED_RUNNER),
+        "--root",
+        str(root),
+        "--manifest",
+        str(root / FOCUSED_MANIFEST),
+        "--log-dir",
+        str(log_dir),
+        "--timings-file",
+        str(runner_inventory),
+        "--jobs",
+        jobs,
+        "--keep-going",
+    ]
+    for suite in decision["suites"]:
+        command.extend(("--suite", suite))
+    env = os.environ.copy()
+    env.pop("HARNESS_ROOT", None)
+    result = subprocess.run(
+        command,
+        cwd=root,
+        env=env,
+        stdin=subprocess.DEVNULL,
+        check=False,
+    )
+    payload = json.loads(runner_inventory.read_text(encoding="utf-8"))
+    steps = checks + [
+        {
+            "path": row["suite"],
+            "seconds": row["seconds"],
+            "status": row["exit_code"],
+            "state": row["state"],
+        }
+        for row in payload["results"]
+    ]
+    for row in payload["results"]:
+        if row["state"] != "pass":
+            continue
+        suite = focused[row["suite"]]
+        log = log_dir / f"{suite.index:03d}-{Path(suite.path).stem}.log"
+        try:
+            log.unlink()
+        except FileNotFoundError:
+            pass
+    try:
+        log_dir.rmdir()
+    except OSError:
+        pass
+    if (result.returncode == 0) != (payload.get("status") == "pass"):
+        raise ValueError("focused discovery status disagrees with its inventory")
+    failure_suites = [
+        row["suite"] for row in payload["results"] if row["state"] != "pass"
+    ]
+    write_private_json(
+        inventory,
+        {
+            "schema": "harness-validation-discovery-v1",
+            "status": payload["status"],
+            "paths": decision["paths"],
+            "groups": [group["name"] for group in decision["groups"]],
+            "results": steps,
+            "failure_suites": failure_suites,
+            "not_run": payload["not_run"],
+            "failure_log_dir": str(log_dir) if failure_suites else None,
+        },
+    )
+    runner_inventory.unlink()
+    return steps, inventory
+
+
 def publish_receipt(receipt_dir: Path, identity: dict, results: list[dict]) -> Path:
     payload = {
         "attestation": (
@@ -510,17 +796,7 @@ def publish_receipt(receipt_dir: Path, identity: dict, results: list[dict]) -> P
     data = canonical_json(payload)
     digest = hashlib.sha256(data).hexdigest()
     path = receipt_dir / f"{identity['identity_sha256']}--{digest}.json"
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-    if hasattr(os, "O_NOFOLLOW"):
-        flags |= os.O_NOFOLLOW
-    descriptor = os.open(path, flags, 0o600)
-    try:
-        with os.fdopen(descriptor, "wb", closefd=False) as handle:
-            handle.write(data)
-            handle.flush()
-            os.fsync(handle.fileno())
-    finally:
-        os.close(descriptor)
+    write_private_json(path, payload)
     return path
 
 
@@ -530,33 +806,58 @@ def main() -> int:
     try:
         validate_python_mode()
         rules = load_rules(root)
+        group_rules = load_group_rules(root)
+        focused = load_focused_suites(root, group_rules)
         if args.path:
             if not args.plan:
                 raise ValueError("--path is permitted only with --plan")
             paths = normalize_paths(args.path)
         else:
             paths = changed_paths(root, args.base)
-        decision = classify(root, paths, rules)
+        decision = classify(root, paths, rules, focused, group_rules)
+        execution_suites = suites_for_stage(
+            decision, args.stage, args.suite, execute=not args.plan
+        )
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f"validate: {error}", file=sys.stderr)
         return 2
 
     plan = {
         "base": args.base,
-        "cacheable": decision["cacheable"],
-        "full": decision["full"],
+        "cacheable": decision["cacheable"] and args.stage == "repair",
+        "discovery_estimated_seconds": decision["discovery_estimated_seconds"],
+        "estimated_seconds": decision["estimated_seconds"],
+        "execution_estimated_seconds": (
+            sum(suite.estimate for suite in focused.values())
+            if args.stage == "final"
+            else sum(focused[path].estimate for path in execution_suites)
+        ),
+        "execution_suites": execution_suites,
+        "final_required": decision["full"],
+        "groups": decision["groups"],
         "matches": decision["matches"],
+        "owner_suites": decision["suites"],
         "paths": decision["paths"],
         "schema": 1,
-        "suites": decision["suites"],
+        "stage": args.stage,
+        "suites": execution_suites,
         "tier": decision["tier"],
     }
     if args.plan:
         print(json.dumps(plan, sort_keys=True, indent=2))
         return 0
 
-    identity = clean_tree_identity(root, args.base, decision, args.jobs)
+    execution = {
+        **decision,
+        "cacheable": decision["cacheable"] and args.stage == "repair",
+        "stage": args.stage,
+        "suites": execution_suites,
+    }
+    identity = clean_tree_identity(root, args.base, execution, args.jobs)
     receipt_dir: Path | None = None
+    if args.stage == "discovery" and args.no_receipt:
+        print("validate: discovery requires a durable failure inventory", file=sys.stderr)
+        return 2
     if identity and not args.no_receipt:
         try:
             receipt_dir = private_receipt_dir(root, args.receipt_dir)
@@ -566,7 +867,7 @@ def main() -> int:
         cached = cached_receipt(receipt_dir, identity)
         if cached:
             if clean_tree_identity(
-                root, args.base, decision, args.jobs
+                root, args.base, execution, args.jobs
             ) != identity:
                 print(
                     "validate: tree or validation contract changed during "
@@ -575,22 +876,41 @@ def main() -> int:
                 )
                 return 2
             print(
-                f"VALIDATE status=pass reuse=1 tier={decision['tier']} "
+                f"VALIDATE status=pass reuse=1 stage={args.stage} "
+                f"tier={decision['tier']} "
                 f"receipt={cached}"
             )
             return 0
 
-    results = run_validation(root, args.base, decision, args.jobs)
+    inventory: Path | None = None
+    if args.stage == "discovery":
+        if receipt_dir is None:
+            try:
+                receipt_dir = private_receipt_dir(root, args.receipt_dir)
+            except (OSError, ValueError) as error:
+                print(f"validate: {error}", file=sys.stderr)
+                return 2
+        try:
+            results, inventory = run_discovery(
+                root, args.base, execution, args.jobs, receipt_dir, focused
+            )
+        except (OSError, ValueError, subprocess.CalledProcessError) as error:
+            print(f"validate: {error}", file=sys.stderr)
+            return 2
+    else:
+        results = run_validation(root, args.base, execution, args.jobs)
     passed = all(item["status"] == 0 for item in results)
     if not passed:
         print(
-            f"VALIDATE status=fail reuse=0 tier={decision['tier']}",
+            f"VALIDATE status=fail reuse=0 stage={args.stage} "
+            f"tier={decision['tier']}"
+            + (f" inventory={inventory}" if inventory else ""),
             file=sys.stderr,
         )
         return 1
 
     if identity and clean_tree_identity(
-        root, args.base, decision, args.jobs
+        root, args.base, execution, args.jobs
     ) != identity:
         print(
             "validate: tree or validation contract changed during validation",
@@ -605,7 +925,7 @@ def main() -> int:
         except FileExistsError:
             print("validate: ambiguous receipt collision", file=sys.stderr)
             return 2
-        if clean_tree_identity(root, args.base, decision, args.jobs) != identity:
+        if clean_tree_identity(root, args.base, execution, args.jobs) != identity:
             try:
                 info = receipt_path.lstat()
                 if (
@@ -626,8 +946,9 @@ def main() -> int:
             return 2
         receipt = str(receipt_path)
     print(
-        f"VALIDATE status=pass reuse=0 tier={decision['tier']} "
-        f"receipt={receipt}"
+        f"VALIDATE status=pass reuse=0 stage={args.stage} "
+        f"tier={decision['tier']} receipt={receipt}"
+        + (f" inventory={inventory}" if inventory else "")
     )
     return 0
 

@@ -1,7 +1,0 @@
-# A fast development signal only; tests/test-phase1.sh remains the final gate.
-tests/test-focused-runner.sh|focused runner contracts|7|light
-tests/test-startup-normalize.sh|portable startup normalization|3|light
-tests/test-bash-startup-unify.sh|portable Bash startup transaction|3|light
-tests/test-personal-macos-inventory.sh|macOS inventory portability|8|light
-tests/test-housekeeping-interrupt.sh|housekeeping interruption lifecycle|12|heavy
-tests/test-evaluation.sh|evaluation interruption lifecycle|7|heavy

@@ -57,6 +57,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--heavy-jobs", default="auto")
     parser.add_argument("--platform", default=platform.system())
     parser.add_argument("--timings-file")
+    parser.add_argument("--suite", action="append", default=[])
     parser.add_argument("--keep-going", action="store_true")
     parser.add_argument("--verbose", action="store_true")
     return parser.parse_args()
@@ -133,6 +134,19 @@ def load_manifest(root: Path, manifest: Path) -> list[Suite]:
     if not suites:
         raise ValueError("empty focused-suite manifest")
     return suites
+
+
+def select_suites(suites: list[Suite], requested: list[str]) -> list[Suite]:
+    if not requested:
+        return suites
+    if len(requested) != len(set(requested)):
+        raise ValueError("duplicate --suite selection")
+    available = {suite.relative for suite in suites}
+    missing = sorted(set(requested) - available)
+    if missing:
+        raise ValueError(f"suite is outside the manifest: {missing[0]}")
+    selected = set(requested)
+    return [suite for suite in suites if suite.relative in selected]
 
 
 def prepare_timings_file(raw: str | None) -> Path | None:
@@ -304,7 +318,7 @@ def main() -> int:
         print(f"focused-tests: --log-dir already exists: {log_dir}", file=sys.stderr)
         return 2
     try:
-        suites = load_manifest(root, manifest)
+        suites = select_suites(load_manifest(root, manifest), args.suite)
     except ValueError as error:
         print(f"focused-tests: {error}", file=sys.stderr)
         return 2
