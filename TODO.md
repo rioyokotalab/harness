@@ -15,12 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Active
 
-### Har-431 — Reduce Riken test latency
-
-**Phase:** profile the exact protected Riken gate, tune concurrency from matched
-evidence, and optimize proven Darwin hotspots without reducing final coverage.
-**Record:** `docs/tasks/Har-431.md`.
-
 ### Har-428 — Roll out Har-427 to Office and Home
 
 **Phase:** Office and Home independently fast-forward their clean managed

@@ -1,5 +1,5 @@
 task	state	summary	source
-Har-431	active	Reduce Riken test latency	TODO.md;docs/tasks/Har-431.md
+Har-431	complete	Reduce Riken test latency	docs/tasks/Har-431.md
 Har-430	complete	Accelerate macOS test feedback	docs/tasks/Har-430.md
 Har-429	complete	Enforce one Codex owner per saved thread	docs/tasks/Har-429.md
 Har-428	active	Roll out Har-427 to Office and Home	TODO.md;docs/tasks/Har-428.md
