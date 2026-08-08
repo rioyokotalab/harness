@@ -124,12 +124,35 @@ def validate_ordinary() -> tuple[dict[str, object], list[dict[str, str]]]:
     next_id = int(config["next_id"])
     if numbers and next_id <= max(numbers):
         raise LedgerError("ordinary-next-id")
+    if numbers != sorted(numbers, reverse=True):
+        raise LedgerError("ordinary-order")
     board = TASK_BOARD.read_text(encoding="utf-8")
+    if len(board.splitlines()) > 80 or len(board.split()) > 600:
+        raise LedgerError("ordinary-board-size")
     if f"Next free ID: Har-{next_id:03d}." not in board:
         raise LedgerError("ordinary-board-next-id")
     board_tasks = set(re.findall(r"^### (Har-\d{3}) —", board, re.MULTILINE))
     if board_tasks != nonterminal:
         raise LedgerError("ordinary-board-parity")
+    indexed_sources = {
+        source
+        for row in rows
+        for source in row["source"].split(";")
+    }
+    for row in rows:
+        task = row["task"]
+        sources = row["source"].split(";")
+        if task in nonterminal:
+            if (
+                "TODO.md" not in sources
+                or f"`docs/tasks/{task}.md`" not in board
+            ):
+                raise LedgerError("ordinary-board-pointer")
+        elif task.startswith("Har-") and "TODO.md" in sources:
+            raise LedgerError("ordinary-complete-board-source")
+    for archive in (ROOT / "docs/history").glob("TODO-full-archive-*.md"):
+        if archive.relative_to(ROOT).as_posix() not in indexed_sources:
+            raise LedgerError("ordinary-archive-source")
     return config, rows
 
 

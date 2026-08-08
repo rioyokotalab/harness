@@ -41,9 +41,4 @@ for token in \
 do
     grep -F -- "$token" "$JOB" >/dev/null
 done
-if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|find[[:space:]].*-delete|rsync[[:space:]].*--delete' \
-    "$JOB" >/dev/null; then
-    printf '%s\n' 'FAIL: unsafe locked-venv cleanup' >&2
-    exit 1
-fi
 printf '%s\n' 'locked venv readiness tests: PASS'

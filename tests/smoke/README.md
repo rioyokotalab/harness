@@ -54,17 +54,3 @@ headers, link, and initialization without launching processes or consuming an
 allocation: `mpicc -O2 tests/smoke/mpi.c -o BUILD/mpi && BUILD/mpi 1`. This is
 not multi-rank readiness evidence. Run the default two-rank gate only through
 the site's reported native allocation and MPI launch commands.
-
-`jobs/local.slurm` is the current node's native `ybatch` smoke. It requests the
-smallest A4500 resource and validates CUDA runtime, two-rank MPI, and Python.
-The site wrapper submits asynchronously and does not forward later scheduler
-options before its temporary script, so the job declares a job-ID-scoped output
-file under `.harness-smoke/` itself. Including a directory component is
-intentional: `ybatch` otherwise mistakes a bare output filename for a directory.
-The agent parses the submitted ID, monitors only that job, validates the output,
-and removes both it and the empty output directory. The script does not
-normalize or conceal the generated Slurm commands. The current node's
-site-owned Docker/Podman wrapper deliberately redirects rootless storage and
-its runtime directory for Slurm. Its native `--version` path fails on the login
-node but is checked inside this allocation before the CUDA and MPI gates; image
-selection and execution remain project-specific.

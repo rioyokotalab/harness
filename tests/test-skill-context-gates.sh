@@ -15,6 +15,8 @@ UNSAFE_SAFE=$UNSAFE/references/safe-rollback.md
 UNSAFE_BRIDGE=$UNSAFE/references/bridge-first.md
 UNSAFE_ACCEPTANCE=$UNSAFE/references/acceptance.md
 UNSAFE_PROTOCOL=$UNSAFE/references/protocol.md
+GUARDED=$ROOT/shared/skills/guarded-bulk-delete
+GUARDED_EXCEPTION=$GUARDED/references/installer-exception.md
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 assert_contains() {
@@ -72,9 +74,24 @@ for path in \
     "$UNSAFE_SAFE" \
     "$UNSAFE_BRIDGE" \
     "$UNSAFE_ACCEPTANCE" \
-    "$UNSAFE_PROTOCOL"; do
+    "$UNSAFE_PROTOCOL" \
+    "$GUARDED/SKILL.md" \
+    "$GUARDED_EXCEPTION"; do
     [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
 done
+
+assert_contains '[installer-exception.md](references/installer-exception.md)' \
+    "$GUARDED/SKILL.md" 'guarded installer routing gate'
+assert_contains 'never pipe them directly to a shell' \
+    "$GUARDED_EXCEPTION" 'guarded installer provenance gate'
+assert_contains 'Owner approval alone is insufficient.' \
+    "$GUARDED_EXCEPTION" 'guarded installer approval boundary'
+guarded_words=$(wc -w <"$GUARDED/SKILL.md" | tr -d ' ')
+exception_words=$(wc -w <"$GUARDED_EXCEPTION" | tr -d ' ')
+[ "$guarded_words" -le 440 ] || fail 'guarded normal route budget'
+[ "$exception_words" -le 200 ] || fail 'guarded exception budget'
+[ "$((guarded_words + exception_words))" -le 640 ] ||
+    fail 'guarded aggregate route budget'
 
 # PIE must not manufacture an interview when decisions and authorization exist.
 pie_frontmatter=$(sed -n '1,5p' "$PIE/SKILL.md")

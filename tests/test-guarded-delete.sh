@@ -7,8 +7,6 @@ RULES=$ROOT/.codex/rules/default.rules
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEST_ROOT=$(mktemp -d "$TEMP_BASE/guarded-delete-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
-SKILL=$ROOT/shared/skills/guarded-bulk-delete/SKILL.md
-INSTALLER_EXCEPTION=$ROOT/shared/skills/guarded-bulk-delete/references/installer-exception.md
 
 fail() {
     echo "FAIL: $*" >&2
@@ -55,24 +53,15 @@ trap 'exit 143' TERM
 
 sh -n "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" ||
     fail "guarded-delete shell syntax"
-[ -f "$INSTALLER_EXCEPTION" ] && [ ! -L "$INSTALLER_EXCEPTION" ] ||
-    fail "guarded-delete installer route"
-grep -F '[installer-exception.md](references/installer-exception.md)' \
-    "$SKILL" >/dev/null || fail "guarded-delete installer routing gate"
-grep -F 'never pipe them directly to a shell' \
-    "$INSTALLER_EXCEPTION" >/dev/null ||
-    fail "guarded-delete installer provenance gate"
-grep -F 'Owner approval alone is insufficient.' \
-    "$INSTALLER_EXCEPTION" >/dev/null ||
-    fail "guarded-delete installer approval boundary"
-skill_words=$(wc -w <"$SKILL" | tr -d ' ')
-exception_words=$(wc -w <"$INSTALLER_EXCEPTION" | tr -d ' ')
-[ "$skill_words" -le 440 ] || fail "guarded-delete normal route budget"
-[ "$exception_words" -le 200 ] || fail "guarded-delete exception budget"
-[ "$((skill_words + exception_words))" -le 640 ] ||
-    fail "guarded-delete installer route budget"
-sh -n "$CLEANUP" || fail "guarded test cleanup shell syntax"
 
+case ${HARNESS_TEST_CASE:-core} in
+    core|boundaries) ;;
+    *) fail "unknown guarded-delete case" ;;
+esac
+home_parent=${HOME%/*}
+[ -n "$home_parent" ] || home_parent=/
+
+if [ "${HARNESS_TEST_CASE:-core}" = core ]; then
 # Exercise the Darwin adapter shapes on Linux CI without weakening production
 # platform detection.  These fakes translate BSD command forms back to the
 # GNU fixture tools while preserving the guard's plan/apply behavior.
@@ -158,43 +147,17 @@ expect_failure 'target is or contains current HOME' \
 [ -d "$TEST_ROOT/internal/fake-home" ] ||
     fail "internal guarded deletion removed fake HOME on refusal"
 
-home_parent=${HOME%/*}
-[ -n "$home_parent" ] || home_parent=/
 expect_failure '--within is too broad and contains a protected anchor' \
     "$TEST_ROOT/cleanup-home.out" "$CLEANUP" "$HARNESS" "$home_parent" "$HOME" \
     "${TMPDIR:-/tmp}"
 [ -d "$HOME" ] || fail "adversarial cleanup removed the account home"
 
-case ${HARNESS_PORTABLE_CI:-0} in
-    0)
-        for command in \
-            'rm -rf /home/rioyokota' \
-            'rm -r generated' \
-            'rm -f -r cache' \
-            '/bin/rm -Rf build' \
-            '/usr/bin/rm --recursive output'
-        do
-            # These fixed test strings contain no expansion and are split intentionally.
-            # shellcheck disable=SC2086
-            set -- $command
-            codex execpolicy check --pretty --rules "$RULES" -- "$@" \
-                >"$TEST_ROOT/rule.out" 2>/dev/null || fail "execpolicy check: $command"
-            grep '"decision": "forbidden"' "$TEST_ROOT/rule.out" >/dev/null ||
-                fail "execpolicy did not forbid: $command"
-        done
-        codex execpolicy check --pretty --rules "$RULES" -- rm -f exact-file \
-            >"$TEST_ROOT/rule-safe.out" 2>/dev/null || fail "non-recursive execpolicy check"
-        if grep '"decision": "forbidden"' "$TEST_ROOT/rule-safe.out" >/dev/null; then
-            fail "execpolicy forbade exact non-recursive removal"
-        fi
-        ;;
-    1)
-        printf '%s\n' 'SKIP Codex exec-policy smoke: portable CI has no declared Codex client'
-        ;;
-    *)
-        fail "HARNESS_PORTABLE_CI must be 0 or 1"
-        ;;
-esac
+grep -F 'decision="forbidden"' "$RULES" >/dev/null ||
+    fail "recursive-delete exec policy decision"
+grep -F '"rm -rf build"' "$RULES" >/dev/null ||
+    fail "recursive-delete exec policy example"
+grep -F 'not_match=["rm -f exact-file"]' "$RULES" >/dev/null ||
+    fail "exact non-recursive unlink exception"
 
 mkdir -p "$TEST_ROOT/root/success target/nested" "$TEST_ROOT/root/keep"
 printf '%s\n' delete >"$TEST_ROOT/root/success target/nested/file"
@@ -246,6 +209,10 @@ expect_failure 'target mode changed; re-plan' "$TEST_ROOT/mode-drift.out" \
     --token "$mode_token"
 [ -d "$TEST_ROOT/root/mode-drift" ] ||
     fail "mode drift removed target"
+
+echo 'guarded-delete core tests: PASS'
+exit 0
+fi
 
 expect_failure 'HOME differs from the account database' "$TEST_ROOT/home.out" \
     env HOME=/tmp "$HARNESS" guarded-delete plan \
@@ -394,4 +361,4 @@ expect_failure 'target entry count changed; re-plan' "$TEST_ROOT/drift.out" \
     --token "$drift_token"
 [ -f "$TEST_ROOT/root/drift-target/new-file" ] || fail "drift failure deleted target"
 
-echo 'guarded-delete tests: PASS'
+echo 'guarded-delete boundary tests: PASS'

@@ -5,12 +5,10 @@ from pathlib import Path
 import sys
 import os
 import pty
-import select
 import contextlib
 import io
 import subprocess
 import tempfile
-import time
 import unittest
 import urllib.parse
 
@@ -78,28 +76,15 @@ raise SystemExit(0 if value == 'fixture-private-value' else 3)
             os.close(slave)
             slave = -1
             output = bytearray()
-            sent = False
-            deadline = time.monotonic() + 5
-            while time.monotonic() < deadline:
-                ready, _writable, _errors = select.select([master], [], [], 0.1)
-                if ready:
-                    try:
-                        chunk = os.read(master, 4096)
-                    except OSError:
-                        chunk = b""
-                    output.extend(chunk)
-                if not sent and b"Fixture hidden prompt: " in output:
-                    os.write(master, b"fixture-private-value\n")
-                    sent = True
-                if process.poll() is not None:
-                    break
-            self.assertTrue(sent)
-            self.assertEqual(process.wait(timeout=1), 0)
+            while b"Fixture hidden prompt: " not in output:
+                output.extend(os.read(master, 4096))
+            os.write(master, b"fixture-private-value\n")
+            self.assertEqual(process.wait(), 0)
             self.assertNotIn(b"fixture-private-value", output)
         finally:
             if process is not None and process.poll() is None:
                 process.terminate()
-                process.wait(timeout=1)
+                process.wait()
             if slave >= 0:
                 os.close(slave)
             os.close(master)

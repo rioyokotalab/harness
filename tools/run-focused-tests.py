@@ -8,7 +8,6 @@ import json
 import os
 from pathlib import Path
 import platform
-import re
 import signal
 import subprocess
 import sys
@@ -23,6 +22,7 @@ class Suite(NamedTuple):
     label: str
     estimate: int
     resource: str
+    platforms: frozenset[str]
 
 
 class Running(NamedTuple):
@@ -112,7 +112,7 @@ def load_manifest(root: Path, manifest: Path) -> list[Suite]:
         if not raw or raw.startswith("#"):
             continue
         fields = raw.split("|")
-        if len(fields) not in (2, 3, 4) or not fields[0] or not fields[1]:
+        if len(fields) not in (2, 3, 4, 5) or not fields[0] or not fields[1]:
             raise ValueError(f"invalid manifest line {number}")
         estimate = 0
         if len(fields) >= 3 and fields[2]:
@@ -122,31 +122,52 @@ def load_manifest(root: Path, manifest: Path) -> list[Suite]:
                 raise ValueError(f"invalid manifest line {number}") from error
             if estimate < 1 or estimate > 3600:
                 raise ValueError(f"invalid manifest line {number}")
-        resource = fields[3] if len(fields) == 4 else "light"
-        if resource not in {"light", "heavy"}:
+        resource = fields[3] if len(fields) >= 4 else "light"
+        platform_text = fields[4] if len(fields) == 5 else "all"
+        platforms = (
+            frozenset({"Darwin", "Linux"})
+            if platform_text == "all"
+            else frozenset({platform_text})
+        )
+        if (
+            resource not in {"light", "heavy"}
+            or platform_text not in {"all", "Darwin", "Linux"}
+        ):
             raise ValueError(f"invalid manifest line {number}")
         path = root / fields[0]
         if not path.is_file() or path.is_symlink():
             raise ValueError(f"unsafe or absent suite: {fields[0]}")
         suites.append(
-            Suite(len(suites) + 1, fields[0], path, fields[1], estimate, resource)
+            Suite(
+                len(suites) + 1,
+                fields[0],
+                path,
+                fields[1],
+                estimate,
+                resource,
+                platforms,
+            )
         )
     if not suites:
         raise ValueError("empty focused-suite manifest")
     return suites
 
 
-def select_suites(suites: list[Suite], requested: list[str]) -> list[Suite]:
-    if not requested:
-        return suites
+def select_suites(
+    suites: list[Suite], requested: list[str], system: str
+) -> tuple[list[Suite], list[Suite]]:
     if len(requested) != len(set(requested)):
         raise ValueError("duplicate --suite selection")
     available = {suite.relative for suite in suites}
     missing = sorted(set(requested) - available)
     if missing:
         raise ValueError(f"suite is outside the manifest: {missing[0]}")
-    selected = set(requested)
-    return [suite for suite in suites if suite.relative in selected]
+    selected = set(requested) if requested else {suite.relative for suite in suites}
+    candidates = [suite for suite in suites if suite.relative in selected]
+    return (
+        [suite for suite in candidates if system in suite.platforms],
+        [suite for suite in candidates if system not in suite.platforms],
+    )
 
 
 def prepare_timings_file(raw: str | None) -> Path | None:
@@ -164,6 +185,18 @@ def prepare_timings_file(raw: str | None) -> Path | None:
     return parent / target.name
 
 
+def test_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    try:
+        count = int(environment.get("GIT_CONFIG_COUNT", "0"))
+    except ValueError as error:
+        raise ValueError("invalid inherited GIT_CONFIG_COUNT") from error
+    environment["GIT_CONFIG_COUNT"] = str(count + 1)
+    environment[f"GIT_CONFIG_KEY_{count}"] = "maintenance.auto"
+    environment[f"GIT_CONFIG_VALUE_{count}"] = "false"
+    return environment
+
+
 def start_one(suite: Suite, root: Path, log_dir: Path) -> Running:
     log = log_dir / f"{suite.index:03d}-{suite.path.stem}.log"
     stream = log.open("xb")
@@ -174,7 +207,7 @@ def start_one(suite: Suite, root: Path, log_dir: Path) -> Running:
             stdin=subprocess.DEVNULL,
             stdout=stream,
             stderr=subprocess.STDOUT,
-            env=os.environ.copy(),
+            env=test_environment(),
             start_new_session=True,
         )
     except BaseException:
@@ -184,7 +217,9 @@ def start_one(suite: Suite, root: Path, log_dir: Path) -> Running:
 
 
 def finish_one(running: Running, cancelled: bool) -> Result:
-    status = running.process.wait()
+    status = running.process.returncode
+    if status is None:
+        raise RuntimeError("completion event arrived before child status")
     running.stream.flush()
     os.fsync(running.stream.fileno())
     running.stream.close()
@@ -208,23 +243,19 @@ def signal_groups(running: dict[int, Running], signum: int) -> None:
             pass
 
 
-def stop_running(running: dict[int, Running], grace: float = 10.0) -> None:
+def stop_running(running: dict[int, Running]) -> None:
     signal_groups(running, signal.SIGTERM)
-    deadline = time.monotonic() + grace
-    while any(item.process.poll() is None for item in running.values()):
-        if time.monotonic() >= deadline:
-            signal_groups(running, signal.SIGKILL)
-            break
-        time.sleep(0.02)
     for item in running.values():
-        try:
-            item.process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            try:
-                os.killpg(item.process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            item.process.wait(timeout=5)
+        item.process.wait()
+
+
+def wait_for_completion(running: dict[int, Running]) -> int:
+    pid, status = os.waitpid(-1, 0)
+    for index, item in running.items():
+        if item.process.pid == pid:
+            item.process.returncode = os.waitstatus_to_exitcode(status)
+            return index
+    raise RuntimeError("reaped an unknown focused-suite child")
 
 
 def eligible_position(
@@ -248,6 +279,7 @@ def write_timings(
     elapsed: float,
     suites: list[Suite],
     results: list[Result],
+    not_applicable: list[Suite],
 ) -> None:
     completed = {result.suite.index for result in results}
     payload = {
@@ -271,6 +303,7 @@ def write_timings(
             for result in sorted(results, key=lambda result: result.suite.index)
         ],
         "not_run": [suite.relative for suite in suites if suite.index not in completed],
+        "not_applicable": [suite.relative for suite in not_applicable],
     }
     descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
@@ -289,11 +322,12 @@ def main() -> int:
         or args.reserve_cpus > 15
         or jobs < 1
         or jobs > 16
-        or not re.fullmatch(r"[A-Za-z0-9_.-]{1,32}", args.platform)
+        or args.platform not in {"Darwin", "Linux"}
     ):
         print(
             "focused-tests: --jobs must be auto or an integer between 1 and 16; "
-            "--reserve-cpus 0..15 is valid only with auto",
+            "--reserve-cpus 0..15 is valid only with auto; platform must be "
+            "Darwin or Linux",
             file=sys.stderr,
         )
         return 2
@@ -318,7 +352,9 @@ def main() -> int:
         print(f"focused-tests: --log-dir already exists: {log_dir}", file=sys.stderr)
         return 2
     try:
-        suites = select_suites(load_manifest(root, manifest), args.suite)
+        suites, not_applicable = select_suites(
+            load_manifest(root, manifest), args.suite, args.platform
+        )
     except ValueError as error:
         print(f"focused-tests: {error}", file=sys.stderr)
         return 2
@@ -356,15 +392,10 @@ def main() -> int:
                     break
                 suite = pending.pop(position)
                 running[suite.index] = start_one(suite, root, log_dir)
-            completed = [
-                index for index, item in running.items() if item.process.poll() is not None
-            ]
-            if not completed:
-                if not running:
-                    break
-                time.sleep(0.02)
-                continue
-            for index in sorted(completed):
+            if not running:
+                break
+            completed = [wait_for_completion(running)]
+            for index in completed:
                 result = finish_one(running.pop(index), index in cancelled)
                 results.append(result)
                 if result.state == "fail" and not failure_seen:
@@ -372,6 +403,10 @@ def main() -> int:
             if failure_seen and not args.keep_going and running and not cancelled:
                 cancelled.update(running)
                 stop_running(running)
+                for index in sorted(list(running)):
+                    results.append(
+                        finish_one(running.pop(index), index in cancelled)
+                    )
     except RunnerSignal as error:
         interrupted = error.signum
         cancelled.update(running)
@@ -412,6 +447,7 @@ def main() -> int:
             elapsed=elapsed,
             suites=suites,
             results=results,
+            not_applicable=not_applicable,
         )
         print(f"focused-tests: timings={timings_file} platform={args.platform}")
     not_run = len(suites) - len(results)

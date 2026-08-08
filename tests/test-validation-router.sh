@@ -15,11 +15,13 @@ import io
 import json
 import os
 from pathlib import Path
+import platform
 import runpy
 import shutil
 import subprocess
 import sys
 import tempfile
+from dataclasses import replace
 from types import SimpleNamespace
 
 if not __debug__:
@@ -32,30 +34,37 @@ rules = module["load_rules"](root)
 group_rules = module["load_group_rules"](root)
 focused = module["load_focused_suites"](root, group_rules)
 classify = module["classify"]
+configured_git = module["test_environment"]()
+configured_index = int(configured_git["GIT_CONFIG_COUNT"]) - 1
+assert configured_git[f"GIT_CONFIG_KEY_{configured_index}"] == "maintenance.auto"
+assert configured_git[f"GIT_CONFIG_VALUE_{configured_index}"] == "false"
 
 cases = [
     (
         ["TODO.md", "docs/tasks/index.tsv"],
-        "R0",
-        ["tests/test-harness-ledgers.sh", "tests/test-task-ledger-routing.sh"],
+        "R1",
+        [
+            "tests/test-context-routing-benchmark.sh",
+            "tests/test-harness-ledgers.sh",
+        ],
         True,
     ),
     (
         ["docs/tasks/Har-196.md"],
         "R0",
-        ["tests/test-task-ledger-routing.sh"],
+        ["tests/test-harness-ledgers.sh"],
         True,
     ),
     (
         ["docs/tasks/Har-999.md"],
         "R0",
-        ["tests/test-task-ledger-routing.sh"],
+        ["tests/test-harness-ledgers.sh"],
         True,
     ),
     (
         ["docs/history/TODO-full-archive-2099-12-31.md"],
         "R0",
-        ["tests/test-task-ledger-routing.sh"],
+        ["tests/test-harness-ledgers.sh"],
         True,
     ),
     (
@@ -151,7 +160,10 @@ cases = [
     (
         ["libexec/harness_housekeeping.py"],
         "R3",
-        ["tests/test-housekeeping.sh"],
+        [
+            "tests/test-housekeeping-owner-alias.sh",
+            "tests/test-housekeeping.sh",
+        ],
         False,
     ),
     (
@@ -224,7 +236,18 @@ cases = [
 for paths, tier, suites, cacheable in cases:
     result = classify(root, paths, rules, focused, group_rules)
     assert result["tier"] == tier, (paths, result)
-    assert result["suites"] == suites, (paths, result)
+    shell_selected = any(
+        rule.suite == "tests/test-shellcheck.sh"
+        and any(rule.regex.search(path) for path in paths)
+        for rule in rules
+    )
+    assert (
+        "tests/test-shellcheck.sh" in result["suites"]
+    ) is shell_selected, (paths, result)
+    assert [
+        suite for suite in result["suites"]
+        if suite != "tests/test-shellcheck.sh"
+    ] == suites, (paths, result)
     assert result["cacheable"] is cacheable, (paths, result)
 
 canonical = module["canonical_json"]({"b": 2, "a": 1})
@@ -337,6 +360,37 @@ with tempfile.TemporaryDirectory() as raw_repo:
     assert module["untracked_whitespace_check"](
         fixture, ["deleted.txt"]
     ) == 1
+    peer_candidate = fixture / "peer.txt"
+    peer_candidate.write_text("$HOME/" + "web" + "site\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "add", "peer.txt"], cwd=fixture, check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    assert module["repository_independence_check"](
+        fixture, ["peer.txt"]
+    ) == 1
+    peer_candidate.write_text("independent\n", encoding="utf-8")
+    assert module["repository_independence_check"](
+        fixture, ["peer.txt"]
+    ) == 0
+    link = fixture / "outside-link"
+    link.symlink_to(fixture.parent, target_is_directory=True)
+    subprocess.run(
+        ["git", "add", "outside-link"], cwd=fixture, check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    assert module["repository_independence_check"](
+        fixture, ["outside-link"]
+    ) == 1
+    broken = fixture / "broken-link"
+    broken.symlink_to("missing")
+    subprocess.run(
+        ["git", "add", "broken-link"], cwd=fixture, check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    assert module["repository_independence_check"](
+        fixture, ["broken-link"]
+    ) == 1
     (fixture / ".gitignore").write_text(
         "*\n!.gitignore\n", encoding="utf-8"
     )
@@ -380,12 +434,11 @@ drifted = {
 }
 decision = {
     "cacheable": True,
-    "discovery_estimated_seconds": 0,
-    "discovery_suites": [],
     "estimated_seconds": 0,
-    "full": False,
+    "final_required": False,
     "groups": [],
     "matches": [],
+    "owner_gaps": [],
     "paths": ["docs/test.md"],
     "suites": [],
     "tier": "R0",
@@ -402,6 +455,7 @@ def identity_scenario(sequence, *, cache_hit, no_receipt=False):
         {
             "parse_args": lambda: SimpleNamespace(
                 base="HEAD^",
+                full=False,
                 jobs="auto",
                 no_receipt=no_receipt,
                 path=[],
@@ -511,36 +565,115 @@ protected_r3 = {
         "tests/test-onboard-personal-mac-skill.sh"
     ),
     "tests/test-reboot-recovery-skill.sh": "tests/test-reboot-recovery-skill.sh",
-    "tests/test-task-ledger-routing.sh": "tests/test-task-ledger-routing.sh",
     "tests/test-github-rulesets.sh": "tests/test-github-rulesets.sh",
     "tests/test-terminfo.sh": "tests/test-terminfo.sh",
 }
 for path, owner in protected_r3.items():
     result = classify(root, [path], rules, focused, group_rules)
     assert result["tier"] == "R3", (path, result)
-    assert result["suites"] == [owner], (path, result)
+    assert owner in result["suites"], (path, result)
+    assert set(result["suites"]) <= {
+        owner,
+        "tests/test-shellcheck.sh",
+        "tests/test-skill-catalog-budget.sh",
+    }, (path, result)
     assert result["cacheable"] is False, (path, result)
 
 multi = classify(
     root,
-    ["config/terminfo/tmux-256color.src", "tests/smoke/debugger.c"],
+    [
+        "tests/smoke/debugger.c",
+        "tests/fixtures/scientific-library-bin/h5cc",
+    ],
     rules,
     focused,
     group_rules,
 )
 assert module["suites_for_stage"](
-    multi, "repair", "tests/test-terminfo.sh", execute=True
-) == ["tests/test-terminfo.sh"]
+    multi, "repair", "tests/test-debugger-readiness.sh", execute=True
+) == ["tests/test-debugger-readiness.sh"]
+wrong_platform_focused = dict(focused)
+wrong_platform_focused["tests/test-terminfo.sh"] = replace(
+    focused["tests/test-terminfo.sh"],
+    platforms=frozenset(
+        {"Darwin"} if platform.system() == "Linux" else {"Linux"}
+    ),
+)
+wrong_platform = classify(
+    root,
+    ["config/terminfo/tmux-256color.src"],
+    rules,
+    wrong_platform_focused,
+    group_rules,
+)
+try:
+    module["suites_for_stage"](
+        wrong_platform, "repair", "tests/test-terminfo.sh", execute=True
+    )
+except ValueError:
+    pass
+else:
+    raise AssertionError("wrong-platform repair owner was executable")
 try:
     module["suites_for_stage"](multi, "repair", None, execute=True)
 except ValueError:
     pass
 else:
     raise AssertionError("multi-owner repair was accepted without --suite")
-assert module["suites_for_stage"](multi, "discovery", None, execute=True)
-assert module["suites_for_stage"](multi, "final", None, execute=True) == [
-    "tests/test-phase1.sh"
+assert module["suites_for_stage"](
+    multi, "discovery", None, execute=True
+) == [
+    "tests/test-debugger-readiness.sh",
+    "tests/test-scientific-library-readiness.sh",
 ]
+assert module["suites_for_stage"](multi, "final", None, execute=True) == [
+    "tests/test-debugger-readiness.sh",
+    "tests/test-scientific-library-readiness.sh",
+]
+full_suites = module["suites_for_stage"](
+    multi, "final", None, execute=True, full=True
+)
+assert full_suites == [
+    suite
+    for suite, metadata in focused.items()
+    if platform.system() in metadata.platforms
+]
+assert "tests/test-phase1.sh" not in full_suites
+owner_gap = classify(root, ["unmapped/new-file"], rules, focused, group_rules)
+try:
+    module["suites_for_stage"](owner_gap, "final", None, execute=True)
+except ValueError as error:
+    assert "owner gaps" in str(error)
+else:
+    raise AssertionError("ownerless final validation was accepted")
+try:
+    module["suites_for_stage"](
+        owner_gap, "final", None, execute=True, full=True
+    )
+except ValueError as error:
+    assert "owner gaps" in str(error)
+else:
+    raise AssertionError("explicit full hid an owner gap")
+mixed_gap = classify(
+    root,
+    ["config/terminfo/tmux-256color.src", "unmapped/new-file"],
+    rules,
+    focused,
+    group_rules,
+)
+assert mixed_gap["suites"] == ["tests/test-terminfo.sh"]
+assert mixed_gap["owner_gaps"] == ["unmapped/new-file"]
+try:
+    module["suites_for_stage"](mixed_gap, "final", None, execute=True)
+except ValueError as error:
+    assert "unmapped/new-file" in str(error)
+else:
+    raise AssertionError("mixed owner gap was hidden by a selected suite")
+docs_only = classify(root, ["docs/ordinary.md"], rules, focused, group_rules)
+assert docs_only["owner_gaps"] == []
+assert module["suites_for_stage"](
+    docs_only, "final", None, execute=True
+) == []
 
 with tempfile.TemporaryDirectory() as raw_discovery:
     discovery_root = Path(raw_discovery)
@@ -552,7 +685,13 @@ with tempfile.TemporaryDirectory() as raw_discovery:
     )
     for name, body in (
         ("fail", "#!/bin/sh\nprintf 'known failure\\n'\nexit 7\n"),
-        ("pass", "#!/bin/sh\nprintf 'later pass\\n'\n"),
+        (
+            "pass",
+            "#!/bin/sh\n"
+            "printf 'later pass\\n'\n"
+            "[ -z \"${HARNESS_FULL_CAPTURE:-}\" ] || "
+            "printf '%s\\n' \"$HARNESS_VALIDATION_FULL\" >\"$HARNESS_FULL_CAPTURE\"\n",
+        ),
     ):
         path = discovery_root / f"tests/{name}.sh"
         path.write_text(body, encoding="utf-8")
@@ -579,6 +718,9 @@ with tempfile.TemporaryDirectory() as raw_discovery:
     module["run_discovery"].__globals__["run_validation"] = (
         lambda *_args: [{"path": "diff", "seconds": 0.0, "status": 0}]
     )
+    full_capture = discovery_root / "full.env"
+    original_capture = os.environ.get("HARNESS_FULL_CAPTURE")
+    os.environ["HARNESS_FULL_CAPTURE"] = str(full_capture)
     try:
         results, inventory_path = module["run_discovery"](
             discovery_root,
@@ -588,11 +730,58 @@ with tempfile.TemporaryDirectory() as raw_discovery:
             discovery_root,
             discovery_focused,
         )
+        structural_results, structural_path = module["run_discovery"](
+            discovery_root,
+            "HEAD^",
+            {"groups": [], "paths": ["docs/ordinary.md"], "suites": []},
+            "1",
+            discovery_root,
+            discovery_focused,
+        )
+        _final_results, final_path = module["run_discovery"](
+            discovery_root,
+            "HEAD^",
+            {
+                "groups": [],
+                "paths": ["docs/ordinary.md"],
+                "stage": "final",
+                "suites": [],
+            },
+            "1",
+            discovery_root,
+            discovery_focused,
+        )
+        module["run_discovery"](
+            discovery_root,
+            "HEAD^",
+            {
+                "full_requested": True,
+                "groups": [],
+                "paths": ["fixture"],
+                "stage": "final",
+                "suites": ["tests/pass.sh"],
+            },
+            "1",
+            discovery_root,
+            discovery_focused,
+        )
     finally:
+        if original_capture is None:
+            os.environ.pop("HARNESS_FULL_CAPTURE", None)
+        else:
+            os.environ["HARNESS_FULL_CAPTURE"] = original_capture
         module["run_discovery"].__globals__["run_validation"] = (
             original_run_validation
         )
     inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    structural = json.loads(structural_path.read_text(encoding="utf-8"))
+    final_inventory = json.loads(final_path.read_text(encoding="utf-8"))
+    assert structural["status"] == "pass"
+    assert structural["results"] == structural_results
+    assert structural["failure_suites"] == []
+    assert structural["not_run"] == []
+    assert final_inventory["schema"] == "harness-validation-final-v1"
+    assert full_capture.read_text(encoding="utf-8") == "1\n"
     assert inventory["schema"] == "harness-validation-discovery-v1"
     assert inventory["status"] == "fail"
     assert inventory["failure_suites"] == ["tests/fail.sh"]
@@ -619,26 +808,29 @@ ordinary_plan=$(plan \
 unknown_plan=$(plan --path unknown/path)
 discovery_plan=$(plan --stage discovery --path config/terminfo/tmux-256color.src)
 final_plan=$(plan --stage final --path config/terminfo/tmux-256color.src)
+full_plan=$(plan --stage final --full --path config/terminfo/tmux-256color.src)
 
 python3 - \
     "$docs_plan" "$skill_plan" "$ordinary_plan" "$unknown_plan" \
-    "$discovery_plan" "$final_plan" <<'PY'
+    "$discovery_plan" "$final_plan" "$full_plan" <<'PY'
 import json
+import platform
 import sys
 
 if not __debug__:
     raise SystemExit("validation-router plan test requires Python assertions")
 
-docs, skill, ordinary, unknown, discovery, final = (
+docs, skill, ordinary, unknown, discovery, final, full = (
     json.loads(value) for value in sys.argv[1:]
 )
-assert docs["tier"] == "R0"
+assert docs["tier"] == "R1"
 assert docs["owner_suites"] == [
+    "tests/test-context-routing-benchmark.sh",
     "tests/test-harness-ledgers.sh",
-    "tests/test-task-ledger-routing.sh",
 ]
 assert skill["tier"] == "R1"
 assert skill["owner_suites"] == [
+    "tests/test-skill-catalog-budget.sh",
     "tests/test-skill-context-budgets.sh",
     "tests/test-skill-context-gates.sh",
 ]
@@ -650,12 +842,30 @@ assert ordinary["owner_suites"] == [
 ]
 assert unknown["tier"] == "R3"
 assert unknown["owner_suites"] == []
+assert unknown["owner_gaps"] == ["unknown/path"]
 assert unknown["final_required"] is True
 assert discovery["stage"] == "discovery"
 assert discovery["groups"][0]["name"] == "macos-terminal"
-assert discovery["execution_suites"] == discovery["groups"][0]["suites"]
+assert discovery["execution_suites"] == (
+    ["tests/test-terminfo.sh"] if platform.system() == "Linux" else []
+)
 assert final["stage"] == "final"
-assert final["execution_suites"] == ["tests/test-phase1.sh"]
+assert final["execution_suites"] == (
+    ["tests/test-terminfo.sh"] if platform.system() == "Linux" else []
+)
+assert final["not_applicable_suites"] == (
+    [] if platform.system() == "Linux" else ["tests/test-terminfo.sh"]
+)
+assert final["full_requested"] is False
+assert "tests/test-phase1.sh" not in full["execution_suites"]
+all_full = full["execution_suites"] + full["not_applicable_suites"]
+assert len(all_full) == len(set(all_full)) == 116
+assert full["full_requested"] is True
 PY
+
+if plan --full --path config/terminfo/tmux-256color.src >/dev/null 2>&1; then
+    printf '%s\n' 'FAIL: --full accepted outside final stage' >&2
+    exit 1
+fi
 
 printf '%s\n' 'VALIDATION_ROUTER status=pass'

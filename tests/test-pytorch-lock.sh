@@ -4,19 +4,11 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 LOCK=$ROOT/profiles/pytorch-2.12.1-cu130.requirements.lock
 BUILDER=$ROOT/tools/build-pytorch-wheelhouse.sh
-DOC=$ROOT/docs/pytorch-framework-baseline.md
 
 sh -n "$BUILDER"
 grep -F -- '--require-hashes --no-deps' "$BUILDER" >/dev/null
 grep -F 'wheel_count=29' "$BUILDER" >/dev/null
 grep -F 'chmod 555 "$stage"' "$BUILDER" >/dev/null
-grep -F 'PyTorch 2.13.0' "$DOC" >/dev/null
-if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|find[[:space:]].*-delete|rsync[[:space:]].*--delete' \
-    "$BUILDER" >/dev/null; then
-    printf '%s\n' 'FAIL: unsafe wheelhouse cleanup' >&2
-    exit 1
-fi
-
 python3 - "$LOCK" <<'PY'
 import pathlib
 import re

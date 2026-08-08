@@ -9,7 +9,7 @@ their ordinary repository-local ledgers when needed.
 Unless the owner specifies another cutoff, every nightly runs until 09:00
 Asia/Tokyo on the morning following its start.
 
-Next free ID: Nit-002.
+Next free ID: Nit-003.
 
 When the owner says to add something to the nightly ledger, allocate the next
 `Nit-NNN` here and under `docs/nightly/`; do not create a `Har-*` task. Keep
@@ -40,6 +40,7 @@ credential, private-source, compute, or destructive authority by itself.
 
 | Task | State | Priority | Record |
 | --- | --- | ---: | --- |
+| Nit-002 | active | 20 | `docs/nightly/tasks/Nit-002.md` |
 | Nit-001 | ready | 10 | `docs/nightly/tasks/Nit-001.md` |
 
 ## Completed lookup

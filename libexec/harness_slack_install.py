@@ -98,6 +98,7 @@ def receive_once(
     *,
     socket_uid: int = 0,
     validator: Callable[[object], dict[str, str]] = validate_bundle,
+    ready: Callable[[], None] | None = None,
 ) -> None:
     if (
         not path.is_absolute()
@@ -112,6 +113,8 @@ def receive_once(
         listener.listen(1)
         os.chown(path, socket_uid, client_gid)
         os.chmod(path, 0o660)
+        if ready is not None:
+            ready()
         listener.settimeout(SOCKET_TIMEOUT_SECONDS)
         connection, _address = listener.accept()
         # Remove the rendezvous immediately after the sole connection so no

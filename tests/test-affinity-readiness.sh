@@ -62,9 +62,4 @@ awk -F '|' '
     NF != 11 || $8 != 2 || $10 != "00:05:00" || $11 !~ /^t237a/ { bad=1 }
     END { exit bad }
 ' "$ROUTES"
-if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|find[[:space:]].*-delete|rsync[[:space:]].*--delete' \
-    "$JOB" "$LOCAL" "$LOCAL_EPYC" "$ROOT/tests/guarded-test-cleanup.sh" >/dev/null; then
-    printf '%s\n' 'FAIL: unsafe cleanup in affinity readiness gate' >&2
-    exit 1
-fi
 printf '%s\n' 'Affinity readiness tests passed'

@@ -3,6 +3,7 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 AGENTS=$ROOT/AGENTS.md
+CLAUDE=$ROOT/CLAUDE.md
 GIT_POLICY=$ROOT/docs/agent-policy/repository-git.md
 EXTERNAL=$ROOT/docs/agent-policy/external-operations.md
 CODEX=$ROOT/docs/agent-policy/managed-codex.md
@@ -28,7 +29,7 @@ assert_contains() {
     grep -F -- "$pattern" "$file" >/dev/null || fail "$label"
 }
 
-for path in "$AGENTS" "$GIT_POLICY" "$EXTERNAL" "$CODEX" "$FLEET" \
+for path in "$AGENTS" "$CLAUDE" "$GIT_POLICY" "$EXTERNAL" "$CODEX" "$FLEET" \
     "$HOUSEKEEPING" "$RESEARCH" "$DURATION" "$PORTFOLIO"; do
     [ -f "$path" ] && [ ! -L "$path" ] ||
         fail "missing regular policy file: $path"
@@ -75,6 +76,7 @@ done
 # Always-read boundaries cannot depend on selecting a conditional module.
 assert_contains 'Never inspect, expose, copy, or modify credentials' "$AGENTS" \
     'credential boundary'
+assert_contains '@AGENTS.md' "$CLAUDE" 'Claude project policy import'
 assert_contains 'Never run raw recursive or multi-path deletion' "$AGENTS" \
     'raw deletion refusal'
 assert_contains 'guarded-bulk-delete' "$AGENTS" 'guarded deletion route'
@@ -87,14 +89,22 @@ assert_contains 'Never infer a timestamp' "$AGENTS" \
     'progress timestamp drift guard'
 assert_contains 'never blindly replay the prior prompt' "$AGENTS" \
     'provider retry boundary'
-assert_contains 'one affected-group discovery' "$AGENTS" \
-    'failure-complete discovery cadence'
-assert_contains 'one owning suite per repair' "$AGENTS" \
+assert_contains 'exact-owner discovery' "$AGENTS" \
+    'exact changed-context discovery cadence'
+assert_contains 'one owner per repair' "$AGENTS" \
     'isolated repair cadence'
-assert_contains 'changes remain final-required' "$AGENTS" \
-    'final validation escalation'
+assert_contains 'complete suite only when the owner' "$AGENTS" \
+    'explicit complete validation boundary'
+assert_contains 'below 10% of runtime' "$AGENTS" \
+    'validation runtime budget'
+assert_contains 'without elapsed-time sleeps, polling' "$AGENTS" \
+    'deterministic test synchronization'
 assert_contains 'not merely because a session resumed' "$AGENTS" \
     'unchanged validation reuse'
+assert_contains 'Run fresh `harness fleet-health` for fleet/runtime work' \
+    "$FLEET" 'risk-bounded fleet health policy'
+assert_contains "consult that system's official" "$FLEET" \
+    'official maintenance lookup policy'
 assert_contains 'Git and `TODO.md` are the ordinary durable truth' "$AGENTS" \
     'durable source of truth'
 assert_contains 'chat and client memory' "$AGENTS" \

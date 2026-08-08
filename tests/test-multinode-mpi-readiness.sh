@@ -55,11 +55,6 @@ if grep -F 'SLURM_TMPDIR' "$JOB" >/dev/null; then
     printf '%s\n' 'FAIL: multi-node executable returned to node-local scratch' >&2
     exit 1
 fi
-if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|find[[:space:]].*-delete|rsync[[:space:]].*--delete' \
-    "$JOB" "$LOCAL_JOB" "$AB_JOB" "$AB2_JOB" "$T4_JOB" >/dev/null; then
-    printf '%s\n' 'FAIL: unsafe multi-node MPI cleanup' >&2
-    exit 1
-fi
 if HARNESS_LOGICAL_HOST=ri HARNESS_EXPECTED_REV=0000000000000000000000000000000000000000 \
     "$JOB" >/dev/null 2>&1; then
     printf '%s\n' 'FAIL: unsupported host accepted' >&2

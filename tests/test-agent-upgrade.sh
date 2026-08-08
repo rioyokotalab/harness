@@ -2,8 +2,8 @@
 set -eu
 
 if [ "$(uname -s)" != Linux ]; then
-    echo 'agent upgrade tests: SKIP (Linux-only deployment contract)'
-    exit 0
+    echo 'FAIL: agent-upgrade owner is Linux-only; selector admitted wrong platform' >&2
+    exit 2
 fi
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)

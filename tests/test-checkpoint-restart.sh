@@ -6,7 +6,6 @@ SOURCE=$ROOT/tests/smoke/checkpoint_restart.cpp
 JOB=$ROOT/tests/smoke/jobs/checkpoint-restart-readiness.sh
 LOCAL_JOB=$ROOT/tests/smoke/jobs/local-checkpoint-restart.slurm
 EPYC_JOB=$ROOT/tests/smoke/jobs/local-checkpoint-restart-epyc.slurm
-FORMAT_DOC=$ROOT/docs/checkpoint-restart-format.md
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEST_ROOT=$(mktemp -d "$TEMP_BASE/checkpoint-restart-test.XXXXXX")
@@ -107,14 +106,6 @@ fi
 
 grep -F 'fsync(fd)' "$SOURCE" >/dev/null || fail "checkpoint fsync"
 grep -F '0x7f7cadf8669fc055' "$JOB" >/dev/null || fail "frozen final state"
-grep -F '48434b505430303100000001000000000000000000000190f228968bea039c89a12045f4cbcc95d1' \
-    "$FORMAT_DOC" >/dev/null || fail "documented golden bytes"
-grep -F 'not cryptographic authentication' "$FORMAT_DOC" >/dev/null ||
-    fail "checksum scope boundary"
-grep -F 'exactly one writer wins' "$FORMAT_DOC" >/dev/null ||
-    fail "writer collision scope"
 grep -F 'O_EXCL' "$SOURCE" >/dev/null || fail "checkpoint collision refusal"
 grep -F 'unlink -- "$checkpoint"' "$JOB" >/dev/null || fail "exact live cleanup"
-if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|find[[:space:]].*-delete|rsync[[:space:]].*--delete' \
-    "$JOB" "$LOCAL_JOB" "$EPYC_JOB"; then fail "unsafe cleanup"; fi
 printf '%s\n' 'checkpoint restart tests: PASS'

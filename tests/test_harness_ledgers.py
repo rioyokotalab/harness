@@ -36,7 +36,8 @@ class HarnessLedgersTest(unittest.TestCase):
             encoding="utf-8",
         )
         (self.root / "TODO.md").write_text(
-            "Next free ID: Har-002.\n\n### Har-001 — Work\n",
+            "Next free ID: Har-002.\n\n### Har-001 — Work\n"
+            "Record: `docs/tasks/Har-001.md`.\n",
             encoding="utf-8",
         )
         (self.root / "docs/nightly/config.json").write_text(
@@ -121,6 +122,13 @@ class HarnessLedgersTest(unittest.TestCase):
     def test_retired_self_consumer_path_fails(self) -> None:
         (self.root / "PRODUCER.md").write_text("retired\n", encoding="utf-8")
         self.assertIn("reason=self-consumer-infrastructure", self.run_tool("validate").stderr)
+
+    def test_compact_board_pointer_is_required(self) -> None:
+        (self.root / "TODO.md").write_text(
+            "Next free ID: Har-002.\n\n### Har-001 — Work\n",
+            encoding="utf-8",
+        )
+        self.assertIn("reason=ordinary-board-pointer", self.run_tool("validate").stderr)
 
 
 if __name__ == "__main__":

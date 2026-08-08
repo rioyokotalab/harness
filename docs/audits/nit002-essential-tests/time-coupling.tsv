@@ -1,0 +1,21 @@
+suite	line	kind	action	source
+tests/test-checkpoint-restart.sh	92	child-join	retain-only-after-exact-event-or-signal	"wait ""$race_400_pid""; race_400_status=$?"
+tests/test-checkpoint-restart.sh	93	child-join	retain-only-after-exact-event-or-signal	"wait ""$race_500_pid""; race_500_status=$?"
+tests/test-codex-arg0-wrapper.sh	16	child-join	retain-only-after-exact-event-or-signal	"wait ""$locker"" 2>/dev/null || true"
+tests/test-codex-arg0-wrapper.sh	122	child-join	retain-only-after-exact-event-or-signal	"wait ""$locker"" 2>/dev/null || true"
+tests/test-codex-arg0-wrapper.sh	177	child-join	retain-only-after-exact-event-or-signal	"wait ""$locker"" 2>/dev/null || true"
+tests/test-codex-runtime-isolation.sh	36	child-join	retain-only-after-exact-event-or-signal	"wait ""$process_pid"" 2>/dev/null"
+tests/test-codex-thread-recovery.sh	23	child-join	retain-only-after-exact-event-or-signal	"wait ""$server_pid"" 2>/dev/null || true"
+tests/test-codex-thread-recovery.sh	717	child-join	retain-only-after-exact-event-or-signal	"wait ""$server_pid"""
+tests/test-connection-monitor.sh	19	child-join	retain-only-after-exact-event-or-signal	"wait ""$AGENT_PID"" 2>/dev/null || true"
+tests/test-fleet-health.sh	16	child-join	retain-only-after-exact-event-or-signal	"wait ""$AGENT_PID"" 2>/dev/null || true"
+tests/test-remote-agent-communication.sh	438	child-join	retain-only-after-exact-event-or-signal	"wait ""$first_receive"""
+tests/test-remote-agent-communication.sh	439	child-join	retain-only-after-exact-event-or-signal	"wait ""$second_receive"""
+tests/test-ssh-config-mirror.sh	17	child-join	retain-only-after-exact-event-or-signal	"wait ""$socket_pid"" 2>/dev/null || true"
+tests/test_slack_install.py	403	child-join	retain-only-after-exact-event-or-signal	ready.wait()
+tests/test_slack_install.py	411	child-join	retain-only-after-exact-event-or-signal	thread.join()
+tests/test_slack_mcp.py	356	child-join	retain-only-after-exact-event-or-signal	thread.join()
+tests/test_slack_oauth.py	82	child-join	retain-only-after-exact-event-or-signal	self.assertEqual(process.wait(), 0)
+tests/test_slack_oauth.py	87	child-join	retain-only-after-exact-event-or-signal	process.wait()
+tests/test_slack_swallow_install.py	262	child-join	retain-only-after-exact-event-or-signal	ready.wait()
+tests/test_slack_swallow_install.py	271	child-join	retain-only-after-exact-event-or-signal	thread.join()

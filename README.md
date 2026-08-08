@@ -653,48 +653,49 @@ Use the deterministic impact selector during ordinary work:
 harness validate --plan --path PATH
 harness validate --stage discovery --base origin/main
 harness validate --stage repair --suite tests/OWNING-SUITE.sh --base origin/main
+harness validate --stage final --base origin/main
+harness validate --stage final --full --base origin/main  # explicit only
 ```
 
-Documentation and ledger changes run their contracts, routed skills run budget
-and gate fixtures, and mapped components run their owning suite. Workflow,
-policy, selector, manifest, safety, lifecycle, cleanup, credential, and unknown
-changes retain their high-risk classification without forcing the full suite
-during development. Discovery runs every suite in each affected group in
-keep-going mode and records one durable failure inventory. Repair accepts one
-owning suite at a time; if several owners are selected, the plan lists the
-individual `--suite` commands instead of running unrelated tests. Exact
+Documentation-only changes use structural checks, ledger changes run their
+contract, routed skills run their exact owners, and mapped components run only
+their owning suite. An unknown path stops with an owner-map defect. Discovery
+runs exact owners in keep-going mode and records one durable failure inventory.
+Repair accepts one owning suite at a time; if several owners are selected, the
+plan lists the individual `--suite` commands. Exact
 clean-tree R0/R1 repair results may reuse a content-addressed local receipt;
 that receipt is owner self-attestation, not independent CI. Recorded validation
 is also reused when the target bytes, environment contract, and acceptance
 scope are unchanged: resuming a session alone does not trigger another run.
 
-After discovery failures have each passed their individual owning suite, run
-the complete portable suite exactly once on the final integrated tree:
+After discovery failures have each passed their individual owner, final runs
+those exact changed-context owners once on the integrated tree. A complete
+portable suite is never inferred from risk or stage; it requires the explicit
+`--full` command shown above.
 
-```bash
-harness validate --stage final --base origin/main
-```
+Closeout reports actual validation/testing wall time as a percentage of task
+wall time. Meet the under-ten-percent target by reducing admission and owner
+cost, never by delaying completion to improve the denominator.
 
 The retired fixed Darwin preflight is no longer part of the workflow: affected
 selection is smaller and cannot drift from the complete manifest. Validation
 plans report owning suites, groups, and estimated serial cost. Timing receipts
 record the platform, resource class, status, and duration of every admitted
-suite. The focused runner fails fast for final validation and uses keep-going
-only for discovery. On Darwin, automatic admission retains a light-work lane
+suite. Discovery and final use keep-going inventories; repair runs only one
+owner. On Darwin, automatic admission retains a light-work lane
 on smaller machines and caps process-heavy concurrency.
 
 Documentation-only changes must at least pass `git diff --check` and the
 relevant focused tests. Protected CI remains authoritative.
 
-Protected Harness pull requests run affected-group discovery against the
-event's exact base revision, including owner-authored changes. This reports all
-group failures in one run instead of exposing them serially after each repair.
-Weekly and manual events remain unconditional full portable backstops.
+Protected Harness pull requests run exact changed-context final validation
+against the event's base revision, including owner-authored changes. Manual
+dispatch is the only hosted full portable-suite trigger.
 
 For private Students and Swallow work, repository-local policy controls any
-owner-authored pull-request shortcut. Harness runs affected-group discovery for
-every pull request and avoids only the redundant post-merge `main` run. Weekly
-and manual hosted runs provide an independent full backstop. The earlier
+owner-authored pull-request shortcut. Harness runs exact-owner final validation
+for every pull request and avoids redundant scheduled and post-merge runs. The
+earlier
 measured cost model, trust boundary, and alternatives are recorded in
 [`docs/audits/t351-autonomy-efficiency/actions-transition.md`](docs/audits/t351-autonomy-efficiency/actions-transition.md).
 

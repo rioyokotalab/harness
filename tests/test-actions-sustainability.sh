@@ -18,10 +18,9 @@ done
 
 grep -F -x '  pull_request:' "$WORKFLOW" >/dev/null ||
     fail 'pull-request trigger missing'
-grep -F -x '  schedule:' "$WORKFLOW" >/dev/null ||
-    fail 'weekly trigger missing'
-grep -F -x '    - cron: "11 19 * * 6"' "$WORKFLOW" >/dev/null ||
-    fail 'weekly trigger changed'
+if grep -F -x '  schedule:' "$WORKFLOW" >/dev/null; then
+    fail 'scheduled full validation restored'
+fi
 grep -F -x '  workflow_dispatch:' "$WORKFLOW" >/dev/null ||
     fail 'manual full trigger missing'
 python3 - "$WORKFLOW" <<'PY'
@@ -52,7 +51,7 @@ def validate(text: str) -> None:
         match = re.fullmatch(r"  ([a-z_]+):", line)
         if match:
             event_keys.append(match.group(1))
-    if event_keys != ["pull_request", "schedule", "workflow_dispatch"]:
+    if event_keys != ["pull_request", "workflow_dispatch"]:
         raise ValueError("workflow has an undeclared event trigger")
 
     declarations = [
@@ -74,17 +73,17 @@ def validate(text: str) -> None:
 
     step_contracts = (
         (
-            "      - name: Discover all affected-group failures for pull requests",
+            "      - name: Run exact changed-context gate for pull requests",
             [
                 "        if: github.event_name == 'pull_request'",
-                '        run: bin/harness validate --stage discovery --base "${{ github.event.pull_request.base.sha }}"',
+                '        run: bin/harness validate --stage final --base "${{ github.event.pull_request.base.sha }}"',
             ],
         ),
         (
-            "      - name: Run credential-free portable full backstop",
+            "      - name: Run explicitly requested portable full suite",
             [
-                "        if: github.event_name != 'pull_request'",
-                "        run: tests/test-phase1.sh",
+                "        if: github.event_name == 'workflow_dispatch'",
+                "        run: bin/harness validate --stage final --full --base HEAD^",
             ],
         ),
     )
@@ -131,11 +130,11 @@ mutations = (
         1,
     ),
     workflow.replace(
-        "github.event_name != 'pull_request'",
+        "github.event_name == 'workflow_dispatch'",
         "always()",
         1,
     ),
-    workflow.replace("--stage discovery", "--stage repair", 1),
+    workflow.replace("--stage final", "--stage repair", 1),
 )
 for mutation in mutations:
     try:
@@ -155,12 +154,12 @@ grep -F 'HARNESS_PORTABLE_CI: "1"' "$WORKFLOW" >/dev/null ||
     fail 'portable gate contract missing'
 grep -F -x "        if: github.event_name == 'pull_request'" "$WORKFLOW" >/dev/null ||
     fail 'pull-request selector condition missing'
-grep -F -x '        run: bin/harness validate --stage discovery --base "${{ github.event.pull_request.base.sha }}"' "$WORKFLOW" >/dev/null ||
-    fail 'pull-request discovery selector changed'
-grep -F -x "        if: github.event_name != 'pull_request'" "$WORKFLOW" >/dev/null ||
-    fail 'weekly/manual full-backstop condition missing'
-grep -F -x '        run: tests/test-phase1.sh' "$WORKFLOW" >/dev/null ||
-    fail 'weekly/manual full backstop changed'
+grep -F -x '        run: bin/harness validate --stage final --base "${{ github.event.pull_request.base.sha }}"' "$WORKFLOW" >/dev/null ||
+    fail 'pull-request exact final selector changed'
+grep -F -x "        if: github.event_name == 'workflow_dispatch'" "$WORKFLOW" >/dev/null ||
+    fail 'manual full condition missing'
+grep -F -x '        run: bin/harness validate --stage final --full --base HEAD^' "$WORKFLOW" >/dev/null ||
+    fail 'manual explicit full command changed'
 
 grep -F 'duplicate `main` push runner' "$DOC" >/dev/null ||
     fail 'owner documentation does not explain trigger routing'
@@ -169,4 +168,4 @@ grep -F 'v7.0.1' "$DOC" >/dev/null ||
 grep -F '678 observed public duplicate runs' "$AUDIT" >/dev/null ||
     fail 'public-run evidence missing'
 
-printf '%s\n' 'ACTIONS_SUSTAINABILITY status=pass harness_push=absent weekly=present manual=present'
+printf '%s\n' 'ACTIONS_SUSTAINABILITY status=pass harness_push=absent schedule=absent manual_full=explicit'
