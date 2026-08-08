@@ -31,9 +31,6 @@ test -f "$SCAFFOLD/tools/consumer_validation.py"
 grep -F 'Do not install this protocol into Harness itself' "$SKILL/SKILL.md" >/dev/null
 grep -F 'not authority for a target consumer to start a nightly run' \
   "$SKILL/SKILL.md" >/dev/null
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$SCAFFOLD/tools \
-  python3 -m unittest discover -s "$SCAFFOLD/tests" -p 'test_*.py'
-
 grep -F 'safe-work-first' "$SKILL/references/protocol.md" >/dev/null
 grep -F 'reconciliation-pending' "$SKILL/references/protocol.md" >/dev/null
 grep -F 'untracked' "$SKILL/references/protocol.md" >/dev/null

@@ -3,59 +3,12 @@ tests/test-remote-agent-communication.sh	438	child-join	retain-only-after-exact-
 tests/test-remote-agent-communication.sh	439	child-join	retain-only-after-exact-event-or-signal	"wait ""$second_receive"""
 tests/test-fleet-health.sh	16	child-join	retain-only-after-exact-event-or-signal	"wait ""$AGENT_PID"" 2>/dev/null || true"
 tests/test-connection-monitor.sh	19	child-join	retain-only-after-exact-event-or-signal	"wait ""$AGENT_PID"" 2>/dev/null || true"
-tests/test-housekeeping.sh	792	child-join	retain-only-after-exact-event-or-signal	"wait ""$LIVE_PID"" 2>/dev/null || true"
-tests/test-housekeeping.sh	793	child-join	retain-only-after-exact-event-or-signal	"wait ""$OPEN_PID"" 2>/dev/null || true"
-tests/test-al-session.sh	45	poll-loop	replace-with-event	"while [ -S ""$home/.ssh/agent.sock"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	46	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	123	elapsed-sleep	remove-or-replace-with-event	time.sleep(60)
-tests/test-al-session.sh	193	poll-loop	replace-with-event	"while [ -S ""$HOME/.ssh/cm-al"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	194	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	221	poll-loop	replace-with-event	"while [ ! -S ""$HOME/.ssh/cm-al"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	222	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	318	poll-loop	replace-with-event	"while [ ! -S ""$HOME/.ssh/cm-al"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	319	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	388	poll-loop	replace-with-event	"while [ ! -S ""$path/.ssh/agent.sock"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	389	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	440	poll-loop	replace-with-event	"while [ ! -S ""$runner_home/.ssh/cm-al"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	441	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	455	child-join	retain-only-after-exact-event-or-signal	"wait ""$runner_stale_pid"" 2>/dev/null || true"
-tests/test-al-session.sh	461	poll-loop	replace-with-event	"while [ ! -S ""$runner_home/.ssh/cm-al"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	462	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	478	child-join	retain-only-after-exact-event-or-signal	"wait ""$runner_collision_pid"" 2>/dev/null || true"
-tests/test-al-session.sh	580	poll-loop	replace-with-event	"while [ -S ""$home/.ssh/cm-al"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	581	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	603	poll-loop	replace-with-event	"while [ ! -S ""$home/.ssh/cm-al"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	604	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	629	poll-loop	replace-with-event	"while [ -S ""$auth_home/.ssh/cm-al"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	630	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	682	poll-loop	replace-with-event	"while [ -S ""$permanent_home/.ssh/cm-al"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	683	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	701	poll-loop	replace-with-event	"while [ -S ""$stale_home/.ssh/cm-al"" ] && [ ""$attempts"" -lt 50 ]; do"
-tests/test-al-session.sh	702	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-al-session.sh	733	child-join	retain-only-after-exact-event-or-signal	"wait ""$stale_socket_pid"" 2>/dev/null || true"
-tests/test-personal-agent.sh	414	child-join	retain-only-after-exact-event-or-signal	"wait ""$lock_pid"""
 tests/test-codex-arg0-wrapper.sh	16	child-join	retain-only-after-exact-event-or-signal	"wait ""$locker"" 2>/dev/null || true"
 tests/test-codex-arg0-wrapper.sh	122	child-join	retain-only-after-exact-event-or-signal	"wait ""$locker"" 2>/dev/null || true"
 tests/test-codex-arg0-wrapper.sh	177	child-join	retain-only-after-exact-event-or-signal	"wait ""$locker"" 2>/dev/null || true"
-tests/test-codex-resilient.sh	191	elapsed-sleep	remove-or-replace-with-event	/bin/sleep 1
-tests/test-codex-resilient.sh	194	elapsed-sleep	remove-or-replace-with-event	short) /bin/sleep 2 ;;
-tests/test-codex-resilient.sh	272	elapsed-sleep	remove-or-replace-with-event	/bin/sleep 1
-tests/test-codex-resilient.sh	279	elapsed-sleep	remove-or-replace-with-event	/bin/sleep 1
-tests/test-codex-resilient.sh	285	elapsed-sleep	remove-or-replace-with-event	/bin/sleep 1
-tests/test-codex-resilient.sh	304	elapsed-sleep	remove-or-replace-with-event	/bin/sleep 0.05
 tests/test-codex-runtime-isolation.sh	38	child-join	retain-only-after-exact-event-or-signal	"wait ""$process_pid"" 2>/dev/null"
 tests/test-codex-thread-recovery.sh	23	child-join	retain-only-after-exact-event-or-signal	"wait ""$server_pid"" 2>/dev/null || true"
-tests/test-codex-thread-recovery.sh	700	poll-loop	replace-with-event	"while [ ! -S ""$control_socket"" ] && [ ""$socket_wait"" -lt 50 ]; do"
-tests/test-codex-thread-recovery.sh	701	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-codex-thread-recovery.sh	716	child-join	retain-only-after-exact-event-or-signal	"wait ""$server_pid"""
-tests/test-personal-macos-ssh-supervisor.sh	22	child-join	retain-only-after-exact-event-or-signal	"if wait ""$watchdog_signal_pid"" 2>/dev/null; then :; fi"
-tests/test-personal-macos-ssh-supervisor.sh	115	elapsed-sleep	remove-or-replace-with-event	sleep 2
-tests/test-personal-macos-ssh-supervisor.sh	675	poll-loop	replace-with-event	"while [ ! -e ""$recovery_lock"" ] && [ ""$watchdog_signal_wait"" -lt 300 ]; do"
-tests/test-personal-macos-ssh-supervisor.sh	676	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
-tests/test-personal-macos-ssh-supervisor.sh	681	child-join	retain-only-after-exact-event-or-signal	"if wait ""$watchdog_signal_pid"" 2>/dev/null; then :; fi"
-tests/test-personal-macos-ssh-supervisor.sh	686	child-join	retain-only-after-exact-event-or-signal	"if wait ""$watchdog_signal_pid""; then"
-tests/test-personal-macos-ssh-supervisor.sh	694	poll-loop	replace-with-event	"while [ -e ""$recovery_lock"" ] && [ ""$watchdog_signal_wait"" -lt 120 ]; do"
-tests/test-personal-macos-ssh-supervisor.sh	695	elapsed-sleep	remove-or-replace-with-event	sleep 0.1
+tests/test-codex-thread-recovery.sh	717	child-join	retain-only-after-exact-event-or-signal	"wait ""$server_pid"""
 tests/test-ssh-config-mirror.sh	17	child-join	retain-only-after-exact-event-or-signal	"wait ""$socket_pid"" 2>/dev/null || true"
 tests/test-checkpoint-restart.sh	93	child-join	retain-only-after-exact-event-or-signal	"wait ""$race_400_pid""; race_400_status=$?"
 tests/test-checkpoint-restart.sh	94	child-join	retain-only-after-exact-event-or-signal	"wait ""$race_500_pid""; race_500_status=$?"

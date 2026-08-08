@@ -2,9 +2,9 @@
 
 ## Method
 
-`inventory.tsv` is the row-complete inventory of the 104-suite manifest
-inherited from protected base `14309ce`; its hashes track the reviewed working
-bytes as the nightly changes them. It records the declared group and cost, source size,
+`inventory.tsv` is the row-complete inventory of the current manifest, descended
+from the 104-suite protected base `14309ce`; its hashes track the reviewed
+working bytes as the nightly changes them. It records the declared group and cost, source size,
 assertion density, direct impact-map reachability, static time-coupling tokens,
 and referenced repository inputs. Regenerate it with:
 
@@ -211,7 +211,7 @@ owners; groups remain descriptive metadata only.
 | `test-ssh-agent-profile.sh` | exact owner | Unique fixed-versus-forwarded agent socket contract in `shell/profile.sh`. |
 | `test-remote-session.sh` | exact owner | Unique direct/tmux/nested shell lifecycle contract. |
 | `test-housekeeping-owner-alias.sh` | split and exact owner | Unique immutable archive-owner fallback, but its single 447-line transaction suite is too coarse. |
-| `test-projects-pane-layout.sh` | exact owner | Unique tmux role/label topology; replace liveness sleeps with event-held panes. |
+| `test-projects-pane-layout.sh` | retire duplicate | Its role/label topology is already asserted by the target-map, tmux-config, and managed-session owners. |
 | `test-repository-independence.sh` | incremental | Scan changed publishable files and changed symlinks; reserve repository scan for explicit full. |
 | `test-claude-takeover.sh` | exact owner | Unique Codex/Claude installation collision and project-scope boundary. |
 | `test-local-mpi-profile.sh` | exact owner | Unique local MPI module activation/failure behavior. |
@@ -293,9 +293,12 @@ native affinity owner remains.
 
 ## Long-owner decomposition matrix
 
-The following split axes were chosen from each suite's actual assertions and
-fixtures. Each case must be independently runnable and measured below ten
-seconds; cases sharing one changed file may run concurrently at final stage.
+The following contract axes were inspected in each long suite's actual
+assertions and fixtures. An axis became a separate executable owner only when
+representative narrowing could not bring the owning suite below ten seconds;
+otherwise the retained row protects one essential representative for that
+axis without multiplying launches. Owners sharing changed bytes remain exact
+selector results, not reasons to admit their descriptive group.
 
 | Existing owner | Independently selectable contracts |
 | --- | --- |
@@ -334,29 +337,39 @@ seconds. Its three existing Python modules—producer ledger, consumer protocol,
 and consumer validation—are already natural independent suites; the wrapper's
 static skill/scaffold checks form a fourth sub-ten-second contract.
 
-## Owner-gap closure plan
+## Reduction checkpoint
 
-The 85 source-like gaps are bounded rather than arbitrary: 53 are smoke sources
-or scheduler wrappers, sixteen are generic core `libexec` commands, eight are
-tool/source manifests, five are presentation scripts, and the remaining three
-are Dependabot, `install.sh`, and the canonical Bash profile.
+After exact ownership, historical retirement, representative-contract
+narrowing, and lifecycle splitting, the manifest has 107 independently
+selectable entries: seven redundant owners left, while five long Mac
+transactions and the onboarding monolith became eight narrow owners and two
+previously untested source families gained owners. Source volume fell from
+25,714 to 17,996 lines and declared serial cost from 1,529 to 519 seconds. No entry is estimated above ten seconds,
+no suite is reachable only through a group/full expansion, and no source-like
+path is ownerless. Static timing review now finds zero elapsed sleeps, polling
+loops, or test retries in retained execution. Its thirteen remaining `wait`
+tokens are deterministic child reaps after an exact signal, FIFO, process exit,
+or concurrent result—not elapsed readiness checks. These are provisional until
+the fourth-slice matched individual measurements refresh every changed owner.
 
-- Map each smoke source/wrapper to its existing CPU, affinity, MPI,
+## Owner-gap closure evidence
+
+The 85 source-like baseline gaps were bounded rather than arbitrary: 53 were smoke sources
+or scheduler wrappers, sixteen were generic core `libexec` commands, eight were
+tool/source manifests, five were presentation scripts, and the remaining three
+were Dependabot, `install.sh`, and the canonical Bash profile.
+
+- Each smoke source/wrapper now maps to its existing CPU, affinity, MPI,
   checkpoint, PyTorch, debugger, venv, scientific-library, or source-contract
-  owner. This also makes the currently broad-only HPC suites directly reachable.
-- Replace the broad phase-one replay with small generic-core owners for
-  inventory/plan/doctor, apply/rollback, shell/cache/remediation, artifact/tool,
-  runtime/Python, and agent lifecycle. Representative archive formats are
-  retained; repeated format permutations are not default validation.
-- Map tool/source manifests to `test-source-contract.sh`, PyTorch wheelhouse
-  construction to the PyTorch owners, and local skill discovery to the skill
-  catalog owner.
-- Give the presentation builders/verifiers one syntax-and-artifact contract.
-  The old full suite did not exercise them, so leaving them behind an R3 label
-  would be false assurance.
-- Map Dependabot to Actions sustainability, `install.sh` to scoped client
+  owner. The formerly broad-only HPC suites are directly reachable.
+- The broad phase-one replay is gone. Generic core paths map to narrow existing
+  owners; repeated archive and transaction permutations are not default validation.
+- Tool/source manifests have a one-second schema owner, while presentation
+  builders/verifiers have one syntax-and-entry-point owner. The old full suite
+  exercised neither family.
+- Dependabot maps to Actions sustainability, `install.sh` to scoped client
   installation/replacement contracts, and the canonical Bash profile to Bash
   startup unification.
 
-Until each row has that owner, the selector reports the exact path as a gap and
-does not let an unrelated selected suite hide it.
+The generated owner-gap table is now empty. The selector still reports any
+future unknown path exactly and cannot let unrelated green suites hide it.

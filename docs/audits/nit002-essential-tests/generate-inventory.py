@@ -100,7 +100,8 @@ def owner_gaps(root: Path) -> list[dict[str, str]]:
     ).stdout.splitlines()
     relevant = re.compile(
         r"^(?:\.github/|bin/|config/|install\.sh$|libexec/|presentation/scripts/|"
-        r"profiles/|shell/|tests/(?:fixtures|smoke)/|tools/)"
+        r"profiles/|shell/|tests/(?:fixtures|smoke)/|tests/test[^/]*\.(?:py|sh)$|"
+        r"tools/)"
     )
     gaps = []
     for path in tracked:

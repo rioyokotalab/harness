@@ -11,6 +11,10 @@
 ^tests/test-harness-ledgers\.sh$|R3|-|ordinary and nightly ledger focused validator
 ^tests/test_harness_ledgers\.py$|R3|tests/test-harness-ledgers.sh|ordinary and nightly synthetic tests
 ^tests/test-(client-comparison|development-evaluation|llm-hpc-next-actions|t343-fable-retest|task-ledger-routing)\.sh$|R0|-|retired historical replay
+^tests/test-(phase1-integration|projects-pane-layout)\.sh$|R1|-|retired redundant integration or layout passenger
+^tools/local_skill_discovery\.py$|R1|-|retired duplicate of repository-scaffold discovery
+^tests/test-housekeeping-interrupt\.sh$|R3|tests/test-housekeeping.sh|housekeeping interruption fixture
+^tests/test-native-mpi\.sh$|R3|-|explicit native MPI environment gate
 ^docs/github-rulesets/|R1|tests/test-github-rulesets.sh|ruleset fixture
 ^tests/test-github-rulesets\.sh$|R3|-|ruleset fixture validator
 ^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|abciq|riken|alps|rccs|tsubame|planning|execute-monitor|validation)\.md)$|R1|tests/test-skill-context-budgets.sh|HPC routed context budget
@@ -37,7 +41,11 @@
 ^shared/skills/onboard-external-user/(SKILL\.md|references/(boundary|preflight|installation|acceptance)\.md)$|R1|tests/test-onboard-external-user.sh|external-user routed contract
 ^shared/skills/onboard-external-user/(scripts|agents)/|R3|tests/test-onboard-external-user.sh|external-user executable or client configuration
 ^shared/skills/onboard-project-repository/(SKILL\.md|references/.*\.md)$|R1|tests/test-onboard-project-repository.sh|project repository onboarding skill
-^shared/skills/onboard-project-repository/(assets|agents)/|R3|tests/test-onboard-project-repository.sh|project repository scaffold or client configuration
+^shared/skills/onboard-project-repository/agents/|R3|tests/test-onboard-project-repository.sh|project repository client configuration
+^shared/skills/onboard-project-repository/assets/scaffold/(AGENTS(\.fragment)?\.md|PRODUCER\.md\.tmpl|TODO\.md\.tmpl|docs/)|R1|tests/test-onboard-project-repository.sh|project repository scaffold declarations
+^shared/skills/onboard-project-repository/assets/scaffold/(tools/producer-ledger\.py|tests/test_producer_ledger\.py)$|R3|tests/test-onboard-project-producer-ledger.sh|producer-ledger implementation
+^shared/skills/onboard-project-repository/assets/scaffold/(tools/consumer_protocol\.py|tests/test_consumer_protocol\.py)$|R3|tests/test-onboard-project-consumer-protocol.sh|consumer-protocol implementation
+^shared/skills/onboard-project-repository/assets/scaffold/(tools/(consumer_validation|local_skill_discovery)\.py|tests/test_consumer_validation\.py)$|R3|tests/test-onboard-project-consumer-validation.sh|consumer-validation implementation
 ^docs/agent-policy/portfolio-coordination\.md$|R3|-|sibling producer and consumer coordination policy
 ^shared/skills/reboot-recovery/(SKILL\.md|references/(status-discovery|recovery-start|validation-closeout)\.md)$|R1|tests/test-reboot-recovery-skill.sh|reboot recovery routed safety gates
 ^shared/skills/reboot-recovery/(scripts|agents)/|R3|tests/test-reboot-recovery-skill.sh|reboot recovery executable or client configuration

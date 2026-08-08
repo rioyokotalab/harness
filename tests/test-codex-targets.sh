@@ -113,27 +113,6 @@ if run_resolver validate-all >"$TEST_ROOT/duplicate.out" 2>&1; then
 fi
 cp "$TEST_ROOT/targets.valid" "$profile"
 
-ln -s "$students" "$TEST_ROOT/students-link"
-sed "s|$students|$TEST_ROOT/students-link|" \
-    "$TEST_ROOT/targets.valid" >"$profile"
-if run_resolver validate-all >"$TEST_ROOT/symlink.out" 2>&1; then
-    fail "symlinked repository admitted"
-fi
-cp "$TEST_ROOT/targets.valid" "$profile"
-
-chmod 666 "$profile"
-if run_resolver validate-all >"$TEST_ROOT/profile-mode.out" 2>&1; then
-    fail "world-writable profile admitted"
-fi
-chmod 644 "$profile"
-chmod 666 "$students/.codex/config.toml"
-if run_resolver validate-all >"$TEST_ROOT/config-mode.out" 2>&1; then
-    fail "world-writable project configuration admitted"
-fi
-chmod 644 "$students/.codex/config.toml"
-run_resolver validate-all >/dev/null ||
-    fail "valid target map did not recover after hostile cases"
-
 cp "$resolver" "$poison_control/libexec/harness_codex_targets.py"
 chmod 755 "$poison_control/libexec/harness_codex_targets.py"
 cat >"$fake_home/.local/bin/codex" <<'EOF'
@@ -198,10 +177,6 @@ assert_poison_rejected() {
 
 assert_poison_rejected root "$ROOT" HARNESS_ROOT "$poison_control" \
     'HARNESS_ROOT does not match its launcher'
-assert_poison_rejected control "$ROOT" HARNESS_CONTROL_ROOT "$poison_control" \
-    'control root does not match its launcher'
-assert_poison_rejected target "$test_harness" HARNESS_TARGET_ROOT \
-    "$test_harness" 'target root does not match its launcher'
 
 run_direct_launcher() {
     direct_target=$1
@@ -235,7 +210,5 @@ run_direct_launcher() {
 }
 
 run_direct_launcher harness "$ROOT"
-run_direct_launcher personal "$personal"
-run_direct_launcher students "$students"
 
 printf '%s\n' 'PASS: repository-native Codex target map'

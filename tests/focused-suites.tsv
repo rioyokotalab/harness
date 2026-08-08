@@ -75,6 +75,9 @@ tests/test-restic-schedule.sh|Restic schedule contract|10
 tests/test-onboard-mirrored-node.sh|onboarding focused suite|5
 tests/test-onboard-external-user.sh|external user onboarding focused suite|4
 tests/test-onboard-project-repository.sh|project repository onboarding focused suite|4
+tests/test-onboard-project-producer-ledger.sh|project producer-ledger contract|10
+tests/test-onboard-project-consumer-protocol.sh|project consumer-protocol contract|10
+tests/test-onboard-project-consumer-validation.sh|project consumer-validation contract|10
 tests/test-onboard-personal-mac-skill.sh|personal Mac onboarding skill|1
 tests/test-macos-codex-bootstrap.sh|personal Mac Codex bootstrap|5
 tests/test-evaluation.sh|evaluation focused suite|6|heavy
