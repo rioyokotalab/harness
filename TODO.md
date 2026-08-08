@@ -17,9 +17,8 @@ mutable-state query is unknown, never absence.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 
-**Phase:** Office's clean local candidate passes corrective discovery and the
-final gate; acquire its two commits for protected integration while Home
-continues independently.
+**Phase:** Office and Home gates pass; Office's two reviewed fixes are on the
+integration branch pending owning suites, one final gate, and protected PR.
 **Record:** `docs/tasks/Har-428.md`.
 
 ## Deferred gates
