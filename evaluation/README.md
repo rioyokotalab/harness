@@ -108,7 +108,7 @@ python3 evaluation/development_v2.py validate
 python3 evaluation/development_v2.py selftest
 python3 evaluation/development-v2/mutation_audit.py
 python3 evaluation/development_v2.py plan --stage pilot
-tests/test-development-evaluation.sh
+tests/test-evaluation.sh
 ```
 
 After a clean implementation commit, run the 32-run pilot and then the 64-run

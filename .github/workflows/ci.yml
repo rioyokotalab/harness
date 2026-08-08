@@ -3,8 +3,6 @@ name: Harness CI
 on:
   pull_request:
     branches: [main]
-  schedule:
-    - cron: "11 19 * * 6"
   workflow_dispatch:
 
 permissions:
@@ -37,9 +35,9 @@ jobs:
           cc --version | sed -n '1p'
           c++ --version | sed -n '1p'
           shellcheck --version | sed -n '2p'
-      - name: Discover all affected-group failures for pull requests
+      - name: Run exact changed-context gate for pull requests
         if: github.event_name == 'pull_request'
-        run: bin/harness validate --stage discovery --base "${{ github.event.pull_request.base.sha }}"
-      - name: Run credential-free portable full backstop
-        if: github.event_name != 'pull_request'
-        run: tests/test-phase1.sh
+        run: bin/harness validate --stage final --base "${{ github.event.pull_request.base.sha }}"
+      - name: Run explicitly requested portable full suite
+        if: github.event_name == 'workflow_dispatch'
+        run: bin/harness validate --stage final --full --base HEAD^

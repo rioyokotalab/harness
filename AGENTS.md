@@ -22,10 +22,11 @@ completely before its first matching action.
 - After a transient Codex provider or service failure, resume the saved thread
   and reconcile durable state; never blindly replay the prior prompt because a
   side effect may already have succeeded.
-- Validate in order: one affected-group discovery, one owning suite per repair,
-  then one complete final suite before publication. High-risk and unknown
-  changes remain final-required. Independently verify generated or delegated
-  results.
+- Validate in order: exact-owner discovery, one owner per repair, then
+  exact-owner final. Run the complete suite only when the owner explicitly
+  requests `--full`; unknown owners stop validation. Keep validation/testing
+  below 10% of task runtime by narrowing or splitting slow owners. Tests use
+  deterministic handshakes, never elapsed-time sleeps, polling, or reruns.
 - Reuse validation when bytes, environment contract, and acceptance scope are
   unchanged. Rerun only changed owning checks, mutable inputs, or required final
   integration—not merely because a session resumed.
@@ -77,8 +78,8 @@ refinements remain mandatory.
 - Resume the first unverified recorded action. Revalidate only mutable inputs
   used by that action; a failed query is unknown, not evidence of absence.
 - Keep Harness independent of the sibling `website` repository.
-- Add focused behavior tests and use `harness validate`; follow the
-  discovery/repair/final order above before protected publication.
+- Add only nonredundant focused behavior tests and use `harness validate`;
+  follow the discovery/repair/final order above before protected publication.
 - Handoffs record verified results/IDs, retry safety, files, validation, next
   action, and required authority.
 - Before yielding unfinished work, update the selected task record. Change

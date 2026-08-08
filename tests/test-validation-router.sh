@@ -37,25 +37,25 @@ cases = [
     (
         ["TODO.md", "docs/tasks/index.tsv"],
         "R0",
-        ["tests/test-harness-ledgers.sh", "tests/test-task-ledger-routing.sh"],
+        ["tests/test-harness-ledgers.sh"],
         True,
     ),
     (
         ["docs/tasks/Har-196.md"],
         "R0",
-        ["tests/test-task-ledger-routing.sh"],
+        ["tests/test-harness-ledgers.sh"],
         True,
     ),
     (
         ["docs/tasks/Har-999.md"],
         "R0",
-        ["tests/test-task-ledger-routing.sh"],
+        ["tests/test-harness-ledgers.sh"],
         True,
     ),
     (
         ["docs/history/TODO-full-archive-2099-12-31.md"],
         "R0",
-        ["tests/test-task-ledger-routing.sh"],
+        ["tests/test-harness-ledgers.sh"],
         True,
     ),
     (
@@ -224,7 +224,18 @@ cases = [
 for paths, tier, suites, cacheable in cases:
     result = classify(root, paths, rules, focused, group_rules)
     assert result["tier"] == tier, (paths, result)
-    assert result["suites"] == suites, (paths, result)
+    shell_selected = any(
+        rule.suite == "tests/test-shellcheck.sh"
+        and any(rule.regex.search(path) for path in paths)
+        for rule in rules
+    )
+    assert (
+        "tests/test-shellcheck.sh" in result["suites"]
+    ) is shell_selected, (paths, result)
+    assert [
+        suite for suite in result["suites"]
+        if suite != "tests/test-shellcheck.sh"
+    ] == suites, (paths, result)
     assert result["cacheable"] is cacheable, (paths, result)
 
 canonical = module["canonical_json"]({"b": 2, "a": 1})
@@ -380,8 +391,6 @@ drifted = {
 }
 decision = {
     "cacheable": True,
-    "discovery_estimated_seconds": 0,
-    "discovery_suites": [],
     "estimated_seconds": 0,
     "final_required": False,
     "groups": [],
@@ -513,14 +522,17 @@ protected_r3 = {
         "tests/test-onboard-personal-mac-skill.sh"
     ),
     "tests/test-reboot-recovery-skill.sh": "tests/test-reboot-recovery-skill.sh",
-    "tests/test-task-ledger-routing.sh": "tests/test-task-ledger-routing.sh",
     "tests/test-github-rulesets.sh": "tests/test-github-rulesets.sh",
     "tests/test-terminfo.sh": "tests/test-terminfo.sh",
 }
 for path, owner in protected_r3.items():
     result = classify(root, [path], rules, focused, group_rules)
     assert result["tier"] == "R3", (path, result)
-    assert result["suites"] == [owner], (path, result)
+    assert owner in result["suites"], (path, result)
+    assert set(result["suites"]) <= {
+        owner,
+        "tests/test-shellcheck.sh",
+    }, (path, result)
     assert result["cacheable"] is False, (path, result)
 
 multi = classify(
@@ -697,7 +709,6 @@ docs, skill, ordinary, unknown, discovery, final, full = (
 assert docs["tier"] == "R0"
 assert docs["owner_suites"] == [
     "tests/test-harness-ledgers.sh",
-    "tests/test-task-ledger-routing.sh",
 ]
 assert skill["tier"] == "R1"
 assert skill["owner_suites"] == [

@@ -2,11 +2,11 @@
 
 ## Implemented harness gate
 
-`.github/workflows/ci.yml` runs for pull requests to `main`, one weekly
-independent full check, and manual full checks, with only `contents: read`.
-Every pull request, including an owner-authored one, runs affected-group
-discovery in keep-going mode so all failures are visible before repair.
-Weekly/manual events still run the complete portable suite. The merge does not
+`.github/workflows/ci.yml` runs for pull requests to `main` and explicitly
+requested manual full checks, with only `contents: read`. Every pull request,
+including an owner-authored one, runs only the exact owners selected from its
+changed paths. Manual dispatch is the sole complete portable-suite trigger.
+The merge does not
 allocate a duplicate `main` push runner. The hosted job uses the official
 checkout action pinned to the immutable v7.0.1 commit and
 disables persisted Git credentials. It has no
@@ -20,12 +20,10 @@ maintenance does not alter the frozen baseline, corpus, or recorded reports.
 The unique required-check candidate is `portable-phase1`. When it runs on a
 pull request, it uses the deterministic impact selector against the event's
 exact base SHA:
-documentation and routed skills select their affected groups, while workflow,
-policy, validator, manifest, safety, lifecycle, cleanup, credential, and
-unknown changes retain high-risk classification without repeatedly invoking
-the complete suite. Discovery records every affected-group result rather than
-failing at the first issue. Weekly and manual events run the complete portable
-suite unconditionally. Native MPI
+documentation-only changes need only structural checks, while every executable
+or policy path maps to exact owners. An unknown path is an owner-map defect and
+fails closed instead of expanding into unrelated groups. Only manual dispatch
+passes the explicit `--full` flag. Native MPI
 compile/run is a separate explicit
 `HARNESS_NATIVE_MPI=1 tests/test-native-mpi.sh` gate for a declared MPI
 environment and is not part of the portable default.
@@ -39,8 +37,8 @@ agent policy while preserving all credential-free portable filesystem and
 integration regressions.
 
 Harness no longer has an owner-only pull-request skip. The required context now
-represents an actual affected-group discovery run for every pull request. The
-weekly backstop detects merged-tree drift independently of owner task cadence.
+represents an actual changed-context final run for every pull request. There is
+no scheduled ceremonial rerun of unchanged tests.
 
 The security choices follow GitHub's official guidance to grant read-only
 default token access and pin actions to a full commit SHA:

@@ -262,9 +262,7 @@ def classify(
             "paths": [],
             "suites": [],
             "groups": [],
-            "discovery_suites": [],
             "estimated_seconds": 0,
-            "discovery_estimated_seconds": 0,
             "matches": [{"path": "-", "pattern": "-", "reason": "no changed paths"}],
             "owner_gaps": [],
             "final_required": False,
@@ -321,7 +319,6 @@ def classify(
         selected_groups = ["validation-core"]
     labels = {rule.name: rule.label for rule in group_rules}
     groups = []
-    discovery_suites = list(selected)
     for name in selected_groups:
         members = [
             suite.path for suite in focused.values() if suite.group == name
@@ -343,11 +340,7 @@ def classify(
         "paths": paths,
         "suites": selected,
         "groups": groups,
-        "discovery_suites": discovery_suites,
         "estimated_seconds": sum(focused[suite].estimate for suite in selected),
-        "discovery_estimated_seconds": sum(
-            focused[suite].estimate for suite in discovery_suites
-        ),
         "matches": matches,
         "owner_gaps": owner_gaps,
         "final_required": bool(paths),
@@ -684,6 +677,11 @@ def run_validation(root: Path, base: str, decision: dict, jobs: str) -> list[dic
     env = os.environ.copy()
     env.pop("HARNESS_ROOT", None)
     env["HARNESS_TEST_JOBS"] = jobs
+    env["HARNESS_CHANGED_PATHS"] = "\n".join(decision["paths"])
+    env["HARNESS_VALIDATION_BASE"] = base
+    env["HARNESS_VALIDATION_FULL"] = (
+        "1" if decision.get("full_requested", False) else "0"
+    )
     for suite in decision["suites"]:
         suite_started = time.monotonic()
         result = subprocess.run(
@@ -770,6 +768,9 @@ def run_discovery(
         command.extend(("--suite", suite))
     env = os.environ.copy()
     env.pop("HARNESS_ROOT", None)
+    env["HARNESS_CHANGED_PATHS"] = "\n".join(decision["paths"])
+    env["HARNESS_VALIDATION_BASE"] = base
+    env["HARNESS_VALIDATION_FULL"] = "0"
     result = subprocess.run(
         command,
         cwd=root,
@@ -870,7 +871,6 @@ def main() -> int:
     plan = {
         "base": args.base,
         "cacheable": decision["cacheable"] and args.stage == "repair",
-        "discovery_estimated_seconds": decision["discovery_estimated_seconds"],
         "estimated_seconds": decision["estimated_seconds"],
         "execution_estimated_seconds": (
             sum(suite.estimate for suite in focused.values())
@@ -897,6 +897,7 @@ def main() -> int:
     execution = {
         **decision,
         "cacheable": decision["cacheable"] and args.stage == "repair",
+        "full_requested": args.full,
         "stage": args.stage,
         "suites": execution_suites,
     }

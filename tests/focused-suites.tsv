@@ -5,7 +5,6 @@ tests/test-focused-runner.sh|parallel focused-suite runner|7
 tests/test-validation-router.sh|risk-tier validation selector|2
 tests/test-shellcheck.sh|repository ShellCheck gate|40|heavy
 tests/test-phase1-integration.sh|phase-one integration transactions|150|heavy
-tests/test-task-ledger-routing.sh|compact active-task ledger routing|1
 tests/test-harness-ledgers.sh|independent ordinary and nightly ledger contract|2
 tests/test-agent-policy-routing.sh|conditional agent-policy routing|1
 tests/test-context-routing-benchmark.sh|mandatory context benchmark|2
@@ -73,9 +72,6 @@ tests/test-restic-schedule.sh|Restic schedule focused suite|31|heavy
 tests/test-onboard-mirrored-node.sh|onboarding focused suite|5
 tests/test-onboard-external-user.sh|external user onboarding focused suite|4
 tests/test-onboard-project-repository.sh|project repository onboarding focused suite|4
-tests/test-client-comparison.sh|matched Codex and Claude comparison declaration|2
-tests/test-development-evaluation.sh|current Harness development benchmark focused suite|19|heavy
-tests/test-t343-fable-retest.sh|frozen T-336 Claude Fable failure retest|2
 tests/test-onboard-personal-mac-skill.sh|personal Mac onboarding skill|1
 tests/test-macos-codex-bootstrap.sh|personal Mac Codex bootstrap|5
 tests/test-evaluation.sh|evaluation focused suite|6|heavy
@@ -91,7 +87,6 @@ tests/test-hpc-job-preflight.sh|HPC job preflight focused suite|5
 tests/test-hpc-topology-surface.sh|HPC topology surface focused suite|3
 tests/test-hpc-project-intake.sh|HPC project intake focused suite|1
 tests/test-hpc-project-intake-validator.sh|HPC project intake validator focused suite|3
-tests/test-llm-hpc-next-actions.sh|LLM/HPC next-action queue focused suite|1
 tests/test-pytorch-lock.sh|PyTorch dual-architecture lock focused suite|1
 tests/test-pytorch-readiness.sh|PyTorch single-device readiness focused suite|2
 tests/test-storage-readiness.sh|storage readiness focused suite|8
