@@ -13,10 +13,15 @@ TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 focused_pid=
 shellcheck_pid=
+focused_timings=${HARNESS_TEST_TIMINGS_FILE:-$TEMP_DIR/focused-timings.json}
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
+    if [ "$status" -ne 0 ]; then
+        [ -z "$shellcheck_pid" ] || kill -TERM "$shellcheck_pid" 2>/dev/null || true
+        [ -z "$focused_pid" ] || kill -TERM "$focused_pid" 2>/dev/null || true
+    fi
     if [ -n "$shellcheck_pid" ]; then
         if ! wait "$shellcheck_pid"; then
             echo "FAIL: ShellCheck warning/error gate" >&2
@@ -129,6 +134,7 @@ for script in \
     "$ROOT/tests/test-claude-takeover.sh" \
     "$ROOT/tests/test-bash-startup-unify.sh" \
     "$ROOT/tests/test-focused-runner.sh" \
+    "$ROOT/tests/darwin-preflight.sh" \
     "$ROOT/tests/test-codex-runtime-isolation.sh" \
     "$ROOT/tests/test-personal-agent.sh" \
     "$ROOT/tests/test-local-mpi-profile.sh" \
@@ -217,6 +223,7 @@ run_focused_suites() {
         --root "$ROOT" \
         --manifest "$ROOT/tests/focused-suites.tsv" \
         --log-dir "$TEMP_DIR/focused-logs" \
+        --timings-file "$focused_timings" \
         --reserve-cpus "$focused_reserve" \
         --jobs "$focused_jobs"
 }

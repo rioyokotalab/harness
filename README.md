@@ -670,6 +670,20 @@ integrated tree:
 tests/test-phase1.sh
 ```
 
+On a Mac, use the bounded development preflight for earlier portability and
+interrupt-lifecycle feedback:
+
+```bash
+tests/darwin-preflight.sh
+```
+
+The preflight does not replace the final complete suite. Both commands accept
+an explicit, new timing-receipt path through `HARNESS_TEST_TIMINGS_FILE`; the
+machine-readable receipt records the platform, resource class, status, and
+duration of every admitted suite. Focused execution fails fast by default and
+`tools/run-focused-tests.py --keep-going` retains the diagnostic all-results
+mode.
+
 Documentation-only changes must at least pass `git diff --check` and the
 relevant focused tests. Protected CI remains authoritative.
 
