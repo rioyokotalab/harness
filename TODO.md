@@ -5,7 +5,7 @@ matching record, and only routed policy. Idle means idle.
 Completed chronology is indexed by `docs/tasks/index.tsv`; do not preload history.
 
 New tasks use `Har-NNN`; historical `T-NNN` IDs remain unchanged.
-Next free ID: Har-425.
+Next free ID: Har-426.
 
 ## Resume contract
 
@@ -14,12 +14,6 @@ the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
 ## Active
-
-### Har-424 — Establish the Local-outage failover environment
-
-**Phase:** validating the existing passwordless t4-to-Home login2 route after
-the material-setup cutoff; no new forwards may be added. **Record:**
-`docs/tasks/Har-424.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
 
