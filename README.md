@@ -681,8 +681,8 @@ The retired fixed Darwin preflight is no longer part of the workflow: affected
 selection is smaller and cannot drift from the complete manifest. Validation
 plans report owning suites, groups, and estimated serial cost. Timing receipts
 record the platform, resource class, status, and duration of every admitted
-suite. The focused runner fails fast for final validation and uses keep-going
-only for discovery. On Darwin, automatic admission retains a light-work lane
+suite. Discovery and final use keep-going inventories; repair runs only one
+owner. On Darwin, automatic admission retains a light-work lane
 on smaller machines and caps process-heavy concurrency.
 
 Documentation-only changes must at least pass `git diff --check` and the
@@ -694,7 +694,8 @@ dispatch is the only hosted full portable-suite trigger.
 
 For private Students and Swallow work, repository-local policy controls any
 owner-authored pull-request shortcut. Harness runs exact-owner final validation
-for every pull request and avoids redundant scheduled and post-merge runs. The earlier
+for every pull request and avoids redundant scheduled and post-merge runs. The
+earlier
 measured cost model, trust boundary, and alternatives are recorded in
 [`docs/audits/t351-autonomy-efficiency/actions-transition.md`](docs/audits/t351-autonomy-efficiency/actions-transition.md).
 
