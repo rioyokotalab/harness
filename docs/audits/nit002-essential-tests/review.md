@@ -19,6 +19,8 @@ python3 docs/audits/nit002-essential-tests/generate-inventory.py \
 records each elapsed sleep, poll loop, and deterministic child join with its
 line and disposition. This keeps the wait-removal pass reviewable without
 mistaking policy prose containing “wait” for an executed command.
+`matched-darwin-timings.tsv` records the serial, one-job final pass for every
+supplied Home over-ten candidate and each owner introduced by decomposition.
 
 The review treats a test as essential when it is the narrow owner of an
 observable contract that can fail because of the changed bytes. A passing
@@ -121,6 +123,16 @@ The median Home/manifest ratio was 1.94 and the mean 3.26; onboarding was
 prove the ten-percent task budget. Final estimates are refreshed from matched
 standalone measurements after broad contention and elapsed waits are removed;
 receipts report actual validation wall time for the final percentage.
+
+The one-job Darwin corrective inventory launched all 32 unresolved candidates
+once in 174.280 seconds and ran every candidate. It froze three assertion
+defects: a stale exact-owner expectation, an invalid SCP-like query assumption,
+and a Homebrew status token that the implementation never emitted. Three green
+owners still exceeded ten seconds: guarded deletion at 15.993, Python at
+12.389, and config migration apply/rollback at 17.465. Repairs were made as one
+batch before any rerun. Guarded deletion became 8.394- and 9.379-second owners;
+Python became 3.857- and 5.278-second owners; migration retained its 6.968-second
+behavioral plan and a 0.061-second apply/rollback source contract.
 
 The literal `wait` audit separately classifies child-process joins. Checkpoint
 race workers and simultaneous message receivers, for
@@ -340,17 +352,18 @@ static skill/scaffold checks form a fourth sub-ten-second contract.
 ## Reduction checkpoint
 
 After exact ownership, historical retirement, representative-contract
-narrowing, and lifecycle splitting, the manifest has 107 independently
-selectable entries: seven redundant owners left, while five long Mac
-transactions and the onboarding monolith became eight narrow owners and two
+narrowing, and lifecycle splitting, the manifest has 109 independently
+selectable entries: seven redundant owners left, ten narrow owner entries were
+split out of long Mac, onboarding, Python, and guarded-delete contracts, and two
 previously untested source families gained owners. Source volume fell from
-25,714 to 17,996 lines and declared serial cost from 1,529 to 519 seconds. No entry is estimated above ten seconds,
+25,714 to 18,016 lines and declared serial cost from 1,529 to 496 seconds. No entry is estimated above ten seconds,
 no suite is reachable only through a group/full expansion, and no source-like
 path is ownerless. Static timing review now finds zero elapsed sleeps, polling
 loops, or test retries in retained execution. Its thirteen remaining `wait`
 tokens are deterministic child reaps after an exact signal, FIFO, process exit,
-or concurrent result—not elapsed readiness checks. These are provisional until
-the fourth-slice matched individual measurements refresh every changed owner.
+or concurrent result—not elapsed readiness checks. The serial Darwin inventory
+in `matched-darwin-timings.tsv` measured every supplied Mac-slow candidate and
+new split independently; all final rows pass between 0.061 and 9.949 seconds.
 
 ## Owner-gap closure evidence
 

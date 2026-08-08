@@ -9,6 +9,27 @@ import re
 import sys
 
 root = Path(sys.argv[1])
+core_commands = (
+    "harness-apply",
+    "harness-build-tool",
+    "harness-cache-bootstrap",
+    "harness-common",
+    "harness-doctor",
+    "harness-dotfiles",
+    "harness-plan",
+    "harness-python",
+    "harness-remediate",
+    "harness-repository-fingerprint",
+    "harness-rollback",
+    "harness-runtime",
+    "harness-shell",
+)
+for name in core_commands:
+    source = (root / "libexec" / name).read_text(encoding="utf-8")
+    assert source.startswith("#!/bin/sh\n"), name
+    if name != "harness-common":
+        assert source.startswith("#!/bin/sh\nset -eu\n"), name
+
 names = ("agents", "python", "runtimes", "source-dependencies", "sources")
 tables = {}
 for name in names:
@@ -35,5 +56,8 @@ source_names = {row[0] for row in tables["sources"][1]}
 for row in tables["source-dependencies"][1]:
     assert row[0] in source_names, row[0]
 
-print(f"TOOL_MANIFESTS status=pass tables={len(tables)}")
+print(
+    f"TOOL_MANIFESTS status=pass tables={len(tables)} "
+    f"core_commands={len(core_commands)}"
+)
 PY

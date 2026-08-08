@@ -15,18 +15,19 @@ tests/test-remote-session.sh|remote-session focused suite|2|heavy
 tests/test-remote-agent-communication.sh|remote agent communication focused suite|8
 tests/test-reboot-recovery-skill.sh|managed Mac reboot recovery skill|3
 tests/test-fleet-health.sh|canonical fleet health focused suite|6
-tests/test-t4-hub.sh|bounded on-demand t4 bastion focused suite|9
+tests/test-t4-hub.sh|bounded on-demand t4 bastion focused suite|5
 tests/test-connection-monitor.sh|managed Mac connection monitor focused suite|4
 tests/test-tmux-codex-monitor.sh|Local tmux Codex monitor focused suite|5
 tests/test-tmux-claude-monitor.sh|Local tmux Claude monitor focused suite|6
 tests/test-macos-agent-session.sh|unified managed-Mac agent session suite|6
 tests/test-housekeeping.sh|routine repository housekeeping suite|6
 tests/test-housekeeping-owner-alias.sh|archive owner alias identity contracts|1
-tests/test-guarded-delete.sh|guarded deletion safety suite|5|heavy
+tests/test-guarded-delete.sh|guarded deletion core contract|9|heavy
+tests/test-guarded-delete-boundaries.sh|guarded deletion identity boundaries|10|heavy
 tests/test-codex-recovery-helper.sh|dedicated Local Codex recovery helper|4
 tests/test-al-session.sh|personal AL session contract|1|light|Linux
 tests/test-fleet-inventory.sh|cold-start fleet inventory focused suite|2
-tests/test-safety-guards.sh|interactive safety-guard focused suite|10
+tests/test-safety-guards.sh|interactive safety-guard focused suite|6
 tests/test-github-rulesets.sh|GitHub ruleset payload focused suite|1
 tests/test-actions-sustainability.sh|GitHub Actions sustainability focused suite|2
 tests/test-repository-independence.sh|repository independence focused suite|2
@@ -39,7 +40,7 @@ tests/test-codex-login.sh|Codex login-node launcher focused suite|6
 tests/test-codex-targets.sh|repository-native Codex target map focused suite|6
 tests/test-codex-resilient.sh|Codex transient-service supervisor|6
 tests/test-codex-runtime-isolation.sh|Codex target-scoped immutable runtime|9
-tests/test-codex-thread-recovery.sh|Codex thread systemError recovery|5|heavy
+tests/test-codex-thread-recovery.sh|Codex thread systemError recovery|6|heavy
 tests/test-recover-codex-unsafe-tail-skill.sh|Codex unsafe-tail recovery skill|2
 tests/test-fleet-repository-hardening-skill.sh|fleet and repository hardening skill|1
 tests/test-hardening-audit.sh|value-free repository hardening preflight|4
@@ -47,7 +48,7 @@ tests/test-local-mpi-profile.sh|local MPI profile focused suite|2
 tests/test-personal-macos-profile.sh|personal macOS private-profile contract|4
 tests/test-personal-macos-inventory.sh|personal macOS inventory contract|9
 tests/test-personal-macos-plan-doctor.sh|personal macOS plan contract|9
-tests/test-personal-macos-doctor.sh|personal macOS doctor contract|9
+tests/test-personal-macos-doctor.sh|personal macOS doctor contract|10
 tests/test-personal-macos-control.sh|personal macOS control-plane contract|10
 tests/test-personal-macos-homebrew.sh|personal macOS Homebrew plan contract|6
 tests/test-personal-macos-homebrew-apply.sh|personal macOS Homebrew apply contract|1
@@ -61,26 +62,27 @@ tests/test-agent-upgrade.sh|agent replacement and recovery|4|light|Linux
 tests/test-agent-config-fleet.sh|agent configuration fleet focused suite|5
 tests/test-personal-macos-update.sh|personal macOS long-gap update contract|10
 tests/test-personal-macos-ssh-supervisor.sh|personal macOS SSH supervisor contract|10
-tests/test-personal-macos-python.sh|personal macOS Python contract|10
-tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync plan contract|7
+tests/test-personal-macos-python.sh|personal macOS Python plan contract|4
+tests/test-personal-macos-python-apply.sh|personal macOS Python apply contract|6
+tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync plan contract|8
 tests/test-personal-macos-ssh-sync-apply.sh|personal macOS SSH-sync apply contract|9
-tests/test-personal-macos-config-sync.sh|personal macOS config-sync plan contract|7
-tests/test-personal-macos-config-sync-apply.sh|personal macOS config-sync apply contract|9
+tests/test-personal-macos-config-sync.sh|personal macOS config-sync plan contract|8
+tests/test-personal-macos-config-sync-apply.sh|personal macOS config-sync apply contract|10
 tests/test-personal-macos-config-migrate.sh|personal macOS config-migration plan contract|7
-tests/test-personal-macos-config-migrate-apply.sh|personal macOS config-migration apply/rollback contract|10
+tests/test-personal-macos-config-migrate-apply.sh|personal macOS config-migration apply/rollback contract|1
 tests/test-ssh-config-mirror.sh|fixed SSH-config mirror contract|9
 tests/test-terminfo.sh|AL user-local terminfo focused suite|1|light|Linux
 tests/test-ssh-config-layout.sh|transactional shared SSH layout migration|4
 tests/test-restic-schedule.sh|Restic schedule contract|10
 tests/test-onboard-mirrored-node.sh|onboarding focused suite|5
 tests/test-onboard-external-user.sh|external user onboarding focused suite|4
-tests/test-onboard-project-repository.sh|project repository onboarding focused suite|4
-tests/test-onboard-project-producer-ledger.sh|project producer-ledger contract|10
-tests/test-onboard-project-consumer-protocol.sh|project consumer-protocol contract|10
-tests/test-onboard-project-consumer-validation.sh|project consumer-validation contract|10
+tests/test-onboard-project-repository.sh|project repository onboarding focused suite|1
+tests/test-onboard-project-producer-ledger.sh|project producer-ledger contract|4
+tests/test-onboard-project-consumer-protocol.sh|project consumer-protocol contract|1
+tests/test-onboard-project-consumer-validation.sh|project consumer-validation contract|1
 tests/test-onboard-personal-mac-skill.sh|personal Mac onboarding skill|1
 tests/test-macos-codex-bootstrap.sh|personal Mac Codex bootstrap|5
-tests/test-evaluation.sh|evaluation focused suite|6|heavy
+tests/test-evaluation.sh|evaluation focused suite|8|heavy
 tests/test-public-repo-audit.sh|public repository audit focused suite|3
 tests/test-fleet-readiness-audit.sh|fleet readiness audit focused suite|3
 tests/test-hpc-readiness.sh|HPC readiness job focused suite|2
@@ -105,4 +107,4 @@ tests/test-checkpoint-restart.sh|checkpoint restart focused suite|2|heavy
 tests/test-hpc-cpu-routes.sh|bounded CPU route focused suite|2
 tests/test-source-contract.sh|source contract focused suite|5
 tests/test-presentation-tools.sh|presentation tool syntax and entry points|1
-tests/test-tool-manifests.sh|tool and runtime manifest schemas|1
+tests/test-tool-manifests.sh|core command and tool manifest schemas|1

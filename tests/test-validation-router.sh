@@ -156,7 +156,10 @@ cases = [
     (
         ["libexec/harness_housekeeping.py"],
         "R3",
-        ["tests/test-housekeeping.sh"],
+        [
+            "tests/test-housekeeping-owner-alias.sh",
+            "tests/test-housekeeping.sh",
+        ],
         False,
     ),
     (
@@ -542,14 +545,32 @@ for path, owner in protected_r3.items():
 
 multi = classify(
     root,
-    ["config/terminfo/tmux-256color.src", "tests/smoke/debugger.c"],
+    [
+        "tests/smoke/debugger.c",
+        "tests/fixtures/scientific-library-bin/h5cc",
+    ],
     rules,
     focused,
     group_rules,
 )
 assert module["suites_for_stage"](
-    multi, "repair", "tests/test-terminfo.sh", execute=True
-) == ["tests/test-terminfo.sh"]
+    multi, "repair", "tests/test-debugger-readiness.sh", execute=True
+) == ["tests/test-debugger-readiness.sh"]
+wrong_platform = classify(
+    root,
+    ["config/terminfo/tmux-256color.src"],
+    rules,
+    focused,
+    group_rules,
+)
+try:
+    module["suites_for_stage"](
+        wrong_platform, "repair", "tests/test-terminfo.sh", execute=True
+    )
+except ValueError:
+    pass
+else:
+    raise AssertionError("wrong-platform repair owner was executable")
 try:
     module["suites_for_stage"](multi, "repair", None, execute=True)
 except ValueError:
@@ -558,12 +579,14 @@ else:
     raise AssertionError("multi-owner repair was accepted without --suite")
 assert module["suites_for_stage"](
     multi, "discovery", None, execute=True
-) == (["tests/test-debugger-readiness.sh", "tests/test-terminfo.sh"]
-      if platform.system() == "Linux"
-      else ["tests/test-debugger-readiness.sh"])
+) == [
+    "tests/test-debugger-readiness.sh",
+    "tests/test-scientific-library-readiness.sh",
+]
 assert module["suites_for_stage"](multi, "final", None, execute=True) == [
     "tests/test-debugger-readiness.sh",
-] + (["tests/test-terminfo.sh"] if platform.system() == "Linux" else [])
+    "tests/test-scientific-library-readiness.sh",
+]
 assert module["suites_for_stage"](
     multi, "final", None, execute=True, full=True
 ) == [
@@ -701,6 +724,7 @@ python3 - \
     "$docs_plan" "$skill_plan" "$ordinary_plan" "$unknown_plan" \
     "$discovery_plan" "$final_plan" "$full_plan" <<'PY'
 import json
+import platform
 import sys
 
 if not __debug__:
@@ -715,6 +739,7 @@ assert docs["owner_suites"] == [
 ]
 assert skill["tier"] == "R1"
 assert skill["owner_suites"] == [
+    "tests/test-skill-catalog-budget.sh",
     "tests/test-skill-context-budgets.sh",
     "tests/test-skill-context-gates.sh",
 ]

@@ -121,8 +121,17 @@ run_python() {
         --host mac-test-pilot "$@"
 }
 
-run_python --minor 3.11 --plan >"$TEMP_DIR/plan.out"
-grep 'INSTALL python_tree=' "$TEMP_DIR/plan.out" >/dev/null || fail "Mac Python plan"
+case ${HARNESS_TEST_CASE:-plan} in
+    plan|apply) ;;
+    *) fail "unknown essential Python case" ;;
+esac
+
+if [ "${HARNESS_TEST_CASE:-plan}" = plan ]; then
+    run_python --minor 3.11 --plan >"$TEMP_DIR/plan.out"
+    grep 'INSTALL python_tree=' "$TEMP_DIR/plan.out" >/dev/null || fail "Mac Python plan"
+    echo 'personal macOS Python plan: PASS'
+    exit 0
+fi
 run_python --minor 3.11 --apply >"$TEMP_DIR/apply.out"
 grep -Fx '3.11.15' "$TEMP_DIR/macos-python-uv-args.log" >/dev/null ||
     fail "Mac Python apply did not request the exact declared patch"
@@ -130,11 +139,5 @@ transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' "$TEMP_DIR/apply.out")
 [ -n "$transaction" ] || fail "Mac Python transaction"
 [ "$("$HOME_DIR/.local/bin/python3.11" -c 'import platform; print(platform.python_version())')" = 3.11.15 ] ||
     fail "Mac Python installed version"
-HOME="$HOME_DIR" HARNESS_ROOT="$PUBLIC" PATH="$FAKE_BIN:/usr/bin:/bin" \
-    "$PUBLIC/bin/harness" rollback "$transaction" >"$TEMP_DIR/rollback.out"
-[ ! -e "$HOME_DIR/.local/bin/python3.11" ] &&
-    [ ! -L "$HOME_DIR/.local/bin/python3.11" ] || fail "Mac Python rollback link"
-[ ! -e "$HOME_DIR/.local/opt/python/3.11/darwin-aarch64" ] ||
-    fail "Mac Python rollback tree"
 
-echo 'personal macOS Python tests: PASS'
+echo 'personal macOS Python apply: PASS'

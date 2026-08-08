@@ -1,0 +1,37 @@
+suite	seconds	platform	jobs	evidence
+tests/test-focused-runner.sh	6.760	Darwin	1	direct repaired-owner pass
+tests/test-startup-normalize.sh	5.065	Darwin	1	frozen candidate inventory pass
+tests/test-validation-router.sh	1.640	Darwin	1	repaired-owner pass
+tests/test-harness-ledgers.sh	0.622	Darwin	1	frozen candidate inventory pass
+tests/test-t4-hub.sh	4.410	Darwin	1	frozen candidate inventory pass
+tests/test-tmux-codex-monitor.sh	1.939	Darwin	1	frozen candidate inventory pass
+tests/test-tmux-claude-monitor.sh	5.002	Darwin	1	frozen candidate inventory pass
+tests/test-housekeeping-owner-alias.sh	0.096	Darwin	1	repaired-owner pass
+tests/test-guarded-delete.sh	8.394	Darwin	1	repaired split-owner pass
+tests/test-guarded-delete-boundaries.sh	9.379	Darwin	1	repaired split-owner pass
+tests/test-codex-recovery-helper.sh	1.878	Darwin	1	frozen candidate inventory pass
+tests/test-safety-guards.sh	5.861	Darwin	1	frozen candidate inventory pass
+tests/test-claude-handoff.sh	3.220	Darwin	1	frozen candidate inventory pass
+tests/test-codex-arg0-wrapper.sh	7.299	Darwin	1	frozen candidate inventory pass
+tests/test-codex-targets.sh	3.235	Darwin	1	frozen candidate inventory pass
+tests/test-codex-thread-recovery.sh	5.464	Darwin	1	frozen candidate inventory pass
+tests/test-onboard-project-repository.sh	0.548	Darwin	1	frozen candidate inventory pass
+tests/test-onboard-project-producer-ledger.sh	3.244	Darwin	1	frozen candidate inventory pass
+tests/test-onboard-project-consumer-protocol.sh	0.534	Darwin	1	frozen candidate inventory pass
+tests/test-onboard-project-consumer-validation.sh	0.670	Darwin	1	frozen candidate inventory pass
+tests/test-evaluation.sh	7.641	Darwin	1	frozen candidate inventory pass
+tests/test-fleet-sync.sh	6.192	Darwin	1	frozen candidate inventory pass
+tests/test-source-contract.sh	2.992	Darwin	1	frozen candidate inventory pass
+tests/test-personal-macos-plan-doctor.sh	8.850	Darwin	1	frozen candidate inventory pass
+tests/test-personal-macos-doctor.sh	9.423	Darwin	1	frozen candidate inventory pass
+tests/test-personal-macos-homebrew.sh	5.204	Darwin	1	frozen candidate inventory pass
+tests/test-personal-macos-homebrew-apply.sh	0.063	Darwin	1	repaired-owner pass
+tests/test-personal-macos-python.sh	3.857	Darwin	1	repaired split-owner pass
+tests/test-personal-macos-python-apply.sh	5.278	Darwin	1	repaired split-owner pass
+tests/test-personal-macos-ssh-sync.sh	7.254	Darwin	1	frozen candidate inventory pass
+tests/test-personal-macos-ssh-sync-apply.sh	6.884	Darwin	1	frozen candidate inventory pass
+tests/test-personal-macos-config-sync.sh	7.980	Darwin	1	frozen candidate inventory pass
+tests/test-personal-macos-config-sync-apply.sh	9.949	Darwin	1	frozen candidate inventory pass
+tests/test-personal-macos-config-migrate.sh	6.968	Darwin	1	repaired-owner pass
+tests/test-personal-macos-config-migrate-apply.sh	0.061	Darwin	1	repaired-owner pass
+tests/test-tool-manifests.sh	0.074	Darwin	1	repaired-owner pass

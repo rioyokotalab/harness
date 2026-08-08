@@ -5,13 +5,13 @@ presentation|presentation build and verification tools|^tests/test-presentation-
 tool-manifests|tool, runtime, Python, and agent declarations|^tests/test-tool-manifests\.sh$
 fleet-control|fleet routing and node control|^tests/test-(ssh-agent-profile|remote-session|remote-agent-communication|reboot-recovery-skill|fleet-health|t4-hub|connection-monitor|fleet-inventory|agent-config-fleet|fleet-sync|fleet-readiness-audit|onboard-mirrored-node|onboard-external-user|onboard-project-(repository|producer-ledger|consumer-protocol|consumer-validation))\.sh$
 agent-sessions|agent, tmux, and recovery lifecycle|^tests/test-(tmux-codex-monitor|tmux-claude-monitor|macos-agent-session|codex-recovery-helper|al-session|claude-takeover|claude-handoff|personal-agent|codex-arg0-wrapper|codex-login|codex-targets|codex-resilient|codex-runtime-isolation|codex-thread-recovery|recover-codex-unsafe-tail-skill|fleet-repository-hardening-skill|hardening-audit|onboard-personal-mac-skill|macos-codex-bootstrap)\.sh$
-housekeeping-safety|housekeeping and local safety transactions|^tests/test-(housekeeping|housekeeping-owner-alias|guarded-delete|safety-guards)\.sh$
+housekeeping-safety|housekeeping and local safety transactions|^tests/test-(housekeeping|housekeeping-owner-alias|guarded-delete(-boundaries)?|safety-guards)\.sh$
 slack|Slack broker and transport policy|^tests/test-slack-broker\.sh$
 macos-profile|macOS desired-state declarations|^tests/test-personal-macos-profile\.sh$
 macos-inventory|macOS value-minimized inventory|^tests/test-personal-macos-inventory\.sh$
 macos-planning|macOS plan, doctor, and control transactions|^tests/test-personal-macos-(plan-doctor|doctor|control)\.sh$
 macos-homebrew|macOS Homebrew lifecycle|^tests/test-personal-macos-homebrew(?:-apply)?\.sh$
-macos-python|macOS Python lifecycle|^tests/test-personal-macos-python\.sh$
+macos-python|macOS Python lifecycle|^tests/test-personal-macos-python(-apply)?\.sh$
 macos-update|macOS long-gap update lifecycle|^tests/test-personal-macos-update\.sh$
 macos-shell|macOS Bash and login-shell integration|^tests/test-personal-macos-(bash|bash-hooks|shell|login-shell)\.sh$
 macos-terminal|macOS tmux and terminal integration|^tests/test-(tmux-config|terminfo)\.sh$

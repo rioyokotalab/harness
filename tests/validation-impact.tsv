@@ -1,5 +1,5 @@
 # regex|tier|suite-or--|reason
-^(bin/|libexec/|shell/|tools/.*\.sh$|shared/skills/.*/scripts/|tests/smoke/jobs/)|R2|tests/test-shellcheck.sh|incremental shell syntax and deletion policy
+^(shell/.*\.(sh|bash)$|tools/.*\.sh$|tests/smoke/jobs/.*\.(sh|slurm|pbs)$)|R2|tests/test-shellcheck.sh|incremental shell syntax and deletion policy
 ^TODO\.md$|R0|tests/test-harness-ledgers.sh|direct ordinary ledger contract
 ^NIGHTLY\.md$|R1|tests/test-harness-ledgers.sh|nightly active ledger contract
 ^docs/tasks/config\.json$|R1|tests/test-harness-ledgers.sh|ordinary task namespace config
@@ -15,6 +15,8 @@
 ^tools/local_skill_discovery\.py$|R1|-|retired duplicate of repository-scaffold discovery
 ^tests/test-housekeeping-interrupt\.sh$|R3|tests/test-housekeeping.sh|housekeeping interruption fixture
 ^tests/test-native-mpi\.sh$|R3|-|explicit native MPI environment gate
+^libexec/harness-(apply|build-tool|cache-bootstrap|common|doctor|dotfiles|plan|python|remediate|repository-fingerprint|rollback|runtime|shell)$|R2|tests/test-tool-manifests.sh|core command source contract
+^shell/bash_profile\.canonical$|R2|tests/test-bash-startup-unify.sh|canonical Bash profile
 ^docs/github-rulesets/|R1|tests/test-github-rulesets.sh|ruleset fixture
 ^tests/test-github-rulesets\.sh$|R3|-|ruleset fixture validator
 ^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|abciq|riken|alps|rccs|tsubame|planning|execute-monitor|validation)\.md)$|R1|tests/test-skill-context-budgets.sh|HPC routed context budget
@@ -60,6 +62,8 @@
 ^profiles/agent-session-targets\.tsv$|R3|tests/test-codex-targets.sh|cross-client Local target map
 ^tests/test-remote-agent-communication\.sh$|R3|-|message transport validator
 ^shared/skills/guarded-bulk-delete/|R3|tests/test-guarded-delete.sh|recursive deletion safety
+^shared/skills/guarded-bulk-delete/|R3|tests/test-guarded-delete-boundaries.sh|recursive deletion identity boundaries
+^\.codex/rules/default\.rules$|R3|tests/test-guarded-delete.sh|recursive deletion exec policy
 ^AGENTS\.md$|R3|tests/test-agent-policy-routing.sh|root authorization and validation policy
 ^CLAUDE\.md$|R3|tests/test-agent-policy-routing.sh|root client policy import
 ^docs/agent-policy/|R3|tests/test-agent-policy-routing.sh|conditional authorization and safety policy
@@ -152,7 +156,8 @@
 ^libexec/harness-macos-inventory$|R3|tests/test-personal-macos-inventory.sh|macOS inventory
 ^libexec/harness-macos-login-shell$|R3|tests/test-personal-macos-login-shell.sh|macOS login shell
 ^libexec/harness-macos-profile$|R3|tests/test-personal-macos-profile.sh|macOS profile
-^libexec/harness-macos-python$|R3|tests/test-personal-macos-python.sh|macOS Python lifecycle
+^libexec/harness-macos-python$|R3|tests/test-personal-macos-python.sh|macOS Python plan
+^libexec/harness-macos-python$|R3|tests/test-personal-macos-python-apply.sh|macOS Python apply
 ^libexec/harness-macos-ssh-supervisor$|R3|tests/test-personal-macos-ssh-supervisor.sh|macOS SSH supervisor
 ^libexec/harness-macos-ssh-sync$|R3|tests/test-personal-macos-ssh-sync.sh|macOS SSH sync
 ^libexec/harness-macos-ssh-sync$|R3|tests/test-personal-macos-ssh-sync-apply.sh|macOS SSH sync apply

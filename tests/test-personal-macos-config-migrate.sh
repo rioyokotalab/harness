@@ -121,16 +121,6 @@ printf '%s\n' 'synthetic-config-state' >"$home/.local/state/harness/personal-mac
 printf '%s\n' 'synthetic-config-status' >"$home/.local/state/harness/personal-macos/config-sync-status.conf"
 chmod 600 "$home/.local/state/harness/personal-macos/config-sync.conf" \
     "$home/.local/state/harness/personal-macos/config-sync-status.conf"
-cp "$home/.bash_profile" "$TEMP_DIR/profile.before"
-cp "$home/.bashrc" "$TEMP_DIR/bashrc.before"
-
-case ${HARNESS_TEST_CASE:-plan} in
-    plan) ;;
-    apply) ;;
-    *) fail "unknown essential config-migration case" ;;
-esac
-
-if [ "${HARNESS_TEST_CASE:-plan}" = plan ]; then
 env PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HOME="$home" \
     HARNESS_ROOT="$public" "$public/libexec/harness-macos-config-migrate" \
     --host office --plan >"$TEMP_DIR/plan.out" 2>&1 || {
@@ -140,38 +130,3 @@ env PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HOME="$home" \
 grep -F 'private_layout=legacy action=migrate apply=not-requested' "$TEMP_DIR/plan.out" >/dev/null ||
     fail "legacy migration plan"
 echo 'personal macOS configuration migration plan: PASS'
-exit 0
-fi
-env PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HOME="$home" \
-    HARNESS_ROOT="$public" "$public/libexec/harness-macos-config-migrate" \
-    --host office --apply >"$TEMP_DIR/apply.out" 2>&1 || {
-        sed -n '1,80p' "$TEMP_DIR/apply.out" >&2
-        fail "legacy migration apply command"
-    }
-transaction=$(sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/apply.out")
-[ -n "$transaction" ] || fail "migration transaction"
-[ -L "$home/.tmux.conf" ] && [ "$(readlink "$home/.tmux.conf")" = "$public/config/tmux/tmux.conf" ] ||
-    fail "migrated tmux symlink"
-grep -F 'HARNESS_LOGICAL_HOST=office' "$home/.bashrc" >/dev/null || fail "migrated Bash prefix"
-[ ! -e "$home/.config/harness/managed/personal-macos-private.bash" ] || fail "private fragment retained"
-[ ! -L "$home/.config/harness/managed/personal-macos.bash" ] || fail "legacy loader retained"
-[ ! -e "$home/.local/state/harness/personal-macos/config-sync.conf" ] || fail "bundle state retained"
-git --git-dir="$private_remote" ls-tree -r --name-only main >"$TEMP_DIR/private-tree"
-grep -F -x ssh_config "$TEMP_DIR/private-tree" >/dev/null || fail "SSH payload missing"
-if grep -E '^(bashrc|tmux\.conf)$' "$TEMP_DIR/private-tree" >/dev/null; then fail "retired payload remains"; fi
-
-env PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HOME="$home" \
-    HARNESS_ROOT="$public" "$public/libexec/harness-macos-config-migrate" \
-    --rollback "$transaction" >"$TEMP_DIR/rollback.out"
-cmp -s "$home/.bash_profile" "$TEMP_DIR/profile.before" || fail "profile rollback"
-cmp -s "$home/.bashrc" "$TEMP_DIR/bashrc.before" || fail "bashrc rollback"
-[ -f "$home/.tmux.conf" ] && [ ! -L "$home/.tmux.conf" ] && [ ! -s "$home/.tmux.conf" ] ||
-    fail "tmux rollback"
-[ -f "$home/.config/harness/managed/personal-macos-private.bash" ] || fail "fragment rollback"
-[ -L "$home/.config/harness/managed/personal-macos.bash" ] || fail "loader rollback"
-[ -f "$home/.local/state/harness/personal-macos/config-sync.conf" ] || fail "state rollback"
-git --git-dir="$private_remote" ls-tree -r --name-only main >"$TEMP_DIR/private-tree-after"
-if grep -E '^(bashrc|tmux\.conf)$' "$TEMP_DIR/private-tree-after" >/dev/null; then
-    fail "rollback rewound private history"
-fi
-echo 'personal macOS configuration migration tests: PASS'

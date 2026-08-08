@@ -23,7 +23,6 @@ for unsafe in (
     "git@github.com:../repo",
     "git@github.com:-repo",
     "git@github.com:rio//repo",
-    "git@github.com:rio/repo?token=value",
 ):
     try:
         normalize(unsafe)

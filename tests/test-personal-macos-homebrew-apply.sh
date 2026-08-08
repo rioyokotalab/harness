@@ -2,25 +2,23 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-SOURCE=$ROOT/libexec/harness-macos-homebrew
 
-fail() { echo "FAIL: $*" >&2; exit 1; }
+python3 - "$ROOT/libexec/harness-macos-homebrew" <<'PY'
+from pathlib import Path
+import sys
 
-for contract in \
-    'private profile changed before managed Homebrew apply' \
-    'managed Homebrew plan changed before apply' \
-    'status=running' \
-    'status=failed' \
-    'status=complete' \
-    'automatic rollback is unavailable' \
-    'managed Homebrew post-state did not converge'
-do
-    grep -F "$contract" "$SOURCE" >/dev/null ||
-        fail "missing irreversible-apply contract: $contract"
-done
-grep -F 'chmod 600 "$manifest" "$status_file"' "$SOURCE" >/dev/null ||
-    fail "private transaction evidence mode"
-grep -F "echo 'END macos_homebrew applied=yes rollback=manual-review-only metadata_refresh=separate'" \
-    "$SOURCE" >/dev/null || fail "bounded apply completion contract"
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+for contract in (
+    "private profile changed before managed Homebrew apply",
+    "managed Homebrew plan changed before apply",
+    "automatic rollback is unavailable",
+    "managed Homebrew post-state did not converge",
+    "END macos_homebrew applied=yes rollback=manual-review-only",
+):
+    assert contract in source, contract
+for state in ("prepared", "failed", "complete"):
+    assert f"printf '%s\\n' {state} >\"$status_file\"" in source, state
+assert source.count('chmod 600 "$status_file"') >= 1
+PY
 
 echo 'personal macOS Homebrew apply contract: PASS'
