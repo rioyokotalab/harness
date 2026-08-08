@@ -1183,9 +1183,11 @@ git -C "$test_repo" commit -qm baseline
 # different but equivalent checkout and falsely block every managed link.
 alias_repo=$TEMP_DIR/repo-alias
 alias_home=$TEMP_DIR/alias-home
+control_facts=$ROOT/tests/fixtures/local.facts
 mkdir -p "$alias_home"
 ln -s "$test_repo" "$alias_repo"
-HOME="$alias_home" "$alias_repo/bin/harness" apply --host local --apply \
+HOME="$alias_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$alias_repo/bin/harness" apply --host local --apply \
     >"$TEMP_DIR/alias-apply.out"
 alias_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/alias-apply.out")
@@ -1204,7 +1206,8 @@ HOME="$test_home" "$test_repo/bin/harness" apply --host local --plan \
     >"$TEMP_DIR/control-plan.out"
 grep 'changes=not-applied' "$TEMP_DIR/control-plan.out" >/dev/null ||
     fail "control-plane dry run"
-HOME="$test_home" "$test_repo/bin/harness" apply --host local --apply \
+HOME="$test_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" apply --host local --apply \
     >"$TEMP_DIR/control-apply.out"
 transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/control-apply.out")

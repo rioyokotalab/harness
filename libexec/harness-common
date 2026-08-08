@@ -213,7 +213,20 @@ make_fact_file() {
     logical_host=$1
     temp_file=$(mktemp "${TMPDIR:-/tmp}/harness-facts.XXXXXX") ||
         die "cannot create temporary fact file"
-    "$HARNESS_ROOT/libexec/harness-inventory" --host "$logical_host" >"$temp_file"
+    if [ -n "${HARNESS_TEST_FACTS_FILE:-}" ]; then
+        [ "${HARNESS_TESTING:-0}" = 1 ] ||
+            die "test fact-file override is unsafe"
+        case $HARNESS_TEST_FACTS_FILE in
+            /*) ;;
+            *) die "test fact-file override is unsafe" ;;
+        esac
+        [ -f "$HARNESS_TEST_FACTS_FILE" ] &&
+            [ ! -L "$HARNESS_TEST_FACTS_FILE" ] ||
+            die "test fact-file override is unsafe"
+        cp "$HARNESS_TEST_FACTS_FILE" "$temp_file"
+    else
+        "$HARNESS_ROOT/libexec/harness-inventory" --host "$logical_host" >"$temp_file"
+    fi
     printf '%s\n' "$temp_file"
 }
 
