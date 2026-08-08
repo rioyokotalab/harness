@@ -1836,7 +1836,11 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$shellcheck_transaction" \
 source_bin=$TEMP_DIR/source-bin
 mkdir -p "$source_bin"
 ln -s "$fake_bin/curl" "$source_bin/curl"
-for command_name in as awk bash cc chmod cmp cp date dirname find getent git grep gzip id ld ln \
+case $(uname -s) in
+    Darwin) account_lookup_command=dscacheutil ;;
+    *) account_lookup_command=getent ;;
+esac
+for command_name in as awk bash cc chmod cmp cp date dirname find "$account_lookup_command" git grep gzip id ld ln \
     mkdir mktemp mv readlink realpath rm rmdir sed sh sha256sum stat tail tar tr \
     uname unlink unzip wc; do
     ln -s "$(command -v "$command_name")" "$source_bin/$command_name"
@@ -1911,7 +1915,7 @@ runtime_home=$TEMP_DIR/runtime-home-link
 ln -s "$test_home" "$runtime_home"
 mkdir -p "$runtime_bin"
 ln -s "$fake_bin/curl" "$runtime_bin/curl"
-for command_name in awk bash chmod cmp cp date dd dirname find getent git gzip id ln mkdir \
+for command_name in awk bash chmod cmp cp date dd dirname find "$account_lookup_command" git gzip id ln mkdir \
     mktemp mv readlink realpath rm rmdir sed sh sha256sum stat tail tar tr uname unlink wc; do
     ln -s "$(command -v "$command_name")" "$runtime_bin/$command_name"
 done
@@ -1951,7 +1955,7 @@ agent_bin=$TEMP_DIR/agent-bin
 agent_home=$TEMP_DIR/agent-home-link
 ln -s "$test_home" "$agent_home"
 mkdir -p "$agent_bin"
-for command_name in awk bash chmod cmp cp date dirname find getent git gzip id ln mkdir \
+for command_name in awk bash chmod cmp cp date dirname find "$account_lookup_command" git gzip id ln mkdir \
     mktemp mv readlink realpath rm rmdir sed sh sha256sum stat tar tr uname unlink wc; do
     ln -s "$(command -v "$command_name")" "$agent_bin/$command_name"
 done
@@ -2011,7 +2015,7 @@ python_bin=$TEMP_DIR/python-bin
 python_home=$TEMP_DIR/python-home-link
 ln -s "$test_home" "$python_home"
 mkdir -p "$python_bin"
-for command_name in awk bash chmod cmp cp date dd dirname find getent git id ln mkdir mktemp \
+for command_name in awk bash chmod cmp cp date dd dirname find "$account_lookup_command" git id ln mkdir mktemp \
     mv readlink realpath rm rmdir sed sh sha256sum stat tail tar tr uname unlink wc; do
     ln -s "$(command -v "$command_name")" "$python_bin/$command_name"
 done
