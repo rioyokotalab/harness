@@ -15,11 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Active
 
-### Har-427 — Make the complete Harness suite portable on macOS
-
-**Phase:** classify the Riken phase-one failures, fix host-assumption groups,
-and rerun the complete suite. **Record:** `docs/tasks/Har-427.md`.
-
 ### Har-423 — Reconcile five repositories across the fleet
 
 **Phase:** inventory and guarded housekeeping; then synchronize clean managed
