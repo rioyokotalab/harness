@@ -15,12 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Active
 
-### Har-432 — Make validation incremental and failure-complete
-
-**Phase:** all isolated owners and the corrective 53-suite discovery pass;
-checkpoint the Mac portability fix, then run the final gate.
-**Record:** `docs/tasks/Har-432.md`.
-
 ### Har-428 — Roll out Har-427 to Office and Home
 
 **Phase:** Office and Home independently fast-forward their clean managed
