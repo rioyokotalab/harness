@@ -15,12 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Active
 
-### Har-425 — Align the Riken phone Codex with the owner session
-
-**Phase:** exact-thread bridge preflight passed, but the provisional TUI exited
-transiently five times and was rolled back without promotion; awaiting an
-owner-visible client handoff choice. **Record:** `docs/tasks/Har-425.md`.
-
 ### Har-424 — Establish the Local-outage failover environment
 
 **Phase:** validating the existing passwordless t4-to-Home login2 route after
