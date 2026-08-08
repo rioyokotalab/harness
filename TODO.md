@@ -17,8 +17,8 @@ mutable-state query is unknown, never absence.
 
 ### Har-424 — Establish the Local-outage failover environment
 
-**Phase:** interviewing the Home Keychain interaction gate after D-008 stopped
-before changing the login2 master. **Record:**
+**Phase:** validating the existing passwordless t4-to-Home login2 route after
+the material-setup cutoff; no new forwards may be added. **Record:**
 `docs/tasks/Har-424.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
