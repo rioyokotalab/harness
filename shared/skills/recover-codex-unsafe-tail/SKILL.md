@@ -5,21 +5,18 @@ description: Diagnose or recover a managed phone/tmux Codex thread with Request 
 
 # Recover or replace Codex unsafe tails
 
-Restore from repository truth; preserve poisoned root
-and unrelated sessions.
+Preserve repository truth, poisoned root, unrelated sessions.
 
 ## Reconstruct and diagnose without content
 
-- Read instructions and ledger completely; never use chat
-  as recovery source. Inspect branch, worktree, commits, and mutable
-  runtime metadata.
+- Read instructions/ledger, never chat, as recovery truth. Inspect branch,
+  worktree, commits, mutable runtime metadata.
 - Resolve `TARGET` from closed canonical map; stored thread CWD must
   equal its exact repository. Every direct `codex-thread-recovery` `--plan`,
   `--recover`, or `--watch` requires `--target TARGET`;
   identify target on status where applicable. Unknown target/CWD mismatch stops.
-- Owner request grants narrow authority for that session, never
-  unrelated sessions/services; checkpoint before any app-server, root-name,
-  tmux, or process write.
+- Owner request grants narrow authority for that session only;
+  checkpoint before any app-server, root-name, tmux, or process write.
 - Use `harness codex-resilient --status --name NAME --target TARGET`
   and `harness codex-thread-recovery` surfaces. Validate exact root ID, tmux
   window/pane owner, supervisor/watcher/launcher/TUI identities and start
@@ -38,6 +35,7 @@ Classify read-only; read the selected row before action.
 | Current action | Read completely |
 | --- | --- |
 | diagnose or classify without mutation | no transaction reference |
+| classify matching-ID dual ownership | [split-brain.md](references/split-brain.md) |
 | perform the helper-proven one-shot rollback | [safe-rollback.md](references/safe-rollback.md) and [acceptance.md](references/acceptance.md) |
 | replace a root/TUI through a fresh bridge | [bridge-first.md](references/bridge-first.md) and [acceptance.md](references/acceptance.md) |
 

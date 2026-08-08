@@ -184,6 +184,13 @@ direct launcher. A fresh first launch recovers with repository-scoped
 remote selector always retains `resume --remote unix:// ID`. No recovery
 command contains a prompt.
 
+One saved ID may still diverge when a standalone TUI and the app server load it
+into independent in-memory contexts. Matching IDs therefore do not prove
+synchronization. Managed cross-surface use requires the TUI to be an exact
+remote peer of the app server. If that bridge cannot be proven, the selected
+standalone client remains the sole writer and every other surface uses a
+distinct thread with Git and the durable ledger as the handoff.
+
 An exact remote selector starts one target-bound
 `harness codex-thread-recovery --watch` child. A one-shot readiness transaction
 must succeed before the TUI launches, and the supervisor stops and reaps the

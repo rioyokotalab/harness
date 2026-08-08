@@ -17,9 +17,9 @@ mutable-state query is unknown, never absence.
 
 ### Har-429 — Enforce one Codex owner per saved thread
 
-**Phase:** canonical phone state is active; an unaffected Claude controller
-must perform the idle-only remote-backed bridge before split-brain detection is
-implemented. **Record:** `docs/tasks/Har-429.md`.
+**Phase:** controller routing failed before insertion, so strict thread
+separation is active; the durable split-brain guard is under complete
+validation. **Record:** `docs/tasks/Har-429.md`.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 

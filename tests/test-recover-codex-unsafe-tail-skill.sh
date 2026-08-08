@@ -9,6 +9,7 @@ PROTOCOL=$ROOT/shared/skills/recover-codex-unsafe-tail/references/protocol.md
 SAFE=$ROOT/shared/skills/recover-codex-unsafe-tail/references/safe-rollback.md
 BRIDGE=$ROOT/shared/skills/recover-codex-unsafe-tail/references/bridge-first.md
 ACCEPTANCE=$ROOT/shared/skills/recover-codex-unsafe-tail/references/acceptance.md
+SPLIT_BRAIN=$ROOT/shared/skills/recover-codex-unsafe-tail/references/split-brain.md
 OPENAI=$ROOT/shared/skills/recover-codex-unsafe-tail/agents/openai.yaml
 
 fail() {
@@ -24,7 +25,7 @@ assert_contains() {
 }
 
 for path in "$AGENTS" "$RUNTIME_POLICY" "$SKILL" "$PROTOCOL" "$SAFE" \
-    "$BRIDGE" "$ACCEPTANCE" "$OPENAI"; do
+    "$BRIDGE" "$ACCEPTANCE" "$SPLIT_BRAIN" "$OPENAI"; do
     [ -f "$path" ] && [ ! -L "$path" ] ||
         fail "missing skill resource: $path"
 done
@@ -36,6 +37,8 @@ assert_contains 'Request blocked' "$SKILL" 'blocked-thread trigger'
 # no transaction and the compatibility index is never loaded.
 assert_contains '| diagnose or classify without mutation | no transaction reference |' \
     "$SKILL" 'diagnosis-only route'
+assert_contains '[split-brain.md](references/split-brain.md)' "$SKILL" \
+    'same-ID split-brain route'
 assert_contains '[safe-rollback.md](references/safe-rollback.md)' "$SKILL" \
     'safe rollback route'
 assert_contains '[bridge-first.md](references/bridge-first.md)' "$SKILL" \
@@ -80,6 +83,16 @@ assert_contains 'signal a process group' "$SKILL" \
 assert_contains 'use `SIGKILL`' "$SKILL" 'SIGKILL boundary'
 assert_contains 'bridge-first cutover' "$RUNTIME_POLICY" \
     'global bridge-first policy'
+assert_contains 'serving one root as split-brain' "$RUNTIME_POLICY" \
+    'global single-writer policy'
+assert_contains 'matching thread ID is not synchronization evidence' "$SPLIT_BRAIN" \
+    'same-ID split-brain detection'
+assert_contains 'open-rollout identity with app-server `thread/read`' "$SPLIT_BRAIN" \
+    'content-blind dual-owner evidence'
+assert_contains 'keep the selected client sole writer' "$SPLIT_BRAIN" \
+    'strict thread-separation fallback'
+assert_contains 'Same-ID readback fails acceptance' "$ACCEPTANCE" \
+    'single-writer acceptance'
 
 # The safe transaction remains exactly one-shot and independently accepted.
 assert_contains 'assistant-less, side-effect-free tail' "$SAFE" \
@@ -169,12 +182,12 @@ for client in .agents .claude; do
 done
 
 if grep -E '/home/|rioyokota|T-[0-9]+|SW-[0-9]+' \
-    "$SKILL" "$PROTOCOL" "$SAFE" "$BRIDGE" "$ACCEPTANCE" "$OPENAI" \
+    "$SKILL" "$PROTOCOL" "$SAFE" "$BRIDGE" "$ACCEPTANCE" "$SPLIT_BRAIN" "$OPENAI" \
     >/dev/null; then
     fail "owner- or incident-specific content"
 fi
 if grep -E 'rm[[:space:]]+-r|rm[[:space:]]+-rf|find .* -delete' \
-    "$SKILL" "$PROTOCOL" "$SAFE" "$BRIDGE" "$ACCEPTANCE" >/dev/null; then
+    "$SKILL" "$PROTOCOL" "$SAFE" "$BRIDGE" "$ACCEPTANCE" "$SPLIT_BRAIN" >/dev/null; then
     fail "raw recursive deletion guidance"
 fi
 
