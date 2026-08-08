@@ -22,7 +22,7 @@ This keeps the wait-removal pass reviewable without
 mistaking policy prose containing “wait” for an executed command.
 `matched-darwin-timings.tsv` records the serial, one-job final pass for every
 supplied Home over-ten candidate and each owner introduced by decomposition.
-The 116 manifest entry scripts currently contain 17,692 lines. The audit also
+The 116 manifest entry scripts currently contain 17,700 lines. The audit also
 descends into thirteen directly discovered Python test modules (3,373 lines)
 and the four intentional non-manifest shell scripts; wrapper brevity is never
 treated as evidence that the underlying test is small or wait-free.
@@ -171,6 +171,11 @@ compressed duration sentence. The three affected skill owners passed after the
 sentence was restored without raising its word budget. The final exact-context
 inventory passed all 82 owners in 42.436 seconds. These inventories demonstrate
 the keep-going repair boundary; none requested or launched the full suite.
+The protected Linux gate then ran all 87 applicable owners in 25.120 seconds
+and exposed only a test-fixture portability defect: its synthetic
+wrong-platform case assumed that Linux-only Terminfo was always inapplicable.
+The fixture now assigns the opposite of the current platform explicitly, so it
+exercises the same rejection on Linux and Darwin; its owner passes locally.
 
 The literal `wait` audit separately classifies child-process joins. Checkpoint
 race workers and simultaneous message receivers, for
