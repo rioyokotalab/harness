@@ -8,8 +8,8 @@ tests/test-t4-hub.sh	4.410	Darwin	1	frozen candidate inventory pass
 tests/test-tmux-codex-monitor.sh	1.939	Darwin	1	frozen candidate inventory pass
 tests/test-tmux-claude-monitor.sh	5.002	Darwin	1	frozen candidate inventory pass
 tests/test-housekeeping-owner-alias.sh	0.096	Darwin	1	repaired-owner pass
-tests/test-guarded-delete.sh	8.394	Darwin	1	repaired split-owner pass
-tests/test-guarded-delete-boundaries.sh	9.379	Darwin	1	repaired split-owner pass
+tests/test-guarded-delete.sh	6.746	Darwin	1	final policy-separation pass
+tests/test-guarded-delete-boundaries.sh	8.307	Darwin	1	final policy-separation pass
 tests/test-codex-recovery-helper.sh	1.878	Darwin	1	frozen candidate inventory pass
 tests/test-safety-guards.sh	5.861	Darwin	1	frozen candidate inventory pass
 tests/test-claude-handoff.sh	3.220	Darwin	1	frozen candidate inventory pass

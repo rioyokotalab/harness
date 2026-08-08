@@ -22,7 +22,7 @@ This keeps the wait-removal pass reviewable without
 mistaking policy prose containing “wait” for an executed command.
 `matched-darwin-timings.tsv` records the serial, one-job final pass for every
 supplied Home over-ten candidate and each owner introduced by decomposition.
-The 116 manifest entry scripts currently contain 17,753 lines. The audit also
+The 116 manifest entry scripts currently contain 17,751 lines. The audit also
 descends into thirteen directly discovered Python test modules (3,373 lines)
 and the four intentional non-manifest shell scripts; wrapper brevity is never
 treated as evidence that the underlying test is small or wait-free.
@@ -358,6 +358,10 @@ native affinity owner remains.
   two-second component process. Its peer-dependency, tracked-symlink,
   `.gitmodules`, and retired-client checks now run directly beside `git diff
   --check` in milliseconds; its standalone replay left the manifest.
+- Guarded-deletion policy and word-budget assertions were repeated before both
+  split transaction cases. They now run once in the existing skill-context
+  owner; policy edits no longer launch two unrelated deletion transactions,
+  while script edits still select both behavioral boundaries.
 - A normalized four-line cross-suite scan found 364 repeated blocks. The
   dominant blocks were cleanup traps, guarded fixture teardown, fake Darwin
   adapters, and Git fixture construction rather than repeated decisions. The
@@ -461,7 +465,7 @@ selectable entries. Nine redundant owners left; separately selectable Mac,
 onboarding, guarded-delete, Python, HPC, host-declaration, and core-command
 contracts replaced their monoliths or ownership gaps. The increased row count
 is decomposition, not broader admission: a changed path selects only its exact
-owner. Source volume fell from 25,714 to 17,753 lines and declared serial cost
+owner. Source volume fell from 25,714 to 17,751 lines and declared serial cost
 from 1,529 to 498 seconds. No entry is estimated above ten seconds,
 no suite is reachable only through a group/full expansion, and no source-like
 path is ownerless. Static timing review now finds zero elapsed sleeps, polling

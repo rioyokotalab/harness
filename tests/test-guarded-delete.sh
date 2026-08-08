@@ -7,8 +7,6 @@ RULES=$ROOT/.codex/rules/default.rules
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEST_ROOT=$(mktemp -d "$TEMP_BASE/guarded-delete-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
-SKILL=$ROOT/shared/skills/guarded-bulk-delete/SKILL.md
-INSTALLER_EXCEPTION=$ROOT/shared/skills/guarded-bulk-delete/references/installer-exception.md
 
 fail() {
     echo "FAIL: $*" >&2
@@ -55,23 +53,6 @@ trap 'exit 143' TERM
 
 sh -n "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" ||
     fail "guarded-delete shell syntax"
-[ -f "$INSTALLER_EXCEPTION" ] && [ ! -L "$INSTALLER_EXCEPTION" ] ||
-    fail "guarded-delete installer route"
-grep -F '[installer-exception.md](references/installer-exception.md)' \
-    "$SKILL" >/dev/null || fail "guarded-delete installer routing gate"
-grep -F 'never pipe them directly to a shell' \
-    "$INSTALLER_EXCEPTION" >/dev/null ||
-    fail "guarded-delete installer provenance gate"
-grep -F 'Owner approval alone is insufficient.' \
-    "$INSTALLER_EXCEPTION" >/dev/null ||
-    fail "guarded-delete installer approval boundary"
-skill_words=$(wc -w <"$SKILL" | tr -d ' ')
-exception_words=$(wc -w <"$INSTALLER_EXCEPTION" | tr -d ' ')
-[ "$skill_words" -le 440 ] || fail "guarded-delete normal route budget"
-[ "$exception_words" -le 200 ] || fail "guarded-delete exception budget"
-[ "$((skill_words + exception_words))" -le 640 ] ||
-    fail "guarded-delete installer route budget"
-sh -n "$CLEANUP" || fail "guarded test cleanup shell syntax"
 
 case ${HARNESS_TEST_CASE:-core} in
     core|boundaries) ;;

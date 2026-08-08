@@ -67,8 +67,9 @@
 ^shared/skills/remote-agent-communication/references/reply\.schema\.json$|R3|tests/test-remote-agent-communication.sh|message response schema
 ^profiles/agent-session-targets\.tsv$|R3|tests/test-codex-targets.sh|cross-client Local target map
 ^tests/test-remote-agent-communication\.sh$|R3|-|message transport validator
-^shared/skills/guarded-bulk-delete/|R3|tests/test-guarded-delete.sh|recursive deletion safety
-^shared/skills/guarded-bulk-delete/|R3|tests/test-guarded-delete-boundaries.sh|recursive deletion identity boundaries
+^shared/skills/guarded-bulk-delete/(SKILL\.md|references/)|R1|tests/test-skill-context-gates.sh|guarded deletion routed policy
+^shared/skills/guarded-bulk-delete/scripts/guarded-delete$|R3|tests/test-guarded-delete.sh|recursive deletion safety
+^shared/skills/guarded-bulk-delete/scripts/guarded-delete$|R3|tests/test-guarded-delete-boundaries.sh|recursive deletion identity boundaries
 ^\.codex/rules/default\.rules$|R3|tests/test-guarded-delete.sh|recursive deletion exec policy
 ^\.(codex/(AGENTS\.md|config\.toml)|claude/settings\.json)$|R3|tests/test-agent-config.sh|project agent client configuration
 ^\.(agents|claude)/skills/|R3|tests/test-claude-takeover.sh|project skill link topology
