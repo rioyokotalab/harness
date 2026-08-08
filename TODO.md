@@ -17,9 +17,9 @@ mutable-state query is unknown, never absence.
 
 ### Har-425 — Align the Riken phone Codex with the owner session
 
-**Phase:** bridge-first replacement of only the canonical Harness Codex TUI;
-the existing phone TUI and saved root remain preserved until exact-thread
-acceptance. **Record:** `docs/tasks/Har-425.md`.
+**Phase:** exact-thread bridge preflight passed, but the provisional TUI exited
+transiently five times and was rolled back without promotion; awaiting an
+owner-visible client handoff choice. **Record:** `docs/tasks/Har-425.md`.
 
 ### Har-424 — Establish the Local-outage failover environment
 
