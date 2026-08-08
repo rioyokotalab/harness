@@ -133,6 +133,7 @@ class ProducerLedgerTests(unittest.TestCase):
             [GIT, "init", "-q"],
             [GIT, "config", "user.name", "Fixture"],
             [GIT, "config", "user.email", "fixture@example.invalid"],
+            [GIT, "config", "maintenance.auto", "false"],
             [GIT, "add", "."],
             [GIT, "commit", "-qm", "baseline"],
         ]
