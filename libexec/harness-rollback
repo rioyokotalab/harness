@@ -11,13 +11,7 @@ usage() {
 }
 
 agent_tree_hash() {
-    rollback_tree=$1
-    rollback_archive=$(mktemp "${TMPDIR:-/tmp}/harness-agent-tree.XXXXXX")
-    tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-        -cf "$rollback_archive" -C "$rollback_tree" .
-    rollback_hash=$(sha256sum "$rollback_archive" | awk '{print $1}')
-    unlink "$rollback_archive"
-    printf '%s\n' "$rollback_hash"
+    managed_tree_sha256 "$1" agent
 }
 
 valid_codex_tree_path() {
@@ -181,12 +175,7 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7 fiel
         fi
         [ -d "$destination" ] && [ ! -L "$destination" ] ||
             die "rollback blocked: Python tree changed type: $destination"
-        tree_archive=$(mktemp "${TMPDIR:-/tmp}/harness-python-tree.XXXXXX")
-        tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-            --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
-            -cf "$tree_archive" -C "$destination" .
-        observed_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
-        rm "$tree_archive"
+        observed_hash=$(managed_tree_sha256 "$destination" python)
         [ "$observed_hash" = "$expected_hash" ] ||
             die "rollback blocked: Python tree changed: $destination expected=$expected_hash observed=$observed_hash"
     elif [ "$record" = agent-replaced ]; then

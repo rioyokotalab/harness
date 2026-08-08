@@ -2059,11 +2059,9 @@ grep 'KEEP python=3.12 source=managed-python' "$TEMP_DIR/python-repeat.out" \
     >/dev/null || fail "managed Python plan"
 python_tree=$python_home/.local/opt/python/3.12/linux-x86_64
 python_executable=$(find "$python_tree" -type f -name python3.12 -print -quit)
-python_tree_archive=$TEMP_DIR/python-tree.tar
-tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-    --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
-    -cf "$python_tree_archive" -C "$python_tree" .
-python_tree_hash=$(sha256sum "$python_tree_archive" | awk '{print $1}')
+python_tree_hash=$(PATH="$python_bin" sh -c \
+    '. "$1"; managed_tree_sha256 "$2" python' sh \
+    "$test_repo/libexec/harness-common" "$python_tree")
 python_expected_hash=$(awk -F'|' '$1 == "python" { print $3 }' \
     "$python_home/.local/state/harness/transactions/$python_transaction.manifest")
 [ "$python_tree_hash" = "$python_expected_hash" ] || fail "Python tree changed during activation"
@@ -2079,10 +2077,9 @@ cp -p "$TEMP_DIR/original-python" "$python_executable"
 python_impl=$(find "$python_tree" -mindepth 1 -maxdepth 1 -type d -name 'cpython-*' -print -quit)
 mkdir -p "$python_impl/bin/__pycache__"
 printf '%s\n' generated-cache >"$python_impl/bin/__pycache__/module.pyc"
-tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-    --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
-    -cf "$python_tree_archive" -C "$python_tree" .
-python_restored_hash=$(sha256sum "$python_tree_archive" | awk '{print $1}')
+python_restored_hash=$(PATH="$python_bin" sh -c \
+    '. "$1"; managed_tree_sha256 "$2" python' sh \
+    "$test_repo/libexec/harness-common" "$python_tree")
 [ "$python_restored_hash" = "$python_expected_hash" ] || fail "Python tree restoration mismatch"
 HOME="$python_home" "$test_repo/bin/harness" rollback "$python_transaction" \
     >"$TEMP_DIR/python-rollback.out"
