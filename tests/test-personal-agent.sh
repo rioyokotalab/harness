@@ -28,6 +28,13 @@ fail() {
     exit 1
 }
 
+path_mode() {
+    case $(uname -s) in
+        Darwin) stat -f '%Lp' "$1" ;;
+        *) stat -c '%a' -- "$1" ;;
+    esac
+}
+
 personal=$TEST_ROOT/personal
 runtime=$TEST_ROOT/runtime
 capture=$TEST_ROOT/capture
@@ -162,6 +169,11 @@ run_agent() {
 run_agent --status >"$TEST_ROOT/status.out"
 grep -F 'status=ready root=ready lock=free profile=absent privacy=blocked connectors=blocked managed_target=false' \
     "$TEST_ROOT/status.out" >/dev/null || fail status
+if [ "$(uname -s)" = Darwin ] &&
+    { [ -e "$runtime/harness-personal-agent/operation.lock.d" ] ||
+      [ -L "$runtime/harness-personal-agent/operation.lock.d" ]; }; then
+    fail 'Darwin status retained its operation lock'
+fi
 
 if run_agent --authorize --domain email \
     --client-file "$TEST_ROOT/absent.json" \
@@ -174,7 +186,7 @@ grep -F 'reason=profile-not-ready' "$TEST_ROOT/preprivacy.out" >/dev/null ||
 run_agent --profile-bootstrap >"$TEST_ROOT/bootstrap.out"
 [ -d "$profile" ] && [ ! -L "$profile" ] ||
     fail 'profile bootstrap type'
-[ "$(stat -c %a "$profile")" = 700 ] ||
+[ "$(path_mode "$profile")" = 700 ] ||
     fail 'profile bootstrap permissions'
 run_agent --privacy-attest --provider openai --value off \
     >"$TEST_ROOT/openai.out"
@@ -183,7 +195,7 @@ grep -F 'profile=ready privacy=blocked' "$TEST_ROOT/partial-status.out" \
     >/dev/null || fail 'partial privacy status'
 run_agent --privacy-attest --provider anthropic --value off \
     >"$TEST_ROOT/anthropic.out"
-[ "$(stat -c %a "$profile/privacy.tsv")" = 600 ] ||
+[ "$(path_mode "$profile/privacy.tsv")" = 600 ] ||
     fail 'privacy marker permissions'
 run_agent --status >"$TEST_ROOT/ready-status.out"
 grep -F 'profile=ready privacy=ready connectors=blocked' \
@@ -288,6 +300,11 @@ run_agent --authorize --domain email \
     >"$TEST_ROOT/auth.out"
 grep -Fx synthetic-auth "$TEST_ROOT/auth.out" >/dev/null ||
     fail 'synthetic authorization helper'
+if [ "$(uname -s)" = Darwin ] &&
+    { [ -e "$runtime/harness-personal-agent/operation.lock.d" ] ||
+      [ -L "$runtime/harness-personal-agent/operation.lock.d" ]; }; then
+    fail 'Darwin local authorization retained its operation lock'
+fi
 for argument in --profile "$profile" --domain email \
     --client-file "$TEST_ROOT/synthetic-client.json"; do
     grep -Fx -- "$argument" "$capture/auth.args" >/dev/null ||
@@ -319,6 +336,11 @@ grep -F 'open location "https://accounts.google.com/' \
 [ -f "$capture/tunnel.stopped" ] || fail 'OAuth tunnel lifecycle cleanup'
 grep -Fx cancel "$capture/tunnel-cleanup.args" >/dev/null ||
     fail 'OAuth tunnel cancellation command'
+if [ "$(uname -s)" = Darwin ] &&
+    { [ -e "$runtime/harness-personal-agent/operation.lock.d" ] ||
+      [ -L "$runtime/harness-personal-agent/operation.lock.d" ]; }; then
+    fail 'Darwin remote authorization retained its operation lock'
+fi
 
 run_agent --authorize --domain calendar-write --browser-host riken \
     --client-file "$TEST_ROOT/synthetic-client.json" \
@@ -361,9 +383,21 @@ grep -F 'retry=forbidden-until-reconciled' \
     "$TEST_ROOT/write-ambiguous.out" >/dev/null ||
     fail 'ambiguous calendar write retry gate'
 
-lock_file=$runtime/harness-personal-agent/operation.lock
-flock "$lock_file" sleep 1 &
-lock_pid=$!
+case $(uname -s) in
+    Darwin)
+        lock_dir=$runtime/harness-personal-agent/operation.lock.d
+        mkdir -m 700 "$lock_dir"
+        sleep 5 &
+        lock_pid=$!
+        printf '%s\n' "$lock_pid" >"$lock_dir/pid"
+        chmod 600 "$lock_dir/pid"
+        ;;
+    *)
+        lock_file=$runtime/harness-personal-agent/operation.lock
+        flock "$lock_file" sleep 1 &
+        lock_pid=$!
+        ;;
+esac
 sleep 0.1
 if printf '%s\n' blocked |
     run_agent --run --client claude --task P-TEST-4 --domain local \
@@ -371,8 +405,34 @@ if printf '%s\n' blocked |
     fail 'concurrent operation executed'
 fi
 wait "$lock_pid"
+if [ "$(uname -s)" = Darwin ]; then
+    unlink "$lock_dir/pid"
+    rmdir "$lock_dir"
+fi
 grep -F 'reason=operation-locked' "$TEST_ROOT/locked.out" >/dev/null ||
     fail 'lock classification'
+
+if [ "$(uname -s)" = Darwin ]; then
+    mkdir -m 700 "$lock_dir"
+    printf '%s\n' 999999999 >"$lock_dir/pid"
+    chmod 600 "$lock_dir/pid"
+    run_agent --status >"$TEST_ROOT/stale-lock.out"
+    grep -F 'lock=free' "$TEST_ROOT/stale-lock.out" >/dev/null ||
+        fail 'stale Darwin lock recovery'
+    [ ! -e "$lock_dir" ] && [ ! -L "$lock_dir" ] ||
+        fail 'stale Darwin lock residue'
+
+    mkdir -m 700 "$lock_dir"
+    printf '%s\n' 999999999 >"$lock_dir/pid"
+    chmod 644 "$lock_dir/pid"
+    if run_agent --status >"$TEST_ROOT/unsafe-lock.out" 2>&1; then
+        fail 'unsafe Darwin lock accepted'
+    fi
+    grep -F 'reason=operation-lock-unsafe' "$TEST_ROOT/unsafe-lock.out" \
+        >/dev/null || fail 'unsafe Darwin lock classification'
+    unlink "$lock_dir/pid"
+    rmdir "$lock_dir"
+fi
 
 PYTHONPATH="$ROOT/libexec" PYTHONDONTWRITEBYTECODE=1 \
     python3 - <<'PY' || fail 'managed target declaration changed'

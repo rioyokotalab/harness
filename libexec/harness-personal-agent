@@ -3,7 +3,15 @@ set -eu
 
 SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
 CONTROL_ROOT=$(CDPATH='' cd -- "$SELF_DIR/.." && pwd -P)
-DEFAULT_PERSONAL_ROOT=/mnt/nfs-03/safe/Users/rioyokota/projects/personal
+platform=$(uname -s)
+case $platform in
+    Linux) DEFAULT_PERSONAL_ROOT=/mnt/nfs-03/safe/Users/rioyokota/projects/personal ;;
+    Darwin) DEFAULT_PERSONAL_ROOT=$HOME/projects/personal ;;
+    *)
+        printf 'PERSONAL_AGENT status=failed reason=unsupported-platform\n' >&2
+        exit 2
+        ;;
+esac
 
 usage() {
     cat >&2 <<'EOF'
@@ -88,17 +96,49 @@ esac
 
 if [ "${HARNESS_TESTING:-0}" = 1 ]; then
     personal_root=${HARNESS_TEST_PERSONAL_ROOT:-$DEFAULT_PERSONAL_ROOT}
-    runtime_base=${HARNESS_TEST_RUNTIME_ROOT:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}}
+    if [ "$platform" = Darwin ]; then
+        default_runtime_base=${TMPDIR:-/tmp}
+        default_runtime_base=${default_runtime_base%/}
+    else
+        default_runtime_base=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+    fi
+    runtime_base=${HARNESS_TEST_RUNTIME_ROOT:-$default_runtime_base}
     profile_root=${HARNESS_TEST_PROFILE_ROOT:-$HOME/.local/state/harness-personal-agent/google}
 else
     personal_root=$DEFAULT_PERSONAL_ROOT
-    runtime_base=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+    if [ "$platform" = Darwin ]; then
+        runtime_base=${TMPDIR:-/tmp}
+        runtime_base=${runtime_base%/}
+    else
+        runtime_base=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+    fi
     profile_root=$HOME/.local/state/harness-personal-agent/google
 fi
 
 fail() {
     printf 'PERSONAL_AGENT status=failed reason=%s\n' "$1" >&2
     exit 2
+}
+
+path_owner() {
+    case $platform in
+        Darwin) stat -f '%u' "$1" ;;
+        *) stat -c '%u' -- "$1" ;;
+    esac
+}
+
+path_mode() {
+    case $platform in
+        Darwin) stat -f '%Lp' "$1" ;;
+        *) stat -c '%a' -- "$1" ;;
+    esac
+}
+
+path_links() {
+    case $platform in
+        Darwin) stat -f '%l' "$1" ;;
+        *) stat -c '%h' -- "$1" ;;
+    esac
 }
 
 case "$personal_root:$runtime_base:$profile_root" in
@@ -120,9 +160,9 @@ if [ "${HARNESS_TESTING:-0}" != 1 ]; then
     [ "$personal_root" = "$DEFAULT_PERSONAL_ROOT" ] ||
         fail personal-root-identity
 fi
-[ "$(stat -c %u "$personal_root")" = "$(id -u)" ] ||
+[ "$(path_owner "$personal_root")" = "$(id -u)" ] ||
     fail personal-root-owner
-[ "$(stat -c %a "$personal_root")" = 700 ] ||
+[ "$(path_mode "$personal_root")" = 700 ] ||
     fail personal-root-mode
 [ "$(git -C "$personal_root" rev-parse --show-toplevel 2>/dev/null)" = \
     "$personal_root" ] || fail personal-git-root
@@ -135,15 +175,15 @@ for required in AGENTS.md CLAUDE.md TODO.md .codex/config.toml \
     [ -f "$personal_root/$required" ] &&
         [ ! -L "$personal_root/$required" ] ||
         fail "personal-contract-$required"
-    [ "$(stat -c %u "$personal_root/$required")" = "$(id -u)" ] ||
+    [ "$(path_owner "$personal_root/$required")" = "$(id -u)" ] ||
         fail "personal-owner-$required"
-    [ "$(stat -c %h "$personal_root/$required")" = 1 ] ||
+    [ "$(path_links "$personal_root/$required")" = 1 ] ||
         fail "personal-links-$required"
 done
 
 [ -d "$runtime_base" ] && [ ! -L "$runtime_base" ] ||
     fail runtime-base-type
-[ "$(stat -c %u "$runtime_base")" = "$(id -u)" ] ||
+[ "$(path_owner "$runtime_base")" = "$(id -u)" ] ||
     fail runtime-base-owner
 runtime_dir=$runtime_base/harness-personal-agent
 if [ ! -e "$runtime_dir" ]; then
@@ -151,20 +191,93 @@ if [ ! -e "$runtime_dir" ]; then
 fi
 [ -d "$runtime_dir" ] && [ ! -L "$runtime_dir" ] ||
     fail runtime-directory-type
-[ "$(stat -c %u "$runtime_dir")" = "$(id -u)" ] &&
-    [ "$(stat -c %a "$runtime_dir")" = 700 ] ||
+[ "$(path_owner "$runtime_dir")" = "$(id -u)" ] &&
+    [ "$(path_mode "$runtime_dir")" = 700 ] ||
     fail runtime-directory-permissions
 
 lock_file=$runtime_dir/operation.lock
-umask 077
-exec 9>"$lock_file"
-chmod 600 "$lock_file"
-if ! flock -n 9; then
-    if [ "$mode" = status ]; then
-        printf 'PERSONAL_AGENT status=ready root=ready lock=busy profile=unknown privacy=unknown connectors=unknown managed_target=false\n'
-        exit 0
+lock_owned=no
+# Invoked through the EXIT trap and OAuth cleanup.
+# shellcheck disable=SC2329
+release_operation_lock() {
+    if [ "$lock_owned" = yes ]; then
+        [ -f "$lock_pid_file" ] && [ ! -L "$lock_pid_file" ] &&
+            [ "$(path_owner "$lock_pid_file")" = "$(id -u)" ] &&
+            [ "$(path_links "$lock_pid_file")" = 1 ] &&
+            unlink "$lock_pid_file" || true
+        [ -d "$lock_dir" ] && [ ! -L "$lock_dir" ] &&
+            [ "$(path_owner "$lock_dir")" = "$(id -u)" ] &&
+            rmdir "$lock_dir" 2>/dev/null || true
+        lock_owned=no
     fi
-    fail operation-locked
+}
+if [ "$platform" = Darwin ]; then
+    lock_dir=$runtime_dir/operation.lock.d
+    lock_pid_file=$lock_dir/pid
+    acquire_directory_lock() {
+        old_umask=$(umask)
+        umask 077
+        if mkdir "$lock_dir" 2>/dev/null; then
+            lock_owned=yes
+            trap release_operation_lock EXIT
+            trap 'exit 129' HUP
+            trap 'exit 130' INT
+            trap 'exit 143' TERM
+            printf '%s\n' "$$" >"$lock_pid_file"
+            chmod 600 "$lock_pid_file"
+            umask "$old_umask"
+            return 0
+        fi
+        umask "$old_umask"
+        [ -d "$lock_dir" ] && [ ! -L "$lock_dir" ] &&
+            [ "$(path_owner "$lock_dir")" = "$(id -u)" ] &&
+            [ "$(path_mode "$lock_dir")" = 700 ] &&
+            [ -f "$lock_pid_file" ] && [ ! -L "$lock_pid_file" ] &&
+            [ "$(path_owner "$lock_pid_file")" = "$(id -u)" ] &&
+            [ "$(path_mode "$lock_pid_file")" = 600 ] &&
+            [ "$(path_links "$lock_pid_file")" = 1 ] ||
+            fail operation-lock-unsafe
+        existing_pid=$(sed -n '1p' "$lock_pid_file")
+        case $existing_pid in ''|*[!0-9]*) fail operation-lock-unsafe ;; esac
+        if kill -0 "$existing_pid" 2>/dev/null; then
+            return 1
+        fi
+        unlink "$lock_pid_file"
+        rmdir "$lock_dir" || fail operation-lock-unsafe
+        old_umask=$(umask)
+        umask 077
+        if ! mkdir "$lock_dir" 2>/dev/null; then
+            umask "$old_umask"
+            return 1
+        fi
+        lock_owned=yes
+        trap release_operation_lock EXIT
+        trap 'exit 129' HUP
+        trap 'exit 130' INT
+        trap 'exit 143' TERM
+        printf '%s\n' "$$" >"$lock_pid_file"
+        chmod 600 "$lock_pid_file"
+        umask "$old_umask"
+    }
+    if ! acquire_directory_lock; then
+        if [ "$mode" = status ]; then
+            printf 'PERSONAL_AGENT status=ready root=ready lock=busy profile=unknown privacy=unknown connectors=unknown managed_target=false\n'
+            exit 0
+        fi
+        fail operation-locked
+    fi
+else
+    command -v flock >/dev/null 2>&1 || fail flock-unavailable
+    umask 077
+    exec 9>"$lock_file"
+    chmod 600 "$lock_file"
+    if ! flock -n 9; then
+        if [ "$mode" = status ]; then
+            printf 'PERSONAL_AGENT status=ready root=ready lock=busy profile=unknown privacy=unknown connectors=unknown managed_target=false\n'
+            exit 0
+        fi
+        fail operation-locked
+    fi
 fi
 
 profile_state=absent
@@ -176,17 +289,17 @@ validate_profile() {
     fi
     [ -d "$profile_root" ] && [ ! -L "$profile_root" ] ||
         return 1
-    [ "$(stat -c %u "$profile_root")" = "$(id -u)" ] &&
-        [ "$(stat -c %a "$profile_root")" = 700 ] ||
+    [ "$(path_owner "$profile_root")" = "$(id -u)" ] &&
+        [ "$(path_mode "$profile_root")" = 700 ] ||
         return 1
     profile_state=ready
     privacy_file=$profile_root/privacy.tsv
     if [ -e "$privacy_file" ] || [ -L "$privacy_file" ]; then
         privacy_file_state=invalid
         if [ -f "$privacy_file" ] && [ ! -L "$privacy_file" ] &&
-            [ "$(stat -c %u "$privacy_file")" = "$(id -u)" ] &&
-            [ "$(stat -c %a "$privacy_file")" = 600 ] &&
-            [ "$(stat -c %h "$privacy_file")" = 1 ]; then
+            [ "$(path_owner "$privacy_file")" = "$(id -u)" ] &&
+            [ "$(path_mode "$privacy_file")" = 600 ] &&
+            [ "$(path_links "$privacy_file")" = 1 ]; then
             if awk -F '\t' '
                 ($1 == "openai" || $1 == "anthropic") && $2 == "off" &&
                     !seen[$1]++ { count++; next }
@@ -235,15 +348,15 @@ if [ "$mode" = profile-bootstrap ]; then
             [ -d "$profile_grandparent" ] &&
                 [ ! -L "$profile_grandparent" ] ||
                 fail profile-parent-unavailable
-            [ "$(stat -c %u "$profile_grandparent")" = "$(id -u)" ] ||
+            [ "$(path_owner "$profile_grandparent")" = "$(id -u)" ] ||
                 fail profile-parent-owner
             mkdir -m 700 "$profile_parent"
         fi
         [ -d "$profile_parent" ] && [ ! -L "$profile_parent" ] ||
             fail profile-parent-type
-        [ "$(stat -c %u "$profile_parent")" = "$(id -u)" ] ||
+        [ "$(path_owner "$profile_parent")" = "$(id -u)" ] ||
             fail profile-parent-owner
-        [ "$(stat -c %a "$profile_parent")" = 700 ] ||
+        [ "$(path_mode "$profile_parent")" = 700 ] ||
             fail profile-parent-permissions
         mkdir -m 700 "$profile_root"
         validate_profile || fail profile-bootstrap-failed
@@ -264,9 +377,9 @@ if [ "$mode" = privacy-attest ]; then
     privacy_tmp=$profile_root/privacy.$$.tmp
     {
         if [ -f "$privacy_file" ] && [ ! -L "$privacy_file" ] &&
-            [ "$(stat -c %u "$privacy_file")" = "$(id -u)" ] &&
-            [ "$(stat -c %a "$privacy_file")" = 600 ] &&
-            [ "$(stat -c %h "$privacy_file")" = 1 ]; then
+            [ "$(path_owner "$privacy_file")" = "$(id -u)" ] &&
+            [ "$(path_mode "$privacy_file")" = 600 ] &&
+            [ "$(path_links "$privacy_file")" = 1 ]; then
             awk -F '\t' -v provider="$provider" '
                 ($1 == "openai" || $1 == "anthropic") &&
                     $2 == "off" && $1 != provider {
@@ -291,9 +404,10 @@ if [ "$mode" = authorize ]; then
     [ -n "$client_file" ] || fail oauth-client-path-missing
     case $client_file in /*) ;; *) fail oauth-client-path-non-absolute ;; esac
     if [ -z "$browser_host" ]; then
-        exec "$personal_root/bin/personal-google-auth" \
+        "$personal_root/bin/personal-google-auth" \
             --profile "$profile_root" --domain "$domain" \
             --client-file "$client_file"
+        exit $?
     fi
     case $browser_host in
         aist|home|office|riken) ;;
@@ -302,8 +416,8 @@ if [ "$mode" = authorize ]; then
     browser_helper=$CONTROL_ROOT/libexec/harness-oauth-browser-open
     [ -f "$browser_helper" ] && [ ! -L "$browser_helper" ] &&
         [ -x "$browser_helper" ] || fail oauth-browser-helper-invalid
-    [ "$(stat -c %u "$browser_helper")" = "$(id -u)" ] &&
-        [ "$(stat -c %h "$browser_helper")" = 1 ] ||
+    [ "$(path_owner "$browser_helper")" = "$(id -u)" ] &&
+        [ "$(path_links "$browser_helper")" = 1 ] ||
         fail oauth-browser-helper-invalid
     callback_port=53682
     ssh_bin=ssh
@@ -312,7 +426,7 @@ if [ "$mode" = authorize ]; then
         ssh_bin=${HARNESS_TEST_SSH:-$ssh_bin}
     else
         [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "$SSH_AUTH_SOCK" ] &&
-            [ "$(stat -c %u "$SSH_AUTH_SOCK")" = "$(id -u)" ] ||
+            [ "$(path_owner "$SSH_AUTH_SOCK")" = "$(id -u)" ] ||
             fail ssh-agent-unavailable
     fi
     case $callback_port in
@@ -337,6 +451,7 @@ PY
         trap - EXIT HUP INT TERM
         "$ssh_bin" -x -O cancel -R "$reverse_forward" "$browser_host" \
             >/dev/null 2>&1 || true
+        release_operation_lock
         exit "$status"
     }
     trap cleanup_oauth_tunnel EXIT
