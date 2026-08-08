@@ -136,7 +136,7 @@ python_path=$implementation_dir/bin/python$minor
     die "managed Python architecture verification failed"
 "$python_path" -c 'import ssl, sqlite3, sys; assert sys.prefix == sys.base_prefix; assert ssl.OPENSSL_VERSION; assert sqlite3.sqlite_version'
 relative=${implementation_dir#"$stage"/}
-mv -T "$stage" "$install_dir"; stage=; installed=1
+mv "$stage" "$install_dir"; stage=; installed=1
 target=$install_dir/$relative/bin/python$minor
 [ "$("$target" -c 'import platform; print(platform.python_version())')" = "$patch" ] ||
     die "activated Python patch verification failed"

@@ -393,7 +393,7 @@ EOF
                 if [ ! -L "$rollback_candidate" ]; then
                     ln -s "$old_command" "$rollback_candidate"
                 fi
-                mv -T "$rollback_candidate" "$stable_link"
+                mv -f "$rollback_candidate" "$stable_link"
                 [ -L "$stable_link" ] &&
                     [ "$(readlink "$stable_link")" = "$old_command" ] ||
                     die "replaced agent link rollback verification failed"
