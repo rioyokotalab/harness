@@ -13,14 +13,6 @@ Confirm branch, worktree, recent commits, ownership, and mutable inputs. Resume
 the first unverified recorded action while preserving unrelated work. A failed
 mutable-state query is unknown, never absence.
 
-## Active
-
-### Har-428 — Roll out Har-427 to Office and Home
-
-**Phase:** Office is clean at protected `14309ce`; fast-forward Home and verify
-the same readback without rerunning tests.
-**Record:** `docs/tasks/Har-428.md`.
-
 ## Deferred gates
 
 ### Har-196 — Backup lifecycle phase 2
