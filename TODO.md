@@ -15,12 +15,6 @@ mutable-state query is unknown, never absence.
 
 ## Active
 
-### Har-429 — Enforce one Codex owner per saved thread
-
-**Phase:** controller routing failed before insertion, so strict separation is
-active; the split-brain guard passed complete validation and awaits protected
-publication. **Record:** `docs/tasks/Har-429.md`.
-
 ### Har-428 — Roll out Har-427 to Office and Home
 
 **Phase:** Office and Home independently fast-forward their clean managed
