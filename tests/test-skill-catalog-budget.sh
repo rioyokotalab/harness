@@ -57,6 +57,20 @@ for name, markers in expected.items():
     description = observed[name][0]
     for marker in markers:
         assert marker in description, (name, marker)
+    interface = root / "shared" / "skills" / name / "agents" / "openai.yaml"
+    lines = interface.read_text(encoding="utf-8").splitlines()
+    assert len(lines) in {3, 4} and lines[0] == "interface:", interface
+    fields = {}
+    for line in lines[1:]:
+        match = re.fullmatch(r'  ([a-z_]+): "([^"\\]+)"', line)
+        assert match, (interface, line)
+        fields[match.group(1)] = match.group(2)
+    assert {"display_name", "short_description"} <= set(fields) <= {
+        "display_name", "short_description", "default_prompt"
+    }
+    assert fields["display_name"] and fields["short_description"]
+    if "default_prompt" in fields:
+        assert fields["default_prompt"], interface
 
 total = sum(count for _, count in observed.values())
 assert total <= 400, total

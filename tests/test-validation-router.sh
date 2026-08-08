@@ -575,6 +575,7 @@ for path, owner in protected_r3.items():
     assert set(result["suites"]) <= {
         owner,
         "tests/test-shellcheck.sh",
+        "tests/test-skill-catalog-budget.sh",
     }, (path, result)
     assert result["cacheable"] is False, (path, result)
 

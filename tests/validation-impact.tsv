@@ -1,4 +1,5 @@
 # regex|tier|suite-or--|reason
+^\.gitignore$|R0|-|repository ignore metadata
 ^(shell/.*\.(sh|bash)$|tools/.*\.sh$)|R2|tests/test-shellcheck.sh|incremental shell syntax and deletion policy
 ^TODO\.md$|R0|tests/test-harness-ledgers.sh|direct ordinary ledger contract
 ^TODO\.md$|R1|tests/test-context-routing-benchmark.sh|active-board context budget
@@ -26,6 +27,7 @@
 ^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|abciq|riken|alps|rccs|tsubame|planning|execute-monitor|validation)\.md)$|R1|tests/test-skill-context-gates.sh|HPC routed safety gates
 ^shared/skills/operate-native-hpc/references/sites\.md$|R3|tests/test-skill-context-budgets.sh|HPC compatibility aggregate budget
 ^shared/skills/operate-native-hpc/references/sites\.md$|R3|tests/test-skill-context-gates.sh|HPC compatibility aggregate gates
+^shared/skills/[^/]+/agents/openai\.yaml$|R1|tests/test-skill-catalog-budget.sh|skill client interface metadata
 ^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-budgets.sh|PIE routed context budget
 ^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-gates.sh|PIE routed behavior gates
 ^tests/test-skill-context-(budgets|gates)\.sh$|R3|-|skill routing validator
@@ -114,6 +116,7 @@
 ^bin/|R3|tests/test-source-contract.sh|public command dispatcher
 ^install\.sh$|R3|tests/test-claude-takeover.sh|top-level installation lifecycle
 ^presentation/scripts/.*\.py$|R1|tests/test-presentation-tools.sh|presentation build and verification tools
+^presentation/(evidence|output)/|R0|-|generated presentation inputs and artifacts
 ^tests/test-presentation-tools\.sh$|R3|-|presentation tool owner
 ^tools/(agents|python|runtimes|source-dependencies|sources)\.tsv$|R2|tests/test-tool-manifests.sh|tool and runtime manifest schema
 ^tools/agents\.tsv$|R3|tests/test-agent-upgrade.sh|agent replacement declaration
@@ -185,6 +188,7 @@
 ^libexec/harness-tmux-config$|R3|tests/test-tmux-config.sh|tmux configuration
 ^libexec/harness_claude_targets\.py$|R3|tests/test-claude-handoff.sh|Claude target identity
 ^evaluation/(evaluate\.py|corpus\.json|candidates/failure-capsule\.md|schemas/(capsule|run-result|stage-report)\.schema\.json)$|R3|tests/test-evaluation.sh|current evaluation runtime and corpus
+^evaluation/(control-plane|oracles|overlays|seeds)/|R3|tests/test-evaluation.sh|current evaluation corpus inputs
 ^evaluation/(README\.md|compare_clients\.py|development[-_].*|results/.*|schemas/client-comparison-report\.schema\.json)$|R0|-|frozen or model-run evaluation material
 ^tools/fleet-readiness-audit\.py$|R3|tests/test-fleet-readiness-audit.sh|fleet readiness audit
 ^tools/harness-ledgers\.py$|R3|tests/test-harness-ledgers.sh|ledger validator
