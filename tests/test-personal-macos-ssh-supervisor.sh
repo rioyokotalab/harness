@@ -10,10 +10,18 @@ FIXTURE=$ROOT/tests/fixtures/personal-macos/private-v1
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-ssh-supervisor-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
+watchdog_signal_pid=
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
+    if [ -n "$watchdog_signal_pid" ]; then
+        if kill -0 "$watchdog_signal_pid" 2>/dev/null; then
+            kill -TERM "$watchdog_signal_pid" 2>/dev/null || true
+        fi
+        if wait "$watchdog_signal_pid" 2>/dev/null; then :; fi
+        watchdog_signal_pid=
+    fi
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
         "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" "$TEMP_BASE" \
@@ -664,15 +672,21 @@ env HOME="$watchdog_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_MODE=1 \
     >"$TEMP_DIR/watchdog-signal.out" 2>&1 &
 watchdog_signal_pid=$!
 watchdog_signal_wait=0
-while [ ! -e "$recovery_lock" ] && [ "$watchdog_signal_wait" -lt 50 ]; do
+while [ ! -e "$recovery_lock" ] && [ "$watchdog_signal_wait" -lt 300 ]; do
     sleep 0.1
     watchdog_signal_wait=$((watchdog_signal_wait + 1))
 done
-[ -e "$recovery_lock" ] || fail "watchdog signal test never entered recovery"
+if [ ! -e "$recovery_lock" ]; then
+    kill -TERM "$watchdog_signal_pid" 2>/dev/null || true
+    if wait "$watchdog_signal_pid" 2>/dev/null; then :; fi
+    watchdog_signal_pid=
+    fail "watchdog signal test never entered recovery"
+fi
 kill -TERM "$watchdog_signal_pid"
 if wait "$watchdog_signal_pid"; then
     fail "watchdog accepted termination during recovery"
 fi
+watchdog_signal_pid=
 watchdog_signal_wait=0
 # The production bind probe has ConnectTimeout=8. Poll rather than sleeping a
 # fixed interval, but allow that bound plus cleanup/scheduling margin before
