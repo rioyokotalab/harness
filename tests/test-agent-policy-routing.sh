@@ -125,6 +125,8 @@ assert_contains 'run server-side merge with' "$GIT_POLICY" \
     'linked-worktree merge ambiguity guard'
 assert_contains 'bridge-first cutover' "$CODEX" \
     'bridge-first lifecycle boundary'
+assert_contains 'serving one root as split-brain' "$CODEX" \
+    'cross-client single-writer boundary'
 assert_contains 'sole portfolio producer may inspect any owner' "$CODEX" \
     'producer pane-inspection standing authority'
 assert_contains 'untrusted' "$CODEX" \
