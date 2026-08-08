@@ -17,8 +17,9 @@ mutable-state query is unknown, never absence.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 
-**Phase:** Office and Home independently discover and repair every Mac failure
-until affected discovery and the final gate pass.
+**Phase:** Office's clean local candidate passes corrective discovery and the
+final gate; acquire its two commits for protected integration while Home
+continues independently.
 **Record:** `docs/tasks/Har-428.md`.
 
 ## Deferred gates
