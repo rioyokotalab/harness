@@ -21,6 +21,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from dataclasses import replace
 from types import SimpleNamespace
 
 if not __debug__:
@@ -590,11 +591,18 @@ multi = classify(
 assert module["suites_for_stage"](
     multi, "repair", "tests/test-debugger-readiness.sh", execute=True
 ) == ["tests/test-debugger-readiness.sh"]
+wrong_platform_focused = dict(focused)
+wrong_platform_focused["tests/test-terminfo.sh"] = replace(
+    focused["tests/test-terminfo.sh"],
+    platforms=frozenset(
+        {"Darwin"} if platform.system() == "Linux" else {"Linux"}
+    ),
+)
 wrong_platform = classify(
     root,
     ["config/terminfo/tmux-256color.src"],
     rules,
-    focused,
+    wrong_platform_focused,
     group_rules,
 )
 try:
