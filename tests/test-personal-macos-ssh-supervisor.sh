@@ -10,10 +10,18 @@ FIXTURE=$ROOT/tests/fixtures/personal-macos/private-v1
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-ssh-supervisor-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
+watchdog_signal_pid=
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
+    if [ -n "$watchdog_signal_pid" ]; then
+        if kill -0 "$watchdog_signal_pid" 2>/dev/null; then
+            kill -TERM "$watchdog_signal_pid" 2>/dev/null || true
+        fi
+        if wait "$watchdog_signal_pid" 2>/dev/null; then :; fi
+        watchdog_signal_pid=
+    fi
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
         "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" "$TEMP_BASE" \
@@ -69,7 +77,7 @@ esac
 shift 2; [ "${1:-}" = -- ] && shift
 case $(/usr/bin/uname -s) in
     Darwin)
-        [ "$native_format" != %a ] || native_format=%Lp
+        case "$native_format" in %a) native_format=%Lp ;; %h) native_format=%l ;; esac
         exec /usr/bin/stat -f "$native_format" "$@"
         ;;
     *) exec /usr/bin/stat -c "$native_format" -- "$@" ;;
@@ -473,7 +481,11 @@ grep -F 'action=none reason=route-running' "$TEMP_DIR/watchdog-healthy.out" >/de
 watchdog_receipt=$watchdog_home/.local/state/harness/macos-tunnel-watchdog/last-run
 [ -f "$watchdog_receipt" ] && [ ! -L "$watchdog_receipt" ] ||
     fail "watchdog healthy run created no receipt"
-[ "$(stat -c %a -- "$watchdog_receipt")" = 600 ] ||
+case $(/usr/bin/uname -s) in
+    Darwin) watchdog_receipt_mode=$(stat -f %Lp "$watchdog_receipt") ;;
+    *) watchdog_receipt_mode=$(stat -c %a -- "$watchdog_receipt") ;;
+esac
+[ "$watchdog_receipt_mode" = 600 ] ||
     fail "watchdog receipt mode"
 grep -F 'outcome=success' "$watchdog_receipt" >/dev/null ||
     fail "watchdog healthy receipt outcome"
@@ -615,8 +627,9 @@ unlink "$watchdog_home/.fake-bind-probed-tunnel"
 
 touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
     "$watchdog_home/.fake-bind-fail-tunnel" "$watchdog_home/.fake-bind-fail-tunnel2"
-if HARNESS_TEST_RECOVERY_ATTEMPTS=1 run_tunnel_watchdog "$watchdog_home" \
-    --host mac-test-pilot --run-once >"$TEMP_DIR/watchdog-timeout.out" 2>&1; then
+if ( HARNESS_TEST_RECOVERY_ATTEMPTS=1 \
+    run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-timeout.out" 2>&1 ); then
     fail "watchdog accepted stale-listener timeout"
 fi
 grep -F 'stale-listener drain timed out' "$TEMP_DIR/watchdog-timeout.out" >/dev/null ||
@@ -632,9 +645,9 @@ unlink "$watchdog_home/.fake-bind-fail-tunnel2"
 
 touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
     "$watchdog_home/.fake-bind-fail-tunnel" "$watchdog_home/.fake-bind-fail-tunnel2"
-if HARNESS_TEST_RECOVERY_ATTEMPTS=999 HARNESS_TEST_RECOVERY_TIMEOUT_SECONDS=0 \
+if ( HARNESS_TEST_RECOVERY_ATTEMPTS=999 HARNESS_TEST_RECOVERY_TIMEOUT_SECONDS=0 \
     run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
-    >"$TEMP_DIR/watchdog-deadline.out" 2>&1; then
+    >"$TEMP_DIR/watchdog-deadline.out" 2>&1 ); then
     fail "watchdog accepted elapsed recovery deadline"
 fi
 grep -F 'action=drain scope=dual status=started timeout=0' \
@@ -659,15 +672,21 @@ env HOME="$watchdog_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_MODE=1 \
     >"$TEMP_DIR/watchdog-signal.out" 2>&1 &
 watchdog_signal_pid=$!
 watchdog_signal_wait=0
-while [ ! -e "$recovery_lock" ] && [ "$watchdog_signal_wait" -lt 50 ]; do
+while [ ! -e "$recovery_lock" ] && [ "$watchdog_signal_wait" -lt 300 ]; do
     sleep 0.1
     watchdog_signal_wait=$((watchdog_signal_wait + 1))
 done
-[ -e "$recovery_lock" ] || fail "watchdog signal test never entered recovery"
+if [ ! -e "$recovery_lock" ]; then
+    kill -TERM "$watchdog_signal_pid" 2>/dev/null || true
+    if wait "$watchdog_signal_pid" 2>/dev/null; then :; fi
+    watchdog_signal_pid=
+    fail "watchdog signal test never entered recovery"
+fi
 kill -TERM "$watchdog_signal_pid"
 if wait "$watchdog_signal_pid"; then
     fail "watchdog accepted termination during recovery"
 fi
+watchdog_signal_pid=
 watchdog_signal_wait=0
 # The production bind probe has ConnectTimeout=8. Poll rather than sleeping a
 # fixed interval, but allow that bound plus cleanup/scheduling margin before

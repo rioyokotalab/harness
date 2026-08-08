@@ -141,7 +141,7 @@ def read_nightly_record(path: Path, word_limit: int) -> dict[str, str]:
     if len(lines) < 4 or lines[3] != "---":
         raise LedgerError("nightly-record-schema")
     values: dict[str, str] = {}
-    for line, key in zip(lines[:3], ("task", "status", "updated"), strict=True):
+    for line, key in zip(lines[:3], ("task", "status", "updated")):
         if not line.startswith(f"{key}: "):
             raise LedgerError("nightly-record-schema")
         values[key] = line.split(": ", 1)[1]

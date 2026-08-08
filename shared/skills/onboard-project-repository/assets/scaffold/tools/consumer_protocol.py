@@ -229,7 +229,7 @@ def parse_report(text: str, expected_request_id: str) -> dict[str, str]:
     if request_id != expected_request_id:
         raise ProtocolError("request-id-mismatch")
     values = {"request_id": request_id, "status": status}
-    for line, field in zip(lines[1:], REPORT_FIELDS, strict=True):
+    for line, field in zip(lines[1:], REPORT_FIELDS):
         prefix = f"{field}: "
         if not line.startswith(prefix) or not line[len(prefix) :].strip():
             raise ProtocolError(f"report-field-invalid:{field}")

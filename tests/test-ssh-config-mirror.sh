@@ -55,6 +55,7 @@ printf '%s\n' '#!/bin/sh' 'echo Linux' >"$fake_bin/uname"
 cat >"$fake_bin/stat" <<'EOF'
 #!/bin/sh
 case "$1:$2" in
+    -Lc:%u) format=%u; follow=yes ;;
     -c:%u) format=%u ;;
     -c:%a) format=%a ;;
     -c:%h) format=%h ;;
@@ -63,6 +64,7 @@ case "$1:$2" in
     *) exec /usr/bin/stat "$@" ;;
 esac
 shift 2; [ "${1:-}" != -- ] || shift
+follow=${follow:-no}
 case $(/usr/bin/uname -s) in
     Darwin)
         case "$format" in
@@ -71,6 +73,9 @@ case $(/usr/bin/uname -s) in
             %s) format=%z ;;
             %d:%i:%u:%a) format=%d:%i:%u:%Lp ;;
         esac
+        if [ "$follow" = yes ]; then
+            exec /usr/bin/stat -L -f "$format" "$@"
+        fi
         exec /usr/bin/stat -f "$format" "$@"
         ;;
     *) exec /usr/bin/stat -c "$format" -- "$@" ;;
@@ -83,7 +88,14 @@ case $(/usr/bin/uname -s) in
     *) exec /usr/bin/sha256sum "$@" ;;
 esac
 EOF
-chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/sha256sum"
+cat >"$fake_bin/realpath" <<'EOF'
+#!/bin/sh
+[ "${1:-}" != -e ] || shift
+[ "${1:-}" != -- ] || shift
+exec /bin/realpath "$@"
+EOF
+chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/sha256sum" \
+    "$fake_bin/realpath"
 chmod 700 "$local_home" "$local_home/.ssh" "$remote_home" "$remote_home/.ssh"
 printf '%s\n' 'Host synthetic-source.invalid' '    HostName 192.0.2.71' \
     '    User synthetic-source' >"$local_home/.ssh/config"

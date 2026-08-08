@@ -276,7 +276,13 @@ run_homebrew() {
     shift 3
     HOME="$test_home" HARNESS_ROOT="$PUBLIC" BREW_STATE="$test_state" \
         BREW_LOG="$test_log" FAKE_BREW_PREFIX="$FAKE_PREFIX" \
-        PATH="$FAKE_PREFIX/bin:$FAKE_BIN:/usr/bin:/bin" "$HOMEBREW" "$@"
+        PATH="$FAKE_PREFIX/bin:$FAKE_BIN:/usr/bin:/bin" \
+        "$HOMEBREW" "$@" && homebrew_status=0 || homebrew_status=$?
+    unset FAKE_APPLY_FAILURE FAKE_PROHIBITED_DRY_RUN FAKE_RETIRED_DEPENDENT \
+        FAKE_RETIRED_INTERNAL_DEPENDENT FAKE_RETIRED_UPGRADE_DEPENDENT \
+        FAKE_RETIRE_REMOVES_MANAGED FAKE_UNMANAGED_DEPENDENCY_USER \
+        FAKE_UNMANAGED_DEPENDENT
+    return "$homebrew_status"
 }
 
 plan_home=$(make_home plan)

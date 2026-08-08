@@ -313,7 +313,8 @@ ensure_codex_remote_control() {
     # The launcher can block. A scheduled agent must never hang: launchd will
     # not start the next tick while this one runs, which would silently end
     # all auto-resume. Start it detached and let the next tick confirm.
-    ( cd "$(repo_root)" && "$launcher" remote-control start >/dev/null 2>&1 & ) || true
+    ( cd "$(repo_root)" && exec "$launcher" remote-control start ) \
+        </dev/null >/dev/null 2>&1 &
     sleep 2
     if codex_remote_control_ready; then printf 'started'; else printf 'starting'; fi
 }

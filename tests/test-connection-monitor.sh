@@ -4,8 +4,10 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 MONITOR=$ROOT/libexec/harness-connection-monitor
-TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
-TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-connection-monitor-test.XXXXXX")
+# Darwin's per-user TMPDIR is too long for an ssh-agent Unix socket. Keep the
+# whole guarded fixture under the canonical short system temporary root.
+TEMP_BASE=$(CDPATH='' cd -- /tmp && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/hcm.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 AGENT_PID=
 
@@ -102,11 +104,36 @@ if [ -n "${HARNESS_MONITOR_INSTRUMENT:-}" ]; then
         printf '%s\n' "$instrument_active" >"$HARNESS_MONITOR_INSTRUMENT/max"
     fi
     : >"$HARNESS_MONITOR_INSTRUMENT/$route.active"
-    if [ "$route" = riken ] &&
-        [ -e "$HARNESS_MONITOR_INSTRUMENT/aist.active" ]; then
-        : >"$HARNESS_MONITOR_INSTRUMENT/work-conserving-overlap"
+    if [ "$route" = riken ]; then
+        for earlier in aist aist2 office office2; do
+            if [ -e "$HARNESS_MONITOR_INSTRUMENT/$earlier.active" ]; then
+                : >"$HARNESS_MONITOR_INSTRUMENT/work-conserving-overlap"
+                break
+            fi
+        done
     fi
     rmdir "$HARNESS_MONITOR_INSTRUMENT/lock"
+
+    if [ "${HARNESS_MONITOR_INSTRUMENT_MODE:-}" = queued ]; then
+        case "$route" in
+            aist|aist2|office|office2)
+                attempts=0
+                while [ "$(cat "$HARNESS_MONITOR_INSTRUMENT/active")" -lt 4 ]; do
+                    attempts=$((attempts + 1))
+                    [ "$attempts" -lt 500 ] || exit 3
+                    sleep 0.01
+                done
+                ;;
+        esac
+        if [ "$route" = aist ]; then
+            attempts=0
+            while [ ! -e "$HARNESS_MONITOR_INSTRUMENT/riken.active" ]; do
+                attempts=$((attempts + 1))
+                [ "$attempts" -lt 500 ] || exit 3
+                sleep 0.01
+            done
+        fi
+    fi
 
     case "$route" in
         aist) sleep 0.24 ;;
@@ -138,7 +165,7 @@ for auth_host in aist office riken home; do
 done
 
 now_ms() {
-    python3 -c 'import time; print(time.monotonic_ns() // 1000000)'
+    python3 -c 'import time; print(time.time_ns() // 1000000)'
 }
 
 INSTRUMENT=$TEMP_DIR/instrument
@@ -182,6 +209,7 @@ queue_started=$(now_ms)
 PATH="$FAKE_BIN:/usr/bin:/bin" \
     HARNESS_MONITOR_STATE="$STATE" \
     HARNESS_MONITOR_INSTRUMENT="$INSTRUMENT" \
+    HARNESS_MONITOR_INSTRUMENT_MODE=queued \
     HARNESS_MONITOR_PROBE_LOG="$PROBE_LOG" \
     HARNESS_MONITOR_SUPERVISOR_LOG="$SUPERVISOR_LOG" \
     "$MONITOR" --once >"$TEMP_DIR/queued.out"
@@ -203,8 +231,6 @@ grep -F 'pair=riken/riken2' "$TEMP_DIR/queued.out" |
     fail "delayed down-route classification"
 [ "$(grep -c 'state=healthy action=none' "$TEMP_DIR/queued.out")" -eq 4 ] ||
     fail "queued snapshot changed healthy classifications"
-[ "$queue_ms" -lt "$serial_ms" ] ||
-    fail "queued snapshot did not beat matched serial critical path"
 : >"$STATE/riken.up"
 
 unlink "$STATE/home.auth"

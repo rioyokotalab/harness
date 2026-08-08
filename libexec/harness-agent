@@ -7,17 +7,7 @@ export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
 agent_tree_hash() {
-    tree=$1
-    archive=$(mktemp "${TMPDIR:-/tmp}/harness-agent-tree.XXXXXX") ||
-        die "cannot allocate agent tree digest staging"
-    tar --format=gnu --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-        -cf "$archive" -C "$tree" . || {
-        unlink "$archive"
-        die "cannot archive managed agent tree"
-    }
-    hash=$(sha256sum "$archive" | awk '{print $1}')
-    unlink "$archive"
-    printf '%s\n' "$hash"
+    managed_tree_sha256 "$1" agent
 }
 
 normalized_semver() {
@@ -53,7 +43,7 @@ atomic_agent_link() {
     ln -s "$aal_source" "$aal_candidate"
     [ -L "$aal_candidate" ] && [ "$(readlink "$aal_candidate")" = "$aal_source" ] ||
         die "agent link candidate verification failed"
-    mv -T "$aal_candidate" "$aal_destination"
+    mv -f "$aal_candidate" "$aal_destination"
     [ -L "$aal_destination" ] && [ "$(readlink "$aal_destination")" = "$aal_source" ] ||
         die "agent link replacement verification failed"
 }
@@ -549,7 +539,7 @@ if [ "$action" = REPLACE ]; then
         "$new_tree_hash" "$install_dir" "$new_tree_hash" "$stable_link" \
         "$installed_command" "$old_install_dir" "$old_tree_hash" \
         "$old_installed_command" >>"$manifest"
-    mv -T "$stage" "$install_dir"
+    mv "$stage" "$install_dir"
     printf '%s\n' promoted >"$status_file"
     if [ "${HARNESS_TEST_AGENT_INTERRUPT:-}" = after-promote ]; then
         trap - EXIT HUP INT TERM
@@ -655,13 +645,9 @@ tar -xzf "$native_archive" -C "$native_dir" --strip-components=1
     die "agent archives created unexpected links"
 [ "$(PATH="$HOME/.local/bin:/usr/bin:/bin" "$stage/$command_relative" --version 2>/dev/null)" = "$version_line" ] ||
     die "agent version verification failed"
-tree_archive=$(mktemp "$state_root/$transaction_id.tree.XXXXXX")
-tar --format=gnu --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-    -cf "$tree_archive" -C "$stage" .
-tree_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
-rm "$tree_archive"; tree_archive=
+tree_hash=$(managed_tree_sha256 "$stage" agent)
 printf 'agent|%s|%s\n' "$install_dir" "$tree_hash" >>"$manifest"
-mv -T "$stage" "$install_dir"; stage=; installed=1
+mv "$stage" "$install_dir"; stage=; installed=1
 mkdir -p "$HOME/.local/bin"
 printf 'link|%s|%s\n' "$stable_link" "$installed_command" >>"$manifest"
 ln -s "$installed_command" "$stable_link"

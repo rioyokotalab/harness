@@ -31,6 +31,31 @@ if [ "$remediation" = bash-common-reference ]; then
         command -v "$required" >/dev/null 2>&1 ||
             die "bash-common remediation requires $required"
     done
+    platform=$(uname -s)
+    stat_basic_identity() {
+        case $platform in
+            Darwin) stat -f '%d:%i:%u' "$1" ;;
+            *) stat -c '%d:%i:%u' -- "$1" ;;
+        esac
+    }
+    stat_full_identity() {
+        case $platform in
+            Darwin) stat -f '%d:%i:%u:%Lp:%l:%z' "$1" ;;
+            *) stat -c '%d:%i:%u:%a:%h:%s' -- "$1" ;;
+        esac
+    }
+    stat_full_fields() {
+        case $platform in
+            Darwin) stat -f '%d %i %u %Lp %l %z' "$1" ;;
+            *) stat -c '%d %i %u %a %h %s' -- "$1" ;;
+        esac
+    }
+    stat_final_fields() {
+        case $platform in
+            Darwin) stat -f '%u %Lp %l %z' "$1" ;;
+            *) stat -c '%u %a %h %s' -- "$1" ;;
+        esac
+    }
 
     destination=$HOME/.bashrc
     uid=$(id -u)
@@ -43,7 +68,7 @@ if [ "$remediation" = bash-common-reference ]; then
         trap - EXIT HUP INT TERM
         if [ -n "$candidate" ] && { [ -e "$candidate" ] || [ -L "$candidate" ]; }; then
             if [ -f "$candidate" ] && [ ! -L "$candidate" ] &&
-               [ "$(stat -c '%d:%i:%u' -- "$candidate")" = "$candidate_identity" ]; then
+               [ "$(stat_basic_identity "$candidate")" = "$candidate_identity" ]; then
                 unlink -- "$candidate" || status=1
             else
                 status=1
@@ -75,7 +100,7 @@ if [ "$remediation" = bash-common-reference ]; then
         die "remediation plan contains a blocked file"
     fi
     IFS=' ' read -r original_device original_inode original_owner original_mode original_links original_size <<EOF
-$(stat -c '%d %i %u %a %h %s' -- "$destination")
+$(stat_full_fields "$destination")
 EOF
     [ "$original_owner" = "$uid" ] && [ "$original_links" -eq 1 ] || {
         echo "BLOCK file=.bashrc reason=unsafe-metadata"
@@ -125,14 +150,14 @@ EOF
     [ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] ||
         die "remediation apply requires clean harness"
 
-    current_identity=$(stat -c '%d:%i:%u:%a:%h:%s' -- "$destination")
+    current_identity=$(stat_full_identity "$destination")
     [ "$current_identity" = "$original_device:$original_inode:$original_owner:$original_mode:$original_links:$original_size" ] ||
         die "bash-common destination changed before apply"
     dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
         cmp -s - "$payload" || die "reviewed bash-common block changed before apply"
 
     candidate=$(mktemp "$HOME/.bashrc.harness-remediate.XXXXXX")
-    candidate_identity=$(stat -c '%d:%i:%u' -- "$candidate")
+    candidate_identity=$(stat_basic_identity "$candidate")
     dd if="$destination" bs=1 count="$offset" 2>/dev/null >"$candidate"
     suffix_offset=$((offset + bytes))
     dd if="$destination" bs=1 skip="$suffix_offset" 2>/dev/null >>"$candidate"
@@ -145,7 +170,7 @@ EOF
     bash -n "$candidate" || die "bash-common candidate shell syntax failed"
     chmod "$original_mode" "$candidate"
 
-    [ "$(stat -c '%d:%i:%u:%a:%h:%s' -- "$destination")" = "$current_identity" ] ||
+    [ "$(stat_full_identity "$destination")" = "$current_identity" ] ||
         die "bash-common destination changed during apply"
     dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
         cmp -s - "$payload" || die "reviewed bash-common block changed during apply"
@@ -154,7 +179,7 @@ EOF
     candidate_identity=
 
     IFS=' ' read -r final_owner final_mode final_links final_size <<EOF
-$(stat -c '%u %a %h %s' -- "$destination")
+$(stat_final_fields "$destination")
 EOF
     [ "$final_owner" = "$uid" ] && [ "$final_mode" = "$original_mode" ] &&
         [ "$final_links" -eq 1 ] && [ "$final_size" -eq "$expected_size" ] ||

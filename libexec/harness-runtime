@@ -234,7 +234,7 @@ tar -cf "$tree_archive" -C "$stage" .
 tree_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
 rm "$tree_archive"; tree_archive=
 printf 'runtime|%s|%s\n' "$install_dir" "$tree_hash" >>"$manifest"
-mv -T "$stage" "$install_dir"; stage=; installed=1
+mv "$stage" "$install_dir"; stage=; installed=1
 mkdir -p "$HOME/.local/bin"
 for command_name in $commands; do
     destination=$HOME/.local/bin/$command_name

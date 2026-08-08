@@ -46,7 +46,21 @@ chmod 700 "$runtime"
 cat >"$fake_bin/stat" <<'EOF'
 #!/bin/sh
 set -eu
+if [ "${1:-}" = -c ] && [ "$(/usr/bin/uname -s)" = Darwin ]; then
+    case "$2" in
+        %u) format=%u ;;
+        %a) format=%Lp ;;
+        %h) format=%l ;;
+        *) exit 2 ;;
+    esac
+    shift 2
+    [ "${1:-}" != -- ] || shift
+    exec /usr/bin/stat -f "$format" "$@"
+fi
 if [ "${1:-}" = -f ]; then
+    if [ "$(/usr/bin/uname -s)" = Darwin ]; then
+        exec /usr/bin/stat "$@"
+    fi
     case "$2" in
         %u) format=%u ;;
         %Lp) format=%a ;;
@@ -307,7 +321,11 @@ run_supervisor() {
     FAKE_SLEEP_CALLS="$TEST_ROOT/sleep.calls" \
     FAKE_CODEX_PID_FILE="${FAKE_CODEX_PID_FILE:-}" \
     PATH="$fake_bin:/usr/bin:/bin" \
-        "$HARNESS" codex-resilient "$@"
+        "$HARNESS" codex-resilient "$@" && supervisor_status=0 ||
+        supervisor_status=$?
+    unset FAKE_CODEX_HOLD FAKE_CODEX_PID_FILE FAKE_DOCTOR_MODE \
+        FAKE_RECOVERY_MODE HARNESS_TEST_DURATION_FILE HARNESS_TEST_PLATFORM
+    return "$supervisor_status"
 }
 
 : >"$TEST_ROOT/codex.calls"

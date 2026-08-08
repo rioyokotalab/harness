@@ -11,7 +11,8 @@ REQUEST=$ROOT/shared/skills/remote-agent-communication/references/request.md
 FALLBACK=$ROOT/shared/skills/remote-agent-communication/references/fallback.md
 RUNTIME_POLICY=$ROOT/docs/agent-policy/managed-codex.md
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
-TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/remote-agent-communication-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEST_ROOT=$(mktemp -d "$TEMP_BASE/remote-agent-communication-test.XXXXXX")
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 cleanup() {
@@ -19,8 +20,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEST_ROOT" ]; then
-        "$CLEANUP" "$ROOT/bin/harness" "${TMPDIR:-/tmp}" "$TEST_ROOT" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$ROOT/bin/harness" "$TEMP_BASE" "$TEST_ROOT" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then status=1; fi
     exit "$status"
@@ -214,7 +215,7 @@ set -eu
 : "${FAKE_STATE:?}"
 printf '%s\n' "$*" >"$FAKE_STATE/ssh-arguments"
 printf 'call\n' >>"$FAKE_STATE/ssh-calls"
-cp /dev/stdin "$FAKE_STATE/ssh-message"
+cp -f /dev/stdin "$FAKE_STATE/ssh-message"
 if [ "${FAKE_SSH_FAIL:-0}" -eq 1 ]; then
     printf 'unexpected remote failure\n' >&2
     exit 1
@@ -225,9 +226,23 @@ if [ "${FAKE_SSH_MODE:-send}" = response ]; then
         "${FAKE_RESPONDER:?}"
     printf 'verified clean\n'
 else
+    remote_command=
+    for argument in "$@"; do remote_command=$argument; done
+    set -f
+    set -- $remote_command
+    response_client=codex
+    response_target_client=codex
+    previous=
+    for argument in "$@"; do
+        case "$previous" in
+            --client) response_client=$argument ;;
+            --target-client) response_target_client=$argument ;;
+        esac
+        previous=$argument
+    done
     printf 'AGENT_MESSAGE_RECEIVE source=%s target_role=%s client=%s target_client=%s status=submitted\n' \
-        "${FAKE_SOURCE:?}" "${FAKE_TARGET_ROLE:?}" "${FAKE_CLIENT:-codex}" \
-        "${FAKE_TARGET_CLIENT:-codex}"
+        "${FAKE_SOURCE:?}" "${FAKE_TARGET_ROLE:?}" "$response_client" \
+        "$response_target_client"
 fi
 EOF
 chmod 755 "$fake_bin/ssh"
@@ -244,37 +259,60 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 [ -n "$output" ]
-cp /dev/stdin "$FAKE_STATE/fallback-prompt"
+cp -f /dev/stdin "$FAKE_STATE/fallback-prompt"
 printf '{"request_id":"%s","status":"complete","response":"verified clean"}\n' \
     "${FAKE_REPLY_REQUEST_ID:?}" >"$output"
 EOF
 chmod 755 "$home/.local/bin/harness-codex"
 
-run_helper() {
-    HOME=$home FAKE_STATE=$state \
-        FAKE_SESSION=${FAKE_SESSION:-harness} \
-        FAKE_ATTACHED=${FAKE_ATTACHED:-0} \
-        FAKE_AMBIGUOUS=${FAKE_AMBIGUOUS:-0} \
-        FAKE_CODEX_COUNT=${FAKE_CODEX_COUNT:-1} \
-        FAKE_CLAUDE_COUNT=${FAKE_CLAUDE_COUNT:-1} \
-        FAKE_CLAUDE_PERMISSION_MODE=${FAKE_CLAUDE_PERMISSION_MODE:-bypassPermissions} \
-        FAKE_TARGET_CLIENT=${FAKE_TARGET_CLIENT:-codex} \
-        FAKE_CLIENT=${FAKE_CLIENT:-codex} \
-        FAKE_REQUIRE_ALL=${FAKE_REQUIRE_ALL:-0} \
-        FAKE_PANE_ROLE=${FAKE_PANE_ROLE:-harness} \
-        FAKE_CLAUDE_ROLE=${FAKE_CLAUDE_ROLE:-harness} \
-        FAKE_WINDOW_INDEX=${FAKE_WINDOW_INDEX:-} \
-        FAKE_WINDOW_NAME=${FAKE_WINDOW_NAME:-} \
-        FAKE_PANE_INDEX=${FAKE_PANE_INDEX:-} \
-        FAKE_PANE_PATH=${FAKE_PANE_PATH:-} \
-        FAKE_TTY=${FAKE_TTY:-/dev/pts/7} \
-        FAKE_PASTE_FAIL=${FAKE_PASTE_FAIL:-0} \
-        HARNESS_TESTING=1 \
-        HARNESS_TEST_AGENT_MESSAGE_SETTLE_SECONDS=0 \
-        HARNESS_TEST_AGENT_MESSAGE_TARGETS_FILE=$state/agent-targets.tsv \
-        PATH="$fake_bin:/usr/bin:/bin" \
-        python3 -B "$HELPER" "$@"
-}
+cat >"$fake_bin/run_helper" <<'EOF'
+#!/bin/sh
+resolved_client=${FAKE_CLIENT:-codex}
+resolved_target_client=${FAKE_TARGET_CLIENT:-codex}
+previous=
+for argument in "$@"; do
+    case "$previous" in
+        --client) resolved_client=$argument ;;
+        --target-client) resolved_target_client=$argument ;;
+    esac
+    previous=$argument
+done
+exec env \
+    HOME="$HARNESS_TEST_HELPER_HOME" \
+    FAKE_STATE="$HARNESS_TEST_HELPER_STATE" \
+    FAKE_SESSION="${FAKE_SESSION:-harness}" \
+    FAKE_ATTACHED="${FAKE_ATTACHED:-0}" \
+    FAKE_AMBIGUOUS="${FAKE_AMBIGUOUS:-0}" \
+    FAKE_CODEX_COUNT="${FAKE_CODEX_COUNT:-1}" \
+    FAKE_CLAUDE_COUNT="${FAKE_CLAUDE_COUNT:-1}" \
+    FAKE_CLAUDE_PERMISSION_MODE="${FAKE_CLAUDE_PERMISSION_MODE:-bypassPermissions}" \
+    FAKE_TARGET_CLIENT="$resolved_target_client" \
+    FAKE_CLIENT="$resolved_client" \
+    FAKE_REQUIRE_ALL="${FAKE_REQUIRE_ALL:-0}" \
+    FAKE_PANE_ROLE="${FAKE_PANE_ROLE:-harness}" \
+    FAKE_CLAUDE_ROLE="${FAKE_CLAUDE_ROLE:-harness}" \
+    FAKE_WINDOW_INDEX="${FAKE_WINDOW_INDEX:-}" \
+    FAKE_WINDOW_NAME="${FAKE_WINDOW_NAME:-}" \
+    FAKE_PANE_INDEX="${FAKE_PANE_INDEX:-}" \
+    FAKE_PANE_PATH="${FAKE_PANE_PATH:-}" \
+    FAKE_TTY="${FAKE_TTY:-/dev/pts/7}" \
+    FAKE_PASTE_FAIL="${FAKE_PASTE_FAIL:-0}" \
+    HARNESS_TESTING=1 \
+    HARNESS_TEST_AGENT_MESSAGE_SETTLE_SECONDS=0 \
+    HARNESS_TEST_AGENT_MESSAGE_TARGETS_FILE="$HARNESS_TEST_HELPER_TARGETS" \
+    PATH="$HARNESS_TEST_HELPER_BIN:/usr/bin:/bin" \
+    python3 -B "$HARNESS_TEST_HELPER" "$@"
+EOF
+chmod 755 "$fake_bin/run_helper"
+HARNESS_TEST_HELPER_HOME=$home
+HARNESS_TEST_HELPER_STATE=$state
+HARNESS_TEST_HELPER_TARGETS=$state/agent-targets.tsv
+HARNESS_TEST_HELPER_BIN=$fake_bin
+HARNESS_TEST_HELPER=$HELPER
+export HARNESS_TEST_HELPER_HOME HARNESS_TEST_HELPER_STATE
+export HARNESS_TEST_HELPER_TARGETS HARNESS_TEST_HELPER_BIN HARNESS_TEST_HELPER
+PATH=$fake_bin:/usr/bin:/bin
+export PATH
 
 message='[Agent: Riken Codex] controller experiment'
 printf %s "$message" >"$state/message"

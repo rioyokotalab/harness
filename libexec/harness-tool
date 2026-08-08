@@ -377,7 +377,7 @@ if [ "$artifact_action" = INSTALL ]; then
         printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" \
             >>"$transaction_manifest"
     fi
-    mv -T "$stage" "$install_dir"
+    mv "$stage" "$install_dir"
     stage=
 fi
 
@@ -393,7 +393,7 @@ elif [ "$link_action" = REPLACE ]; then
     [ ! -e "$link_candidate" ] && [ ! -L "$link_candidate" ] ||
         die "replacement link candidate collision"
     ln -s "$installed_binary" "$link_candidate"
-    mv -Tf "$link_candidate" "$stable_link"
+    mv -f "$link_candidate" "$stable_link"
     replacement_switched=1
     echo "CALLER native='hash -r' reason=refresh-command-path-cache"
 fi

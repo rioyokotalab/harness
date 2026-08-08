@@ -186,6 +186,14 @@ exit 0
 SH
 chmod 700 "$BIN/ps"
 
+# Keep the launchd apply path deterministic on macOS while Linux naturally
+# has no launchctl in the fixture PATH.
+cat >"$BIN/launchctl" <<'SH'
+#!/bin/sh
+exit 0
+SH
+chmod 700 "$BIN/launchctl"
+
 cat >"$BIN/harness-codex" <<SH
 #!/bin/sh
 printf '%s\n' "\$*" >>"$TEST_ROOT/codex-rc-calls"
@@ -195,16 +203,25 @@ SH
 chmod 700 "$BIN/harness-codex"
 
 agent() {
-    HARNESS_TESTING=1 \
-    HARNESS_TEST_TMUX="$BIN/tmux" \
-    HARNESS_TEST_CLAUDE="$BIN/claude" \
-    HARNESS_TEST_CODEX_LAUNCHER="$BIN/harness-codex" \
-    HARNESS_TEST_LAUNCH_AGENTS="$TEST_ROOT/agents" \
-    HARNESS_TEST_AGENT_REPO="$TEST_ROOT/repo" \
-    HARNESS_TEST_BIN="$BIN" \
-    HARNESS_TEST_CLAUDE_PROJECTS="${FAKE_PROJECTS:-$TEST_ROOT/projects}" \
-    HARNESS_TEST_AUTH_PROBE_TIMEOUT=1 \
-        "$HARNESS" macos-agent-session "$@"
+    if HARNESS_TESTING=1 \
+        HARNESS_TEST_TMUX="$BIN/tmux" \
+        HARNESS_TEST_CLAUDE="$BIN/claude" \
+        HARNESS_TEST_CODEX_LAUNCHER="$BIN/harness-codex" \
+        HARNESS_TEST_LAUNCH_AGENTS="$TEST_ROOT/agents" \
+        HARNESS_TEST_AGENT_REPO="$TEST_ROOT/repo" \
+        HARNESS_TEST_BIN="$BIN" \
+        HARNESS_TEST_CLAUDE_PROJECTS="${FAKE_PROJECTS:-$TEST_ROOT/projects}" \
+        HARNESS_TEST_AUTH_PROBE_TIMEOUT=1 \
+            "$HARNESS" macos-agent-session "$@"; then
+        agent_status=0
+    else
+        agent_status=$?
+    fi
+    unset FAKE_PROJECTS FAKE_CLAUDE_DEAD FAKE_CODEX_DEAD FAKE_LEGACY
+    unset FAKE_RC_READY FAKE_ORPHAN_SUPERVISOR FAKE_CLAUDE_LOGGED_OUT
+    unset FAKE_KEYCHAIN_LOCKED FAKE_TMUX_CLAUDE_LOGGED_OUT
+    unset FAKE_TMUX_RUN_SHELL_HANG FAKE_MENTION_ONLY
+    return "$agent_status"
 }
 
 # --- host allow-list -----------------------------------------------------

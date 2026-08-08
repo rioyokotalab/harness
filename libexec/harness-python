@@ -136,19 +136,14 @@ python_path=$implementation_dir/bin/python$minor
     die "managed Python architecture verification failed"
 "$python_path" -c 'import ssl, sqlite3, sys; assert sys.prefix == sys.base_prefix; assert ssl.OPENSSL_VERSION; assert sqlite3.sqlite_version'
 relative=${implementation_dir#"$stage"/}
-mv -T "$stage" "$install_dir"; stage=; installed=1
+mv "$stage" "$install_dir"; stage=; installed=1
 target=$install_dir/$relative/bin/python$minor
 [ "$("$target" -c 'import platform; print(platform.python_version())')" = "$patch" ] ||
     die "activated Python patch verification failed"
 [ "$("$target" -c 'import platform; print(platform.machine())')" = "$arch" ] ||
     die "activated Python architecture verification failed"
 "$target" -c 'import ssl, sqlite3, sys; assert sys.prefix == sys.base_prefix; assert ssl.OPENSSL_VERSION; assert sqlite3.sqlite_version'
-tree_archive=$(mktemp "$state_root/$transaction_id.tree.XXXXXX")
-tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-    --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
-    -cf "$tree_archive" -C "$install_dir" .
-tree_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
-rm "$tree_archive"; tree_archive=
+tree_hash=$(managed_tree_sha256 "$install_dir" python)
 printf 'python|%s|%s\n' "$install_dir" "$tree_hash" >>"$manifest"
 mkdir -p "$HOME/.local/bin"
 printf 'link|%s|%s\n' "$stable_link" "$target" >>"$manifest"

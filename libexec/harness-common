@@ -42,6 +42,53 @@ fact_key_for_command() {
     printf '%s' "$1" | sed 's/+/p/g; s/-/_/g'
 }
 
+# Produce the transaction digest used to detect changes to managed Linux
+# runtime trees. GNU tar normalization remains byte-for-byte unchanged on
+# Linux. Darwin uses its native archive format because these Linux trees are
+# exercised there only by isolated portability fixtures; apply and rollback
+# still share one exact recipe.
+managed_tree_sha256() (
+    set -eu
+    [ "$#" -eq 2 ] || die "managed_tree_sha256 requires tree and kind"
+    mts_tree=$1
+    mts_kind=$2
+    [ -d "$mts_tree" ] && [ ! -L "$mts_tree" ] ||
+        die "managed tree hash requires a directory"
+    case "$mts_kind" in agent|python) ;; *) die "unknown managed tree kind" ;; esac
+    mts_archive=$(mktemp "${TMPDIR:-/tmp}/harness-managed-tree.XXXXXX") ||
+        die "cannot allocate managed tree digest staging"
+    trap 'unlink "$mts_archive"' EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    case $(uname -s) in
+        Darwin)
+            if [ "$mts_kind" = python ]; then
+                COPYFILE_DISABLE=1 tar --format=mtree \
+                    --options='!all,type,mode,link,size,sha256' \
+                    --exclude='*/__pycache__' \
+                    --exclude='*.pyc' --exclude='*.pyo' \
+                    -cf "$mts_archive" -C "$mts_tree" .
+            else
+                COPYFILE_DISABLE=1 tar --format=mtree \
+                    --options='!all,type,mode,link,size,sha256' \
+                    -cf "$mts_archive" -C "$mts_tree" .
+            fi
+            ;;
+        *)
+            if [ "$mts_kind" = python ]; then
+                tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+                    --exclude='*/__pycache__' --exclude='*.pyc' \
+                    --exclude='*.pyo' -cf "$mts_archive" -C "$mts_tree" .
+            else
+                tar --format=gnu --sort=name --mtime=@0 --owner=0 --group=0 \
+                    --numeric-owner -cf "$mts_archive" -C "$mts_tree" .
+            fi
+            ;;
+    esac
+    sha256sum "$mts_archive" | awk '{print $1}'
+)
+
 profile_for() {
     logical_host=$1
     require_safe_id "$logical_host"
@@ -213,7 +260,20 @@ make_fact_file() {
     logical_host=$1
     temp_file=$(mktemp "${TMPDIR:-/tmp}/harness-facts.XXXXXX") ||
         die "cannot create temporary fact file"
-    "$HARNESS_ROOT/libexec/harness-inventory" --host "$logical_host" >"$temp_file"
+    if [ -n "${HARNESS_TEST_FACTS_FILE:-}" ]; then
+        [ "${HARNESS_TESTING:-0}" = 1 ] ||
+            die "test fact-file override is unsafe"
+        case $HARNESS_TEST_FACTS_FILE in
+            /*) ;;
+            *) die "test fact-file override is unsafe" ;;
+        esac
+        [ -f "$HARNESS_TEST_FACTS_FILE" ] &&
+            [ ! -L "$HARNESS_TEST_FACTS_FILE" ] ||
+            die "test fact-file override is unsafe"
+        cp "$HARNESS_TEST_FACTS_FILE" "$temp_file"
+    else
+        "$HARNESS_ROOT/libexec/harness-inventory" --host "$logical_host" >"$temp_file"
+    fi
     printf '%s\n' "$temp_file"
 }
 

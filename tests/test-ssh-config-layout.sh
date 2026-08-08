@@ -191,8 +191,9 @@ printf '%s\n' '# prior regular fragment' >"$failure_home/.ssh/config.d/harness.c
 chmod 644 "$failure_home/.ssh/config.d/harness.conf"
 cp "$failure_home/.ssh/config" "$TEMP_DIR/failure-root.before"
 cp "$failure_home/.ssh/config.d/harness.conf" "$TEMP_DIR/failure-fragment.before"
-if HARNESS_TEST_SSH_LAYOUT_FAIL_AFTER_FRAGMENT=1 run_layout "$failure_home" --apply \
-    >"$TEMP_DIR/injected.out" 2>&1; then
+if ( HARNESS_TEST_SSH_LAYOUT_FAIL_AFTER_FRAGMENT=1 \
+    run_layout "$failure_home" --apply \
+    >"$TEMP_DIR/injected.out" 2>&1 ); then
     fail "injected replacement failure accepted"
 fi
 grep -F 'prior files were restored' "$TEMP_DIR/injected.out" >/dev/null ||

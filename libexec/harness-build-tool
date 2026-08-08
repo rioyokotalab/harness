@@ -463,7 +463,7 @@ esac
 source_tool_healthy "$stage/$binary" || die "source-built feature verification failed"
 binary_hash=$(sha256sum "$stage/$binary" | awk '{print $1}')
 printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" >>"$transaction_manifest"
-mv -T "$stage" "$install_dir"; stage=
+mv "$stage" "$install_dir"; stage=
 guarded_delete_tree "$install_parent" "$build_dir" "$state_root" ||
     die "guarded source-build cleanup failed"
 build_dir=

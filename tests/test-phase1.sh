@@ -1183,9 +1183,11 @@ git -C "$test_repo" commit -qm baseline
 # different but equivalent checkout and falsely block every managed link.
 alias_repo=$TEMP_DIR/repo-alias
 alias_home=$TEMP_DIR/alias-home
+control_facts=$ROOT/tests/fixtures/local.facts
 mkdir -p "$alias_home"
 ln -s "$test_repo" "$alias_repo"
-HOME="$alias_home" "$alias_repo/bin/harness" apply --host local --apply \
+HOME="$alias_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$alias_repo/bin/harness" apply --host local --apply \
     >"$TEMP_DIR/alias-apply.out"
 alias_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/alias-apply.out")
@@ -1204,7 +1206,8 @@ HOME="$test_home" "$test_repo/bin/harness" apply --host local --plan \
     >"$TEMP_DIR/control-plan.out"
 grep 'changes=not-applied' "$TEMP_DIR/control-plan.out" >/dev/null ||
     fail "control-plane dry run"
-HOME="$test_home" "$test_repo/bin/harness" apply --host local --apply \
+HOME="$test_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" apply --host local --apply \
     >"$TEMP_DIR/control-apply.out"
 transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/control-apply.out")
@@ -1254,7 +1257,8 @@ cp "$test_home/.bash_profile" "$TEMP_DIR/original-bash-profile"
 HOME="$test_home" "$test_repo/bin/harness" shell --host local --plan \
     >"$TEMP_DIR/shell-plan.out"
 grep 'APPEND file=.bashrc' "$TEMP_DIR/shell-plan.out" >/dev/null || fail "shell plan"
-HOME="$test_home" "$test_repo/bin/harness" shell --host local --apply \
+HOME="$test_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" shell --host local --apply \
     >"$TEMP_DIR/shell-apply.out"
 shell_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' "$TEMP_DIR/shell-apply.out")
 [ -n "$shell_transaction" ] || fail "missing shell transaction"
@@ -1287,14 +1291,16 @@ printf '%s\n' \
 printf '%s\n' \
     'printf "%s\\n" "${XDG_CACHE_HOME:-unset}" >"$HOME/login-observed"' \
     >"$cache_home/.bash_profile"
-HOME="$cache_home" "$test_repo/bin/harness" shell --host local --apply \
+HOME="$cache_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" shell --host local --apply \
     >"$TEMP_DIR/cache-shell-apply.out"
 ln -s "$test_repo" "$cache_home/harness"
 HOME="$cache_home" "$test_repo/bin/harness" cache-bootstrap --host local --plan \
     >"$TEMP_DIR/cache-bootstrap-plan.out"
 [ "$(grep -c '^PREPEND file=' "$TEMP_DIR/cache-bootstrap-plan.out")" -eq 2 ] ||
     fail "cache bootstrap plan did not cover both startup files"
-HOME="$cache_home" "$test_repo/bin/harness" cache-bootstrap --host local --apply \
+HOME="$cache_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" cache-bootstrap --host local --apply \
     >"$TEMP_DIR/cache-bootstrap-apply.out"
 cache_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/cache-bootstrap-apply.out")
@@ -1538,7 +1544,8 @@ if grep 'file=.bash_profile' "$TEMP_DIR/profile-shell-plan.out" >/dev/null; then
 fi
 cp "$profile_home/.bashrc" "$TEMP_DIR/original-profile-bashrc"
 cp "$profile_home/.profile" "$TEMP_DIR/original-profile-login"
-HOME="$profile_home" "$test_repo/bin/harness" shell --host local --apply \
+HOME="$profile_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" shell --host local --apply \
     >"$TEMP_DIR/profile-shell-apply.out"
 profile_shell_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/profile-shell-apply.out")
@@ -1562,7 +1569,8 @@ grep 'CREATE file=.bashrc' "$TEMP_DIR/new-shell-plan.out" >/dev/null ||
     fail "absent bashrc creation plan"
 grep 'CREATE file=.profile' "$TEMP_DIR/new-shell-plan.out" >/dev/null ||
     fail "absent profile creation plan"
-HOME="$new_shell_home" "$test_repo/bin/harness" shell --host local --apply \
+HOME="$new_shell_home" HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
+    "$test_repo/bin/harness" shell --host local --apply \
     >"$TEMP_DIR/new-shell-apply.out"
 new_shell_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/new-shell-apply.out")
@@ -1581,14 +1589,16 @@ printf '%s\n' 'Host node-only' '    HostName node.invalid' \
 chmod 600 "$dotfile_home/.ssh/config"
 cp "$dotfile_home/.vimrc" "$TEMP_DIR/original-vimrc"
 cp "$dotfile_home/.ssh/config" "$TEMP_DIR/original-ssh-config"
-HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$dotfile_home" \
+HARNESS_TEST_ALLOW_NONMAIN=1 HARNESS_TESTING=1 \
+    HARNESS_TEST_FACTS_FILE="$control_facts" HOME="$dotfile_home" \
     "$test_repo/bin/harness" dotfiles --host local --plan \
     >"$TEMP_DIR/dotfile-plan.out"
 grep 'REPLACE file=.*\.vimrc reason=owner-approved-canonical-version' \
     "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "canonical Vim plan"
 grep -F 'SSH_CONFIG_LAYOUT mode=plan host=local state=migrate' \
     "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "SSH layout plan"
-HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$dotfile_home" \
+HARNESS_TEST_ALLOW_NONMAIN=1 HARNESS_TESTING=1 \
+    HARNESS_TEST_FACTS_FILE="$control_facts" HOME="$dotfile_home" \
     "$test_repo/bin/harness" dotfiles --host local --apply \
     >"$TEMP_DIR/dotfile-apply.out"
 dotfile_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1623,11 +1633,14 @@ cmp -s "$dotfile_home/.ssh/config" "$TEMP_DIR/original-ssh-config" ||
 # managed bin. The portable profile must move its directory to the front and
 # remove duplicates without losing the remaining order.
 profile_path_home=$TEMP_DIR/profile-path-home
-mkdir -p "$profile_path_home/.local/bin"
+profile_path_bin=$TEMP_DIR/profile-path-bin
+mkdir -p "$profile_path_home/.local/bin" "$profile_path_bin"
+printf '%s\n' '#!/bin/sh' 'printf "Linux\\n"' >"$profile_path_bin/uname"
+chmod 755 "$profile_path_bin/uname"
 HOME="$profile_path_home" \
-    PATH="/site/project/bin:$profile_path_home/.local/bin:/usr/bin:$profile_path_home/.local/bin:/bin" \
+    PATH="$profile_path_bin:/site/project/bin:$profile_path_home/.local/bin:/usr/bin:$profile_path_home/.local/bin:/bin" \
     HARNESS_PROFILE="$test_repo/shell/profile.sh" \
-    EXPECTED_PATH="$profile_path_home/.local/bin:/site/project/bin:/usr/bin:/bin" \
+    EXPECTED_PATH="$profile_path_home/.local/bin:$profile_path_bin:/site/project/bin:/usr/bin:/bin" \
     sh -c '. "$HARNESS_PROFILE"; [ "$PATH" = "$EXPECTED_PATH" ]' ||
     fail "managed bin path precedence"
 
@@ -1651,7 +1664,9 @@ printf '%s\n' \
     '[ "$1" = --fsys-tarfile ]' \
     'cat "$2"' >"$fake_bin/dpkg-deb"
 chmod 755 "$fake_bin/dpkg-deb"
+ln -s "$(command -v sha256sum)" "$fake_bin/sha256sum"
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" FIXTURE_ARCHIVE="$zip_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name rclone --apply \
     >"$TEMP_DIR/zip-tool-apply.out"
 zip_tool_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1692,6 +1707,7 @@ grep 'REPLACE command=rclone from=1.74.3 to=1.74.4 predecessor=retained' \
     fail "rclone replacement plan"
 HOME="$rclone_home" PATH="$fake_bin:/usr/bin:/bin" \
     FIXTURE_ARCHIVE="$zip_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name rclone --apply \
     >"$TEMP_DIR/rclone-upgrade-apply.out"
 rclone_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1721,6 +1737,7 @@ HOME="$uv_home" PATH="$fake_bin:/usr/bin:/bin" \
 grep 'REPLACE command=uv from=0.9.18 to=0.11.32 predecessor=retained' \
     "$TEMP_DIR/uv-upgrade-plan.out" >/dev/null || fail "uv replacement plan"
 HOME="$uv_home" PATH="$fake_bin:/usr/bin:/bin" FIXTURE_ARCHIVE="$uv_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name uv --apply \
     >"$TEMP_DIR/uv-upgrade-apply.out"
 uv_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1740,6 +1757,7 @@ HOME="$uv_home" "$test_repo/bin/harness" rollback "$uv_transaction" \
 # Exercise the single-binary bzip2 release format used by Restic.
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
     FIXTURE_ARCHIVE="$restic_fixture.bz2" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name restic --apply \
     >"$TEMP_DIR/restic-tool-apply.out"
 restic_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1760,6 +1778,7 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$restic_transaction" \
 # Exercise a root-member tar archive through the same exact-output path.
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
     FIXTURE_ARCHIVE="$tectonic_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name tectonic --apply \
     >"$TEMP_DIR/tectonic-tool-apply.out"
 tectonic_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1780,6 +1799,7 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$tectonic_transaction" \
 # idempotence, tamper refusal, and rollback.
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
     FIXTURE_ARCHIVE="$shellcheck_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name shellcheck --apply \
     >"$TEMP_DIR/shellcheck-tool-apply.out"
 shellcheck_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1816,12 +1836,17 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$shellcheck_transaction" \
 source_bin=$TEMP_DIR/source-bin
 mkdir -p "$source_bin"
 ln -s "$fake_bin/curl" "$source_bin/curl"
-for command_name in as awk bash cc chmod cmp cp date dirname find getent git grep gzip id ld ln \
+case $(uname -s) in
+    Darwin) account_lookup_command=dscacheutil ;;
+    *) account_lookup_command=getent ;;
+esac
+for command_name in as awk bash cc chmod cmp cp date dirname find "$account_lookup_command" git grep gzip id ld ln \
     mkdir mktemp mv readlink realpath rm rmdir sed sh sha256sum stat tail tar tr \
     uname unlink unzip wc; do
     ln -s "$(command -v "$command_name")" "$source_bin/$command_name"
 done
 HOME="$test_home" PATH="$source_bin" FIXTURE_ARCHIVE="$sqlite_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" build-tool --host local --name sqlite --apply \
     >"$TEMP_DIR/sqlite-build-apply.out"
 sqlite_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1853,6 +1878,7 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$sqlite_transaction" \
 [ ! -e "$sqlite_tree" ] || fail "SQLite rollback left artifact directory"
 
 HOME="$test_home" PATH="$source_bin" FIXTURE_ARCHIVE="$tree_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" build-tool --host local --name tree --apply \
     >"$TEMP_DIR/tree-build-apply.out"
 tree_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1889,11 +1915,12 @@ runtime_home=$TEMP_DIR/runtime-home-link
 ln -s "$test_home" "$runtime_home"
 mkdir -p "$runtime_bin"
 ln -s "$fake_bin/curl" "$runtime_bin/curl"
-for command_name in awk bash chmod cmp cp date dd dirname find getent git gzip id ln mkdir \
+for command_name in awk bash chmod cmp cp date dd dirname find "$account_lookup_command" git gzip id ln mkdir \
     mktemp mv readlink realpath rm rmdir sed sh sha256sum stat tail tar tr uname unlink wc; do
     ln -s "$(command -v "$command_name")" "$runtime_bin/$command_name"
 done
 HOME="$runtime_home" PATH="$runtime_bin" FIXTURE_ARCHIVE="$runtime_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" runtime --host local --name node --apply \
     >"$TEMP_DIR/runtime-apply.out"
 runtime_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1928,7 +1955,7 @@ agent_bin=$TEMP_DIR/agent-bin
 agent_home=$TEMP_DIR/agent-home-link
 ln -s "$test_home" "$agent_home"
 mkdir -p "$agent_bin"
-for command_name in awk bash chmod cmp cp date dirname find getent git gzip id ln mkdir \
+for command_name in awk bash chmod cmp cp date dirname find "$account_lookup_command" git gzip id ln mkdir \
     mktemp mv readlink realpath rm rmdir sed sh sha256sum stat tar tr uname unlink wc; do
     ln -s "$(command -v "$command_name")" "$agent_bin/$command_name"
 done
@@ -1953,6 +1980,7 @@ chmod 755 "$agent_bin/curl"
 HOME="$agent_home" PATH="$agent_bin" \
     FIXTURE_AGENT_LAUNCHER="$agent_launcher_archive" \
     FIXTURE_AGENT_NATIVE="$agent_native_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" agent --host local --name codex --apply \
     >"$TEMP_DIR/agent-apply.out"
 agent_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1987,7 +2015,7 @@ python_bin=$TEMP_DIR/python-bin
 python_home=$TEMP_DIR/python-home-link
 ln -s "$test_home" "$python_home"
 mkdir -p "$python_bin"
-for command_name in awk bash chmod cmp cp date dd dirname find getent git id ln mkdir mktemp \
+for command_name in awk bash chmod cmp cp date dd dirname find "$account_lookup_command" git id ln mkdir mktemp \
     mv readlink realpath rm rmdir sed sh sha256sum stat tail tar tr uname unlink wc; do
     ln -s "$(command -v "$command_name")" "$python_bin/$command_name"
 done
@@ -2016,6 +2044,7 @@ printf '%s\n' \
 chmod 755 "$python_bin/uv"
 HOME="$python_home" PATH="$python_bin" FIXTURE_PYTHON="$fake_python" \
     UV_ARGS_LOG="$TEMP_DIR/python-uv-args.log" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" python --host local --minor 3.12 --apply \
     >"$TEMP_DIR/python-apply.out"
 grep -Fx '3.12.12' "$TEMP_DIR/python-uv-args.log" >/dev/null ||
@@ -2030,11 +2059,9 @@ grep 'KEEP python=3.12 source=managed-python' "$TEMP_DIR/python-repeat.out" \
     >/dev/null || fail "managed Python plan"
 python_tree=$python_home/.local/opt/python/3.12/linux-x86_64
 python_executable=$(find "$python_tree" -type f -name python3.12 -print -quit)
-python_tree_archive=$TEMP_DIR/python-tree.tar
-tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-    --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
-    -cf "$python_tree_archive" -C "$python_tree" .
-python_tree_hash=$(sha256sum "$python_tree_archive" | awk '{print $1}')
+python_tree_hash=$(PATH="$python_bin" sh -c \
+    '. "$1"; managed_tree_sha256 "$2" python' sh \
+    "$test_repo/libexec/harness-common" "$python_tree")
 python_expected_hash=$(awk -F'|' '$1 == "python" { print $3 }' \
     "$python_home/.local/state/harness/transactions/$python_transaction.manifest")
 [ "$python_tree_hash" = "$python_expected_hash" ] || fail "Python tree changed during activation"
@@ -2050,10 +2077,9 @@ cp -p "$TEMP_DIR/original-python" "$python_executable"
 python_impl=$(find "$python_tree" -mindepth 1 -maxdepth 1 -type d -name 'cpython-*' -print -quit)
 mkdir -p "$python_impl/bin/__pycache__"
 printf '%s\n' generated-cache >"$python_impl/bin/__pycache__/module.pyc"
-tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-    --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
-    -cf "$python_tree_archive" -C "$python_tree" .
-python_restored_hash=$(sha256sum "$python_tree_archive" | awk '{print $1}')
+python_restored_hash=$(PATH="$python_bin" sh -c \
+    '. "$1"; managed_tree_sha256 "$2" python' sh \
+    "$test_repo/libexec/harness-common" "$python_tree")
 [ "$python_restored_hash" = "$python_expected_hash" ] || fail "Python tree restoration mismatch"
 HOME="$python_home" "$test_repo/bin/harness" rollback "$python_transaction" \
     >"$TEMP_DIR/python-rollback.out"

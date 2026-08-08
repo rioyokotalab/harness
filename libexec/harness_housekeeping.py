@@ -884,7 +884,11 @@ def independent_alias_restore(
     bundle: Path,
     tips: Sequence[Dict[str, str]],
 ) -> str:
-    restore = Path(tempfile.mkdtemp(prefix="harness-owner-alias-", dir="/tmp"))
+    restore = Path(
+        tempfile.mkdtemp(
+            prefix="harness-owner-alias-", dir=str(scratch_boundaries()[0])
+        )
+    )
     try:
         git(restore, "init", "--bare")
         git(
@@ -909,7 +913,11 @@ def independent_alias_restore_sources(
     tips: Sequence[Dict[str, str]],
     recovery_sources: Dict[str, Tuple[Path, str]],
 ) -> str:
-    restore = Path(tempfile.mkdtemp(prefix="harness-owner-alias-", dir="/tmp"))
+    restore = Path(
+        tempfile.mkdtemp(
+            prefix="harness-owner-alias-", dir=str(scratch_boundaries()[0])
+        )
+    )
     try:
         git(restore, "init", "--bare")
         for row in tips:
@@ -2302,7 +2310,10 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
             git(owner, "bundle", "verify", str(temporary))
 
             restore = Path(
-                tempfile.mkdtemp(prefix=f"harness-{generation}-r{index}-", dir="/tmp")
+                tempfile.mkdtemp(
+                    prefix=f"harness-{generation}-r{index}-",
+                    dir=str(scratch_boundaries()[0]),
+                )
             )
             try:
                 git(restore, "init", "--bare")
