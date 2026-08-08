@@ -79,6 +79,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--stage", choices=("repair", "discovery", "final"), default="repair"
     )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="run the complete manifest; valid only with --stage final",
+    )
     parser.add_argument("--suite")
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--path", action="append", default=[])
@@ -261,7 +266,8 @@ def classify(
             "estimated_seconds": 0,
             "discovery_estimated_seconds": 0,
             "matches": [{"path": "-", "pattern": "-", "reason": "no changed paths"}],
-            "full": False,
+            "owner_gaps": [],
+            "final_required": False,
             "cacheable": True,
         }
 
@@ -303,17 +309,23 @@ def classify(
             )
 
     selected = sorted(suites)
+    owner_gaps = sorted(
+        {
+            item["path"]
+            for item in matches
+            if item["pattern"] == "-" and item["reason"] == "unmapped path escalates"
+        }
+    )
     selected_groups = sorted({focused[suite].group for suite in selected})
     if paths and not selected_groups:
         selected_groups = ["validation-core"]
     labels = {rule.name: rule.label for rule in group_rules}
     groups = []
-    discovery_suites: list[str] = []
+    discovery_suites = list(selected)
     for name in selected_groups:
         members = [
             suite.path for suite in focused.values() if suite.group == name
         ]
-        discovery_suites.extend(members)
         groups.append(
             {
                 "name": name,
@@ -337,7 +349,8 @@ def classify(
             focused[suite].estimate for suite in discovery_suites
         ),
         "matches": matches,
-        "full": bool(paths),
+        "owner_gaps": owner_gaps,
+        "final_required": bool(paths),
         "cacheable": cacheable,
     }
 
@@ -594,30 +607,40 @@ def untracked_whitespace_check(
 
 
 def suites_for_stage(
-    decision: dict, stage: str, requested: str | None, *, execute: bool
+    decision: dict,
+    stage: str,
+    requested: str | None,
+    *,
+    execute: bool,
+    full: bool = False,
 ) -> list[str]:
     owners = decision["suites"]
+    if execute and decision.get("owner_gaps"):
+        raise ValueError(
+            "changed paths have owner gaps; add impact-map owners for: "
+            + ", ".join(decision["owner_gaps"])
+        )
+    if full:
+        if stage != "final":
+            raise ValueError("--full is valid only with --stage final")
+        if requested:
+            raise ValueError("--full and --suite are mutually exclusive")
+        return [FULL_SUITE]
     if stage == "final":
         if requested:
             raise ValueError("--suite is valid only for repair stage")
-        return [FULL_SUITE]
+        return owners
     if stage == "discovery":
         if requested:
             raise ValueError("--suite is valid only for repair stage")
         if not decision["paths"]:
             raise ValueError("no changed paths to discover")
-        if not decision["discovery_suites"] and decision["paths"]:
-            raise ValueError("changed paths lack an owning discovery group")
-        return decision["discovery_suites"]
+        return owners
     if requested:
         if requested not in owners:
             raise ValueError("--suite is not an owner selected by the changed paths")
         return [requested]
     if execute:
-        if not owners and decision["paths"]:
-            raise ValueError(
-                "repair stage has no owner; add an impact-map owner before repair"
-            )
         if len(owners) > 1:
             raise ValueError(
                 "repair stage selected multiple owners; run each --suite from the plan"
@@ -690,7 +713,10 @@ def run_discovery(
     receipt_dir: Path,
     focused: dict[str, FocusedSuite],
 ) -> tuple[list[dict], Path]:
-    nonce = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{os.getpid()}"
+    nonce = (
+        f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-"
+        f"{os.getpid()}-{time.time_ns()}"
+    )
     inventory = receipt_dir / f"discovery-{nonce}.json"
     log_dir = receipt_dir / f"discovery-{nonce}.logs"
     checks = run_validation(root, base, {**decision, "suites": []}, jobs)
@@ -705,6 +731,21 @@ def run_discovery(
                 "results": checks,
                 "failure_suites": [],
                 "not_run": decision["suites"],
+            },
+        )
+        return checks, inventory
+
+    if not decision["suites"]:
+        write_private_json(
+            inventory,
+            {
+                "schema": "harness-validation-discovery-v1",
+                "status": "pass",
+                "paths": decision["paths"],
+                "groups": [group["name"] for group in decision["groups"]],
+                "results": checks,
+                "failure_suites": [],
+                "not_run": [],
             },
         )
         return checks, inventory
@@ -816,7 +857,11 @@ def main() -> int:
             paths = changed_paths(root, args.base)
         decision = classify(root, paths, rules, focused, group_rules)
         execution_suites = suites_for_stage(
-            decision, args.stage, args.suite, execute=not args.plan
+            decision,
+            args.stage,
+            args.suite,
+            execute=not args.plan,
+            full=args.full,
         )
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f"validate: {error}", file=sys.stderr)
@@ -829,14 +874,16 @@ def main() -> int:
         "estimated_seconds": decision["estimated_seconds"],
         "execution_estimated_seconds": (
             sum(suite.estimate for suite in focused.values())
-            if args.stage == "final"
+            if args.full
             else sum(focused[path].estimate for path in execution_suites)
         ),
         "execution_suites": execution_suites,
-        "final_required": decision["full"],
+        "final_required": decision["final_required"],
+        "full_requested": args.full,
         "groups": decision["groups"],
         "matches": decision["matches"],
         "owner_suites": decision["suites"],
+        "owner_gaps": decision["owner_gaps"],
         "paths": decision["paths"],
         "schema": 1,
         "stage": args.stage,

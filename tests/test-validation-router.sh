@@ -383,9 +383,10 @@ decision = {
     "discovery_estimated_seconds": 0,
     "discovery_suites": [],
     "estimated_seconds": 0,
-    "full": False,
+    "final_required": False,
     "groups": [],
     "matches": [],
+    "owner_gaps": [],
     "paths": ["docs/test.md"],
     "suites": [],
     "tier": "R0",
@@ -402,6 +403,7 @@ def identity_scenario(sequence, *, cache_hit, no_receipt=False):
         {
             "parse_args": lambda: SimpleNamespace(
                 base="HEAD^",
+                full=False,
                 jobs="auto",
                 no_receipt=no_receipt,
                 path=[],
@@ -537,10 +539,56 @@ except ValueError:
     pass
 else:
     raise AssertionError("multi-owner repair was accepted without --suite")
-assert module["suites_for_stage"](multi, "discovery", None, execute=True)
+assert module["suites_for_stage"](
+    multi, "discovery", None, execute=True
+) == [
+    "tests/test-debugger-readiness.sh",
+    "tests/test-terminfo.sh",
+]
 assert module["suites_for_stage"](multi, "final", None, execute=True) == [
+    "tests/test-debugger-readiness.sh",
+    "tests/test-terminfo.sh",
+]
+assert module["suites_for_stage"](
+    multi, "final", None, execute=True, full=True
+) == [
     "tests/test-phase1.sh"
 ]
+owner_gap = classify(root, ["unmapped/new-file"], rules, focused, group_rules)
+try:
+    module["suites_for_stage"](owner_gap, "final", None, execute=True)
+except ValueError as error:
+    assert "owner gaps" in str(error)
+else:
+    raise AssertionError("ownerless final validation was accepted")
+try:
+    module["suites_for_stage"](
+        owner_gap, "final", None, execute=True, full=True
+    )
+except ValueError as error:
+    assert "owner gaps" in str(error)
+else:
+    raise AssertionError("explicit full hid an owner gap")
+mixed_gap = classify(
+    root,
+    ["config/terminfo/tmux-256color.src", "unmapped/new-file"],
+    rules,
+    focused,
+    group_rules,
+)
+assert mixed_gap["suites"] == ["tests/test-terminfo.sh"]
+assert mixed_gap["owner_gaps"] == ["unmapped/new-file"]
+try:
+    module["suites_for_stage"](mixed_gap, "final", None, execute=True)
+except ValueError as error:
+    assert "unmapped/new-file" in str(error)
+else:
+    raise AssertionError("mixed owner gap was hidden by a selected suite")
+docs_only = classify(root, ["docs/ordinary.md"], rules, focused, group_rules)
+assert docs_only["owner_gaps"] == []
+assert module["suites_for_stage"](
+    docs_only, "final", None, execute=True
+) == []
 
 with tempfile.TemporaryDirectory() as raw_discovery:
     discovery_root = Path(raw_discovery)
@@ -588,11 +636,24 @@ with tempfile.TemporaryDirectory() as raw_discovery:
             discovery_root,
             discovery_focused,
         )
+        structural_results, structural_path = module["run_discovery"](
+            discovery_root,
+            "HEAD^",
+            {"groups": [], "paths": ["docs/ordinary.md"], "suites": []},
+            "1",
+            discovery_root,
+            discovery_focused,
+        )
     finally:
         module["run_discovery"].__globals__["run_validation"] = (
             original_run_validation
         )
     inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    structural = json.loads(structural_path.read_text(encoding="utf-8"))
+    assert structural["status"] == "pass"
+    assert structural["results"] == structural_results
+    assert structural["failure_suites"] == []
+    assert structural["not_run"] == []
     assert inventory["schema"] == "harness-validation-discovery-v1"
     assert inventory["status"] == "fail"
     assert inventory["failure_suites"] == ["tests/fail.sh"]
@@ -619,17 +680,18 @@ ordinary_plan=$(plan \
 unknown_plan=$(plan --path unknown/path)
 discovery_plan=$(plan --stage discovery --path config/terminfo/tmux-256color.src)
 final_plan=$(plan --stage final --path config/terminfo/tmux-256color.src)
+full_plan=$(plan --stage final --full --path config/terminfo/tmux-256color.src)
 
 python3 - \
     "$docs_plan" "$skill_plan" "$ordinary_plan" "$unknown_plan" \
-    "$discovery_plan" "$final_plan" <<'PY'
+    "$discovery_plan" "$final_plan" "$full_plan" <<'PY'
 import json
 import sys
 
 if not __debug__:
     raise SystemExit("validation-router plan test requires Python assertions")
 
-docs, skill, ordinary, unknown, discovery, final = (
+docs, skill, ordinary, unknown, discovery, final, full = (
     json.loads(value) for value in sys.argv[1:]
 )
 assert docs["tier"] == "R0"
@@ -650,12 +712,21 @@ assert ordinary["owner_suites"] == [
 ]
 assert unknown["tier"] == "R3"
 assert unknown["owner_suites"] == []
+assert unknown["owner_gaps"] == ["unknown/path"]
 assert unknown["final_required"] is True
 assert discovery["stage"] == "discovery"
 assert discovery["groups"][0]["name"] == "macos-terminal"
-assert discovery["execution_suites"] == discovery["groups"][0]["suites"]
+assert discovery["execution_suites"] == ["tests/test-terminfo.sh"]
 assert final["stage"] == "final"
-assert final["execution_suites"] == ["tests/test-phase1.sh"]
+assert final["execution_suites"] == ["tests/test-terminfo.sh"]
+assert final["full_requested"] is False
+assert full["execution_suites"] == ["tests/test-phase1.sh"]
+assert full["full_requested"] is True
 PY
+
+if plan --full --path config/terminfo/tmux-256color.src >/dev/null 2>&1; then
+    printf '%s\n' 'FAIL: --full accepted outside final stage' >&2
+    exit 1
+fi
 
 printf '%s\n' 'VALIDATION_ROUTER status=pass'
