@@ -17,8 +17,10 @@ mutable-state query is unknown, never absence.
 
 ### Har-433 — Rebind the Riken phone and tmux Codex surfaces
 
-**Phase:** preflight identities frozen; stage a distinct remote-backed bridge
-without touching Office or Home. **Record:** `docs/tasks/Har-433.md`.
+**Phase:** bridge root `019fe195…` created and named provisionally, but the
+0.147.0 remote TUI panics under the supervised launch; failure checkpointed,
+both chains preserved, owner decision required. **Record:**
+`docs/tasks/Har-433.md`.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 
