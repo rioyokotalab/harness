@@ -17,9 +17,9 @@ mutable-state query is unknown, never absence.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 
-**Phase:** Office and Home independently fast-forward their clean managed
-Harness checkouts to protected main and run the complete macOS-compatible
-phase-one suite. **Record:** `docs/tasks/Har-428.md`.
+**Phase:** Home reached protected main with a clean checkout but failed
+`test-evaluation.sh`; no repair or rerun was attempted. Office's independent
+report remains pending. **Record:** `docs/tasks/Har-428.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
 
