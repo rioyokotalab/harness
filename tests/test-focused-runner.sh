@@ -3,8 +3,9 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 PHASE1=$ROOT/tests/test-phase1.sh
-PREFLIGHT=$ROOT/tests/darwin-preflight.sh
-PREFLIGHT_MANIFEST=$ROOT/tests/darwin-preflight.tsv
+ORCHESTRATOR=$ROOT/tests/test-phase1-orchestrator.sh
+INTEGRATION=$ROOT/tests/test-phase1-integration.sh
+SHELLCHECK=$ROOT/tests/test-shellcheck.sh
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-focused-runner-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
@@ -23,59 +24,22 @@ trap 'exit 143' TERM
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
-grep -F 'focused_pid=$!' "$PHASE1" >/dev/null ||
-    fail "phase-1 does not overlap focused and integration gates"
-grep -F 'wait "$focused_pid"' "$PHASE1" >/dev/null ||
-    fail "phase-1 does not join focused validation"
-grep -F 'shellcheck_pid=$!' "$PHASE1" >/dev/null ||
-    fail "phase-1 does not overlap ShellCheck and integration gates"
-grep -F 'wait "$shellcheck_pid"' "$PHASE1" >/dev/null ||
-    fail "phase-1 does not join ShellCheck validation"
-grep -F '        focused_jobs=auto' "$PHASE1" >/dev/null &&
-    grep -F '        focused_reserve=1' "$PHASE1" >/dev/null &&
-    grep -F '[ "$visible_cpus" -le 2 ]' "$PHASE1" >/dev/null &&
-    grep -F -- '--reserve-cpus "$focused_reserve"' "$PHASE1" >/dev/null ||
-    fail "phase-1 does not reserve one CPU or serialize low-core gates"
-grep -F '[ "$focused_status" -eq 0 ] || fail "focused suites"' \
-    "$PHASE1" >/dev/null || fail "phase-1 loses focused-suite failure"
-grep -F '[ "$shellcheck_status" -eq 0 ] || fail "ShellCheck warning/error gate"' \
-    "$PHASE1" >/dev/null || fail "phase-1 loses ShellCheck failure"
-grep -F 'kill -TERM "$focused_pid"' "$PHASE1" >/dev/null ||
-    fail 'phase-1 failure does not stop the focused pool'
-grep -F -- '--timings-file "$focused_timings"' "$PHASE1" >/dev/null ||
-    fail 'phase-1 omits the focused timing receipt'
-grep -F 'full tests/test-phase1.sh still required' "$PREFLIGHT" >/dev/null ||
-    fail 'Darwin preflight weakens the final gate contract'
-grep -F 'tests/test-housekeeping-interrupt.sh|' "$PREFLIGHT_MANIFEST" >/dev/null &&
-    grep -F 'tests/test-evaluation.sh|' "$PREFLIGHT_MANIFEST" >/dev/null ||
-    fail 'Darwin preflight omits interrupt lifecycle coverage'
-while IFS='|' read -r suite _rest; do
-    case $suite in ''|'#'*) continue ;; esac
-    case $suite in
-        tests/test-housekeeping-interrupt.sh)
-            full_suite=tests/test-housekeeping.sh
-            ;;
-        *) full_suite=$suite ;;
-    esac
-    grep -F "$full_suite|" "$ROOT/tests/focused-suites.tsv" >/dev/null ||
-        fail "Darwin preflight suite lacks full-gate coverage: $suite"
-done <"$PREFLIGHT_MANIFEST"
-
-python3 - "$PHASE1" <<'PY'
-import pathlib
-import sys
-
-if not __debug__:
-    raise SystemExit("focused-runner contract requires Python assertions")
-
-text = pathlib.Path(sys.argv[1]).read_text()
-shellcheck_start = text.index("shellcheck_pid=$!")
-integration_start = text.index('"$ROOT/tests/test-guarded-delete.sh"')
-shellcheck_join = text.rindex('wait "$shellcheck_pid"')
-integration_end = text.index('artifact_dir=$test_home/.local/opt/fixture')
-assert shellcheck_start < integration_start
-assert shellcheck_join > integration_end
-PY
+grep -F 'exec "$ROOT/tests/test-phase1-orchestrator.sh"' "$PHASE1" >/dev/null ||
+    fail 'phase-1 does not delegate final orchestration'
+grep -F 'HARNESS_PHASE1_COMPONENT=integration exec' "$INTEGRATION" >/dev/null ||
+    fail 'phase-1 integration wrapper does not select its bounded component'
+grep -F 'tools/run-focused-tests.py' "$ORCHESTRATOR" >/dev/null &&
+    grep -F -- '--timings-file "$TIMINGS"' "$ORCHESTRATOR" >/dev/null &&
+    grep -F -- '--manifest "$ROOT/tests/focused-suites.tsv"' \
+        "$ORCHESTRATOR" >/dev/null ||
+    fail 'phase-1 orchestrator does not retain one attributed runner'
+grep -F 'shellcheck --severity=warning' "$SHELLCHECK" >/dev/null ||
+    fail 'phase-1 ShellCheck gate is not independently runnable'
+for suite in tests/test-phase1-integration.sh tests/test-shellcheck.sh \
+    tests/test-guarded-delete.sh; do
+    grep -F "$suite|" "$ROOT/tests/focused-suites.tsv" >/dev/null ||
+        fail "phase-1 component is outside the complete manifest: $suite"
+done
 
 fake=$TEMP_DIR/root
 mkdir -p "$fake/tests"
@@ -150,6 +114,32 @@ late.sh" ] || fail 'priority admission order'
     "early.sh
 priority.sh
 late.sh" ] || fail 'priority changed canonical output order'
+
+ORDER_FILE="$TEMP_DIR/selected.order" \
+    python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
+    --manifest "$fake/priority.tsv" --log-dir "$fake/selected-logs" --jobs 1 \
+    --suite tests/priority.sh --timings-file "$TEMP_DIR/selected-timings.json" \
+    >"$TEMP_DIR/selected.out" 2>"$TEMP_DIR/selected.err" ||
+    fail 'single-suite selection'
+[ "$(cat "$TEMP_DIR/selected.order")" = priority.sh ] ||
+    fail 'single-suite selection admitted unrelated work'
+python3 - "$TEMP_DIR/selected-timings.json" <<'PY'
+import json
+import pathlib
+import sys
+
+receipt = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert receipt["suites_total"] == 1
+assert [row["suite"] for row in receipt["results"]] == ["tests/priority.sh"]
+PY
+if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
+    --manifest "$fake/priority.tsv" --log-dir "$fake/missing-suite-logs" \
+    --jobs 1 --suite tests/missing.sh >"$TEMP_DIR/missing-suite.out" 2>&1; then
+    fail 'runner accepted a suite outside its manifest'
+fi
+grep -F 'focused-tests: suite is outside the manifest: tests/missing.sh' \
+    "$TEMP_DIR/missing-suite.out" >/dev/null ||
+    fail 'missing selected-suite diagnostic'
 
 PYTHONDONTWRITEBYTECODE=1 python3 - "$ROOT/tools/run-focused-tests.py" <<'PY'
 import importlib.util

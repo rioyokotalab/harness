@@ -4,12 +4,11 @@
 
 `.github/workflows/ci.yml` runs for pull requests to `main`, one weekly
 independent full check, and manual full checks, with only `contents: read`.
-For an owner-authored pull request whose event sender is also the owner, the
-required job is skipped after the exact tree is validated locally and recorded
-in the pull request. Non-owner or mixed-sender pull requests still receive the
-strict hosted check, and weekly/manual events still run the complete portable
-suite. The merge does not allocate a duplicate `main` push runner. The hosted
-job uses the official checkout action pinned to the immutable v7.0.1 commit and
+Every pull request, including an owner-authored one, runs affected-group
+discovery in keep-going mode so all failures are visible before repair.
+Weekly/manual events still run the complete portable suite. The merge does not
+allocate a duplicate `main` push runner. The hosted job uses the official
+checkout action pinned to the immutable v7.0.1 commit and
 disables persisted Git credentials. It has no
 secrets, deployment, model calls, remote-node access, scheduler commands,
 package installation, or cache writes outside its ephemeral runner.
@@ -21,10 +20,12 @@ maintenance does not alter the frozen baseline, corpus, or recorded reports.
 The unique required-check candidate is `portable-phase1`. When it runs on a
 pull request, it uses the deterministic impact selector against the event's
 exact base SHA:
-documentation and routed skills receive their owning checks, while workflow,
+documentation and routed skills select their affected groups, while workflow,
 policy, validator, manifest, safety, lifecycle, cleanup, credential, and
-unknown changes escalate to the complete phase-one integration suite. Weekly
-and manual events run that complete portable suite unconditionally. Native MPI
+unknown changes retain high-risk classification without repeatedly invoking
+the complete suite. Discovery records every affected-group result rather than
+failing at the first issue. Weekly and manual events run the complete portable
+suite unconditionally. Native MPI
 compile/run is a separate explicit
 `HARNESS_NATIVE_MPI=1 tests/test-native-mpi.sh` gate for a declared MPI
 environment and is not part of the portable default.
@@ -37,13 +38,9 @@ This prevents generic CI from pretending to validate an HPC MPI stack or local
 agent policy while preserving all credential-free portable filesystem and
 integration regressions.
 
-The owner-only skip is the same-trust-root route used by the private Students
-and Swallow repositories. It removes hosted queue and merge latency from the
-normal owner workflow; it is not independent CI. GitHub documents that a
-skipped required job reports success, so the required context remains stable.
-Any event with a different author or sender still runs on an ephemeral hosted
-runner, preserving the untrusted-code boundary. The weekly backstop detects
-merged-tree drift independently of owner task cadence.
+Harness no longer has an owner-only pull-request skip. The required context now
+represents an actual affected-group discovery run for every pull request. The
+weekly backstop detects merged-tree drift independently of owner task cadence.
 
 The security choices follow GitHub's official guidance to grant read-only
 default token access and pin actions to a full commit SHA:

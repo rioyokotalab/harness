@@ -87,8 +87,12 @@ assert_contains 'Never infer a timestamp' "$AGENTS" \
     'progress timestamp drift guard'
 assert_contains 'never blindly replay the prior prompt' "$AGENTS" \
     'provider retry boundary'
-assert_contains 'safety, lifecycle, cleanup,' "$AGENTS" \
-    'full validation escalation'
+assert_contains 'one affected-group discovery' "$AGENTS" \
+    'failure-complete discovery cadence'
+assert_contains 'one owning suite per repair' "$AGENTS" \
+    'isolated repair cadence'
+assert_contains 'changes remain final-required' "$AGENTS" \
+    'final validation escalation'
 assert_contains 'not merely because a session resumed' "$AGENTS" \
     'unchanged validation reuse'
 assert_contains 'Git and `TODO.md` are the ordinary durable truth' "$AGENTS" \

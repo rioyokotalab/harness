@@ -69,10 +69,10 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 [ "$(grep -Ec '^[[:space:]]*python3 "\$ROOT/tools/run-focused-tests.py"' \
-    "$ROOT/tests/test-phase1.sh")" = 1 ] ||
+    "$ROOT/tests/test-phase1-orchestrator.sh")" = 1 ] ||
     fail "phase-1 retains divergent focused-suite execution"
-grep -F '        focused_jobs=1' "$ROOT/tests/test-phase1.sh" >/dev/null &&
-    grep -F '        overlap_gates=no' "$ROOT/tests/test-phase1.sh" >/dev/null ||
+grep -F '    legacy) jobs=1 ;;' \
+    "$ROOT/tests/test-phase1-orchestrator.sh" >/dev/null ||
     fail "legacy compatibility does not select the normal manifest serially"
 [ "$(grep -c '^tests/test-codex-targets.sh|' \
     "$ROOT/tests/focused-suites.tsv")" = 1 ] ||

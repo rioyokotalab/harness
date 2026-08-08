@@ -1,4 +1,5 @@
 task	state	summary	source
+Har-432	complete	Make validation incremental and failure-complete	docs/tasks/Har-432.md
 Har-431	complete	Reduce Riken test latency	docs/tasks/Har-431.md
 Har-430	complete	Accelerate macOS test feedback	docs/tasks/Har-430.md
 Har-429	complete	Enforce one Codex owner per saved thread	docs/tasks/Har-429.md

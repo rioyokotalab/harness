@@ -2,6 +2,9 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+if [ "${HARNESS_PHASE1_COMPONENT:-}" != integration ]; then
+    exec "$ROOT/tests/test-phase1-orchestrator.sh"
+fi
 # A managed Codex process exports the live checkout for its launchers. Focused
 # suites must instead let each executable derive the checkout under test.
 unset HARNESS_ROOT HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
@@ -11,30 +14,9 @@ HARNESS=$ROOT/bin/harness
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
-focused_pid=
-shellcheck_pid=
-focused_timings=${HARNESS_TEST_TIMINGS_FILE:-$TEMP_DIR/focused-timings.json}
-
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
-    if [ "$status" -ne 0 ]; then
-        [ -z "$shellcheck_pid" ] || kill -TERM "$shellcheck_pid" 2>/dev/null || true
-        [ -z "$focused_pid" ] || kill -TERM "$focused_pid" 2>/dev/null || true
-    fi
-    if [ -n "$shellcheck_pid" ]; then
-        if ! wait "$shellcheck_pid"; then
-            echo "FAIL: ShellCheck warning/error gate" >&2
-            [ "$status" -ne 0 ] || status=1
-        fi
-        shellcheck_pid=
-    fi
-    if [ -n "$focused_pid" ]; then
-        if ! wait "$focused_pid"; then
-            [ "$status" -ne 0 ] || status=1
-        fi
-        focused_pid=
-    fi
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
         "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" \
@@ -134,7 +116,9 @@ for script in \
     "$ROOT/tests/test-claude-takeover.sh" \
     "$ROOT/tests/test-bash-startup-unify.sh" \
     "$ROOT/tests/test-focused-runner.sh" \
-    "$ROOT/tests/darwin-preflight.sh" \
+    "$ROOT/tests/test-phase1-orchestrator.sh" \
+    "$ROOT/tests/test-phase1-integration.sh" \
+    "$ROOT/tests/test-shellcheck.sh" \
     "$ROOT/tests/test-housekeeping-interrupt.sh" \
     "$ROOT/tests/test-codex-runtime-isolation.sh" \
     "$ROOT/tests/test-personal-agent.sh" \
@@ -189,52 +173,6 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-foc
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/shared/skills/remote-agent-communication/scripts/agent-message").read_text())' ||
     fail "Python syntax: remote agent communication"
 
-case ${HARNESS_TEST_JOBS:-auto} in
-    legacy)
-        focused_jobs=1
-        focused_reserve=0
-        overlap_gates=no
-        ;;
-    auto)
-        focused_jobs=auto
-        focused_reserve=1
-        visible_cpus=$(python3 -c \
-            'import os; print(len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1))')
-        if [ "$visible_cpus" -le 2 ]; then
-            overlap_gates=no
-        else
-            overlap_gates=yes
-        fi
-        ;;
-    ''|*[!0-9]*)
-        fail "HARNESS_TEST_JOBS must be auto, legacy, or an integer"
-        ;;
-    *)
-        focused_jobs=$HARNESS_TEST_JOBS
-        focused_reserve=0
-        if [ "$focused_jobs" -eq 1 ]; then
-            overlap_gates=no
-        else
-            overlap_gates=yes
-        fi
-        ;;
-esac
-run_focused_suites() {
-    python3 "$ROOT/tools/run-focused-tests.py" \
-        --root "$ROOT" \
-        --manifest "$ROOT/tests/focused-suites.tsv" \
-        --log-dir "$TEMP_DIR/focused-logs" \
-        --timings-file "$focused_timings" \
-        --reserve-cpus "$focused_reserve" \
-        --jobs "$focused_jobs"
-}
-if [ "$overlap_gates" = yes ]; then
-    run_focused_suites &
-    focused_pid=$!
-else
-    run_focused_suites ||
-        fail "focused suites"
-fi
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact
 # fallback, while retaining normal PATH precedence when a site command exists.
@@ -367,23 +305,6 @@ if env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
     fail "remote Codex launcher accepted an excluded service"
 fi
 
-if command -v shellcheck >/dev/null 2>&1; then
-    if [ "$overlap_gates" = yes ]; then
-        (
-            git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
-                ':(exclude)tests/fixtures/**' |
-                xargs -0 shellcheck --severity=warning
-        ) &
-        shellcheck_pid=$!
-    elif ! (
-        git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
-            ':(exclude)tests/fixtures/**' |
-            xargs -0 shellcheck --severity=warning
-    ); then
-        fail "ShellCheck warning/error gate"
-    fi
-fi
-
 for script in \
     "$ROOT/libexec/harness-rollback" \
     "$ROOT/libexec/harness-shell" \
@@ -399,8 +320,6 @@ do
         fail "raw recursive removal remains: $script"
     fi
 done
-
-"$ROOT/tests/test-guarded-delete.sh" || fail "guarded-delete regression suite"
 
 replica_generation=20260715T120000Z
 "$HARNESS" replica plan --host local --generation "$replica_generation" \
@@ -2123,21 +2042,4 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$artifact_transaction" \
     fail "artifact rollback left link"
 [ ! -e "$artifact_dir" ] || fail "artifact rollback left directory"
 
-shellcheck_status=0
-focused_status=0
-set +e
-if [ -n "$shellcheck_pid" ]; then
-    wait "$shellcheck_pid"
-    shellcheck_status=$?
-    shellcheck_pid=
-fi
-if [ -n "$focused_pid" ]; then
-    wait "$focused_pid"
-    focused_status=$?
-    focused_pid=
-fi
-set -e
-[ "$shellcheck_status" -eq 0 ] || fail "ShellCheck warning/error gate"
-[ "$focused_status" -eq 0 ] || fail "focused suites"
-
-echo "phase-1 harness tests passed"
+echo "phase-1 integration tests passed"

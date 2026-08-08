@@ -1,5 +1,10 @@
 # T-351 sustainable private Actions transition
 
+> Historical decision record. Har-432 supersedes only the public Harness
+> owner-PR skip: Harness now runs affected-group discovery for every pull
+> request. The Students and Swallow repository-local decisions recorded here
+> are unchanged.
+
 ## Decision
 
 Keep GitHub-hosted validation for untrusted contributions, but stop allocating a

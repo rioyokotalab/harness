@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import runpy
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -28,6 +29,8 @@ validator = Path(sys.argv[1])
 root = Path(sys.argv[2])
 module = runpy.run_path(str(validator))
 rules = module["load_rules"](root)
+group_rules = module["load_group_rules"](root)
+focused = module["load_focused_suites"](root, group_rules)
 classify = module["classify"]
 
 cases = [
@@ -142,13 +145,13 @@ cases = [
     (
         ["tests/test-terminfo.sh"],
         "R3",
-        ["tests/test-phase1.sh"],
+        ["tests/test-terminfo.sh"],
         False,
     ),
     (
         ["libexec/harness_housekeeping.py"],
         "R3",
-        ["tests/test-phase1.sh"],
+        ["tests/test-housekeeping.sh"],
         False,
     ),
     (
@@ -190,13 +193,13 @@ cases = [
     (
         ["AGENTS.md"],
         "R3",
-        ["tests/test-phase1.sh"],
+        ["tests/test-agent-policy-routing.sh"],
         False,
     ),
     (
         [".github/workflows/ci.yml"],
         "R3",
-        ["tests/test-phase1.sh"],
+        ["tests/test-actions-sustainability.sh"],
         False,
     ),
     (
@@ -214,12 +217,12 @@ cases = [
     (
         ["unmapped/new-file"],
         "R3",
-        ["tests/test-phase1.sh"],
+        [],
         False,
     ),
 ]
 for paths, tier, suites, cacheable in cases:
-    result = classify(root, paths, rules)
+    result = classify(root, paths, rules, focused, group_rules)
     assert result["tier"] == tier, (paths, result)
     assert result["suites"] == suites, (paths, result)
     assert result["cacheable"] is cacheable, (paths, result)
@@ -355,8 +358,11 @@ validator_globals = module["main"].__globals__
 patched_names = (
     "parse_args",
     "load_rules",
+    "load_group_rules",
+    "load_focused_suites",
     "changed_paths",
     "classify",
+    "suites_for_stage",
     "clean_tree_identity",
     "private_receipt_dir",
     "cached_receipt",
@@ -374,7 +380,11 @@ drifted = {
 }
 decision = {
     "cacheable": True,
+    "discovery_estimated_seconds": 0,
+    "discovery_suites": [],
+    "estimated_seconds": 0,
     "full": False,
+    "groups": [],
     "matches": [],
     "paths": ["docs/test.md"],
     "suites": [],
@@ -397,10 +407,15 @@ def identity_scenario(sequence, *, cache_hit, no_receipt=False):
                 path=[],
                 plan=False,
                 receipt_dir=None,
+                stage="repair",
+                suite=None,
             ),
             "load_rules": lambda _root: [],
+            "load_group_rules": lambda _root: [],
+            "load_focused_suites": lambda _root, _groups: {},
             "changed_paths": lambda _root, _base: ["docs/test.md"],
-            "classify": lambda _root, _paths, _rules: decision,
+            "classify": lambda _root, _paths, _rules, _focused, _groups: decision,
+            "suites_for_stage": lambda *_args, **_kwargs: [],
             "clean_tree_identity": lambda *_args: next(remaining),
             "private_receipt_dir": (
                 unexpected_receipt_call
@@ -450,43 +465,145 @@ try:
 finally:
     validator_globals.update(originals)
 
-protected_r3 = [
-    ".github/workflows/ci.yml",
-    "tests/validation-impact.tsv",
-    "tests/focused-suites.tsv",
-    "libexec/harness-validate",
-    "tests/guarded-test-cleanup.sh",
-    "config/tmux/tmux.conf",
-    "tests/smoke/debugger-readiness.sh",
-    "tests/smoke/scientific-library-readiness.sh",
-    "tests/fixtures/offline-project/uv.lock",
-    "evaluation/evaluate.py",
-    "libexec/harness-storage-readiness",
-    "libexec/harness-codex-resilient",
-    "libexec/harness-fleet-health",
-    "libexec/harness-restic",
-    "libexec/harness-ssh-config-layout",
-    "libexec/harness-agent-config",
-    "shared/skills/onboard-mirrored-node/scripts/onboard-preflight",
-    "shared/skills/onboard-external-user/scripts/preflight",
-    "shared/skills/reboot-recovery/scripts/recover-mac-after-reboot",
-    "shared/skills/remote-agent-communication/scripts/agent-message",
-    "shared/skills/remote-agent-communication/agents/openai.yaml",
-    "shared/skills/remote-agent-communication/references/reply.schema.json",
-    "shared/skills/fleet-repository-hardening/agents/openai.yaml",
-    "shared/skills/onboard-personal-mac/agents/openai.yaml",
-    "tests/test-fleet-repository-hardening-skill.sh",
-    "tests/test-onboard-personal-mac-skill.sh",
-    "tests/test-reboot-recovery-skill.sh",
-    "tests/test-task-ledger-routing.sh",
-    "tests/test-github-rulesets.sh",
-    "tests/test-terminfo.sh",
-]
-for path in protected_r3:
-    result = classify(root, [path], rules)
+protected_r3 = {
+    ".github/workflows/ci.yml": "tests/test-actions-sustainability.sh",
+    "tests/validation-impact.tsv": "tests/test-validation-router.sh",
+    "tests/validation-groups.tsv": "tests/test-validation-router.sh",
+    "tests/focused-suites.tsv": "tests/test-focused-runner.sh",
+    "libexec/harness-validate": "tests/test-validation-router.sh",
+    "tests/guarded-test-cleanup.sh": "tests/test-guarded-delete.sh",
+    "config/tmux/tmux.conf": "tests/test-tmux-config.sh",
+    "evaluation/evaluate.py": "tests/test-evaluation.sh",
+    "libexec/harness-storage-readiness": "tests/test-storage-readiness.sh",
+    "libexec/harness-codex-resilient": "tests/test-codex-resilient.sh",
+    "libexec/harness-fleet-health": "tests/test-fleet-health.sh",
+    "libexec/harness-restic": "tests/test-restic-schedule.sh",
+    "libexec/harness-ssh-config-layout": "tests/test-ssh-config-layout.sh",
+    "libexec/harness-agent-config": "tests/test-agent-config.sh",
+    "shared/skills/onboard-mirrored-node/scripts/onboard-preflight": (
+        "tests/test-onboard-mirrored-node.sh"
+    ),
+    "shared/skills/onboard-external-user/scripts/preflight": (
+        "tests/test-onboard-external-user.sh"
+    ),
+    "shared/skills/reboot-recovery/scripts/recover-mac-after-reboot": (
+        "tests/test-reboot-recovery-skill.sh"
+    ),
+    "shared/skills/remote-agent-communication/scripts/agent-message": (
+        "tests/test-remote-agent-communication.sh"
+    ),
+    "shared/skills/remote-agent-communication/agents/openai.yaml": (
+        "tests/test-remote-agent-communication.sh"
+    ),
+    "shared/skills/remote-agent-communication/references/reply.schema.json": (
+        "tests/test-remote-agent-communication.sh"
+    ),
+    "shared/skills/fleet-repository-hardening/agents/openai.yaml": (
+        "tests/test-fleet-repository-hardening-skill.sh"
+    ),
+    "shared/skills/onboard-personal-mac/agents/openai.yaml": (
+        "tests/test-onboard-personal-mac-skill.sh"
+    ),
+    "tests/test-fleet-repository-hardening-skill.sh": (
+        "tests/test-fleet-repository-hardening-skill.sh"
+    ),
+    "tests/test-onboard-personal-mac-skill.sh": (
+        "tests/test-onboard-personal-mac-skill.sh"
+    ),
+    "tests/test-reboot-recovery-skill.sh": "tests/test-reboot-recovery-skill.sh",
+    "tests/test-task-ledger-routing.sh": "tests/test-task-ledger-routing.sh",
+    "tests/test-github-rulesets.sh": "tests/test-github-rulesets.sh",
+    "tests/test-terminfo.sh": "tests/test-terminfo.sh",
+}
+for path, owner in protected_r3.items():
+    result = classify(root, [path], rules, focused, group_rules)
     assert result["tier"] == "R3", (path, result)
-    assert result["suites"] == ["tests/test-phase1.sh"], (path, result)
+    assert result["suites"] == [owner], (path, result)
     assert result["cacheable"] is False, (path, result)
+
+multi = classify(
+    root,
+    ["config/terminfo/tmux-256color.src", "tests/smoke/debugger.c"],
+    rules,
+    focused,
+    group_rules,
+)
+assert module["suites_for_stage"](
+    multi, "repair", "tests/test-terminfo.sh", execute=True
+) == ["tests/test-terminfo.sh"]
+try:
+    module["suites_for_stage"](multi, "repair", None, execute=True)
+except ValueError:
+    pass
+else:
+    raise AssertionError("multi-owner repair was accepted without --suite")
+assert module["suites_for_stage"](multi, "discovery", None, execute=True)
+assert module["suites_for_stage"](multi, "final", None, execute=True) == [
+    "tests/test-phase1.sh"
+]
+
+with tempfile.TemporaryDirectory() as raw_discovery:
+    discovery_root = Path(raw_discovery)
+    (discovery_root / "tools").mkdir()
+    (discovery_root / "tests").mkdir()
+    shutil.copy2(
+        root / "tools/run-focused-tests.py",
+        discovery_root / "tools/run-focused-tests.py",
+    )
+    for name, body in (
+        ("fail", "#!/bin/sh\nprintf 'known failure\\n'\nexit 7\n"),
+        ("pass", "#!/bin/sh\nprintf 'later pass\\n'\n"),
+    ):
+        path = discovery_root / f"tests/{name}.sh"
+        path.write_text(body, encoding="utf-8")
+        path.chmod(0o755)
+    (discovery_root / "tests/focused-suites.tsv").write_text(
+        "tests/fail.sh|known failure|2\n"
+        "tests/pass.sh|later pass|1\n",
+        encoding="utf-8",
+    )
+    discovery_focused = {
+        "tests/fail.sh": module["FocusedSuite"](
+            1, "tests/fail.sh", "known failure", 2, "light", "fixture"
+        ),
+        "tests/pass.sh": module["FocusedSuite"](
+            2, "tests/pass.sh", "later pass", 1, "light", "fixture"
+        ),
+    }
+    discovery_decision = {
+        "groups": [{"name": "fixture"}],
+        "paths": ["fixture"],
+        "suites": ["tests/fail.sh", "tests/pass.sh"],
+    }
+    original_run_validation = module["run_discovery"].__globals__["run_validation"]
+    module["run_discovery"].__globals__["run_validation"] = (
+        lambda *_args: [{"path": "diff", "seconds": 0.0, "status": 0}]
+    )
+    try:
+        results, inventory_path = module["run_discovery"](
+            discovery_root,
+            "HEAD^",
+            discovery_decision,
+            "1",
+            discovery_root,
+            discovery_focused,
+        )
+    finally:
+        module["run_discovery"].__globals__["run_validation"] = (
+            original_run_validation
+        )
+    inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    assert inventory["schema"] == "harness-validation-discovery-v1"
+    assert inventory["status"] == "fail"
+    assert inventory["failure_suites"] == ["tests/fail.sh"]
+    assert [row["state"] for row in inventory["results"][1:]] == [
+        "fail",
+        "pass",
+    ]
+    assert [row["status"] for row in results[1:]] == [7, 0]
+    retained_logs = list(discovery_root.glob("discovery-*.logs/*.log"))
+    assert len(retained_logs) == 1
+    assert "known failure" in retained_logs[0].read_text(encoding="utf-8")
 print(
     f"VALIDATION_ROUTER_CLASSIFY status=pass cases={len(cases)} "
     f"protected={len(protected_r3)}"
@@ -500,33 +617,45 @@ ordinary_plan=$(plan \
     --path tests/smoke/debugger.c \
     --path tests/fixtures/scientific-library-bin/h5cc)
 unknown_plan=$(plan --path unknown/path)
+discovery_plan=$(plan --stage discovery --path config/terminfo/tmux-256color.src)
+final_plan=$(plan --stage final --path config/terminfo/tmux-256color.src)
 
-python3 - "$docs_plan" "$skill_plan" "$ordinary_plan" "$unknown_plan" <<'PY'
+python3 - \
+    "$docs_plan" "$skill_plan" "$ordinary_plan" "$unknown_plan" \
+    "$discovery_plan" "$final_plan" <<'PY'
 import json
 import sys
 
 if not __debug__:
     raise SystemExit("validation-router plan test requires Python assertions")
 
-docs, skill, ordinary, unknown = (json.loads(value) for value in sys.argv[1:])
+docs, skill, ordinary, unknown, discovery, final = (
+    json.loads(value) for value in sys.argv[1:]
+)
 assert docs["tier"] == "R0"
-assert docs["suites"] == [
+assert docs["owner_suites"] == [
     "tests/test-harness-ledgers.sh",
     "tests/test-task-ledger-routing.sh",
 ]
 assert skill["tier"] == "R1"
-assert skill["suites"] == [
+assert skill["owner_suites"] == [
     "tests/test-skill-context-budgets.sh",
     "tests/test-skill-context-gates.sh",
 ]
 assert ordinary["tier"] == "R2"
-assert ordinary["suites"] == [
+assert ordinary["owner_suites"] == [
     "tests/test-debugger-readiness.sh",
     "tests/test-scientific-library-readiness.sh",
     "tests/test-terminfo.sh",
 ]
 assert unknown["tier"] == "R3"
-assert unknown["suites"] == ["tests/test-phase1.sh"]
+assert unknown["owner_suites"] == []
+assert unknown["final_required"] is True
+assert discovery["stage"] == "discovery"
+assert discovery["groups"][0]["name"] == "macos-terminal"
+assert discovery["execution_suites"] == discovery["groups"][0]["suites"]
+assert final["stage"] == "final"
+assert final["execution_suites"] == ["tests/test-phase1.sh"]
 PY
 
 printf '%s\n' 'VALIDATION_ROUTER status=pass'

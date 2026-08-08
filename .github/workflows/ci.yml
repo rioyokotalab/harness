@@ -17,7 +17,6 @@ concurrency:
 jobs:
   portable-phase1:
     name: portable-phase1
-    if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'rioyokota' || github.event.sender.login != 'rioyokota'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -38,11 +37,9 @@ jobs:
           cc --version | sed -n '1p'
           c++ --version | sed -n '1p'
           shellcheck --version | sed -n '2p'
-      - name: Test Linux affinity readiness contract
-        run: tests/test-affinity-readiness.sh
-      - name: Run risk-routed portable pull-request gate
+      - name: Discover all affected-group failures for pull requests
         if: github.event_name == 'pull_request'
-        run: bin/harness validate --base "${{ github.event.pull_request.base.sha }}" --no-receipt
+        run: bin/harness validate --stage discovery --base "${{ github.event.pull_request.base.sha }}"
       - name: Run credential-free portable full backstop
         if: github.event_name != 'pull_request'
         run: tests/test-phase1.sh
