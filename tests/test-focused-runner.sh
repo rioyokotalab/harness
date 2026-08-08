@@ -46,13 +46,19 @@ grep -F -- '--timings-file "$focused_timings"' "$PHASE1" >/dev/null ||
     fail 'phase-1 omits the focused timing receipt'
 grep -F 'full tests/test-phase1.sh still required' "$PREFLIGHT" >/dev/null ||
     fail 'Darwin preflight weakens the final gate contract'
-grep -F 'tests/test-housekeeping.sh|' "$PREFLIGHT_MANIFEST" >/dev/null &&
+grep -F 'tests/test-housekeeping-interrupt.sh|' "$PREFLIGHT_MANIFEST" >/dev/null &&
     grep -F 'tests/test-evaluation.sh|' "$PREFLIGHT_MANIFEST" >/dev/null ||
     fail 'Darwin preflight omits interrupt lifecycle coverage'
 while IFS='|' read -r suite _rest; do
     case $suite in ''|'#'*) continue ;; esac
-    grep -F "$suite|" "$ROOT/tests/focused-suites.tsv" >/dev/null ||
-        fail "Darwin preflight suite is outside the full gate: $suite"
+    case $suite in
+        tests/test-housekeeping-interrupt.sh)
+            full_suite=tests/test-housekeeping.sh
+            ;;
+        *) full_suite=$suite ;;
+    esac
+    grep -F "$full_suite|" "$ROOT/tests/focused-suites.tsv" >/dev/null ||
+        fail "Darwin preflight suite lacks full-gate coverage: $suite"
 done <"$PREFLIGHT_MANIFEST"
 
 python3 - "$PHASE1" <<'PY'
@@ -165,6 +171,11 @@ assert module.auto_jobs(1, 1) == 1
 assert module.auto_jobs(7, 1) == 4
 assert module.auto_jobs(8, 1) == 7
 assert module.auto_jobs(64, 1) == 8
+assert module.resolve_heavy_jobs("auto", 1, "Darwin") == 1
+assert module.resolve_heavy_jobs("auto", 4, "Darwin") == 2
+assert module.resolve_heavy_jobs("auto", 7, "Darwin") == 3
+assert module.resolve_heavy_jobs("auto", 8, "Darwin") == 4
+assert module.resolve_heavy_jobs("auto", 4, "Linux") == 4
 PY
 python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/auto-logs" --jobs auto \

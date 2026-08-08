@@ -93,7 +93,12 @@ def resolve_heavy_jobs(raw: str, jobs: int, system: str) -> int:
     if system != "Darwin":
         return jobs
     if raw == "auto":
-        return min(2, jobs)
+        # Preserve a light-work lane on smaller Macs, but let machines with
+        # enough workers admit up to four process-heavy suites. Matched Riken
+        # measurements show that two-way admission leaves the full gate
+        # needlessly serialized and that four-way admission already increases
+        # individual heavy-suite runtimes, so retain that bounded ceiling.
+        return max(1, min(4, jobs // 2))
     try:
         return int(raw)
     except ValueError:
