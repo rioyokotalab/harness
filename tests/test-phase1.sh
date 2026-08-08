@@ -1665,6 +1665,7 @@ printf '%s\n' \
     'cat "$2"' >"$fake_bin/dpkg-deb"
 chmod 755 "$fake_bin/dpkg-deb"
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" FIXTURE_ARCHIVE="$zip_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name rclone --apply \
     >"$TEMP_DIR/zip-tool-apply.out"
 zip_tool_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1705,6 +1706,7 @@ grep 'REPLACE command=rclone from=1.74.3 to=1.74.4 predecessor=retained' \
     fail "rclone replacement plan"
 HOME="$rclone_home" PATH="$fake_bin:/usr/bin:/bin" \
     FIXTURE_ARCHIVE="$zip_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name rclone --apply \
     >"$TEMP_DIR/rclone-upgrade-apply.out"
 rclone_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1734,6 +1736,7 @@ HOME="$uv_home" PATH="$fake_bin:/usr/bin:/bin" \
 grep 'REPLACE command=uv from=0.9.18 to=0.11.32 predecessor=retained' \
     "$TEMP_DIR/uv-upgrade-plan.out" >/dev/null || fail "uv replacement plan"
 HOME="$uv_home" PATH="$fake_bin:/usr/bin:/bin" FIXTURE_ARCHIVE="$uv_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name uv --apply \
     >"$TEMP_DIR/uv-upgrade-apply.out"
 uv_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1753,6 +1756,7 @@ HOME="$uv_home" "$test_repo/bin/harness" rollback "$uv_transaction" \
 # Exercise the single-binary bzip2 release format used by Restic.
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
     FIXTURE_ARCHIVE="$restic_fixture.bz2" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name restic --apply \
     >"$TEMP_DIR/restic-tool-apply.out"
 restic_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1773,6 +1777,7 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$restic_transaction" \
 # Exercise a root-member tar archive through the same exact-output path.
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
     FIXTURE_ARCHIVE="$tectonic_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name tectonic --apply \
     >"$TEMP_DIR/tectonic-tool-apply.out"
 tectonic_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1793,6 +1798,7 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$tectonic_transaction" \
 # idempotence, tamper refusal, and rollback.
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
     FIXTURE_ARCHIVE="$shellcheck_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" tool --host local --name shellcheck --apply \
     >"$TEMP_DIR/shellcheck-tool-apply.out"
 shellcheck_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1835,6 +1841,7 @@ for command_name in as awk bash cc chmod cmp cp date dirname find getent git gre
     ln -s "$(command -v "$command_name")" "$source_bin/$command_name"
 done
 HOME="$test_home" PATH="$source_bin" FIXTURE_ARCHIVE="$sqlite_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" build-tool --host local --name sqlite --apply \
     >"$TEMP_DIR/sqlite-build-apply.out"
 sqlite_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1866,6 +1873,7 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$sqlite_transaction" \
 [ ! -e "$sqlite_tree" ] || fail "SQLite rollback left artifact directory"
 
 HOME="$test_home" PATH="$source_bin" FIXTURE_ARCHIVE="$tree_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" build-tool --host local --name tree --apply \
     >"$TEMP_DIR/tree-build-apply.out"
 tree_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1907,6 +1915,7 @@ for command_name in awk bash chmod cmp cp date dd dirname find getent git gzip i
     ln -s "$(command -v "$command_name")" "$runtime_bin/$command_name"
 done
 HOME="$runtime_home" PATH="$runtime_bin" FIXTURE_ARCHIVE="$runtime_fixture_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" runtime --host local --name node --apply \
     >"$TEMP_DIR/runtime-apply.out"
 runtime_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -1966,6 +1975,7 @@ chmod 755 "$agent_bin/curl"
 HOME="$agent_home" PATH="$agent_bin" \
     FIXTURE_AGENT_LAUNCHER="$agent_launcher_archive" \
     FIXTURE_AGENT_NATIVE="$agent_native_archive" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" agent --host local --name codex --apply \
     >"$TEMP_DIR/agent-apply.out"
 agent_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
@@ -2029,6 +2039,7 @@ printf '%s\n' \
 chmod 755 "$python_bin/uv"
 HOME="$python_home" PATH="$python_bin" FIXTURE_PYTHON="$fake_python" \
     UV_ARGS_LOG="$TEMP_DIR/python-uv-args.log" \
+    HARNESS_TESTING=1 HARNESS_TEST_FACTS_FILE="$control_facts" \
     "$test_repo/bin/harness" python --host local --minor 3.12 --apply \
     >"$TEMP_DIR/python-apply.out"
 grep -Fx '3.12.12' "$TEMP_DIR/python-uv-args.log" >/dev/null ||
