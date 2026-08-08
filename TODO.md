@@ -17,9 +17,9 @@ mutable-state query is unknown, never absence.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 
-**Phase:** Home reached protected main with a clean checkout but failed
-`test-evaluation.sh`; no repair or rerun was attempted. Office's independent
-report remains pending. **Record:** `docs/tasks/Har-428.md`.
+**Phase:** Office and Home both reached protected main with clean checkouts,
+but both complete suites failed in interrupt-related fixtures. No repair or
+rerun was attempted. **Record:** `docs/tasks/Har-428.md`.
 
 ### Har-423 — Reconcile five repositories across the fleet
 
