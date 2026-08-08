@@ -809,18 +809,19 @@ def run_discovery(
     receipt_dir: Path,
     focused: dict[str, FocusedSuite],
 ) -> tuple[list[dict], Path]:
+    stage = decision.get("stage", "discovery")
     nonce = (
         f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-"
         f"{os.getpid()}-{time.time_ns()}"
     )
-    inventory = receipt_dir / f"discovery-{nonce}.json"
-    log_dir = receipt_dir / f"discovery-{nonce}.logs"
+    inventory = receipt_dir / f"{stage}-{nonce}.json"
+    log_dir = receipt_dir / f"{stage}-{nonce}.logs"
     checks = run_validation(root, base, {**decision, "suites": []}, jobs)
     if not all(item["status"] == 0 for item in checks):
         write_private_json(
             inventory,
             {
-                "schema": "harness-validation-discovery-v1",
+                "schema": f"harness-validation-{stage}-v1",
                 "status": "fail",
                 "paths": decision["paths"],
                 "groups": [group["name"] for group in decision["groups"]],
@@ -836,7 +837,7 @@ def run_discovery(
         write_private_json(
             inventory,
             {
-                "schema": "harness-validation-discovery-v1",
+                "schema": f"harness-validation-{stage}-v1",
                 "status": "pass",
                 "paths": decision["paths"],
                 "groups": [group["name"] for group in decision["groups"]],
@@ -848,7 +849,7 @@ def run_discovery(
         )
         return checks, inventory
 
-    runner_inventory = receipt_dir / f"discovery-{nonce}-runner.json"
+    runner_inventory = receipt_dir / f"{stage}-{nonce}-runner.json"
     command = [
         sys.executable,
         str(root / FOCUSED_RUNNER),
@@ -909,7 +910,7 @@ def run_discovery(
     write_private_json(
         inventory,
         {
-            "schema": "harness-validation-discovery-v1",
+            "schema": f"harness-validation-{stage}-v1",
             "status": payload["status"],
             "paths": decision["paths"],
             "groups": [group["name"] for group in decision["groups"]],
@@ -1005,8 +1006,11 @@ def main() -> int:
     }
     identity = clean_tree_identity(root, args.base, execution, args.jobs)
     receipt_dir: Path | None = None
-    if args.stage == "discovery" and args.no_receipt:
-        print("validate: discovery requires a durable failure inventory", file=sys.stderr)
+    if args.stage in {"discovery", "final"} and args.no_receipt:
+        print(
+            f"validate: {args.stage} requires a durable failure inventory",
+            file=sys.stderr,
+        )
         return 2
     if identity and not args.no_receipt:
         try:
@@ -1033,7 +1037,7 @@ def main() -> int:
             return 0
 
     inventory: Path | None = None
-    if args.stage == "discovery":
+    if args.stage in {"discovery", "final"}:
         if receipt_dir is None:
             try:
                 receipt_dir = private_receipt_dir(root, args.receipt_dir)

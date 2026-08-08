@@ -25,9 +25,9 @@ completely before its first matching action.
 - Validate in order: exact-owner discovery, one owner per repair, then
   exact-owner final. Run the complete suite only when the owner explicitly
   requests `--full`; unknown owners stop validation. Keep validation/testing
-  below 10% of task runtime by narrowing or splitting slow owners, never by
-  idling to inflate task time. Tests use deterministic handshakes, never
-  elapsed-time sleeps, polling, or reruns.
+  below 10% of runtime by narrowing or splitting owners; never idle to inflate
+  time. Tests use deterministic handshakes without elapsed-time sleeps, polling,
+  or reruns.
 - Reuse validation when bytes, environment contract, and acceptance scope are
   unchanged. Rerun only changed owning checks, mutable inputs, or required final
   integration—not merely because a session resumed.

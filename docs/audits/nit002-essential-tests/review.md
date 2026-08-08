@@ -22,7 +22,7 @@ This keeps the wait-removal pass reviewable without
 mistaking policy prose containing “wait” for an executed command.
 `matched-darwin-timings.tsv` records the serial, one-job final pass for every
 supplied Home over-ten candidate and each owner introduced by decomposition.
-The 116 manifest entry scripts currently contain 17,674 lines. The audit also
+The 116 manifest entry scripts currently contain 17,689 lines. The audit also
 descends into thirteen directly discovered Python test modules (3,373 lines)
 and the four intentional non-manifest shell scripts; wrapper brevity is never
 treated as evidence that the underlying test is small or wait-free.
@@ -153,6 +153,13 @@ unused remnants left by narrowing—and one 11.634-second update owner. One batc
 repaired all four and removed the update test's redundant second idempotent
 apply. Only those four owners reran; all passed in 18.870 seconds, individually
 between 1.945 and 9.235 seconds.
+
+The first exact final stopped after the policy owner, revealing both a four-word
+policy-budget overflow and an architectural inefficiency: final still executed
+owners serially and stopped at its first failure. The policy was compressed
+without raising its budget. Exact final now uses the same bounded parallel,
+keep-going runner as discovery and writes a stage-specific durable inventory,
+so a future final failure exposes the complete repair set in one pass.
 
 The literal `wait` audit separately classifies child-process joins. Checkpoint
 race workers and simultaneous message receivers, for
@@ -429,7 +436,7 @@ selectable entries. Nine redundant owners left; separately selectable Mac,
 onboarding, guarded-delete, Python, HPC, host-declaration, and core-command
 contracts replaced their monoliths or ownership gaps. The increased row count
 is decomposition, not broader admission: a changed path selects only its exact
-owner. Source volume fell from 25,714 to 17,674 lines and declared serial cost
+owner. Source volume fell from 25,714 to 17,689 lines and declared serial cost
 from 1,529 to 498 seconds. No entry is estimated above ten seconds,
 no suite is reachable only through a group/full expansion, and no source-like
 path is ownerless. Static timing review now finds zero elapsed sleeps, polling

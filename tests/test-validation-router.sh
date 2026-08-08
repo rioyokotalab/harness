@@ -716,16 +716,31 @@ with tempfile.TemporaryDirectory() as raw_discovery:
             discovery_root,
             discovery_focused,
         )
+        _final_results, final_path = module["run_discovery"](
+            discovery_root,
+            "HEAD^",
+            {
+                "groups": [],
+                "paths": ["docs/ordinary.md"],
+                "stage": "final",
+                "suites": [],
+            },
+            "1",
+            discovery_root,
+            discovery_focused,
+        )
     finally:
         module["run_discovery"].__globals__["run_validation"] = (
             original_run_validation
         )
     inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
     structural = json.loads(structural_path.read_text(encoding="utf-8"))
+    final_inventory = json.loads(final_path.read_text(encoding="utf-8"))
     assert structural["status"] == "pass"
     assert structural["results"] == structural_results
     assert structural["failure_suites"] == []
     assert structural["not_run"] == []
+    assert final_inventory["schema"] == "harness-validation-final-v1"
     assert inventory["schema"] == "harness-validation-discovery-v1"
     assert inventory["status"] == "fail"
     assert inventory["failure_suites"] == ["tests/fail.sh"]

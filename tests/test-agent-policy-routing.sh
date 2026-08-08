@@ -95,9 +95,9 @@ assert_contains 'one owner per repair' "$AGENTS" \
     'isolated repair cadence'
 assert_contains 'complete suite only when the owner' "$AGENTS" \
     'explicit complete validation boundary'
-assert_contains 'below 10% of task runtime' "$AGENTS" \
+assert_contains 'below 10% of runtime' "$AGENTS" \
     'validation runtime budget'
-assert_contains 'never elapsed-time sleeps, polling, or reruns' "$AGENTS" \
+assert_contains 'without elapsed-time sleeps, polling' "$AGENTS" \
     'deterministic test synchronization'
 assert_contains 'not merely because a session resumed' "$AGENTS" \
     'unchanged validation reuse'

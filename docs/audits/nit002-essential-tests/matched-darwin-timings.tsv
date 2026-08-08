@@ -1,8 +1,9 @@
 suite	seconds	platform	jobs	evidence
 tests/test-focused-runner.sh	5.478	Darwin	1	repaired standalone pass
 tests/test-startup-normalize.sh	5.065	Darwin	1	frozen candidate inventory pass
-tests/test-validation-router.sh	1.945	Darwin	1	repaired standalone pass
+tests/test-validation-router.sh	1.735	Darwin	1	repaired final-router pass
 tests/test-harness-ledgers.sh	0.622	Darwin	1	frozen candidate inventory pass
+tests/test-agent-policy-routing.sh	0.720	Darwin	1	repaired final-policy pass
 tests/test-t4-hub.sh	4.410	Darwin	1	frozen candidate inventory pass
 tests/test-tmux-codex-monitor.sh	1.939	Darwin	1	frozen candidate inventory pass
 tests/test-tmux-claude-monitor.sh	5.002	Darwin	1	frozen candidate inventory pass
