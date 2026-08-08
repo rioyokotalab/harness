@@ -690,7 +690,9 @@ os.unlink(socket_path)
 PY
 chmod 755 "$websocket_server"
 
-control_socket=/private/tmp/harness-recovery-$$.sock
+# Keep the Unix-domain socket path below Darwin's short sun_path limit while
+# retaining a parent that exists on both macOS and Linux runners.
+control_socket=/tmp/harness-recovery-$$.sock
 python3 "$websocket_server" "$control_socket" "$websocket_rollout" \
     "$TEST_ROOT/websocket.calls" &
 server_pid=$!
