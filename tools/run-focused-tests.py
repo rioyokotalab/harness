@@ -254,7 +254,7 @@ def wait_for_completion(running: dict[int, Running]) -> int:
     pid, status = os.waitpid(-1, 0)
     for index, item in running.items():
         if item.process.pid == pid:
-            item.process._handle_exitstatus(status)
+            item.process.returncode = os.waitstatus_to_exitcode(status)
             return index
     raise RuntimeError("reaped an unknown focused-suite child")
 

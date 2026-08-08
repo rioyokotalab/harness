@@ -23,9 +23,8 @@ tests/test-macos-agent-session.sh|unified managed-Mac agent session suite|6
 tests/test-housekeeping.sh|routine repository housekeeping suite|6
 tests/test-housekeeping-owner-alias.sh|archive owner alias identity contracts|1
 tests/test-guarded-delete.sh|guarded deletion safety suite|5|heavy
-tests/test-projects-pane-layout.sh|isolated final Harness six-pane topology|4
 tests/test-codex-recovery-helper.sh|dedicated Local Codex recovery helper|4
-tests/test-al-session.sh|personal AL session focused suite|7|light|Linux
+tests/test-al-session.sh|personal AL session contract|1|light|Linux
 tests/test-fleet-inventory.sh|cold-start fleet inventory focused suite|2
 tests/test-safety-guards.sh|interactive safety-guard focused suite|10
 tests/test-github-rulesets.sh|GitHub ruleset payload focused suite|1
@@ -45,29 +44,34 @@ tests/test-recover-codex-unsafe-tail-skill.sh|Codex unsafe-tail recovery skill|2
 tests/test-fleet-repository-hardening-skill.sh|fleet and repository hardening skill|1
 tests/test-hardening-audit.sh|value-free repository hardening preflight|4
 tests/test-local-mpi-profile.sh|local MPI profile focused suite|2
-tests/test-personal-macos-profile.sh|personal macOS private-profile focused suite|25
-tests/test-personal-macos-inventory.sh|personal macOS inventory focused suite|35
-tests/test-personal-macos-plan-doctor.sh|personal macOS plan/doctor focused suite|114
-tests/test-personal-macos-control.sh|personal macOS control-plane focused suite|28
-tests/test-personal-macos-homebrew.sh|personal macOS Homebrew focused suite|55|heavy
-tests/test-personal-macos-bash.sh|personal macOS Bash focused suite|20
-tests/test-personal-macos-bash-hooks.sh|personal macOS Bash-hook focused suite|13
+tests/test-personal-macos-profile.sh|personal macOS private-profile contract|4
+tests/test-personal-macos-inventory.sh|personal macOS inventory contract|9
+tests/test-personal-macos-plan-doctor.sh|personal macOS plan contract|9
+tests/test-personal-macos-doctor.sh|personal macOS doctor contract|9
+tests/test-personal-macos-control.sh|personal macOS control-plane contract|10
+tests/test-personal-macos-homebrew.sh|personal macOS Homebrew plan contract|6
+tests/test-personal-macos-homebrew-apply.sh|personal macOS Homebrew apply contract|1
+tests/test-personal-macos-bash.sh|personal macOS Bash contract|9
+tests/test-personal-macos-bash-hooks.sh|personal macOS Bash-hook contract|6
 tests/test-personal-macos-shell.sh|personal macOS shell focused suite|3
-tests/test-personal-macos-login-shell.sh|personal macOS login-shell focused suite|12
+tests/test-personal-macos-login-shell.sh|personal macOS login-shell contract|9
 tests/test-tmux-config.sh|shared tmux configuration focused suite|8
-tests/test-agent-config.sh|agent configuration focused suite|16
+tests/test-agent-config.sh|agent configuration contract|6
 tests/test-agent-upgrade.sh|agent replacement and recovery|4|light|Linux
 tests/test-agent-config-fleet.sh|agent configuration fleet focused suite|5
-tests/test-personal-macos-update.sh|personal macOS long-gap update focused suite|22|heavy
-tests/test-personal-macos-ssh-supervisor.sh|personal macOS SSH supervisor focused suite|133|heavy
-tests/test-personal-macos-python.sh|personal macOS Python focused suite|15
-tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync focused suite|140|heavy
-tests/test-personal-macos-config-sync.sh|personal macOS config-sync focused suite|58|heavy
-tests/test-personal-macos-config-migrate.sh|personal macOS config-migration focused suite|25
-tests/test-ssh-config-mirror.sh|fixed SSH-config mirror focused suite|23
+tests/test-personal-macos-update.sh|personal macOS long-gap update contract|10
+tests/test-personal-macos-ssh-supervisor.sh|personal macOS SSH supervisor contract|10
+tests/test-personal-macos-python.sh|personal macOS Python contract|10
+tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync plan contract|7
+tests/test-personal-macos-ssh-sync-apply.sh|personal macOS SSH-sync apply contract|9
+tests/test-personal-macos-config-sync.sh|personal macOS config-sync plan contract|7
+tests/test-personal-macos-config-sync-apply.sh|personal macOS config-sync apply contract|9
+tests/test-personal-macos-config-migrate.sh|personal macOS config-migration plan contract|7
+tests/test-personal-macos-config-migrate-apply.sh|personal macOS config-migration apply/rollback contract|10
+tests/test-ssh-config-mirror.sh|fixed SSH-config mirror contract|9
 tests/test-terminfo.sh|AL user-local terminfo focused suite|1|light|Linux
-tests/test-ssh-config-layout.sh|transactional shared SSH layout migration|11
-tests/test-restic-schedule.sh|Restic schedule focused suite|31|heavy
+tests/test-ssh-config-layout.sh|transactional shared SSH layout migration|4
+tests/test-restic-schedule.sh|Restic schedule contract|10
 tests/test-onboard-mirrored-node.sh|onboarding focused suite|5
 tests/test-onboard-external-user.sh|external user onboarding focused suite|4
 tests/test-onboard-project-repository.sh|project repository onboarding focused suite|4

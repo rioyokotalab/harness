@@ -52,18 +52,36 @@ esac
 EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat"
 
-git clone -q "$ROOT" "$public"
-if git -C "$public" symbolic-ref --quiet HEAD >/dev/null 2>&1; then
-    git -C "$public" branch -m main
-else
-    git -C "$public" switch -q -c main
-fi
-git -C "$public" config branch.main.remote origin
-git -C "$public" config branch.main.merge refs/heads/main
+mkdir -p "$public/libexec" "$public/profiles/personal-macos" \
+    "$public/config/ssh" "$public/config/tmux" "$public/shell" \
+    "$public/shared/skills/guarded-bulk-delete/scripts"
+cp "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
+    "$ROOT/libexec/harness-macos-profile" \
+    "$ROOT/libexec/harness-macos-config-migrate" \
+    "$ROOT/libexec/harness-macos-ssh-sync" \
+    "$ROOT/libexec/harness-ssh-config-layout" \
+    "$ROOT/libexec/harness-macos-bash-hooks" \
+    "$ROOT/libexec/harness-tmux-config" "$public/libexec/"
+cp "$ROOT/profiles/personal-macos/base.conf" \
+    "$ROOT/profiles/personal-macos/formula-policy-v4.conf" \
+    "$public/profiles/personal-macos/"
+cp "$ROOT/config/ssh/harness.conf" "$public/config/ssh/"
+cp "$ROOT/config/tmux/tmux.conf" "$public/config/tmux/"
+cp "$ROOT/shell/personal-macos.bash" \
+    "$ROOT/shell/personal-macos-startup.block" \
+    "$ROOT/shell/bash_profile.block" "$ROOT/shell/bashrc.block" \
+    "$public/shell/"
+cp "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" \
+    "$public/shared/skills/guarded-bulk-delete/scripts/"
+git -C "$public" init -q -b main
+git -C "$public" add .
+git -C "$public" -c user.name=Fixture -c user.email=fixture.invalid \
+    commit -q -m fixture
 git init -q --bare "$private_remote"
 mkdir -p "$home/.config/harness" "$home/.ssh" "$home/.local/state/harness/personal-macos"
-git clone -q "$private_remote" "$private"
-git -C "$private" switch -q -c main
+mkdir "$private"
+git -C "$private" init -q -b main
+git -C "$private" remote add origin "$private_remote"
 git -C "$private" config user.name Fixture
 git -C "$private" config user.email fixture.invalid
 mkdir "$private/hosts"
@@ -106,6 +124,13 @@ chmod 600 "$home/.local/state/harness/personal-macos/config-sync.conf" \
 cp "$home/.bash_profile" "$TEMP_DIR/profile.before"
 cp "$home/.bashrc" "$TEMP_DIR/bashrc.before"
 
+case ${HARNESS_TEST_CASE:-plan} in
+    plan) ;;
+    apply) ;;
+    *) fail "unknown essential config-migration case" ;;
+esac
+
+if [ "${HARNESS_TEST_CASE:-plan}" = plan ]; then
 env PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HOME="$home" \
     HARNESS_ROOT="$public" "$public/libexec/harness-macos-config-migrate" \
     --host office --plan >"$TEMP_DIR/plan.out" 2>&1 || {
@@ -114,6 +139,9 @@ env PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HOME="$home" \
     }
 grep -F 'private_layout=legacy action=migrate apply=not-requested' "$TEMP_DIR/plan.out" >/dev/null ||
     fail "legacy migration plan"
+echo 'personal macOS configuration migration plan: PASS'
+exit 0
+fi
 env PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HOME="$home" \
     HARNESS_ROOT="$public" "$public/libexec/harness-macos-config-migrate" \
     --host office --apply >"$TEMP_DIR/apply.out" 2>&1 || {

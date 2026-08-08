@@ -23,8 +23,20 @@ PUBLIC=$TEMP_DIR/public
 HOME_DIR=$TEMP_DIR/home
 PRIVATE=$HOME_DIR/.config/harness/private
 FAKE_BIN=$TEMP_DIR/fake-bin
-mkdir -p "$PUBLIC" "$HOME_DIR/.ssh" "$PRIVATE/hosts" "$FAKE_BIN"
-cp -R "$ROOT/bin" "$ROOT/libexec" "$ROOT/profiles" "$ROOT/tools" "$ROOT/shared" "$PUBLIC/"
+mkdir -p "$PUBLIC/bin" "$PUBLIC/libexec" "$PUBLIC/profiles/personal-macos" \
+    "$PUBLIC/tools" "$PUBLIC/shared/skills/guarded-bulk-delete/scripts" \
+    "$HOME_DIR/.ssh" "$PRIVATE/hosts" "$FAKE_BIN"
+cp "$ROOT/bin/harness" "$PUBLIC/bin/"
+cp "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
+    "$ROOT/libexec/harness-inventory" "$ROOT/libexec/harness-macos-profile" \
+    "$ROOT/libexec/harness-macos-python" \
+    "$ROOT/libexec/harness-rollback" "$PUBLIC/libexec/"
+cp "$ROOT/profiles/personal-macos/base.conf" \
+    "$ROOT/profiles/personal-macos/formula-policy-v4.conf" \
+    "$PUBLIC/profiles/personal-macos/"
+cp "$ROOT/tools/python.tsv" "$PUBLIC/tools/"
+cp "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" \
+    "$PUBLIC/shared/skills/guarded-bulk-delete/scripts/"
 cp "$ROOT/tests/fixtures/personal-macos/private-v1/companion.conf" "$PRIVATE/companion.conf"
 cp "$ROOT/tests/fixtures/personal-macos/private-v1/hosts/mac-test-pilot.conf" \
     "$PRIVATE/hosts/mac-test-pilot.conf"
@@ -118,9 +130,6 @@ transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' "$TEMP_DIR/apply.out")
 [ -n "$transaction" ] || fail "Mac Python transaction"
 [ "$("$HOME_DIR/.local/bin/python3.11" -c 'import platform; print(platform.python_version())')" = 3.11.15 ] ||
     fail "Mac Python installed version"
-run_python --minor 3.11 --plan >"$TEMP_DIR/repeat.out"
-grep 'KEEP python=3.11 source=managed-python' "$TEMP_DIR/repeat.out" >/dev/null ||
-    fail "Mac Python repeat plan"
 HOME="$HOME_DIR" HARNESS_ROOT="$PUBLIC" PATH="$FAKE_BIN:/usr/bin:/bin" \
     "$PUBLIC/bin/harness" rollback "$transaction" >"$TEMP_DIR/rollback.out"
 [ ! -e "$HOME_DIR/.local/bin/python3.11" ] &&

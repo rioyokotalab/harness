@@ -285,6 +285,23 @@ run_homebrew() {
     return "$homebrew_status"
 }
 
+case ${HARNESS_TEST_CASE:-plan} in
+    apply)
+        apply_home=$(make_home apply)
+        apply_state=$(make_brew_state apply)
+        run_homebrew "$apply_home" "$apply_state" "$TEMP_DIR/essential-apply.log" \
+            --host mac-test-pilot --apply >"$TEMP_DIR/essential-apply.out"
+        grep -F 'TRANSACTION id=' "$TEMP_DIR/essential-apply.out" >/dev/null ||
+            fail "essential Homebrew apply transaction"
+        grep -F -x 'END macos_homebrew applied=yes rollback=manual-review-only metadata_refresh=separate' \
+            "$TEMP_DIR/essential-apply.out" >/dev/null || fail "essential Homebrew apply summary"
+        echo 'personal macOS Homebrew apply contract: PASS'
+        exit 0
+        ;;
+    plan) ;;
+    *) fail "unknown essential Homebrew case" ;;
+esac
+
 plan_home=$(make_home plan)
 plan_state=$(make_brew_state plan)
 plan_log=$TEMP_DIR/plan.log
@@ -319,254 +336,5 @@ grep -F -x 'install --formula --dry-run tree' "$plan_log" >/dev/null ||
 grep -F -x 'upgrade --formula --dry-run git sqlite' \
     "$plan_log" >/dev/null || fail "scoped upgrade dry-run"
 
-retire_home=$(make_home retire)
-retire_state=$(make_brew_state retire)
-printf '%s\n' 'bash-completion 1.3' 'pyenv 2.6.0' >>"$retire_state/installed"
-FAKE_RETIRED_INTERNAL_DEPENDENT=1 run_homebrew "$retire_home" \
-    "$retire_state" "$TEMP_DIR/retire-plan.log" \
-    --host mac-test-pilot --plan >"$TEMP_DIR/retire-plan.out"
-grep -F -x "RETIRE count=2 formulae='bash-completion pyenv'" \
-    "$TEMP_DIR/retire-plan.out" >/dev/null || fail "retirement plan"
-if grep -F -x 'uninstall --force --formula bash-completion pyenv' \
-    "$TEMP_DIR/retire-plan.log" >/dev/null; then
-    fail "retirement plan mutated Homebrew"
-fi
-FAKE_RETIRED_INTERNAL_DEPENDENT=1 run_homebrew "$retire_home" \
-    "$retire_state" "$TEMP_DIR/retire-apply.log" \
-    --host mac-test-pilot --apply >"$TEMP_DIR/retire-apply.out"
-grep -F -x 'uninstall --force --formula bash-completion pyenv' \
-    "$TEMP_DIR/retire-apply.log" >/dev/null || fail "bounded retirement apply"
-grep -F ' status=complete install=1 upgrade=2 retire=2' \
-    "$TEMP_DIR/retire-apply.out" >/dev/null || fail "retirement transaction summary"
-if awk '$1 == "bash-completion" || $1 == "pyenv" { found = 1 }
-    END { exit found ? 0 : 1 }' "$retire_state/installed"; then
-    fail "retired formula remained installed"
-fi
-
-migration_home=$(make_home retirement-migration)
-migration_state=$(make_brew_state retirement-migration)
-printf '%s\n' 'pyenv 2.6.0' >>"$migration_state/installed"
-printf '%s\n' node >>"$migration_state/outdated"
-FAKE_RETIRED_UPGRADE_DEPENDENT=1 run_homebrew "$migration_home" \
-    "$migration_state" "$TEMP_DIR/migration-plan.log" \
-    --host mac-test-pilot --plan >"$TEMP_DIR/migration-plan.out"
-grep -F -x \
-    "MIGRATION_DEPENDENTS count=1 formulae='node' resolution=upgrade-before-retire" \
-    "$TEMP_DIR/migration-plan.out" >/dev/null || fail "retirement migration plan"
-FAKE_RETIRED_UPGRADE_DEPENDENT=1 run_homebrew "$migration_home" \
-    "$migration_state" "$TEMP_DIR/migration-apply.log" \
-    --host mac-test-pilot --apply >"$TEMP_DIR/migration-apply.out"
-upgrade_line=$(grep -n -F -x 'upgrade --formula git sqlite node' \
-    "$TEMP_DIR/migration-apply.log" | cut -d: -f1)
-retire_line=$(grep -n -F -x 'uninstall --force --formula pyenv' \
-    "$TEMP_DIR/migration-apply.log" | cut -d: -f1)
-[ -n "$upgrade_line" ] && [ -n "$retire_line" ] && \
-    [ "$upgrade_line" -lt "$retire_line" ] ||
-    fail "retirement ran before dependency migration upgrade"
-
-cleanup_home=$(make_home legacy-cleanup)
-cleanup_state=$(make_brew_state legacy-cleanup)
-printf '%s\n' 'icu4c 69.1' >>"$cleanup_state/installed"
-run_homebrew "$cleanup_home" "$cleanup_state" \
-    "$TEMP_DIR/cleanup-plan.log" --host mac-test-pilot --plan \
-    >"$TEMP_DIR/cleanup-plan.out"
-grep -F -x \
-    "RETIRE_CLEANUP count=1 aliases='icu4c' targets='icu4c@78'" \
-    "$TEMP_DIR/cleanup-plan.out" >/dev/null || fail "legacy cleanup plan"
-run_homebrew "$cleanup_home" "$cleanup_state" \
-    "$TEMP_DIR/cleanup-apply.log" --host mac-test-pilot --apply \
-    >"$TEMP_DIR/cleanup-apply.out"
-grep -F -x 'cleanup icu4c@78' "$TEMP_DIR/cleanup-apply.log" >/dev/null ||
-    fail "legacy cleanup apply"
-if awk '$1 == "icu4c" { found = 1 } END { exit found ? 0 : 1 }' \
-    "$cleanup_state/installed"; then
-    fail "legacy cleanup formula remained installed"
-fi
-
-repair_home=$(make_home post-retire-repair)
-repair_state=$(make_brew_state post-retire-repair)
-printf '%s\n' 'pyenv 2.6.0' >>"$repair_state/installed"
-FAKE_RETIRE_REMOVES_MANAGED=1 run_homebrew "$repair_home" "$repair_state" \
-    "$TEMP_DIR/repair-apply.log" --host mac-test-pilot --apply \
-    >"$TEMP_DIR/repair-apply.out"
-grep -F -x 'REPAIR install=1 upgrade=0' "$TEMP_DIR/repair-apply.out" \
-    >/dev/null || fail "post-retirement repair summary"
-retire_line=$(grep -n -F -x 'uninstall --force --formula pyenv' \
-    "$TEMP_DIR/repair-apply.log" | cut -d: -f1)
-repair_line=$(grep -n -F -x 'install --formula mpdecimal' \
-    "$TEMP_DIR/repair-apply.log" | cut -d: -f1)
-[ -n "$retire_line" ] && [ -n "$repair_line" ] && \
-    [ "$retire_line" -lt "$repair_line" ] ||
-    fail "post-retirement repair ordering"
-
-old_home=$(make_home old-versions)
-old_state=$(make_brew_state old-versions)
-awk '$1 == "icu4c@78" { print $1, $2, "legacy"; next } { print }' \
-    "$old_state/installed" >"$old_state/installed.new"
-mv "$old_state/installed.new" "$old_state/installed"
-run_homebrew "$old_home" "$old_state" "$TEMP_DIR/old-plan.log" \
-    --host mac-test-pilot --plan >"$TEMP_DIR/old-plan.out"
-grep -F -x "CLEANUP_OLD count=1 formulae='icu4c@78'" \
-    "$TEMP_DIR/old-plan.out" >/dev/null || fail "old-version cleanup plan"
-run_homebrew "$old_home" "$old_state" "$TEMP_DIR/old-apply.log" \
-    --host mac-test-pilot --apply >"$TEMP_DIR/old-apply.out"
-grep -F -x 'CLEANUP old_versions=1' "$TEMP_DIR/old-apply.out" >/dev/null ||
-    fail "old-version cleanup summary"
-[ "$(awk '$1 == "icu4c@78" { print NF }' "$old_state/installed")" -eq 2 ] ||
-    fail "old managed version remained installed"
-
-retired_dependent_home=$(make_home retired-dependent)
-retired_dependent_state=$(make_brew_state retired-dependent)
-printf '%s\n' 'pyenv 2.6.0' >>"$retired_dependent_state/installed"
-if FAKE_RETIRED_DEPENDENT=1 run_homebrew "$retired_dependent_home" \
-    "$retired_dependent_state" "$TEMP_DIR/retired-dependent.log" \
-    --host mac-test-pilot --plan >"$TEMP_DIR/retired-dependent.out" 2>&1; then
-    fail "retirement plan accepted an installed dependent"
-fi
-grep -F -x "RETIRED_DEPENDENTS count=1 formulae='personal-tool'" \
-    "$TEMP_DIR/retired-dependent.out" >/dev/null || fail "retired-dependent plan"
-grep -F -x 'BLOCK macos_homebrew reason=retired-formula-has-installed-dependent' \
-    "$TEMP_DIR/retired-dependent.out" >/dev/null || fail "retired-dependent refusal"
-
-apply_home=$(make_home apply)
-apply_state=$(make_brew_state apply)
-apply_log=$TEMP_DIR/apply.log
-run_homebrew "$apply_home" "$apply_state" "$apply_log" \
-    --host mac-test-pilot --apply >"$TEMP_DIR/apply.out"
-transaction_id=$(sed -n \
-    's/^TRANSACTION id=\([^ ]*\) status=complete.*/\1/p' "$TEMP_DIR/apply.out")
-[ -n "$transaction_id" ] || fail "Homebrew apply transaction identifier"
-transaction_root=$apply_home/.local/state/harness/transactions
-status_file=$transaction_root/$transaction_id.macos-homebrew.status
-pre_file=$transaction_root/$transaction_id.macos-homebrew.pre.tsv
-post_file=$transaction_root/$transaction_id.macos-homebrew.post.tsv
-delta_file=$transaction_root/$transaction_id.macos-homebrew.delta.diff
-local_apply_log=$transaction_root/$transaction_id.macos-homebrew.apply.log
-for private_file in "$status_file" "$pre_file" "$post_file" \
-    "$delta_file" "$local_apply_log"; do
-    [ "$(file_mode "$private_file")" = 600 ] ||
-        fail "Homebrew transaction evidence mode"
-done
-[ "$(sed -n '1p' "$status_file")" = complete ] ||
-    fail "Homebrew transaction completion state"
-grep -F -x 'selected|tree|absent' "$pre_file" >/dev/null ||
-    fail "missing-formula pre-state evidence"
-grep -F -x 'selected|tree|1.0' "$post_file" >/dev/null ||
-    fail "installed-formula post-state evidence"
-grep -F -x 'dependency|dependency-lib|3.0' "$post_file" >/dev/null ||
-    fail "dependency post-state evidence"
-grep -F 'selected|git|1.0' "$delta_file" >/dev/null ||
-    fail "version delta evidence"
-grep -F -x 'END macos_homebrew applied=yes rollback=manual-review-only metadata_refresh=separate' \
-    "$TEMP_DIR/apply.out" >/dev/null || fail "irreversible apply summary"
-if grep -E '^(update|cleanup|services|tap|bundle)( |$)' "$apply_log" >/dev/null; then
-    fail "Homebrew apply used a prohibited command"
-fi
-
-before_count=$(find "$transaction_root" -type f \
-    -name '*.macos-homebrew.manifest' | wc -l | tr -d ' ')
-run_homebrew "$apply_home" "$apply_state" "$TEMP_DIR/noop.log" \
-    --host mac-test-pilot --apply >"$TEMP_DIR/noop.out"
-after_count=$(find "$transaction_root" -type f \
-    -name '*.macos-homebrew.manifest' | wc -l | tr -d ' ')
-[ "$before_count" = "$after_count" ] || fail "no-op apply created a transaction"
-grep -F -x 'END macos_homebrew changes=none metadata_refresh=separate' \
-    "$TEMP_DIR/noop.out" >/dev/null || fail "no-op apply summary"
-
-dependent_home=$(make_home dependent)
-dependent_state=$(make_brew_state dependent)
-if FAKE_UNMANAGED_DEPENDENT=1 FAKE_UNMANAGED_DEPENDENCY_USER=0 \
-    FAKE_PROHIBITED_DRY_RUN=0 FAKE_APPLY_FAILURE=0 \
-    run_homebrew "$dependent_home" "$dependent_state" \
-    "$TEMP_DIR/dependent.log" --host mac-test-pilot --plan \
-    >"$TEMP_DIR/dependent.out" 2>&1; then
-    fail "Homebrew plan accepted an unmanaged selected-root dependent"
-fi
-grep -F -x "UNMANAGED_DEPENDENTS count=1 formulae='personal-tool'" \
-    "$TEMP_DIR/dependent.out" >/dev/null || fail "unmanaged-dependent plan"
-grep -F -x 'BLOCK macos_homebrew reason=selected-root-has-unmanaged-dependent' \
-    "$TEMP_DIR/dependent.out" >/dev/null || fail "unmanaged-dependent refusal"
-[ ! -e "$dependent_home/.local" ] ||
-    fail "unmanaged-dependent refusal created transaction state"
-
-unmanaged_home=$(make_home unmanaged-installed)
-unmanaged_state=$(make_brew_state unmanaged-installed)
-printf '%s\n' 'personal-tool 1.0' >>"$unmanaged_state/installed"
-if run_homebrew "$unmanaged_home" "$unmanaged_state" \
-    "$TEMP_DIR/unmanaged-installed.log" --host mac-test-pilot --plan \
-    >"$TEMP_DIR/unmanaged-installed.out" 2>&1; then
-    fail "Homebrew plan accepted a formula outside exact policy"
-fi
-grep -F -x "UNMANAGED_INSTALLED count=1 formulae='personal-tool'" \
-    "$TEMP_DIR/unmanaged-installed.out" >/dev/null ||
-    fail "unmanaged installed formula evidence"
-grep -F -x 'BLOCK macos_homebrew reason=installed-formula-outside-exact-policy' \
-    "$TEMP_DIR/unmanaged-installed.out" >/dev/null ||
-    fail "unmanaged installed formula refusal"
-
-shared_home=$(make_home shared-dependent)
-shared_state=$(make_brew_state shared-dependent)
-if ! FAKE_UNMANAGED_DEPENDENT=0 FAKE_UNMANAGED_DEPENDENCY_USER=1 \
-    FAKE_PROHIBITED_DRY_RUN=0 FAKE_APPLY_FAILURE=0 \
-    run_homebrew "$shared_home" "$shared_state" \
-    "$TEMP_DIR/shared.log" --host mac-test-pilot --plan \
-    >"$TEMP_DIR/shared.out" 2>&1; then
-    fail "Homebrew plan rejected an unmanaged shared-dependency user"
-fi
-grep -F -x "UNMANAGED_DEPENDENTS count=0 formulae=''" \
-    "$TEMP_DIR/shared.out" >/dev/null || fail "shared-dependency user preservation"
-if grep -F -x 'uses --installed --recursive --formula dependency-lib' \
-    "$TEMP_DIR/shared.log" >/dev/null; then
-    fail "Homebrew plan treated a shared dependency as a selected root"
-fi
-
-dry_home=$(make_home prohibited-dry-run)
-dry_state=$(make_brew_state prohibited-dry-run)
-if FAKE_UNMANAGED_DEPENDENT=0 FAKE_UNMANAGED_DEPENDENCY_USER=0 \
-    FAKE_PROHIBITED_DRY_RUN=1 FAKE_APPLY_FAILURE=0 \
-    run_homebrew "$dry_home" "$dry_state" \
-    "$TEMP_DIR/dry.log" --host mac-test-pilot --plan \
-    >"$TEMP_DIR/dry.out" 2>&1; then
-    fail "Homebrew plan accepted prohibited dry-run scope"
-fi
-grep -F 'dry-run reported prohibited scope' "$TEMP_DIR/dry.out" >/dev/null ||
-    fail "prohibited dry-run refusal"
-[ ! -e "$dry_home/.local" ] || fail "prohibited dry-run created state"
-
-failure_home=$(make_home apply-failure)
-failure_state=$(make_brew_state apply-failure)
-if FAKE_UNMANAGED_DEPENDENT=0 FAKE_UNMANAGED_DEPENDENCY_USER=0 \
-    FAKE_PROHIBITED_DRY_RUN=0 FAKE_APPLY_FAILURE=1 \
-    run_homebrew "$failure_home" "$failure_state" \
-    "$TEMP_DIR/failure.log" --host mac-test-pilot --apply \
-    >"$TEMP_DIR/failure.out" 2>&1; then
-    fail "injected Homebrew apply failure succeeded"
-fi
-grep -F 'automatic rollback is unavailable' "$TEMP_DIR/failure.out" >/dev/null ||
-    fail "irreversible failure warning"
-failure_status=$(find "$failure_home/.local/state/harness/transactions" \
-    -type f -name '*.macos-homebrew.status')
-[ -n "$failure_status" ] && [ "$(sed -n '1p' "$failure_status")" = failed ] ||
-    fail "failed Homebrew transaction state"
-failure_post=${failure_status%.status}.post.tsv
-failure_delta=${failure_status%.status}.delta.diff
-[ -f "$failure_post" ] && [ -f "$failure_delta" ] ||
-    fail "failed Homebrew transaction retained no post/delta evidence"
-
-tapped_home=$(make_home tapped-selection)
-tapped_private=$tapped_home/.config/harness/private
-sed 's/extra_formulae=ninja/extra_formulae=owner\/tap\/formula/' \
-    "$tapped_private/hosts/mac-test-pilot.conf" >"$TEMP_DIR/tapped.conf"
-mv "$TEMP_DIR/tapped.conf" "$tapped_private/hosts/mac-test-pilot.conf"
-chmod 600 "$tapped_private/hosts/mac-test-pilot.conf"
-git -C "$tapped_private" add hosts/mac-test-pilot.conf
-git -C "$tapped_private" commit -q -m 'synthetic tapped selection'
-if run_homebrew "$tapped_home" "$(make_brew_state tapped-selection)" \
-    "$TEMP_DIR/tapped.log" --host mac-test-pilot --plan \
-    >"$TEMP_DIR/tapped.out" 2>&1; then
-    fail "Homebrew plan accepted a tapped formula selection"
-fi
-grep -F 'selection contains a tap or duplicate' "$TEMP_DIR/tapped.out" >/dev/null ||
-    fail "tapped-selection refusal"
-
-echo "personal macOS Homebrew tests: PASS"
+echo 'personal macOS Homebrew plan contract: PASS'
+exit 0

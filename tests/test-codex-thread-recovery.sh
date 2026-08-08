@@ -565,10 +565,12 @@ import socket
 import struct
 import sys
 
-socket_path, rollout_path, calls_path = sys.argv[1:4]
+socket_path, rollout_path, calls_path, ready_path = sys.argv[1:5]
 listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 listener.bind(socket_path)
 listener.listen(1)
+with open(ready_path, "w", encoding="utf-8") as ready:
+    ready.write("ready\n")
 connection, _ = listener.accept()
 buffer = bytearray()
 while b"\r\n\r\n" not in buffer:
@@ -693,15 +695,14 @@ chmod 755 "$websocket_server"
 # Keep the Unix-domain socket path below Darwin's short sun_path limit while
 # retaining a parent that exists on both macOS and Linux runners.
 control_socket=/tmp/harness-recovery-$$.sock
+server_ready=$TEST_ROOT/websocket.ready
+mkfifo "$server_ready"
 python3 "$websocket_server" "$control_socket" "$websocket_rollout" \
-    "$TEST_ROOT/websocket.calls" &
+    "$TEST_ROOT/websocket.calls" "$server_ready" &
 server_pid=$!
-socket_wait=0
-while [ ! -S "$control_socket" ] && [ "$socket_wait" -lt 50 ]; do
-    sleep 0.1
-    socket_wait=$((socket_wait + 1))
-done
-[ -S "$control_socket" ] || fail "fake WebSocket server did not start"
+IFS= read -r ready_state <"$server_ready"
+[ "$ready_state" = ready ] && [ -S "$control_socket" ] ||
+    fail "fake WebSocket server did not start"
 HARNESS_TESTING=1 \
 HARNESS_CONTROL_ROOT="$ROOT" \
 HARNESS_TARGET_ROOT="$target_harness" \

@@ -21,6 +21,7 @@
 ^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-gates.sh|PIE routed behavior gates
 ^tests/test-skill-context-(budgets|gates)\.sh$|R3|-|skill routing validator
 ^tests/test-skill-catalog-budget\.sh$|R3|-|always-visible skill catalog validator
+^shared/skills/[^/]+/SKILL\.md$|R1|tests/test-skill-catalog-budget.sh|always-visible skill catalog descriptions
 ^shared/skills/fleet-repository-hardening/(SKILL\.md|references/.*\.md)$|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill
 ^shared/skills/fleet-repository-hardening/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-budgets.sh|hardening routed context budget
 ^shared/skills/fleet-repository-hardening/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-gates.sh|hardening routed safety gates
@@ -95,6 +96,7 @@
 ^presentation/scripts/.*\.py$|R1|tests/test-presentation-tools.sh|presentation build and verification tools
 ^tests/test-presentation-tools\.sh$|R3|-|presentation tool owner
 ^tools/(agents|python|runtimes|source-dependencies|sources)\.tsv$|R2|tests/test-tool-manifests.sh|tool and runtime manifest schema
+^tools/agents\.tsv$|R3|tests/test-agent-upgrade.sh|agent replacement declaration
 ^tests/test-tool-manifests\.sh$|R3|-|tool manifest owner
 ^libexec/harness-validate$|R3|tests/test-validation-router.sh|validation selector
 ^tests/validation-impact\.tsv$|R3|tests/test-validation-router.sh|validation impact map
@@ -107,6 +109,7 @@
 ^tools/run-focused-tests\.py$|R3|tests/test-focused-runner.sh|parallel focused runner
 ^libexec/harness_codex_targets\.py$|R3|tests/test-codex-targets.sh|managed target identity
 ^libexec/harness-(startup-normalize)$|R2|tests/test-startup-normalize.sh|startup normalization runtime
+^libexec/harness-agent$|R3|tests/test-agent-upgrade.sh|agent replacement lifecycle
 ^libexec/harness-(bash-startup-unify)$|R2|tests/test-bash-startup-unify.sh|Bash startup transaction
 ^libexec/harness-(agent-config|agent-config-catch-up)$|R3|tests/test-agent-config.sh|agent configuration lifecycle
 ^libexec/harness-agent-config-fleet$|R3|tests/test-agent-config-fleet.sh|fleet agent configuration lifecycle
@@ -129,17 +132,22 @@
 ^libexec/harness-macos-(bash|bash-hooks)$|R3|tests/test-personal-macos-bash.sh|macOS Bash lifecycle
 ^libexec/harness-macos-bash-hooks$|R3|tests/test-personal-macos-bash-hooks.sh|macOS Bash hook lifecycle
 ^libexec/harness-macos-codex-bootstrap$|R3|tests/test-macos-codex-bootstrap.sh|macOS Codex bootstrap
-^libexec/harness-macos-(common|doctor|pilot-plan|plan)$|R3|tests/test-personal-macos-plan-doctor.sh|macOS plan and doctor primitives
+^libexec/harness-macos-(common|pilot-plan|plan)$|R3|tests/test-personal-macos-plan-doctor.sh|macOS plan primitives
+^libexec/harness-macos-(common|doctor)$|R3|tests/test-personal-macos-doctor.sh|macOS doctor primitives
 ^libexec/harness-macos-config-migrate$|R3|tests/test-personal-macos-config-migrate.sh|macOS configuration migration
+^libexec/harness-macos-config-migrate$|R3|tests/test-personal-macos-config-migrate-apply.sh|macOS configuration migration apply
 ^libexec/harness-macos-config-sync$|R3|tests/test-personal-macos-config-sync.sh|macOS configuration sync
+^libexec/harness-macos-config-sync$|R3|tests/test-personal-macos-config-sync-apply.sh|macOS configuration sync apply
 ^libexec/harness-macos-control$|R3|tests/test-personal-macos-control.sh|macOS control plane
 ^libexec/harness-macos-homebrew$|R3|tests/test-personal-macos-homebrew.sh|macOS Homebrew policy
+^libexec/harness-macos-homebrew$|R3|tests/test-personal-macos-homebrew-apply.sh|macOS Homebrew apply policy
 ^libexec/harness-macos-inventory$|R3|tests/test-personal-macos-inventory.sh|macOS inventory
 ^libexec/harness-macos-login-shell$|R3|tests/test-personal-macos-login-shell.sh|macOS login shell
 ^libexec/harness-macos-profile$|R3|tests/test-personal-macos-profile.sh|macOS profile
 ^libexec/harness-macos-python$|R3|tests/test-personal-macos-python.sh|macOS Python lifecycle
 ^libexec/harness-macos-ssh-supervisor$|R3|tests/test-personal-macos-ssh-supervisor.sh|macOS SSH supervisor
 ^libexec/harness-macos-ssh-sync$|R3|tests/test-personal-macos-ssh-sync.sh|macOS SSH sync
+^libexec/harness-macos-ssh-sync$|R3|tests/test-personal-macos-ssh-sync-apply.sh|macOS SSH sync apply
 ^libexec/harness-macos-(tunnel-supervisor|tunnel-watchdog)$|R3|tests/test-connection-monitor.sh|macOS tunnel recovery
 ^libexec/harness-macos-update$|R3|tests/test-personal-macos-update.sh|macOS long-gap update
 ^libexec/harness-oauth-browser-open$|R3|tests/test-personal-agent.sh|Personal OAuth handoff
@@ -166,6 +174,9 @@
 ^tools/public-repo-audit\.py$|R3|tests/test-public-repo-audit.sh|public repository audit
 ^shell/(bash_profile|bashrc).*\.block$|R2|tests/test-bash-startup-unify.sh|managed Bash startup blocks
 ^shell/(cache|early-cache|common-aliases|interactive|module-stack|profile|remote-session)\.sh$|R2|tests/test-startup-normalize.sh|portable shell integration
+^shell/profile\.sh$|R2|tests/test-ssh-agent-profile.sh|local versus forwarded SSH agent selection
+^shell/(profile|remote-session)\.sh$|R2|tests/test-remote-session.sh|interactive remote shell lifecycle
+^shell/hosts/local\.sh$|R2|tests/test-local-mpi-profile.sh|local interactive MPI policy
 ^shell/personal-macos|R3|tests/test-personal-macos-shell.sh|personal macOS shell integration
 ^shell/safety-guards\.sh$|R3|tests/test-safety-guards.sh|interactive safety guards
 ^shell/(environments|hosts)/|R2|tests/test-hpc-readiness.sh|host and environment shell declarations
@@ -190,6 +201,7 @@
 ^tests/fixtures/(ab|ab2|abq|al|local|rc|ri|t4)\.facts$|R2|tests/test-hpc-readiness.sh|host fact fixtures
 ^tests/fixtures/offline-project/|R2|tests/test-locked-venv-readiness.sh|offline environment fixture
 ^tests/fixtures/personal-macos/|R3|tests/test-personal-macos-config-sync.sh|personal macOS private fixtures
+^tests/fixtures/personal-macos/|R3|tests/test-personal-macos-config-sync-apply.sh|personal macOS private fixture apply
 ^config/terminfo/tmux-256color\.src$|R2|tests/test-terminfo.sh|mapped ordinary terminfo source
 ^tests/test-terminfo\.sh$|R3|-|mapped ordinary component validator
 ^tests/smoke/debugger\.c$|R2|tests/test-debugger-readiness.sh|mapped ordinary debugger source fixture
@@ -199,11 +211,13 @@
 ^tests/smoke/mpi\.c$|R2|tests/test-hpc-readiness.sh|single-node MPI smoke source
 ^tests/smoke/mpi-multinode\.c$|R2|tests/test-multinode-mpi-readiness.sh|multi-node MPI smoke source
 ^tests/smoke/llm_torch\.py$|R2|tests/test-pytorch-readiness.sh|PyTorch smoke source
+^tests/smoke/jobs/shared-executable-visibility\.sh$|R2|tests/test-shared-executable-visibility.sh|shared executable boundary probe
 ^tests/smoke/debugger-readiness\.sh$|R2|tests/test-debugger-readiness.sh|debugger readiness probe
 ^tests/smoke/locked-venv-readiness\.sh$|R2|tests/test-locked-venv-readiness.sh|locked environment probe
 ^tests/smoke/scientific-library-readiness\.sh$|R2|tests/test-scientific-library-readiness.sh|scientific library probe
 ^tests/smoke/venv-readiness\.sh$|R2|tests/test-venv-readiness.sh|virtual environment probe
 ^tests/smoke/README\.md$|R0|-|smoke documentation
+^docs/(hpc-project-intake\.md|schemas/hpc-project-intake\.schema\.json)$|R1|tests/test-hpc-project-intake.sh|HPC project intake contract
 ^tests/fixtures/scientific-library-bin/(h5cc|nc-config|pkg-config)$|R2|tests/test-scientific-library-readiness.sh|mapped ordinary scientific-library fixture
 ^(\.gitmodules|profiles/tools\.tsv|tools/artifacts\.tsv|libexec/harness-(tool|inventory))$|R1|tests/test-repository-independence.sh|repository independence boundary
 ^docs/|R0|-|documentation
