@@ -17,8 +17,8 @@ mutable-state query is unknown, never absence.
 
 ### Har-428 — Roll out Har-427 to Office and Home
 
-**Phase:** PR #759 merged as `14309ce`; fast-forward clean Office and Home
-checkouts and verify exact protected-main readback without rerunning tests.
+**Phase:** Office is clean at protected `14309ce`; fast-forward Home and verify
+the same readback without rerunning tests.
 **Record:** `docs/tasks/Har-428.md`.
 
 ## Deferred gates
